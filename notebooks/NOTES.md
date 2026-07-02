@@ -14,13 +14,14 @@ Current status:
 - M2B is complete: CSV, Excel, HTML, and structured text fixtures parse
   into one normalized transaction shape with deterministic hold-period,
   tax-class, and gain/loss calculations.
+- M2C is complete: the notebook generates its own CA Summary CSV and full
+  workbook outputs from parsed transactions, then validates CA Summary
+  totals against the Milestone 1 reference.
 - PDF/free-form extracted text is deliberately routed back to
   `prompts/01-extract-statement.md`, not parsed in the notebook.
 - `scripts/validate-notebook.py` executes every code cell without manual
-  edits and checks fixture parity.
-- The current export cell is still an explicit placeholder that copies
-  Milestone 1 dry-run outputs. M2C replaces it with notebook-generated
-  outputs.
+  edits, checks fixture parity, verifies generated outputs exist, and
+  compares CA Summary totals to the Milestone 1 reference.
 
 Generated notebook outputs go to `notebooks/output/`, which is ignored by
 Git.

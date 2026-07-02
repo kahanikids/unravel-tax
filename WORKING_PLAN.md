@@ -76,7 +76,7 @@ Slices:
     prompt workflow.
   - Validate fixture parity against the Milestone 1 workbook.
 
-- **M2C - Notebook exports**
+- **M2C - Notebook exports** - done 2026-07-02
   - Generate the CA summary and full workbook outputs.
   - Validate that exported totals match the Milestone 1 reference.
 
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M2C - Notebook exports**.
+Start with **M3A - Rule JSON population**.

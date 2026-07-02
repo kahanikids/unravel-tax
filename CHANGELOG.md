@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M2C: notebook exports now generate a CA Summary CSV and full
+  workbook from parsed transactions, and validation compares CA Summary
+  totals to the Milestone 1 reference.
 - Completed M2B: added deterministic notebook ingestion/calculation helpers
   for CSV, Excel, HTML, and structured text fixtures, kept PDF/free-form text
   routed to the guided prompt, and validated fixture parity in the notebook.
