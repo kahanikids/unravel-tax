@@ -46,7 +46,7 @@ Slices:
   - Validate by opening/rendering the workbook and checking formula cells
     for visible errors.
 
-- **M1C - Manual flow dry run**
+- **M1C - Manual flow dry run** - done 2026-07-02
   - Run the prompt + template path with the synthetic fixtures.
   - Submit at least one non-CSV fixture path.
   - Record friction points and fix only the flow blockers.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M1C - Manual flow dry run**.
+Start with **M2A - Notebook skeleton**.

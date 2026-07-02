@@ -1,0 +1,11 @@
+Head,Rule/Section,Amount,Notes
+Speculative / Intraday income,Business income,800,From Detailed Summary
+Short-Term Capital Gains,111A,-500,From Detailed Summary
+Long-Term Capital Gains,112A,5500,From Detailed Summary
+Dividends,Schedule OS,4000,Quarter-wise detail in Dividends tab
+Interest & other income,Schedule OS,24000,From certificates/AIS
+Eligible interest deduction,80TTA/80TTB,0,Profile-dependent
+Deductible transaction charges,Expense split,160,Check source treatment
+Carry-forward losses available,CFL,500,From register
+Recommended ITR form,,ITR-3,
+CA review recommendation,,Get CA review before filing,

@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M1C: ran a repeatable manual-flow dry run using the non-CSV
+  HTML fixture, produced a full workbook copy and CA Summary CSV, and
+  recorded friction points in `dry-runs/m1c/README.md`.
 - Completed M1B: generated `templates/excel-export/UnravelTax-Template.xlsx`
   from synthetic fixture data, with common tabs, profile-specific tabs,
   formula-backed working sheets, and repeatable build/verification scripts.
