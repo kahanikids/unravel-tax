@@ -167,9 +167,15 @@ h1 {
 .panel {
   padding: 28px clamp(20px, 4vw, 56px);
   border-right: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
 }
 
-.panel:last-child {
+.panel:nth-child(2n) {
+  border-right: 0;
+}
+
+.ingestion-panel {
+  grid-column: 1 / -1;
   border-right: 0;
 }
 

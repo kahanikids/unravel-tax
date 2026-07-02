@@ -27,8 +27,18 @@ const milestones: Milestone[] = [
   },
   {
     label: "Webapp scaffold",
-    status: "Current",
+    status: "Done",
     detail: "Vite React TypeScript shell; static and client-side only."
+  },
+  {
+    label: "Client-side ingestion",
+    status: "Done",
+    detail: "CSV, Excel, HTML, and structured text normalize to one transaction shape."
+  },
+  {
+    label: "Calculation and rules wiring",
+    status: "Current",
+    detail: "Rule JSON loading and fixture parity are the next implementation slice."
   }
 ];
 
@@ -41,10 +51,16 @@ const buildChecks: CheckItem[] = [
 ];
 
 const nextSlices: CheckItem[] = [
-  { label: "M4B", value: "Client-side ingestion" },
-  { label: "M4C", value: "Calculation and rules wiring" },
   { label: "M4D", value: "Guided UI and reconciliation panel" },
   { label: "M4E", value: "Exports" }
+];
+
+const ingestionFormats: CheckItem[] = [
+  { label: "CSV", value: "Parsed with PapaParse" },
+  { label: "Excel", value: "Parsed with read-excel-file" },
+  { label: "HTML", value: "Transaction table selected by expected headers" },
+  { label: "Structured text", value: "Tab-separated rows normalized directly" },
+  { label: "PDF/free-form", value: "Routed to prompts/01-extract-statement.md" }
 ];
 
 function App() {
@@ -58,8 +74,8 @@ function App() {
         </div>
         <div className="hero-copy">
           <p>
-            A client-side webapp scaffold for turning validated prompt, workbook,
-            notebook, rule, and reconciliation work into one browser flow.
+            A client-side webapp for turning validated prompt, workbook, notebook,
+            rule, reconciliation, and fixture-ingestion work into one browser flow.
           </p>
         </div>
       </section>
@@ -79,9 +95,21 @@ function App() {
         ))}
       </section>
 
-      <section className="work-grid" aria-label="Current scaffold constraints">
+      <section className="work-grid" aria-label="Current webapp status">
+        <div className="panel ingestion-panel">
+          <h2>M4B Ingestion</h2>
+          <dl>
+            {ingestionFormats.map((item) => (
+              <div className="fact-row" key={item.label}>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
         <div className="panel">
-          <h2>M4A Gate</h2>
+          <h2>Static Constraints</h2>
           <dl>
             {buildChecks.map((item) => (
               <div className="fact-row" key={item.label}>

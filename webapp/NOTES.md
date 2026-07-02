@@ -9,7 +9,8 @@ exports must stay client-side.
 
 Build order after the scaffold:
 
-1. `src/ingest/` format router and CSV/Excel/HTML/structured-text parsers.
+1. `src/ingest/` format router and CSV/Excel/HTML/structured-text parsers
+   - done in M4B.
 2. `src/rules/` rule JSON loading.
 3. `src/lib/` pure classification, gain calculation, reconciliation, and
    tax estimate functions, validated against `../fixtures/`.

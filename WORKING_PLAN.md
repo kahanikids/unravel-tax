@@ -122,7 +122,7 @@ Slices:
   - No backend, database, accounts, or required API keys.
   - Validate with a local build.
 
-- **M4B - Client-side ingestion**
+- **M4B - Client-side ingestion** - done 2026-07-02
   - Implement CSV, Excel, HTML, and structured text ingestion.
   - Route PDF/free-form text to the guided AI extraction prompt.
   - Normalize every source into one common row shape.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M4B - Client-side ingestion**.
+Start with **M4C - Calculation and rules wiring**.

@@ -6,6 +6,11 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M4B: added client-side CSV, Excel, HTML, and structured-text
+  ingestion under `webapp/src/ingest/`, kept PDF/free-form text routed to
+  `prompts/01-extract-statement.md`, validated fixture parity with
+  `npm run validate:ingest`, and surfaced supported formats in the webapp
+  shell.
 - Completed M4A: scaffolded the static Vite + React + TypeScript webapp
   under `webapp/`, kept it backend-free/account-free/API-key-free, added
   a Swiss-style milestone readiness shell, and validated it with
