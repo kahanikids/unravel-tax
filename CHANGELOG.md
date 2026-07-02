@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M3B: added rule markdown/JSON pair validation covering missing
+  pairs, non-empty values, verification metadata, effective dates, and source
+  references, with pending current-source review reported as warnings.
 - Completed M3A: populated all 18 `rules/*.json` files with structured
   values, effective dates, source references, and explicit
   `pending_current_source` verification metadata.

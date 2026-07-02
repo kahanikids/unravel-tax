@@ -96,7 +96,7 @@ Slices:
     values needed by deterministic logic.
   - Validate every JSON file parses and has a non-empty `values` object.
 
-- **M3B - Rule pair validation**
+- **M3B - Rule pair validation** - done 2026-07-02
   - Add a small validation script for `.json`/`.md` rule pairs.
   - Check missing pairs, empty values, and missing verification metadata.
   - Validate by running the script locally.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M3B - Rule pair validation**.
+Start with **M3C - Reconciliation engine**.
