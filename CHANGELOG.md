@@ -6,6 +6,11 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M4D: ported reconciliation into the webapp, added a guided
+  orientation/review flow with a persistent "Things To Check" panel, kept
+  simple view as the first-time default with an explicit advanced-detail
+  toggle, and validated that checklist consequences render before totals
+  with `npm run validate:guided-ui`.
 - Completed M4C: mirrored `rules/*.json` into the webapp, added typed rule
   loading and pure rule-backed calculation helpers, validated CA Summary
   parity against the Milestone 1 reference and Milestone 2 fixture buckets

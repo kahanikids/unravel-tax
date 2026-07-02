@@ -133,7 +133,7 @@ Slices:
   - Avoid hardcoded rates in app logic.
   - Validate fixture parity against Milestones 1 and 2.
 
-- **M4D - Guided UI and reconciliation panel**
+- **M4D - Guided UI and reconciliation panel** - done 2026-07-02
   - Build the orientation flow, checklist state, simple default view, and
     advanced view toggle.
   - Show consequences/checklist gaps before totals.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M4D - Guided UI and reconciliation panel**.
+Start with **M4E - Exports**.

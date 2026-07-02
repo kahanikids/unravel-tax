@@ -15,5 +15,6 @@ Build order after the scaffold:
 3. `src/lib/` pure classification, gain calculation, reconciliation, and
    tax estimate functions, validated against `../fixtures/` - calculation
    parity done in M4C.
-4. `src/components/` guided workflow, persistent "things to check" panel,
-   simple view, advanced view, and exports.
+4. Guided workflow, persistent "things to check" panel, simple view, and
+   advanced view - done in M4D.
+5. Client-side exports.

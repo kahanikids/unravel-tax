@@ -8,7 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "validate:ingest": "tsx scripts/validate-ingest.ts",
-    "validate:calculations": "tsx scripts/validate-calculations.ts"
+    "validate:calculations": "tsx scripts/validate-calculations.ts",
+    "validate:reconciliation": "tsx scripts/validate-reconciliation.ts",
+    "validate:guided-ui": "tsx scripts/validate-guided-ui.tsx"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
