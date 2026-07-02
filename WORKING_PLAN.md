@@ -69,7 +69,7 @@ Slices:
     calculations, and exporting files.
   - Validate by running all cells without manual edits.
 
-- **M2B - Ingestion and calculations**
+- **M2B - Ingestion and calculations** - done 2026-07-02
   - Parse CSV, Excel, HTML, and structured text fixtures.
   - Reuse the same normalized transaction shape for every format.
   - Keep PDF/free-form reconstruction outside the notebook, routed to the
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M2B - Ingestion and calculations**.
+Start with **M2C - Notebook exports**.
