@@ -6,6 +6,10 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M3C: added pure reconciliation functions for checklist gaps,
+  calculated-vs-reported figure mismatches, and TDS cross-checks, plus a
+  planted fixture validator proving missing documents and mismatches are
+  reported before the webapp consumes the logic.
 - Completed M3B: added rule markdown/JSON pair validation covering missing
   pairs, non-empty values, verification metadata, effective dates, and source
   references, with pending current-source review reported as warnings.

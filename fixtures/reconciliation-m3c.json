@@ -1,0 +1,70 @@
+{
+  "checklist": [
+    {
+      "document": "Form 16 or pension statement",
+      "needed": "Yes",
+      "status": "Loaded",
+      "why_needed": "Salary/pension income"
+    },
+    {
+      "document": "AIS / Form 26AS",
+      "needed": "Yes",
+      "status": "Needed",
+      "why_needed": "TDS and reported transactions"
+    },
+    {
+      "document": "Bank interest certificates",
+      "needed": "Yes",
+      "status": "Needed",
+      "why_needed": "Other income and deductions"
+    },
+    {
+      "document": "Broker/AMC capital gains statement",
+      "needed": "Yes",
+      "status": "Sample loaded",
+      "why_needed": "Capital gains classification"
+    },
+    {
+      "document": "Dividend statement",
+      "needed": "Yes",
+      "status": "Loaded",
+      "why_needed": "Quarter-wise Schedule OS"
+    },
+    {
+      "document": "NRI documents",
+      "needed": "Profile-dependent",
+      "status": "Not applicable",
+      "why_needed": "TRC, 10F, NRE/NRO, TDS"
+    }
+  ],
+  "reported_summary": {
+    "Speculative / Intraday income": 800,
+    "Short-Term Capital Gains": -450,
+    "Long-Term Capital Gains": 5500,
+    "Dividends": 4000,
+    "Interest & other income": 24000,
+    "Eligible interest deduction": 0,
+    "Deductible transaction charges": 160,
+    "Carry-forward losses available": 500
+  },
+  "tds_rows": [
+    {
+      "source": "Sample Bank",
+      "tds_per_document": 1800,
+      "tds_per_ais": 1800
+    },
+    {
+      "source": "Sample Broker",
+      "tds_per_document": 1200,
+      "tds_per_ais": 900
+    }
+  ],
+  "expected_missing_documents": [
+    "AIS / Form 26AS",
+    "Bank interest certificates"
+  ],
+  "expected_mismatch_fields": [
+    "Short-Term Capital Gains",
+    "Sample Broker"
+  ]
+}

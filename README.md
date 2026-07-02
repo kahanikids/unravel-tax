@@ -10,9 +10,9 @@ No installs.
 
 ## Start here
 
-The guided prompt, workbook template, notebook flow, and structured rule
-data are ready to review. The current engineering slice is reconciliation
-logic.
+The guided prompt, workbook template, notebook flow, structured rule data,
+and reconciliation checks are ready to review. The current engineering
+slice is the first static webapp scaffold.
 
 1. [Open the guided chat prompt](prompts/00-master-guide.md) — copy the
    whole file into ChatGPT or another AI chat and follow along.
@@ -57,7 +57,8 @@ tax rates and thresholds change more often than the code does.
 
 ## Status
 
-Early scaffold stage. The current next product slice is reconciliation engine.
+Early scaffold stage. The current next product slice is the Vite React
+TypeScript scaffold.
 See `BUILD_PLAN.md` Section 12 for the milestone sequence and
 what's built so far. Day-to-day work follows
 `WORKING_PLAN.md`: each loop completes one milestone slice, validates it,

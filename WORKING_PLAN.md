@@ -101,7 +101,7 @@ Slices:
   - Check missing pairs, empty values, and missing verification metadata.
   - Validate by running the script locally.
 
-- **M3C - Reconciliation engine**
+- **M3C - Reconciliation engine** - done 2026-07-02
   - Add pure functions for checklist diffing and basic cross-source
     mismatch detection.
   - Test against deliberately incomplete and mismatched fixture states.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M3C - Reconciliation engine**.
+Start with **M4A - Vite React TypeScript scaffold**.
