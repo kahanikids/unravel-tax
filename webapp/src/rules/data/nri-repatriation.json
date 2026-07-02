@@ -1,0 +1,31 @@
+{
+  "topic": "nri-repatriation",
+  "applies_to": [
+    "nri"
+  ],
+  "effective_date": "2026-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Sections 9.5, 8"
+  ],
+  "values": {
+    "nro_annual_limit_usd": 1000000,
+    "nre_repatriation_cap": null,
+    "nro_threshold_requiring_ca_certificate_inr": 500000,
+    "old_forms": [
+      "15CA",
+      "15CB"
+    ],
+    "new_forms": [
+      "145",
+      "146"
+    ],
+    "separate_from_itr": true
+  }
+}

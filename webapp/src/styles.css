@@ -174,9 +174,16 @@ h1 {
   border-right: 0;
 }
 
+.calculation-panel,
+.ca-summary-panel,
 .ingestion-panel {
   grid-column: 1 / -1;
   border-right: 0;
+}
+
+.calculation-panel .fact-row,
+.ca-summary-panel .fact-row {
+  grid-template-columns: minmax(160px, 0.8fr) minmax(120px, 1fr);
 }
 
 .panel h2 {

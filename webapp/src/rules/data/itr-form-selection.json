@@ -1,0 +1,66 @@
+{
+  "topic": "itr-form-selection",
+  "applies_to": [
+    "resident",
+    "nri",
+    "huf",
+    "business-income",
+    "clubbing"
+  ],
+  "effective_date": "2026-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "BUILD_PLAN.md Section 15.6",
+    "SYSTEM_SPEC.md Section 10"
+  ],
+  "values": {
+    "forms": {
+      "resident_simple": {
+        "form": "ITR-1",
+        "due_date": "2026-07-31"
+      },
+      "resident_capital_gains_or_clubbing": {
+        "form": "ITR-2",
+        "due_date": "2026-07-31"
+      },
+      "business_or_speculative_non_audit": {
+        "form": "ITR-3",
+        "due_date": "2026-08-31"
+      },
+      "business_or_speculative_audit": {
+        "form": "ITR-3",
+        "due_date": "2026-10-31"
+      },
+      "nri_no_business": {
+        "form": "ITR-2",
+        "due_date": "2026-07-31"
+      },
+      "nri_with_business": {
+        "form": "ITR-3",
+        "due_date": "2026-08-31"
+      },
+      "huf_no_business": {
+        "form": "ITR-2",
+        "due_date": "2026-07-31"
+      },
+      "huf_with_business": {
+        "form": "ITR-3",
+        "due_date": "2026-08-31"
+      }
+    },
+    "never_itr_1_if": [
+      "nri",
+      "huf",
+      "stcg",
+      "capital_gains_beyond_itr_1_limit",
+      "clubbing_schedule_spi"
+    ],
+    "business_income_triggers_itr_3": true
+  }
+}

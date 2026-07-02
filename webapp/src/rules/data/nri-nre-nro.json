@@ -1,0 +1,30 @@
+{
+  "topic": "nri-nre-nro",
+  "applies_to": [
+    "nri"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Sections 9.1, 6.2"
+  ],
+  "values": {
+    "nre": {
+      "holds": "foreign_sourced_money",
+      "interest_taxable_in_india": false,
+      "withholding": false
+    },
+    "nro": {
+      "holds": "india_sourced_income",
+      "interest_taxable_in_india": true,
+      "withholding": true
+    },
+    "common_error": "treating_nro_interest_as_exempt"
+  }
+}

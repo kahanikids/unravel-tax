@@ -128,7 +128,7 @@ Slices:
   - Normalize every source into one common row shape.
   - Validate with fixtures.
 
-- **M4C - Calculation and rules wiring**
+- **M4C - Calculation and rules wiring** - done 2026-07-02
   - Use rule JSON and pure calculation functions.
   - Avoid hardcoded rates in app logic.
   - Validate fixture parity against Milestones 1 and 2.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M4C - Calculation and rules wiring**.
+Start with **M4D - Guided UI and reconciliation panel**.

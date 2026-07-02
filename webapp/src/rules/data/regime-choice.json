@@ -1,0 +1,36 @@
+{
+  "topic": "regime-choice",
+  "applies_to": [
+    "resident",
+    "senior-citizen",
+    "business-income"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "BUILD_PLAN.md Sections 15.5, 15.6",
+    "SYSTEM_SPEC.md Section 10"
+  ],
+  "values": {
+    "new_regime_default": true,
+    "business_income_switching": {
+      "can_switch_freely_each_year": false,
+      "restricted_switching_applies": true,
+      "trigger_income_types": [
+        "business",
+        "professional",
+        "speculative_intraday"
+      ]
+    },
+    "non_business_income_switching": {
+      "can_choose_yearly": true
+    },
+    "special_rate_income_rebate_caution": true
+  }
+}

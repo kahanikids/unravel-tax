@@ -11,8 +11,9 @@ Build order after the scaffold:
 
 1. `src/ingest/` format router and CSV/Excel/HTML/structured-text parsers
    - done in M4B.
-2. `src/rules/` rule JSON loading.
+2. `src/rules/` rule JSON loading - started in M4C with mirrored rule data.
 3. `src/lib/` pure classification, gain calculation, reconciliation, and
-   tax estimate functions, validated against `../fixtures/`.
+   tax estimate functions, validated against `../fixtures/` - calculation
+   parity done in M4C.
 4. `src/components/` guided workflow, persistent "things to check" panel,
    simple view, advanced view, and exports.

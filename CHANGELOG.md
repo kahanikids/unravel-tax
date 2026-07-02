@@ -6,6 +6,11 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M4C: mirrored `rules/*.json` into the webapp, added typed rule
+  loading and pure rule-backed calculation helpers, validated CA Summary
+  parity against the Milestone 1 reference and Milestone 2 fixture buckets
+  with `npm run validate:calculations`, and surfaced the calculation ledger
+  in the webapp shell.
 - Completed M4B: added client-side CSV, Excel, HTML, and structured-text
   ingestion under `webapp/src/ingest/`, kept PDF/free-form text routed to
   `prompts/01-extract-statement.md`, validated fixture parity with

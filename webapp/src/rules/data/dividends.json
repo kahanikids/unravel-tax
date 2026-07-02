@@ -1,0 +1,29 @@
+{
+  "topic": "dividends",
+  "applies_to": [
+    "resident",
+    "nri",
+    "huf",
+    "senior-citizen",
+    "single-parent"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "BUILD_PLAN.md Section 15.3",
+    "SYSTEM_SPEC.md Section 8"
+  ],
+  "values": {
+    "taxable": true,
+    "tax_rate": "slab",
+    "reporting": "quarter_wise_schedule_os",
+    "tds_threshold_per_company_inr": 10000,
+    "advance_tax_timing_relevant": true
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "topic": "capital-gains-mutual-funds",
+  "applies_to": [
+    "resident",
+    "nri",
+    "huf",
+    "senior-citizen",
+    "single-parent"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Section 8",
+    "BUILD_PLAN.md Section 15.1"
+  ],
+  "values": {
+    "equity_oriented_funds": {
+      "use_listed_equity_rates": true,
+      "ltcg_rate": 0.125,
+      "stcg_rate": 0.2,
+      "ltcg_exemption_inr": 125000
+    },
+    "specified_funds_section_50aa": {
+      "classification": "short_term_deemed",
+      "tax_rate": "slab",
+      "indexation_allowed": false,
+      "needs_fund_type_check": true
+    }
+  }
+}
