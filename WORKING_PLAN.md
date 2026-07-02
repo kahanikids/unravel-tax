@@ -117,7 +117,7 @@ notebook flows.
 
 Slices:
 
-- **M4A - Vite React TypeScript scaffold**
+- **M4A - Vite React TypeScript scaffold** - done 2026-07-02
   - Create the static app only after Milestone 3 is complete.
   - No backend, database, accounts, or required API keys.
   - Validate with a local build.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M4A - Vite React TypeScript scaffold**.
+Start with **M4B - Client-side ingestion**.

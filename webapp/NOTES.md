@@ -1,15 +1,17 @@
 # Web app
 
-Deliberately not scaffolded yet. This is Milestone 4 (BUILD_PLAN.md
-Sections 12–13) — do not start on this ahead of Milestones 1–3.
+Milestone 4 has started after Milestones 1-3 were validated. This folder
+is a Vite + React + TypeScript static app scaffold.
 
-Per CLAUDE.md and BUILD_PLAN.md Section 13, when this does get built:
-Vite + React + TypeScript, static/client-side only, no backend, no
-database, no accounts. Stack detail and reasoning in BUILD_PLAN.md
-Section 13 and SYSTEM_SPEC.md Section 15.2.
+Constraints remain unchanged: no backend, no database, no accounts, no
+required API keys. All parsing, rules, calculations, reconciliation, and
+exports must stay client-side.
 
-Build order once started: format router (`src/ingest/`) → rules loader
-(`src/rules/`) → pure calculation functions (`src/lib/` — classification,
-gain-calc, reconciliation, tax-estimate, unit-tested against
-`../fixtures/`) → components. Reconciliation engine wired into a
-persistent "things to check" panel, simple/advanced toggle per Section 5.
+Build order after the scaffold:
+
+1. `src/ingest/` format router and CSV/Excel/HTML/structured-text parsers.
+2. `src/rules/` rule JSON loading.
+3. `src/lib/` pure classification, gain calculation, reconciliation, and
+   tax estimate functions, validated against `../fixtures/`.
+4. `src/components/` guided workflow, persistent "things to check" panel,
+   simple view, advanced view, and exports.

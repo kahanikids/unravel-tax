@@ -6,6 +6,10 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M4A: scaffolded the static Vite + React + TypeScript webapp
+  under `webapp/`, kept it backend-free/account-free/API-key-free, added
+  a Swiss-style milestone readiness shell, and validated it with
+  `npm run build`.
 - Completed M3C: added pure reconciliation functions for checklist gaps,
   calculated-vs-reported figure mismatches, and TDS cross-checks, plus a
   planted fixture validator proving missing documents and mismatches are
