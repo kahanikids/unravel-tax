@@ -10,7 +10,8 @@
     "validate:ingest": "tsx scripts/validate-ingest.ts",
     "validate:calculations": "tsx scripts/validate-calculations.ts",
     "validate:reconciliation": "tsx scripts/validate-reconciliation.ts",
-    "validate:guided-ui": "tsx scripts/validate-guided-ui.tsx"
+    "validate:guided-ui": "tsx scripts/validate-guided-ui.tsx",
+    "validate:exports": "tsx scripts/validate-exports.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
@@ -19,7 +20,8 @@
     "react-dom": "^18.3.1",
     "read-excel-file": "^9.2.0",
     "typescript": "^5.7.3",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

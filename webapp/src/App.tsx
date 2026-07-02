@@ -1,8 +1,22 @@
 import { useEffect, useState } from "react";
-import { caSummaryRows, reconciliationReport, summarizeWithRules } from "./lib";
-import { parseCsvText } from "./ingest";
-import { ruleCatalog, ruleVerificationSummary } from "./rules";
-import type { ChecklistItem, TdsRow } from "./lib";
+import {
+  buildCaSummaryCsvExport,
+  buildCaSummaryWorkbookExport,
+  buildFullWorkbookExport,
+  downloadExport
+} from "./lib";
+import {
+  calculationSummary,
+  calculationLedger,
+  calculationRows,
+  checksReport,
+  checklistItems,
+  formatAmount,
+  fixtureTransactions,
+  ingestionFormats,
+  orientationAnswers,
+  tdsRows
+} from "./demo/sampleState";
 
 type Milestone = {
   label: string;
@@ -48,8 +62,13 @@ const milestones: Milestone[] = [
   },
   {
     label: "Guided UI and reconciliation panel",
-    status: "Current",
+    status: "Done",
     detail: "Checklist gaps and planted mismatches appear before totals."
+  },
+  {
+    label: "Exports",
+    status: "Done",
+    detail: "CA Summary and full workbook files generate in the browser."
   }
 ];
 
@@ -61,127 +80,13 @@ const buildChecks: CheckItem[] = [
   { label: "Validation command", value: "npm run build" }
 ];
 
-const nextSlices: CheckItem[] = [{ label: "M4E", value: "Exports" }];
-
-const orientationAnswers: CheckItem[] = [
-  { label: "Residency", value: "Resident fixture" },
-  { label: "Profile flags", value: "No NRI, HUF, senior citizen, or single-parent flag" },
-  { label: "Income sources", value: "Capital gains, dividends, bank interest" },
-  { label: "Review trigger", value: "Speculative intraday income selects ITR-3" }
-];
-
-const ingestionFormats: CheckItem[] = [
-  { label: "CSV", value: "Parsed with PapaParse" },
-  { label: "Excel", value: "Parsed with read-excel-file" },
-  { label: "HTML", value: "Transaction table selected by expected headers" },
-  { label: "Structured text", value: "Tab-separated rows normalized directly" },
-  { label: "PDF/free-form", value: "Routed to prompts/01-extract-statement.md" }
-];
-
-const fixtureCsv = [
-  "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
-  "Acme Industries,01-Apr-2025,15-Apr-2025,100,50000,51000,500,510",
-  "Acme Industries,10-Jan-2024,20-May-2025,50,25000,27500,500,550",
-  "Sample Metals Ltd,05-Jun-2025,05-Jun-2025,200,40000,40800,200,204",
-  "Sample Metals Ltd,12-Feb-2023,18-Jun-2025,75,30000,33000,400,440",
-  "Test Pharma Co,01-Aug-2025,30-Aug-2025,150,45000,43500,300,290"
-].join("\n");
-
-const checklistItems: ChecklistItem[] = [
-  {
-    document: "Form 16 or pension statement",
-    needed: "Yes",
-    status: "Loaded",
-    whyNeeded: "Salary/pension income"
-  },
-  {
-    document: "AIS / Form 26AS",
-    needed: "Yes",
-    status: "Needed",
-    whyNeeded: "TDS and reported transactions"
-  },
-  {
-    document: "Bank interest certificates",
-    needed: "Yes",
-    status: "Needed",
-    whyNeeded: "Other income and deductions"
-  },
-  {
-    document: "Broker/AMC capital gains statement",
-    needed: "Yes",
-    status: "Sample loaded",
-    whyNeeded: "Capital gains classification"
-  },
-  {
-    document: "Dividend statement",
-    needed: "Yes",
-    status: "Loaded",
-    whyNeeded: "Quarter-wise Schedule OS"
-  },
-  {
-    document: "NRI documents",
-    needed: "Profile-dependent",
-    status: "Not applicable",
-    whyNeeded: "TRC, 10F, NRE/NRO, TDS"
-  }
-];
-
-const reportedSummary = {
-  "Speculative / Intraday income": 800,
-  "Short-Term Capital Gains": -450,
-  "Long-Term Capital Gains": 5500,
-  Dividends: 4000,
-  "Interest & other income": 24000,
-  "Eligible interest deduction": 0,
-  "Deductible transaction charges": 160,
-  "Carry-forward losses available": 500
-};
-
-const tdsRows: TdsRow[] = [
-  { source: "Sample Bank", tdsPerDocument: 1800, tdsPerAis: 1800 },
-  { source: "Sample Broker", tdsPerDocument: 1200, tdsPerAis: 900 }
-];
-
-const fixtureTransactions = parseCsvText(fixtureCsv).transactions;
-const calculationSummary = summarizeWithRules(
-  fixtureTransactions,
-  ruleCatalog.capitalGainsEquity,
-  ruleCatalog.itrFormSelection
-);
-const calculationRows = caSummaryRows(
-  fixtureTransactions,
-  ruleCatalog.capitalGainsEquity,
-  ruleCatalog.itrFormSelection
-);
-const expectedFigures = Object.fromEntries(
-  calculationRows
-    .filter((row) => typeof row.amount === "number")
-    .map((row) => [row.head, row.amount as number])
-);
-const checksReport = reconciliationReport({
-  checklistItems,
-  expectedFigures,
-  reportedFigures: reportedSummary,
-  tdsRows
-});
-const verificationSummary = ruleVerificationSummary([
-  ruleCatalog.capitalGainsEquity,
-  ruleCatalog.itrFormSelection
-]);
-
-const calculationLedger: CheckItem[] = [
-  { label: "Rows", value: String(calculationSummary.rows) },
-  { label: "Intraday", value: formatAmount(calculationSummary.intradayGain) },
-  { label: "STCG", value: formatAmount(calculationSummary.stcg) },
-  { label: "LTCG", value: formatAmount(calculationSummary.ltcg) },
-  { label: "Recommended form", value: calculationSummary.recommendedItrForm },
-  { label: "Rule verification", value: `${verificationSummary.pendingCurrentSource}/${verificationSummary.total} pending` }
-];
+const nextSlices: CheckItem[] = [{ label: "Working plan", value: "All slices complete" }];
 
 function App() {
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
   );
+  const [exportMessage, setExportMessage] = useState("Exports are generated in this browser.");
 
   useEffect(() => {
     if (typeof localStorage !== "undefined") {
@@ -276,6 +181,29 @@ function App() {
             ))}
           </div>
 
+          <section className="handover-panel" aria-labelledby="handover-title">
+            <div>
+              <h3 id="handover-title">Exports</h3>
+              <p>
+                {checksReport.ready
+                  ? "Both handover files are ready."
+                  : `${checksReport.missingDocuments.length + checksReport.mismatches.length} things are still open. Export anyway, or go back to the checklist.`}
+              </p>
+            </div>
+            <div className="export-actions">
+              <button type="button" onClick={() => exportCaSummaryCsv(setExportMessage)}>
+                Download CA Summary CSV
+              </button>
+              <button type="button" onClick={() => exportCaSummaryWorkbook(setExportMessage)}>
+                Download CA Summary XLSX
+              </button>
+              <button type="button" onClick={() => exportFullWorkbook(setExportMessage)}>
+                Download full workbook
+              </button>
+            </div>
+            <p className="export-message">{exportMessage}</p>
+          </section>
+
           {showAdvanced ? (
             <div className="advanced-grid">
               <div className="panel-inline">
@@ -347,10 +275,29 @@ function App() {
   );
 }
 
-function formatAmount(value: number) {
-  return new Intl.NumberFormat("en-IN", {
-    maximumFractionDigits: 0
-  }).format(value);
+async function exportCaSummaryCsv(setExportMessage: (message: string) => void) {
+  const file = await buildCaSummaryCsvExport(calculationRows);
+  downloadExport(file);
+  setExportMessage(`${file.filename} generated in this browser.`);
+}
+
+async function exportCaSummaryWorkbook(setExportMessage: (message: string) => void) {
+  const file = await buildCaSummaryWorkbookExport(calculationRows);
+  downloadExport(file);
+  setExportMessage(`${file.filename} generated in this browser.`);
+}
+
+async function exportFullWorkbook(setExportMessage: (message: string) => void) {
+  const file = await buildFullWorkbookExport({
+    caSummaryRows: calculationRows,
+    transactions: fixtureTransactions,
+    calculationSummary,
+    checklistItems,
+    tdsRows,
+    openIssueCount: checksReport.missingDocuments.length + checksReport.mismatches.length
+  });
+  downloadExport(file);
+  setExportMessage(`${file.filename} generated in this browser.`);
 }
 
 export default App;

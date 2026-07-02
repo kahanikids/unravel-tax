@@ -17,4 +17,4 @@ Build order after the scaffold:
    parity done in M4C.
 4. Guided workflow, persistent "things to check" panel, simple view, and
    advanced view - done in M4D.
-5. Client-side exports.
+5. Client-side exports - done in M4E.

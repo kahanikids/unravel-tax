@@ -6,6 +6,11 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M4E: added browser-side CA Summary CSV/XLSX and full workbook
+  XLSX generation, surfaced fixed export actions in the webapp handover
+  panel, warned when checklist/reconciliation issues remain, and validated
+  generated outputs against fixture expectations with
+  `npm run validate:exports`.
 - Completed M4D: ported reconciliation into the webapp, added a guided
   orientation/review flow with a persistent "Things To Check" panel, kept
   simple view as the first-time default with an explicit advanced-detail

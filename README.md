@@ -14,7 +14,7 @@ The guided prompt, workbook template, notebook flow, structured rule data,
 reconciliation checks, static webapp scaffold, and client-side ingestion
 are ready to review. Calculation and rules wiring now match the fixture
 reference outputs, and the webapp now shows checklist/reconciliation
-issues before totals. The current engineering slice is exports.
+issues before totals. Browser-generated exports are implemented.
 
 1. [Open the guided chat prompt](prompts/00-master-guide.md) — copy the
    whole file into ChatGPT or another AI chat and follow along.
@@ -59,7 +59,8 @@ tax rates and thresholds change more often than the code does.
 
 ## Status
 
-Early scaffold stage. The current next product slice is exports.
+Early scaffold stage. The working plan slices are complete; the next work is
+release hardening and real-user review.
 See `BUILD_PLAN.md` Section 12 for the milestone sequence and
 what's built so far. Day-to-day work follows
 `WORKING_PLAN.md`: each loop completes one milestone slice, validates it,

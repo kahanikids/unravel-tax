@@ -139,7 +139,7 @@ Slices:
   - Show consequences/checklist gaps before totals.
   - Validate with a first-time user dry run.
 
-- **M4E - Exports**
+- **M4E - Exports** - done 2026-07-02
   - Generate CA summary and full workbook outputs client-side.
   - Validate both outputs against fixture expectations.
 
@@ -148,4 +148,5 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M4E - Exports**.
+All planned slices are complete. Run the validation commands before
+publishing or tagging a release.

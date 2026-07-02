@@ -8,6 +8,9 @@ function main() {
   assertIncludes(html, "Bank interest certificates");
   assertIncludes(html, "Short-Term Capital Gains");
   assertIncludes(html, "Show full detail");
+  assertIncludes(html, "Download CA Summary CSV");
+  assertIncludes(html, "Download full workbook");
+  assertIncludes(html, "Export anyway");
 
   const checksIndex = html.indexOf("Things To Check");
   const totalsIndex = html.indexOf("Simple Summary");
