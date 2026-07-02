@@ -1,0 +1,42 @@
+SYNTHETIC FIXTURE - NOT REAL DATA
+Represents typical raw output of a PDF text-extraction pass on a broker
+capital gains statement: line breaks in odd places, columns not aligned,
+some words run together, used to test the AI-assisted extraction path
+(Section 3 of BUILD_PLAN.md) since this path can't be tested with clean
+tabular fixtures.
+
+---
+
+CapitalGains Statement FY 2025-26
+ClientName: TEST USER (synthetic)
+StatementPeriod 01-Apr-2025 to
+31-Mar-2026
+
+Scrip
+Name Purchase
+Date Sell Date Units BuyValue SellValue
+
+Acme
+Industries 01-Apr-2025 15-Apr-
+2025 100 50000
+51000
+
+Acme Industries 10-Jan-2024
+20-May-2025
+50 25000 27500
+
+SampleMetals Ltd 05-Jun-2025 05-Jun-2025 200
+40000 40800
+
+Sample
+Metals Ltd 12-Feb-2023 18-Jun-2025 75 30000 33000
+
+TestPharma Co 01-Aug-2025 30-Aug-
+2025 150 45000 43500
+
+Note: buy/sell price per unit not
+shown separately on this statement, only
+buy value and sell value -- unit price would need
+to be derived (value / units) if required downstream.
+
+--- End of extract ---
