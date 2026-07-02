@@ -63,7 +63,7 @@ Milestone 1 for lightweight formats.
 
 Slices:
 
-- **M2A - Notebook skeleton**
+- **M2A - Notebook skeleton** - done 2026-07-02
   - Create `notebooks/build-workbook.ipynb`.
   - Include clear cells for uploading/choosing fixture data, running
     calculations, and exporting files.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M2A - Notebook skeleton**.
+Start with **M2B - Ingestion and calculations**.

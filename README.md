@@ -56,8 +56,8 @@ tax rates and thresholds change more often than the code does.
 
 ## Status
 
-Early scaffold stage. The current next product slice is the notebook
-skeleton. See `BUILD_PLAN.md` Section 12 for the milestone sequence and
+Early scaffold stage. The current next product slice is notebook
+ingestion and calculations. See `BUILD_PLAN.md` Section 12 for the milestone sequence and
 what's built so far. Day-to-day work follows
 `WORKING_PLAN.md`: each loop completes one milestone slice, validates it,
 commits it, and pushes it to GitHub.

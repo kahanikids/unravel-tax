@@ -6,6 +6,10 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M2A: added `notebooks/build-workbook.ipynb` with runnable
+  setup, fixture selection, calculation placeholder, export placeholder,
+  and readiness-check cells, plus a validator that executes every code
+  cell without manual edits.
 - Completed M1C: ran a repeatable manual-flow dry run using the non-CSV
   HTML fixture, produced a full workbook copy and CA Summary CSV, and
   recorded friction points in `dry-runs/m1c/README.md`.
