@@ -1,8 +1,50 @@
 {
   "topic": "capital-gains-equity",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/capital-gains-equity.md"
+  "applies_to": [
+    "resident",
+    "nri",
+    "huf",
+    "senior-citizen",
+    "single-parent"
+  ],
+  "effective_date": "2024-07-23",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "BUILD_PLAN.md Sections 15.1, 15.2, 15.4",
+    "SYSTEM_SPEC.md Section 8"
+  ],
+  "values": {
+    "listed_equity": {
+      "ltcg_rate": 0.125,
+      "stcg_rate": 0.2,
+      "ltcg_exemption_inr": 125000,
+      "long_term_holding_period_days_gt": 365,
+      "indexation_allowed": false,
+      "surcharge_cap_rate": 0.15,
+      "section_87a_rebate_allowed": false
+    },
+    "transaction_costs": {
+      "stt_deductible_for_capital_gains": false,
+      "stt_deductible_for_speculative_business_income": true,
+      "non_stt_charges_deductible": true,
+      "broker_values_may_already_net_charges": "check_contract_notes"
+    },
+    "losses": {
+      "stcl_offsets": [
+        "short_term_capital_gains",
+        "long_term_capital_gains"
+      ],
+      "ltcl_offsets": [
+        "long_term_capital_gains"
+      ],
+      "carry_forward_assessment_years": 8,
+      "late_return_preserves_carry_forward": false
+    }
+  }
 }

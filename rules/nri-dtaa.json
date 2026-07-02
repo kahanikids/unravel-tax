@@ -1,8 +1,26 @@
 {
   "topic": "nri-dtaa",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/nri-dtaa.md"
+  "applies_to": [
+    "nri"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Section 9.4"
+  ],
+  "values": {
+    "exemption_method_documents": [
+      "tax_residency_certificate",
+      "form_10f"
+    ],
+    "foreign_tax_credit_document": "form_67",
+    "forms_not_interchangeable": true,
+    "requires_country_of_tax_residence": true
+  }
 }

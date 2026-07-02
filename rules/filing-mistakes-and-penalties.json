@@ -1,8 +1,66 @@
 {
   "topic": "filing-mistakes-and-penalties",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/filing-mistakes-and-penalties.md"
+  "applies_to": [
+    "all-profiles"
+  ],
+  "effective_date": "2026-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "BUILD_PLAN.md Section 15.5",
+    "SYSTEM_SPEC.md Section 12"
+  ],
+  "values": {
+    "risk_triggers": [
+      {
+        "trigger": "wrong_itr_form",
+        "consequence": "defective_return"
+      },
+      {
+        "trigger": "ais_26as_tds_mismatch",
+        "consequence": "automated_mismatch_notice"
+      },
+      {
+        "trigger": "multiple_employers_unreconciled_tds",
+        "consequence": "unexpected_shortfall"
+      },
+      {
+        "trigger": "hra_over_threshold_without_landlord_pan",
+        "consequence": "claim_rejection_risk"
+      },
+      {
+        "trigger": "tax_after_tds_above_advance_tax_threshold",
+        "consequence": "234b_234c_interest"
+      },
+      {
+        "trigger": "epf_withdrawal_before_minimum_service",
+        "consequence": "tds_and_taxable_income_risk"
+      },
+      {
+        "trigger": "deductions_without_proof",
+        "consequence": "scrutiny_risk"
+      },
+      {
+        "trigger": "late_filing",
+        "consequence": "234f_fee_and_loss_carry_forward_forfeiture"
+      },
+      {
+        "trigger": "underreporting",
+        "consequence": "penalty_50_percent_tax_on_underreported_amount"
+      },
+      {
+        "trigger": "misreporting",
+        "consequence": "penalty_200_percent_tax_on_misreported_amount"
+      }
+    ],
+    "late_fee_234f": {
+      "income_lte_500000_inr": 1000,
+      "otherwise_max": 5000
+    }
+  }
 }

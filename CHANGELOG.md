@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M3A: populated all 18 `rules/*.json` files with structured
+  values, effective dates, source references, and explicit
+  `pending_current_source` verification metadata.
 - Completed M2C: notebook exports now generate a CA Summary CSV and full
   workbook from parsed transactions, and validation compares CA Summary
   totals to the Milestone 1 reference.

@@ -90,7 +90,7 @@ testable before the webapp consumes it.
 
 Slices:
 
-- **M3A - Rule JSON population**
+- **M3A - Rule JSON population** - done 2026-07-02
   - Populate each `rules/*.json` from its paired markdown rule file.
   - Include effective dates, verification metadata, and structured
     values needed by deterministic logic.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M3A - Rule JSON population**.
+Start with **M3B - Rule pair validation**.

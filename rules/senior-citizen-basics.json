@@ -1,8 +1,29 @@
 {
   "topic": "senior-citizen-basics",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/senior-citizen-basics.md"
+  "applies_to": [
+    "senior-citizen"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Sections 6.2, 8",
+    "BUILD_PLAN.md Section 14"
+  ],
+  "values": {
+    "senior_age_years_gte": 60,
+    "super_senior_age_years_gte": 80,
+    "interest_deduction": {
+      "section": "80TTB",
+      "limit_inr": 50000,
+      "old_regime_only": true
+    },
+    "not_80tta_once_senior": true,
+    "needs_dob_proof": true
+  }
 }

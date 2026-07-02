@@ -1,8 +1,26 @@
 {
   "topic": "huf-basics",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/huf-basics.md"
+  "applies_to": [
+    "huf"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Sections 6.2, 8",
+    "BUILD_PLAN.md Section 15.6"
+  ],
+  "values": {
+    "separate_tax_entity": true,
+    "requires_separate_pan": true,
+    "no_itr_1_or_itr_4": true,
+    "no_87a_rebate": true,
+    "itr_without_business": "ITR-2",
+    "itr_with_business": "ITR-3"
+  }
 }

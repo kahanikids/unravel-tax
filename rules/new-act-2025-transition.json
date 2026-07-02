@@ -1,8 +1,33 @@
 {
   "topic": "new-act-2025-transition",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/new-act-2025-transition.md"
+  "applies_to": [
+    "all-profiles"
+  ],
+  "effective_date": "2026-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Sections 1, 8, 9.5",
+    "00 Project Overview.md"
+  ],
+  "values": {
+    "fy_2025_26_still_old_act_1961": true,
+    "new_income_tax_act_applies_from_fy_2026_27": true,
+    "transition_caution": "form_names_and_income_year_rules_may_be_on_different_clocks",
+    "nro_repatriation_forms": {
+      "old": [
+        "15CA",
+        "15CB"
+      ],
+      "new": [
+        "145",
+        "146"
+      ]
+    }
+  }
 }

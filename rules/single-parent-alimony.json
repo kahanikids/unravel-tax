@@ -1,8 +1,28 @@
 {
   "topic": "single-parent-alimony",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/single-parent-alimony.md"
+  "applies_to": [
+    "single-parent",
+    "guardian"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "SYSTEM_SPEC.md Sections 6.2, 8"
+  ],
+  "values": {
+    "periodic_maintenance": {
+      "tax_treatment": "review_as_income"
+    },
+    "lump_sum_settlement": {
+      "tax_treatment": "generally_capital_receipt_review_facts"
+    },
+    "requires_periodic_vs_lump_sum_flag": true,
+    "needs_documentation": true
+  }
 }

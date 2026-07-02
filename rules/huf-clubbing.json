@@ -1,8 +1,25 @@
 {
   "topic": "huf-clubbing",
-  "effective_date": null,
-  "last_verified": null,
-  "source": null,
-  "values": {},
-  "_status": "stub — not yet populated, see rules/huf-clubbing.md"
+  "applies_to": [
+    "huf"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "pending_current_source",
+    "last_verified": null,
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+  },
+  "source_refs": [
+    "BUILD_PLAN.md Section 15.8",
+    "SYSTEM_SPEC.md Sections 6.2, 11"
+  ],
+  "values": {
+    "section": "64(2)",
+    "trigger": "member_transfers_asset_to_huf_without_adequate_consideration",
+    "income_taxed_in": "transferor_member_return",
+    "not_taxed_in": "huf_return",
+    "requires_transfer_log": true
+  }
 }
