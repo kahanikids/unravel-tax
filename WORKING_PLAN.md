@@ -31,7 +31,7 @@ template/manual workflow, and produce a CA summary plus a full workbook.
 
 Slices:
 
-- **M1A - README and prompt path**
+- **M1A - README and prompt path** - done 2026-07-02
   - Replace placeholder "Start here" links with concrete local/published
     prompt/template instructions.
   - Make `prompts/00-master-guide.md` the obvious single entry point.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M1A - README and prompt path**.
+Start with **M1B - Template workbook**.

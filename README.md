@@ -10,16 +10,17 @@ No installs.
 
 ## Start here
 
-1. [Open the template] — this is your working file, make your own copy.
-2. [Open the guided chat prompt] — paste this into ChatGPT (free account
-   is fine) and follow along. It will ask you a few questions, then tell
-   you exactly what to do next.
+Milestone 1 is in progress. The guided prompt path is ready to review;
+the master template is the next slice of work.
+
+1. [Open the guided chat prompt](prompts/00-master-guide.md) — copy the
+   whole file into ChatGPT or another AI chat and follow along.
+2. [Check the template status](templates/master-template.gsheet-link.md)
+   — this is where the Google Sheets template link will live once the
+   workbook is built.
 
 That's it. Everything else on this page is background, come back to it
 if you want to understand how it works.
-
-*(Links above are placeholders until Milestone 1's template and prompt
-pack are published — see `BUILD_PLAN.md` Section 12.)*
 
 ## How it works
 
@@ -55,7 +56,8 @@ tax rates and thresholds change more often than the code does.
 
 ## Status
 
-Early scaffold stage. See `BUILD_PLAN.md` Section 12 for the milestone
-sequence and what's built so far. Day-to-day work follows
+Early scaffold stage. The current next product slice is the template
+workbook. See `BUILD_PLAN.md` Section 12 for the milestone sequence and
+what's built so far. Day-to-day work follows
 `WORKING_PLAN.md`: each loop completes one milestone slice, validates it,
 commits it, and pushes it to GitHub.

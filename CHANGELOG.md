@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M1A: README now links to the guided master prompt and template
+  status file directly, and `prompts/README.md` makes
+  `00-master-guide.md` the single prompt entry point.
 - Added `WORKING_PLAN.md` as the loop-by-loop plan from scaffold to
   webapp: template + prompts, notebook, rules + reconciliation, then
   webapp. Each loop ends with validation, commit, and push.
