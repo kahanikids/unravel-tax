@@ -1,9 +1,15 @@
 # Excel export template
 
-Not yet created. This folder will hold `IndiaTaxAssistant-Template.xlsx`
-— the Excel-native equivalent of the Google Sheets master template, for
-users who prefer it or work offline (SYSTEM_SPEC.md Section 4).
+Created: `UnravelTax-Template.xlsx`.
 
-Build this alongside the Google Sheets template in Milestone 1, from the
-same data model (BUILD_PLAN.md Section 14), not as an afterthought —
-both need to produce identical numbers from identical input.
+This is the Excel-native equivalent of the future Google Sheets master
+template, for users who prefer Excel or work offline
+(SYSTEM_SPEC.md Section 4). It is generated from
+`scripts/build-template.mjs` and seeded only with synthetic fixture data.
+
+Validation:
+
+- `scripts/verify-template.mjs` checks required sheets and visible formula
+  error markers.
+- Key preview sheets were rendered during M1B: `CA Summary`,
+  `Detailed Summary`, and `Working - Sample Broker`.

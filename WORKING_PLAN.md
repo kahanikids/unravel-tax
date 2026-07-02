@@ -38,7 +38,7 @@ Slices:
   - Validate by reading the flow as a new user and confirming there is
     exactly one next action at each stage.
 
-- **M1B - Template workbook**
+- **M1B - Template workbook** - done 2026-07-02
   - Generalize the RKM workbook structure into a synthetic-data template.
   - Include common tabs and profile-specific tabs described in
     `SYSTEM_SPEC.md`.
@@ -148,4 +148,4 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-Start with **M1B - Template workbook**.
+Start with **M1C - Manual flow dry run**.

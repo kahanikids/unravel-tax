@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-02
 
+- Completed M1B: generated `templates/excel-export/UnravelTax-Template.xlsx`
+  from synthetic fixture data, with common tabs, profile-specific tabs,
+  formula-backed working sheets, and repeatable build/verification scripts.
 - Completed M1A: README now links to the guided master prompt and template
   status file directly, and `prompts/README.md` makes
   `00-master-guide.md` the single prompt entry point.
