@@ -118,6 +118,53 @@ export function parseHtmlText(text: string): ParsedTransactionSource {
   return { kind: "html", transactions, summary: summarizeTransactions(transactions) };
 }
 
+/**
+ * Closes the Stage 4 handoff loop (BUILD_PLAN.md Section 3/7) for PDF and
+ * free-form text: those formats route to prompts/01-extract-statement.md
+ * outside this app, and the user pastes the returned table back in here.
+ * Accepts either a markdown table or a tab-separated block, since the
+ * prompt lets the model choose either.
+ */
+export function parsePastedExtraction(text: string): ParsedTransactionSource {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Paste the table you got back from the extraction prompt.");
+  }
+  if (trimmed.includes("|")) {
+    return parseMarkdownTable(trimmed);
+  }
+  return parseStructuredText(trimmed);
+}
+
+function parseMarkdownTable(text: string): ParsedTransactionSource {
+  const separatorPattern = /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/;
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !separatorPattern.test(line));
+
+  const rows = lines.map((line) =>
+    line
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((cell) => cell.trim())
+  );
+
+  const [headers, ...dataRows] = rows;
+  if (!headers) {
+    throw new Error("Could not find a table in the pasted text.");
+  }
+  assertTransactionColumns(headers);
+
+  const records = dataRows.map((row) =>
+    Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""]))
+  ) as RawTransactionRow[];
+
+  const transactions = normalizeRows(records);
+  return { kind: "structured_text", transactions, summary: summarizeTransactions(transactions) };
+}
+
 export function routePdfOrFreeform(): PromptRoute {
   return {
     kind: "pdf_or_freeform",

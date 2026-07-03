@@ -17,6 +17,8 @@ export type RuleBackedSummary = {
   ltcgTaxableAfterExemption: number;
   estimatedStcgTax: number;
   estimatedLtcgTax: number;
+  /** Section 50AA specified (debt) mutual fund gains - short-term-deemed, taxed at slab rate, kept out of the equity STCG/LTCG buckets. */
+  debtMfShortTermDeemedGain: number;
   recommendedItrForm: string;
   caReviewRecommendation: string;
 };
@@ -37,9 +39,16 @@ export const SYNTHETIC_SUPPLEMENTAL_INPUTS: SupplementalInputs = {
 };
 
 export function classifyTransactionWithRules(
-  transaction: Pick<NormalizedTransaction, "holdPeriodDays">,
+  transaction: Pick<NormalizedTransaction, "holdPeriodDays" | "instrumentType">,
   capitalGainsRule: CapitalGainsEquityRule
 ): TaxClass {
+  // Section 50AA specified (debt) mutual funds are always short-term-deemed,
+  // regardless of holding period - see rules/capital-gains-mutual-funds.json.
+  // Callers must still branch on instrumentType before applying an equity rate.
+  if (transaction.instrumentType === "debt_mutual_fund") {
+    return "ST";
+  }
+
   if (transaction.holdPeriodDays === 0) {
     return "Intraday";
   }
@@ -58,6 +67,10 @@ export function summarizeWithRules(
 ): RuleBackedSummary {
   const buckets = transactions.reduce(
     (totals, transaction) => {
+      if (transaction.instrumentType === "debt_mutual_fund") {
+        totals.debtMfShortTermDeemedGain += transaction.gainLoss;
+        return totals;
+      }
       const taxClass = classifyTransactionWithRules(transaction, capitalGainsRule);
       if (taxClass === "Intraday") {
         totals.intradayGain += transaction.gainLoss;
@@ -68,7 +81,7 @@ export function summarizeWithRules(
       }
       return totals;
     },
-    { intradayGain: 0, stcg: 0, ltcg: 0 }
+    { intradayGain: 0, stcg: 0, ltcg: 0, debtMfShortTermDeemedGain: 0 }
   );
 
   const listedEquity = capitalGainsRule.values.listed_equity;
@@ -88,6 +101,7 @@ export function summarizeWithRules(
     ltcgTaxableAfterExemption,
     estimatedStcgTax: Math.max(0, buckets.stcg) * listedEquity.stcg_rate,
     estimatedLtcgTax: ltcgTaxableAfterExemption * listedEquity.ltcg_rate,
+    debtMfShortTermDeemedGain: buckets.debtMfShortTermDeemedGain,
     recommendedItrForm,
     caReviewRecommendation:
       recommendedItrForm === "ITR-3" ? "Get CA review before filing" : "Self-file may be reasonable after checks"
@@ -119,6 +133,13 @@ export function caSummaryRows(
       ruleSection: "112A",
       amount: summary.ltcg,
       notes: "Rule-backed webapp calculation"
+    },
+    {
+      head: "Debt/specified mutual fund gains",
+      ruleSection: "50AA",
+      amount: summary.debtMfShortTermDeemedGain,
+      notes:
+        "Short-term-deemed, taxed at your slab rate - not the equity 20%/12.5% rates above and not included in those totals. Confirm the fund's classification with a CA."
     },
     {
       head: "Dividends",

@@ -148,5 +148,18 @@ the webapp and fixture totals match the reference outputs.
 
 ## Current Next Slice
 
-All planned slices are complete. Run the validation commands before
-publishing or tagging a release.
+All four milestones' planned slices are built and pass `npm run validate:*`,
+but "complete" there means code-complete against the slice's own checklist,
+not "ready for a first-time non-technical user" — see README.md's Status
+section for the honest gap list. In priority order, what's actually left:
+
+1. **Get the webapp hosted somewhere free** (GitHub Pages or equivalent)
+   and point README.md's "Start here" at the live link instead of local
+   `npm run dev` steps. Nothing else matters if a first-time user still
+   has to clone the repo.
+2. **Wire NRI/HUF/single-parent calculations**, not just their orientation
+   questions and checklists (SYSTEM_SPEC.md Section 14 Phase 2/3): NRE/NRO
+   separation, TDS-withheld-vs-owed reconciliation, HUF partition/clubbing
+   amounts, minor's-income clubbing amounts.
+3. Real first-time-user dry run against the hosted webapp (not just the
+   validation scripts), the same bar Milestone 1 used.

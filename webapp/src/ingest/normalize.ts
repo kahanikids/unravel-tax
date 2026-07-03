@@ -1,5 +1,7 @@
 import {
   EXPECTED_TRANSACTION_COLUMNS,
+  OPTIONAL_INSTRUMENT_TYPE_COLUMN,
+  type InstrumentType,
   type NormalizedTransaction,
   type RawTransactionRow,
   type TaxClass,
@@ -69,16 +71,32 @@ export function parseNumber(value: string | number | Date): number {
   return Number(value.replace(/,/g, "").trim());
 }
 
+export function parseInstrumentType(value: string | number | Date | undefined): InstrumentType {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (text === "debt_mutual_fund" || text === "debt mutual fund" || text === "debt fund" || text === "debt") {
+    return "debt_mutual_fund";
+  }
+  return "equity";
+}
+
 export function normalizeRows(rows: RawTransactionRow[]): NormalizedTransaction[] {
   return rows.map((row) => {
     const purchaseDate = parseFixtureDate(row["Purchase Date"]);
     const sellDate = parseFixtureDate(row["Sell Date"]);
     const holdPeriodDays = Math.round((sellDate.getTime() - purchaseDate.getTime()) / 86_400_000);
-    let taxClass: TaxClass = "ST";
-    if (holdPeriodDays === 0) {
+    const instrumentType = parseInstrumentType(row[OPTIONAL_INSTRUMENT_TYPE_COLUMN]);
+
+    // Section 50AA specified (debt) mutual funds are always short-term-deemed,
+    // regardless of holding period - see rules/capital-gains-mutual-funds.json.
+    let taxClass: TaxClass;
+    if (instrumentType === "debt_mutual_fund") {
+      taxClass = "ST";
+    } else if (holdPeriodDays === 0) {
       taxClass = "Intraday";
     } else if (holdPeriodDays > 365) {
       taxClass = "LT";
+    } else {
+      taxClass = "ST";
     }
 
     const buyValue = parseNumber(row["Buy Value"]);
@@ -95,6 +113,7 @@ export function normalizeRows(rows: RawTransactionRow[]): NormalizedTransaction[
       sellPrice: parseNumber(row["Sell Price"]),
       holdPeriodDays,
       taxClass,
+      instrumentType,
       gainLoss: sellValue - buyValue
     };
   });

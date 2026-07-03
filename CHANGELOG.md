@@ -4,6 +4,70 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-03
+
+- Added a "?" help button in the header (`HelpPanel`, visible on every
+  screen including welcome): how the guided flow works, who the tool is
+  for, and a fuller plain-language disclaimer, all in one place instead of
+  spread across every screen. Centralized disclaimer/how-it-works/who-it's-
+  for copy in `src/lib/copy.ts` (single source, was duplicated inline
+  before). Tightened wording on the welcome screen and the checklist/
+  upload step ledes.
+- Made the header step indicator (`ProgressSteps`) into real navigation:
+  any step already reached this filing is now a clickable button, so
+  users can jump back to the checklist/documents/results without
+  restarting from the welcome screen. Steps not yet reached stay inert -
+  never a way to skip ahead. Tracked via a new `furthestStepIndex`, saved
+  in the session cache so it survives a resume.
+- Fixed `OrientationForm` to resume at the first unanswered question (or
+  the last one, if all are answered) when navigated back to, instead of
+  always restarting at Question 1.
+- Swapped the header logo to the new artwork (`webapp/public/unravel-tax-logo.png`,
+  cropped from the full lockup to fit the header) and updated README's
+  hero image to the same new logo.
+- Added `webapp/DESIGN_NOTES.md` capturing a user-provided dashboard
+  reference image and how (and how much) it informed the nav decision
+  above, so the reference doesn't need to be re-shared.
+
+## 2026-07-02 (post-M4 hardening, PM review follow-up)
+
+- Fixed a correctness gap: debt/specified mutual funds (Section 50AA) were
+  silently classified using equity STCG/LTCG rates. Added an optional
+  `Instrument Type` ingest column (defaults to "equity" for backward
+  compatibility) and a separate "short-term-deemed, slab rate" bucket in
+  calculations, exports, and the CA Summary rows, per
+  `rules/capital-gains-mutual-funds.json`.
+- Added the hard-block popup BUILD_PLAN.md Section 1.4 calls for on
+  form-changing/recommendation-changing risk triggers (e.g. a trade moving
+  someone to ITR-3). These previously only showed inline in the sidebar.
+- Added "Known limits for your profile" caveats for NRI/HUF/single-parent
+  flags, so the checklist doesn't imply calculation coverage (TDS
+  reconciliation, NRE/NRO split, HUF partition, minor's-income clubbing
+  amounts) that isn't wired in yet - those remain Phase 2/3 per
+  SYSTEM_SPEC.md Section 14.
+- Added localStorage session caching (BUILD_PLAN.md Section 9: resume
+  convenience only, never the system of record) - orientation answers,
+  documents, supplemental figures, and acknowledged risk triggers persist
+  across a closed tab, with a "Resume where you left off" welcome-screen
+  action and a "Start over" control to clear it.
+- Added local-folder saving via the File System Access API (Chromium
+  browsers, with a download fallback everywhere else): users can pick a
+  folder once and have submitted documents and generated exports (CA
+  Summary CSV/XLSX, full workbook) written straight there instead of
+  piling up in Downloads.
+- Fixed a pre-existing bug in `validate:guided-ui`: adjacent JSX
+  expressions (`Question {index + 1} of {visible.length}`) get React SSR
+  hydration comment markers inserted between them, so the literal substring
+  assertion never matched. Collapsed to a single template-string expression.
+- Reconciled README.md/WORKING_PLAN.md's contradictory status ("early
+  scaffold" vs. "all slices complete") and pointed "Start here" at real
+  local-run instructions (`cd webapp && npm install && npm run dev`) since
+  there's no hosted link yet - that's now called out as the top remaining
+  gap in both files.
+- Removed a path reference in `templates/master-template.gsheet-link.md`
+  that named an external file identifying a real person's financial data,
+  per this repo's own "never real personal data in docs" rule.
+
 ## 2026-07-02
 
 - Completed M4E: added browser-side CA Summary CSV/XLSX and full workbook

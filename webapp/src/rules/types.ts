@@ -45,5 +45,19 @@ export type ItrFormSelectionValues = {
   business_income_triggers_itr_3: boolean;
 };
 
+export type RiskTriggerDefinition = {
+  trigger: string;
+  consequence: string;
+};
+
+export type FilingMistakesValues = {
+  risk_triggers: RiskTriggerDefinition[];
+  late_fee_234f: {
+    income_lte_500000_inr: number;
+    otherwise_max: number;
+  };
+};
+
 export type CapitalGainsEquityRule = RuleDocument<CapitalGainsEquityValues>;
 export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
+export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;

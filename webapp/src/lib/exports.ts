@@ -23,6 +23,41 @@ export const CA_SUMMARY_CSV_FILENAME = "UnravelTax-CA-Summary.csv";
 export const CA_SUMMARY_XLSX_FILENAME = "UnravelTax-CA-Summary.xlsx";
 export const FULL_WORKBOOK_XLSX_FILENAME = "UnravelTax-Full-Workbook.xlsx";
 
+export function transactionsCsv(transactions: NormalizedTransaction[]) {
+  return [
+    [
+      "Scrip Name",
+      "Purchase Date",
+      "Sell Date",
+      "Units",
+      "Buy Value",
+      "Sell Value",
+      "Buy Price",
+      "Sell Price",
+      "Hold Period (Days)",
+      "Instrument Type",
+      "Tax Class",
+      "Gain/(Loss)"
+    ],
+    ...transactions.map((transaction) => [
+      transaction.scripName,
+      transaction.purchaseDate,
+      transaction.sellDate,
+      transaction.units,
+      transaction.buyValue,
+      transaction.sellValue,
+      transaction.buyPrice,
+      transaction.sellPrice,
+      transaction.holdPeriodDays,
+      transaction.instrumentType,
+      transaction.taxClass,
+      transaction.gainLoss
+    ])
+  ]
+    .map((row) => row.map(csvCell).join(","))
+    .join("\r\n");
+}
+
 export function caSummaryCsv(rows: CaSummaryRow[]) {
   return [
     ["Head", "Rule/Section", "Amount", "Notes"],
@@ -112,6 +147,7 @@ function transactionsSheet(transactions: NormalizedTransaction[]): SheetData {
       "Buy Price",
       "Sell Price",
       "Hold Period (Days)",
+      "Instrument Type",
       "Tax Class",
       "Gain/(Loss)"
     ],
@@ -125,6 +161,7 @@ function transactionsSheet(transactions: NormalizedTransaction[]): SheetData {
       transaction.buyPrice,
       transaction.sellPrice,
       transaction.holdPeriodDays,
+      transaction.instrumentType,
       transaction.taxClass,
       transaction.gainLoss
     ])
@@ -141,6 +178,11 @@ function detailedSummarySheet(summary: RuleBackedSummary): SheetData {
     ["LTCG taxable after exemption", summary.ltcgTaxableAfterExemption, "Uses rule JSON exemption value."],
     ["Estimated STCG tax", summary.estimatedStcgTax, "Uses rule JSON STCG rate."],
     ["Estimated LTCG tax", summary.estimatedLtcgTax, "Uses rule JSON LTCG rate."],
+    [
+      "Debt/specified mutual fund gains (50AA)",
+      summary.debtMfShortTermDeemedGain,
+      "Short-term-deemed, slab rate - not part of STCG/LTCG totals above."
+    ],
     ["Recommended ITR form", summary.recommendedItrForm, "Selected from rule JSON."],
     ["CA review recommendation", summary.caReviewRecommendation, "Derived from selected form."]
   ];
