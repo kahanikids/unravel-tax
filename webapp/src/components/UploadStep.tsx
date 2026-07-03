@@ -490,7 +490,15 @@ export function UploadStep({
           Continue to your results
         </button>
       </div>
-      {documents.length === 0 ? <p className="upload-empty-hint">Add at least one document to continue.</p> : null}
+      {documents.length === 0 ? (
+        <p className="upload-empty-hint">
+          Add a document to continue — or, if you didn't sell any shares or mutual funds this year,{" "}
+          <button type="button" className="text-button" onClick={onContinue}>
+            skip this step
+          </button>{" "}
+          and type your dividend/interest figures in on the results screen.
+        </p>
+      ) : null}
     </div>
   );
 }
