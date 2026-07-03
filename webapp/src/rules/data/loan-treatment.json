@@ -1,0 +1,106 @@
+{
+  "topic": "loan-treatment",
+  "applies_to": [
+    "resident",
+    "senior-citizen",
+    "nri",
+    "huf",
+    "single-parent"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-03",
+    "note": "Loans mostly matter to income tax as interest deductions, and (with one exception) only under the OLD regime. Section 24(b) home-loan interest: up to Rs 2,00,000 for a self-occupied home (old regime only), or the full interest for a let-out home with no cap (both regimes), where the house-property loss set off against other income is capped at Rs 2,00,000 (old regime; the new regime allows no set-off against other heads and no carry-forward). Home-loan principal is part of the Section 80C Rs 1,50,000 ceiling (see deduction-limits.json). Section 80EE (loans sanctioned 1-Apr-2016 to 31-Mar-2017, cap Rs 50,000) and Section 80EEA (first-time buyer, affordable housing, loans sanctioned 1-Apr-2019 to 31-Mar-2022, cap Rs 1,50,000) give extra home-loan interest on top of 24(b); you cannot claim both for the same loan. Section 80E education-loan interest has no rupee cap, is interest-only, and runs for up to 8 years from when repayment starts. Section 80EEB electric-vehicle-loan interest is capped at Rs 1,50,000 (loans sanctioned 1-Apr-2019 to 31-Mar-2023). All of these are old-regime-only except let-out home-loan interest. Cross-checked against multiple current FY 2025-26 filing guides (ClearTax, TaxGuru); confirm against incometax.gov.in before relying on this as filing advice. The rupee ceilings that overlap with 80C live in deduction-limits.json and are cross-referenced, not duplicated.",
+    "source_type": "secondary"
+  },
+  "source_refs": [
+    "Income Tax Act, 1961, Sections 24(b), 80C, 80EE, 80EEA, 80EEB, 80E, 64",
+    "https://cleartax.in/s/deductions-under-section24-income-from-house-property",
+    "https://taxguru.in/income-tax/old-vs-new-tax-regime-complete-comparison-deductions-tax-benefits.html",
+    "https://www.taxsmooth.com/knowledge-center/section-80e-80ee-80eea-80eeb",
+    "https://cleartax.in/s/section-80eeb-deduction-purchase-electric-vehicle"
+  ],
+  "values": {
+    "regime_applicability": "old_regime_only_except_let_out_home_loan_interest",
+    "home_loan": {
+      "self_occupied_interest_24b": {
+        "limit_inr": 200000,
+        "regime": "old_only",
+        "reduced_limit_if_construction_over_5_years_inr": 30000,
+        "conditions": "Loan taken for buying or building the home; construction completed within 5 years of the end of the year the loan was taken, otherwise the limit drops to Rs 30,000. Available only under the old regime; the new regime gives no interest deduction on a self-occupied home."
+      },
+      "let_out_interest_24b": {
+        "limit_inr": null,
+        "regime": "both",
+        "house_property_loss_setoff_cap_against_other_heads_inr": 200000,
+        "old_regime_loss_carry_forward_years": 8,
+        "new_regime_no_setoff_against_other_heads": true,
+        "new_regime_no_carry_forward": true,
+        "note": "For a rented-out home there is no cap on the interest you can deduct against the rent, under either regime. But a resulting loss from house property can be set off against your other income only up to Rs 2,00,000 a year (old regime), with the balance carried forward 8 years. Under the new regime that loss cannot be set off against other heads at all and cannot be carried forward, so the interest benefit is effectively limited to the rental income."
+      },
+      "principal_repayment_80c": {
+        "within_section_80c_limit": true,
+        "regime": "old_only",
+        "cross_reference": "deduction-limits.json",
+        "note": "The principal portion of your home-loan EMI (and stamp duty/registration in the year paid) counts inside the single Rs 1,50,000 Section 80C ceiling, not on top of it. Old regime only."
+      },
+      "additional_interest_80ee": {
+        "limit_inr": 50000,
+        "regime": "old_only",
+        "loan_sanctioned_from": "2016-04-01",
+        "loan_sanctioned_to": "2017-03-31",
+        "property_value_max_inr": 5000000,
+        "note": "An older first-time-buyer top-up over the 24(b) limit, only for loans sanctioned in FY 2016-17. Cannot be claimed together with Section 80EEA for the same loan."
+      },
+      "additional_interest_80eea": {
+        "limit_inr": 150000,
+        "regime": "old_only",
+        "loan_sanctioned_from": "2019-04-01",
+        "loan_sanctioned_to": "2022-03-31",
+        "stamp_duty_value_max_inr": 4500000,
+        "first_time_buyer_only": true,
+        "cannot_combine_with_80ee": true,
+        "note": "Affordable-housing first-time-buyer top-up of up to Rs 1,50,000 on home-loan interest, over and above the Section 24(b) Rs 2,00,000, for loans sanctioned between 1-Apr-2019 and 31-Mar-2022. The sanction window has closed, so this only helps if your loan was sanctioned inside it."
+      },
+      "self_occupied_homes_allowed": 2,
+      "self_occupied_homes_note": "From FY 2025-26 up to two houses can be treated as self-occupied with no tax on notional rent on the second one, but the combined Section 24(b) self-occupied interest deduction still cannot exceed Rs 2,00,000."
+    },
+    "education_loan_80e": {
+      "limit_inr": null,
+      "interest_only": true,
+      "max_claim_years": 8,
+      "eligible_borrowers": "You, your spouse, your children, or a student you are the legal guardian of.",
+      "individuals_only": true,
+      "regime": "old_only",
+      "note": "No rupee cap: the entire interest paid in the year is deductible (principal is not). Runs for up to 8 consecutive years from the year repayment starts, or until the interest is fully paid, whichever is earlier. Loan must be from a bank, NBFC, or approved charitable institution for higher education. Old regime only; HUFs and companies cannot claim it."
+    },
+    "electric_vehicle_loan_80eeb": {
+      "limit_inr": 150000,
+      "regime": "old_only",
+      "loan_sanctioned_from": "2019-04-01",
+      "loan_sanctioned_to": "2023-03-31",
+      "individuals_only": true,
+      "note": "Up to Rs 1,50,000 of interest on a loan (from a bank or NBFC) to buy an electric vehicle, for loans sanctioned between 1-Apr-2019 and 31-Mar-2023. Old regime only. If the vehicle is used for business, interest above Rs 1,50,000 may instead be a business expense."
+    },
+    "personal_and_other_loans": {
+      "interest_generally_deductible": false,
+      "exceptions": "A personal/top-up/gold loan gives no deduction by default. It becomes deductible only by what the money was actually used for: interest on any loan used to buy or build a house can qualify under Section 24(b) even if it is not labelled a 'home loan'; interest on a loan used for a business is a business expense; interest on a loan used to earn dividend income is deductible against that dividend but capped at 20% of the dividend (Section 57). Keep evidence of what the borrowed money was used for."
+    },
+    "loans_and_clubbing": {
+      "note": "A genuine loan to a spouse or relative at a reasonable interest rate is not the same as a gift and does not trigger income-clubbing under Section 64. But money simply given (not lent) to a spouse, or to a minor child, that is then invested has its income clubbed back to you. If you have lent within the family, keep a written loan record and charge/receive interest so it is treated as a loan, not a transfer without consideration.",
+      "cross_reference": "single-parent-clubbing.json, huf-clubbing.json"
+    },
+    "new_act_2025_renumbering": {
+      "applies_from_financial_year": "2026-27",
+      "section_80c": "Section 123",
+      "section_80e": "Section 129",
+      "section_80ee_and_80eea": "Section 130",
+      "section_80eeb": "Section 132",
+      "house_property_interest_24b": "Section 22",
+      "note": "The Income Tax Act, 2025 renumbers these from FY 2026-27 onward; the rates and limits carry over unchanged. For a FY 2025-26 (AY 2026-27) return, filed around July 2026, use the 1961 Act's old section numbers, since that is what governs income earned in that year. Same 'form/section name follows today's date, tax rule follows the year the income was earned' pattern noted in new-act-2025-transition.json."
+    }
+  }
+}

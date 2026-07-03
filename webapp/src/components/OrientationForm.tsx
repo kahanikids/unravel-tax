@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import type { IncomeSource, OrientationAnswers } from "../state/types";
+import type { IncomeSource, NriCountry, OrientationAnswers } from "../state/types";
 
 type QuestionBase = {
   id: string;
   prompt: string;
+  /** Shown instead of `prompt` when residency is NRI. */
+  promptNri?: string;
   helper?: string;
+  helperNri?: string;
   mobileHelper?: string;
   visible: (answers: OrientationAnswers) => boolean;
   /** Safe to leave unanswered: deriveProfileFlags() treats a skipped
@@ -22,19 +25,28 @@ type YesNoQuestion = QuestionBase & {
 
 type ChoiceQuestion = QuestionBase & {
   kind: "choice";
-  options: { label: string; value: OrientationAnswers["residency"] }[];
-  value: (answers: OrientationAnswers) => OrientationAnswers["residency"];
-  set: (answers: OrientationAnswers, value: NonNullable<OrientationAnswers["residency"]>) => OrientationAnswers;
+  options: { label: string; value: string }[];
+  value: (answers: OrientationAnswers) => string | null;
+  set: (answers: OrientationAnswers, value: string) => OrientationAnswers;
 };
 
 type MultiQuestion = QuestionBase & {
   kind: "multi";
   options: { label: string; value: IncomeSource }[];
+  /** When set, shown instead of `options` for the NRI profile. */
+  optionsNri?: { label: string; value: IncomeSource }[];
   value: (answers: OrientationAnswers) => IncomeSource[];
   set: (answers: OrientationAnswers, values: IncomeSource[]) => OrientationAnswers;
 };
 
-type Question = YesNoQuestion | ChoiceQuestion | MultiQuestion;
+type NumberQuestion = QuestionBase & {
+  kind: "number";
+  unit?: string;
+  value: (answers: OrientationAnswers) => number | null;
+  set: (answers: OrientationAnswers, value: number | null) => OrientationAnswers;
+};
+
+type Question = YesNoQuestion | ChoiceQuestion | MultiQuestion | NumberQuestion;
 
 const INCOME_OPTIONS: { label: string; value: IncomeSource }[] = [
   { label: "Salary or pension", value: "salary_pension" },
@@ -44,6 +56,49 @@ const INCOME_OPTIONS: { label: string; value: IncomeSource }[] = [
   { label: "Rent", value: "rent" },
   { label: "Something else", value: "other" }
 ];
+
+const INCOME_OPTIONS_NRI: { label: string; value: IncomeSource }[] = [
+  { label: "Salary for work done in India", value: "salary_pension" },
+  { label: "Interest on NRO or Indian bank accounts (not NRE)", value: "bank_interest" },
+  { label: "Mutual funds or shares you sold in India", value: "capital_gains" },
+  { label: "Dividends from Indian companies", value: "dividends" },
+  { label: "Rent from property in India", value: "rent" },
+  { label: "Something else", value: "other" }
+];
+
+const NRI_COUNTRY_OPTIONS: { label: string; value: string }[] = [
+  { label: "Singapore", value: "Singapore" },
+  { label: "United Arab Emirates", value: "United Arab Emirates" },
+  { label: "United States", value: "United States" },
+  { label: "United Kingdom", value: "United Kingdom" },
+  { label: "Canada", value: "Canada" },
+  { label: "Australia", value: "Australia" },
+  { label: "Saudi Arabia", value: "Saudi Arabia" },
+  { label: "Germany", value: "Germany" },
+  { label: "Malaysia", value: "Malaysia" },
+  { label: "Kuwait", value: "Kuwait" },
+  { label: "Oman", value: "Oman" },
+  { label: "Qatar", value: "Qatar" },
+  { label: "Italy", value: "Italy" },
+  { label: "Nepal", value: "Nepal" },
+  { label: "Philippines", value: "Philippines" },
+  { label: "Hong Kong", value: "Hong Kong" },
+  { label: "Another country", value: "Other" }
+];
+
+const isNri = (answers: OrientationAnswers) => answers.residency === "nri";
+const isResident = (answers: OrientationAnswers) => answers.residency !== "nri";
+
+function clearResidentOnlyAnswers(answers: OrientationAnswers): OrientationAnswers {
+  return {
+    ...answers,
+    hraClaimed: null,
+    hraAboveThreshold: null,
+    hasLandlordPan: null,
+    epfWithdrawal: null,
+    epfBeforeFiveYears: null
+  };
+}
 
 const QUESTIONS: Question[] = [
   {
@@ -56,7 +111,38 @@ const QUESTIONS: Question[] = [
     ],
     visible: () => true,
     value: (a) => a.residency,
-    set: (a, value) => ({ ...a, residency: value })
+    set: (a, value) => {
+      const residency = value as NonNullable<OrientationAnswers["residency"]>;
+      if (residency === "nri") {
+        return clearResidentOnlyAnswers({ ...a, residency });
+      }
+      return { ...clearResidentOnlyAnswers(a), residency, nriCountry: null };
+    }
+  },
+  {
+    id: "nriCountry",
+    kind: "choice",
+    prompt: "Which country are you a tax resident of?",
+    helper:
+      "Where you live and pay tax — not your passport. This decides which India treaty (DTAA) applies. For some countries, mutual fund gains may be exempt in India after a 2025 tribunal ruling.",
+    mobileHelper: "Where you pay tax, not your passport.",
+    options: NRI_COUNTRY_OPTIONS,
+    visible: isNri,
+    value: (a) => a.nriCountry,
+    set: (a, value) => ({ ...a, nriCountry: value as NriCountry })
+  },
+  {
+    id: "nriDaysInIndia",
+    kind: "number",
+    prompt: "How many days were you physically in India this financial year?",
+    helper:
+      "The return asks for this to confirm your non-resident status (under 182 days usually keeps you an NRI). Don't have the exact count handy? Skip it and come back later.",
+    mobileHelper: "Don't know yet? Skip and come back later.",
+    unit: "days",
+    visible: isNri,
+    skippable: true,
+    value: (a) => a.nriDaysInIndia,
+    set: (a, value) => ({ ...a, nriDaysInIndia: value })
   },
   {
     id: "huf",
@@ -94,8 +180,12 @@ const QUESTIONS: Question[] = [
     id: "incomeSources",
     kind: "multi",
     prompt: "What kinds of income do you have?",
+    promptNri: "What kinds of income do you have from India?",
     helper: "Pick everything that applies.",
+    helperNri:
+      "Pick everything that applies. NRE account interest is tax-free and doesn't go here — you'll enter it separately later if needed.",
     options: INCOME_OPTIONS,
+    optionsNri: INCOME_OPTIONS_NRI,
     visible: () => true,
     value: (a) => a.incomeSources,
     set: (a, values) => ({ ...a, incomeSources: values })
@@ -104,7 +194,7 @@ const QUESTIONS: Question[] = [
     id: "multipleEmployers",
     kind: "yes-no",
     prompt: "Did you change jobs this year, or have income from more than one employer?",
-    visible: () => true,
+    visible: (a) => isResident(a) || a.incomeSources.includes("salary_pension"),
     skippable: true,
     value: (a) => a.multipleEmployers,
     set: (a, value) => ({ ...a, multipleEmployers: value })
@@ -113,7 +203,7 @@ const QUESTIONS: Question[] = [
     id: "hraClaimed",
     kind: "yes-no",
     prompt: "Do you pay rent and claim it against your salary (HRA)?",
-    visible: () => true,
+    visible: isResident,
     skippable: true,
     value: (a) => a.hraClaimed,
     set: (a, value) => ({ ...a, hraClaimed: value, hraAboveThreshold: value ? a.hraAboveThreshold : null, hasLandlordPan: value ? a.hasLandlordPan : null })
@@ -122,7 +212,7 @@ const QUESTIONS: Question[] = [
     id: "hraAboveThreshold",
     kind: "yes-no",
     prompt: "Is your annual rent over roughly ₹1 lakh (about ₹8,300/month)?",
-    visible: (a) => a.hraClaimed === true,
+    visible: (a) => isResident(a) && a.hraClaimed === true,
     skippable: true,
     value: (a) => a.hraAboveThreshold,
     set: (a, value) => ({ ...a, hraAboveThreshold: value, hasLandlordPan: value ? a.hasLandlordPan : null })
@@ -132,7 +222,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Do you have your landlord's PAN?",
     helper: "Above that rent threshold, the HRA claim needs it on file.",
-    visible: (a) => a.hraClaimed === true && a.hraAboveThreshold === true,
+    visible: (a) => isResident(a) && a.hraClaimed === true && a.hraAboveThreshold === true,
     skippable: true,
     value: (a) => a.hasLandlordPan,
     set: (a, value) => ({ ...a, hasLandlordPan: value })
@@ -141,7 +231,7 @@ const QUESTIONS: Question[] = [
     id: "epfWithdrawal",
     kind: "yes-no",
     prompt: "Did you take money out of your provident fund this year?",
-    visible: () => true,
+    visible: isResident,
     skippable: true,
     value: (a) => a.epfWithdrawal,
     set: (a, value) => ({ ...a, epfWithdrawal: value, epfBeforeFiveYears: value ? a.epfBeforeFiveYears : null })
@@ -150,10 +240,22 @@ const QUESTIONS: Question[] = [
     id: "epfBeforeFiveYears",
     kind: "yes-no",
     prompt: "Was that before completing 5 years of continuous service?",
-    visible: (a) => a.epfWithdrawal === true,
+    visible: (a) => isResident(a) && a.epfWithdrawal === true,
     skippable: true,
     value: (a) => a.epfBeforeFiveYears,
     set: (a, value) => ({ ...a, epfBeforeFiveYears: value })
+  },
+  {
+    id: "loansRepaid",
+    kind: "yes-no",
+    prompt: "Are you repaying any loans this year (home, education, or electric vehicle)?",
+    helper:
+      "The interest you pay on these can lower your tax, mostly under the old regime. Answer No for a personal or car loan, which usually gives no deduction.",
+    mobileHelper: "Home, education, or EV loan? Say Yes.",
+    visible: () => true,
+    skippable: true,
+    value: (a) => a.loansRepaid,
+    set: (a, value) => ({ ...a, loansRepaid: value })
   }
 ];
 
@@ -168,6 +270,8 @@ function isUnanswered(question: Question, answers: OrientationAnswers): boolean 
  * returning user sees a scannable recap rather than the full question text. */
 const SUMMARY_LABELS: Record<string, string> = {
   residency: "Where you live",
+  nriCountry: "Country of tax residence",
+  nriDaysInIndia: "Days in India this year",
   huf: "Income held through a family (HUF)",
   seniorCitizen: "60 or older",
   singleParent: "Single parent with minor children",
@@ -177,7 +281,8 @@ const SUMMARY_LABELS: Record<string, string> = {
   hraAboveThreshold: "Annual rent over ~₹1 lakh",
   hasLandlordPan: "Have landlord's PAN",
   epfWithdrawal: "Took money out of provident fund",
-  epfBeforeFiveYears: "Withdrawal before 5 years of service"
+  epfBeforeFiveYears: "Withdrawal before 5 years of service",
+  loansRepaid: "Repaying a home, education, or EV loan"
 };
 
 function formatAnswer(question: Question, answers: OrientationAnswers): string {
@@ -190,10 +295,15 @@ function formatAnswer(question: Question, answers: OrientationAnswers): string {
     if (values.length === 0) {
       return "None selected";
     }
-    return question.options
+    const options = isNri(answers) && question.optionsNri ? question.optionsNri : question.options;
+    return options
       .filter((option) => values.includes(option.value))
       .map((option) => option.label)
       .join(", ");
+  }
+  if (question.kind === "number") {
+    const value = question.value(answers);
+    return value === null ? "Skipped" : `${value}${question.unit ? ` ${question.unit}` : ""}`;
   }
   const value = question.value(answers);
   return value === null ? "Skipped" : value ? "Yes" : "No";
@@ -282,11 +392,17 @@ export function OrientationForm({
         <span style={{ width: `${progressPercent}%` }} />
       </div>
       {index === 0 ? <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p> : null}
-      <h2 className="orientation-prompt">{current.prompt}</h2>
-      {current.helper ? (
+      <h2 className="orientation-prompt">
+        {isNri(answers) && current.promptNri ? current.promptNri : current.prompt}
+      </h2>
+      {current.helper || (isNri(answers) && current.helperNri) ? (
         <p className="orientation-helper">
-          <span className="orientation-helper-desktop">{current.helper}</span>
-          <span className="orientation-helper-mobile">{current.mobileHelper ?? current.helper}</span>
+          <span className="orientation-helper-desktop">
+            {isNri(answers) && current.helperNri ? current.helperNri : current.helper}
+          </span>
+          <span className="orientation-helper-mobile">
+            {current.mobileHelper ?? (isNri(answers) && current.helperNri ? current.helperNri : current.helper)}
+          </span>
         </p>
       ) : null}
 
@@ -308,7 +424,7 @@ export function OrientationForm({
               key={String(option.value)}
               type="button"
               className="option-button"
-              onClick={() => answerAndAdvance(current.set(answers, option.value as NonNullable<OrientationAnswers["residency"]>))}
+              onClick={() => answerAndAdvance(current.set(answers, option.value))}
             >
               {option.label}
             </button>
@@ -318,6 +434,10 @@ export function OrientationForm({
 
       {current.kind === "multi" ? (
         <MultiSelectQuestion question={current} answers={answers} onChange={onChange} onContinue={() => setIndex((value) => value + 1)} />
+      ) : null}
+
+      {current.kind === "number" ? (
+        <NumberQuestionInput question={current} answers={answers} onCommit={answerAndAdvance} />
       ) : null}
 
       {current.skippable ? (
@@ -343,6 +463,44 @@ export function OrientationForm({
   );
 }
 
+function NumberQuestionInput({
+  question,
+  answers,
+  onCommit
+}: {
+  question: NumberQuestion;
+  answers: OrientationAnswers;
+  onCommit: (answers: OrientationAnswers) => void;
+}) {
+  const [draft, setDraft] = useState(() => {
+    const current = question.value(answers);
+    return current === null ? "" : String(current);
+  });
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    const parsed = trimmed === "" ? null : Math.max(0, Math.floor(Number(trimmed)));
+    onCommit(question.set(answers, parsed !== null && Number.isFinite(parsed) ? parsed : null));
+  };
+
+  return (
+    <div className="orientation-number">
+      <input
+        type="number"
+        min={0}
+        max={366}
+        inputMode="numeric"
+        value={draft}
+        placeholder={question.unit ?? ""}
+        onChange={(event) => setDraft(event.target.value)}
+      />
+      <button type="button" className="primary-button" onClick={commit} disabled={draft.trim() === ""}>
+        Continue
+      </button>
+    </div>
+  );
+}
+
 function MultiSelectQuestion({
   question,
   answers,
@@ -355,6 +513,7 @@ function MultiSelectQuestion({
   onContinue: () => void;
 }) {
   const selected = question.value(answers);
+  const options = isNri(answers) && question.optionsNri ? question.optionsNri : question.options;
 
   const toggle = (value: IncomeSource) => {
     const next = selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
@@ -364,7 +523,7 @@ function MultiSelectQuestion({
   return (
     <div className="orientation-multi">
       <div className="orientation-checkboxes">
-        {question.options.map((option) => (
+        {options.map((option) => (
           <label key={option.value} className="checkbox-row">
             <input type="checkbox" checked={selected.includes(option.value)} onChange={() => toggle(option.value)} />
             {option.label}

@@ -3,20 +3,20 @@
  * each year the user has already filed, so a repeat filer can see their
  * trend year over year.
  *
- * Two ways in, matching BUILD_PLAN.md Section 3's format rules:
+ * Three ways in, matching BUILD_PLAN.md Section 3's format rules:
  *  - The income-tax portal's ITR JSON (structured, parsed client-side, no
  *    AI) via `parseItrJson` - tolerant, pulls whatever fields it can find.
+ *  - An ITR-V acknowledgement PDF via `parseItrVText`, run over the text
+ *    that the existing pdf.js extractor (ingest/pdfExtract) already pulls
+ *    out - a tolerant, label/regex reader, NOT a bespoke PDF table parser
+ *    (CLAUDE.md). Whatever it can't read falls back to manual entry.
  *  - Manual entry of the same handful of figures, as the always-works
- *    fallback so the dashboard is useful even without a JSON file.
- *
- * There is deliberately NO PDF parser here (CLAUDE.md): an ITR-V/PDF
- * acknowledgement routes through the offline AI-extraction loop, not a
- * bespoke client-side table parser.
+ *    fallback so the dashboard is useful even without a file.
  */
 
 export type FilingRegime = "old" | "new" | "unknown";
 
-export type FilingSource = "itr-json" | "manual";
+export type FilingSource = "itr-json" | "itr-v" | "manual";
 
 /** One past year's filing summary - only fields deterministically derivable
  * from an ITR JSON or trivially entered by hand. */
@@ -32,6 +32,14 @@ export type PastFiling = {
   totalTaxPaid: number;
   /** Positive = refund due, negative = balance payable. */
   refundOrPayable: number;
+  /** Net capital gains for the year (negative = a net loss). */
+  capitalGains: number;
+  /** Losses carried forward out of this year to set off in future years. */
+  carryForwardLosses: number;
+  /** Loan principal repaid in the year (e.g. home-loan principal, 80C). */
+  loanPrincipal: number;
+  /** Loan interest paid/claimed in the year (e.g. 24(b), 80E, 80EEB). */
+  loanInterest: number;
   source: FilingSource;
 };
 
@@ -44,7 +52,11 @@ export const BLANK_PAST_FILING_FIELDS: PastFilingFields = {
   regime: "unknown",
   grossTotalIncome: 0,
   totalTaxPaid: 0,
-  refundOrPayable: 0
+  refundOrPayable: 0,
+  capitalGains: 0,
+  carryForwardLosses: 0,
+  loanPrincipal: 0,
+  loanInterest: 0
 };
 
 export type ParsedItrFiling = {
@@ -252,6 +264,122 @@ export function parseItrJson(text: string): ParsedItrFiling {
   };
 }
 
+/**
+ * Finds the first rupee-style number that appears just after any of the
+ * given label patterns in a run of text. `labels` are regex fragments (so
+ * "Gross\\s*Total\\s*Income" tolerates odd spacing from pdf.js). The number
+ * may be plain (1200000) or Indian-grouped (12,00,000), optionally decimal.
+ */
+function numberAfterLabel(text: string, labels: string[]): number | null {
+  for (const label of labels) {
+    const re = new RegExp(`${label}[^0-9()-]{0,40}?\\(?(-?[0-9][0-9,]*(?:\\.[0-9]+)?)\\)?`, "i");
+    const match = text.match(re);
+    if (match) {
+      const value = coerceNumber(match[1]);
+      if (value !== null) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Best-effort regime read from ITR-V text. The wording differs across years
+ * ("opting for new tax regime", "section 115BAC"), so this only commits when
+ * it finds a clear Yes/No right after such a phrase; otherwise it stays
+ * "unknown" and the user picks it in the manual dropdown.
+ */
+function detectRegimeFromText(text: string): FilingRegime {
+  const newRegime = text.match(/new\s*tax\s*regime[^A-Za-z]{0,25}(yes|no)/i) ?? text.match(/115\s*BAC[^A-Za-z]{0,25}(yes|no)/i);
+  if (newRegime) {
+    return newRegime[1].toLowerCase() === "yes" ? "new" : "old";
+  }
+  return "unknown";
+}
+
+/**
+ * Reads an ITR-V acknowledgement's already-extracted text (from
+ * ingest/pdfExtract's pdf.js pass). Tolerant and label-driven: it pulls the
+ * fields it can recognise and reports which, leaving the rest for manual
+ * entry. Never throws - text it can't make sense of comes back ok:false so
+ * the caller can route straight to the manual form.
+ */
+export function parseItrVText(text: string): ParsedItrFiling {
+  const fields: PastFilingFields = { ...BLANK_PAST_FILING_FIELDS };
+  const readFields: (keyof PastFilingFields)[] = [];
+
+  const normalized = (text ?? "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return {
+      ok: false,
+      fields,
+      readFields,
+      message: "Couldn't read any text from this PDF — it may be a scan or image. Enter the figures by hand below instead."
+    };
+  }
+
+  const ayMatch = normalized.match(/Assessment\s*Year\s*[:\-]?\s*(\d{4}\s*[-/]\s*\d{2,4})/i);
+  const assessmentYear = normalizeAssessmentYear(ayMatch?.[1]);
+  if (assessmentYear) {
+    fields.assessmentYear = assessmentYear;
+    readFields.push("assessmentYear");
+  }
+
+  // Match the ITR form number (ITR-1..7) but never the "ITR-V" acknowledgement
+  // label itself, which carries a letter, not a digit.
+  const formMatch = normalized.match(/ITR[\s-]?([1-7])\b/i);
+  if (formMatch) {
+    fields.itrForm = `ITR-${formMatch[1]}`;
+    readFields.push("itrForm");
+  }
+
+  const regime = detectRegimeFromText(normalized);
+  if (regime !== "unknown") {
+    fields.regime = regime;
+    readFields.push("regime");
+  }
+
+  const gti = numberAfterLabel(normalized, ["Gross\\s*Total\\s*Income"]);
+  if (gti !== null) {
+    fields.grossTotalIncome = gti;
+    readFields.push("grossTotalIncome");
+  }
+
+  const taxPaid = numberAfterLabel(normalized, ["Total\\s*Taxes?\\s*Paid", "Taxes?\\s*Paid"]);
+  if (taxPaid !== null) {
+    fields.totalTaxPaid = taxPaid;
+    readFields.push("totalTaxPaid");
+  }
+
+  const refund = numberAfterLabel(normalized, ["Refund"]);
+  const payable = numberAfterLabel(normalized, ["Net\\s*Tax\\s*Payable", "Total\\s*Tax\\s*Payable", "Tax\\s*Payable"]);
+  if (refund !== null && refund > 0) {
+    fields.refundOrPayable = refund;
+    readFields.push("refundOrPayable");
+  } else if (payable !== null && payable > 0) {
+    fields.refundOrPayable = -payable;
+    readFields.push("refundOrPayable");
+  }
+
+  if (readFields.length === 0) {
+    return {
+      ok: false,
+      fields,
+      readFields,
+      message:
+        "Read this PDF, but couldn't recognise the usual ITR-V figures in it. Enter them by hand below instead."
+    };
+  }
+
+  return {
+    ok: true,
+    fields,
+    readFields,
+    message: `Read ${readFields.length} field${readFields.length === 1 ? "" : "s"} from this ITR-V. Check them and fill in anything left blank before adding.`
+  };
+}
+
 export type EffectiveRatePoint = { assessmentYear: string; rate: number };
 
 export type HistoryInsights = {
@@ -308,4 +436,11 @@ export const REGIME_LABELS: Record<FilingRegime, string> = {
   old: "Old regime",
   new: "New regime",
   unknown: "Not recorded"
+};
+
+/** Short badge text for where a past filing's figures came from. */
+export const FILING_SOURCE_LABELS: Record<FilingSource, string> = {
+  "itr-json": "From JSON",
+  "itr-v": "From PDF",
+  manual: "Entered"
 };

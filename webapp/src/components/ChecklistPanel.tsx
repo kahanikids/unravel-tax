@@ -2,7 +2,9 @@ import { useState } from "react";
 import { checklistGaps, type ChecklistItem } from "../lib/reconciliation";
 import type { RiskTrigger } from "../lib/riskTriggers";
 import type { ProfileScopeCaveat } from "../lib/profile";
+import { ruleCatalog } from "../rules";
 import { DocumentSourceHint } from "./DocumentSourceHint";
+import { RuleSourceLink } from "./RuleSourceLink";
 
 const MOBILE_TABLET_BREAKPOINT = 860;
 
@@ -81,6 +83,7 @@ export function ChecklistPanel({
               >
                 <strong>{trigger.label}</strong>
                 <p>{trigger.consequence}</p>
+                <RuleSourceLink refs={ruleCatalog.filingMistakesAndPenalties.source_refs} />
               </article>
             ))}
           </div>

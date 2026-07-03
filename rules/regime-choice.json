@@ -11,7 +11,7 @@
   "verification": {
     "status": "verified",
     "last_verified": "2026-07-03",
-    "note": "Slabs, standard deductions, Section 87A rebate thresholds, and the new-regime marginal relief above Rs 12,00,000 verified against the Income Tax Department's official Budget 2025 FAQ. Switching-rule fields (business_income_switching etc.) are still structured from BUILD_PLAN.md/SYSTEM_SPEC.md draft content pending a dedicated re-check."
+    "note": "Slabs (including old-regime senior 60-79 and super-senior 80+ bands), standard deductions, Section 87A rebate thresholds, and the new-regime marginal relief above Rs 12,00,000 verified against the Income Tax Department's official Budget 2025 FAQ. The deductions_by_regime notes (80C/80D/80CCD(1B)/HRA/24(b) old-regime, 80CCD(2) both regimes) are explanatory only; the enforced rupee ceilings live in deduction-limits.json and the Section 24(b) Rs 2,00,000 home-loan-interest limit is a long-standing figure. Switching-rule fields (business_income_switching etc.) are still structured from BUILD_PLAN.md/SYSTEM_SPEC.md draft content pending a dedicated re-check."
   },
   "source_refs": [
     "https://incometaxindia.gov.in/Documents/Budget/budget-2025/faqs-budget-2025.pdf",
@@ -72,6 +72,17 @@
       ],
       "rebate_87a": { "taxable_income_at_or_below_inr": 500000, "max_rebate_inr": 12500 }
     },
-    "comparison_scope_caveat": "A regime comparison only covers income taxed at slab rates: salary, dividends, bank interest, and similar. Capital gains taxed under Sections 111A/112A are the same amount either way, so they're not part of the comparison. Surcharge above Rs 50 lakh of income, and the age 80+ super senior slab, are not modelled yet."
+    "deductions_by_regime": {
+      "old_regime_allows": "80C, 80D, 80CCD(1B), HRA, Section 24(b) home-loan interest, and most other Chapter VI-A deductions. The rupee ceilings for 80C/80D/80CCD(1B) live in deduction-limits.json (not duplicated here).",
+      "old_regime_home_loan_interest_24b_inr": 200000,
+      "new_regime_allows_only": "The Section 80CCD(2) deduction for your EMPLOYER's contribution to your NPS account. Almost every other deduction (80C, 80D, HRA, 24(b), 80CCD(1B)) is given up in exchange for the lower new-regime slab rates.",
+      "section_80ccd_2_note": "Available under BOTH regimes. It's the employer's NPS contribution, capped at a percentage of salary (14% for government employees, 10% otherwise) rather than a flat rupee amount, so no fixed limit is stored here.",
+      "cross_reference": "deduction-limits.json"
+    },
+    "comparison_scope_caveat": "A regime comparison only covers income taxed at slab rates: salary, dividends, bank interest, and similar. Capital gains taxed under Sections 111A/112A are the same amount either way, so they're not part of the comparison. Surcharge above Rs 50 lakh of income, and the age 80+ super senior slab, are not modelled yet.",
+    "break_even": {
+      "method": "solve_on_slabs",
+      "note": "Your break-even is the exact amount of old-regime deductions (80C, 80D, 80CCD(1B), HRA, Section 24(b) home-loan interest, and the rest) at which the old regime's tax would exactly match the new regime's. Enter more than that and the old regime saves you money; enter less and the new regime, the statutory default, wins. It's solved directly on the same slab tables both regimes already use, so it accounts for the different standard deductions (old Rs 50,000, new Rs 75,000), the Section 87A rebate, and the 4% cess automatically. When your new-regime tax is already zero (for a salaried filer, up to about Rs 12.75 lakh), no amount of old-regime deductions can beat it, so there is no break-even to reach."
+    }
   }
 }

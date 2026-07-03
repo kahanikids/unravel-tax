@@ -8,10 +8,11 @@
   "assessment_year": "2026-27",
   "verification": {
     "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "last_verified": "2026-07-03",
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Source link (Section 234F late-filing fee, FY 2025-26) added and checked 2026-07-03; underlying trigger table still pending full current-source verification."
   },
   "source_refs": [
+    "https://cleartax.in/s/late-tax-return",
     "BUILD_PLAN.md Section 15.5",
     "SYSTEM_SPEC.md Section 12"
   ],

@@ -4,6 +4,153 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-03 (NRI orientation + DTAA mutual fund map)
+
+- Reworked the **NRI track** in `OrientationForm`: after picking "I live
+  outside India", users are asked their **country of tax residence**
+  (drives DTAA lookup) and **days physically in India this year**
+  (skippable — reported on the return to confirm non-resident status).
+  Resident-only questions (HRA, EPF) are hidden; income-source labels are
+  NRI-specific (NRO vs NRE called out). New `number` question kind +
+  `nriDaysInIndia` field on `OrientationAnswers`.
+- Populated `rules/nri-dtaa.json` / `.md` with a country-by-country map
+  for **mutual fund capital gains** under DTAAs, including the ITAT Mumbai
+  Mar 2025 ruling (*Anushaka Sanjay Shah*) that MF units are not company
+  shares and may be exempt in India for Singapore/UAE-style residual-clause
+  treaties. Synced to `webapp/src/rules/data/nri-dtaa.json`.
+- `profileScopeCaveats()` now surfaces a country-specific MF DTAA heads-up
+  when an NRI reports capital gains. Checklist TRC copy is tailored when
+  MF exemption may apply.
+
+## 2026-07-03 (regime break-even point)
+
+- Added an old-vs-new regime **break-even** calculation and display: the
+  exact amount of old-regime deductions (80C, 80D, 80CCD(1B), HRA, Section
+  24(b), etc.) at which the old regime's tax would match the new regime's.
+  New `computeRegimeBreakEven()` in `webapp/src/lib/regimeComparison.ts`
+  solves it generically off the existing `compareRegimes()` slab engine (a
+  monotonic search, no slab rates or offsets restated), so it's correct at
+  every income and handles the zero-tax band (up to ~₹12.75L salary) by
+  reporting no break-even, since no deduction can beat a zero new-regime
+  tax. Surfaced in the Results regime panel and the dashboard regime widget
+  as a headline number plus a progress bar of entered deductions vs the
+  break-even target. Added a plain-language explanation and a ₹15L worked
+  example to `rules/regime-choice.md`, and a `values.break_even`
+  explanatory note (no numeric constants) to `rules/regime-choice.json`
+  (typed as optional, synced to `webapp/src/rules/data/`). Validation cases
+  added in `validate-calculations.ts` for ₹12.75L (no break-even), ₹15L
+  (₹5,43,750), ₹20L (₹7,08,333), and ₹25L (₹8,00,000). Note: the widely
+  quoted `Gross − 6,75,000 − newTax/0.30` shortcut matches the slab-accurate
+  engine at ₹20L/₹25L but overstates the old regime's case at ₹15L
+  (₹5,12,500 vs the correct ₹5,43,750), because the crossover there falls in
+  the 20% old-regime band, not the 30% band the shortcut assumes; the tool
+  uses the accurate slab solve.
+
+## 2026-07-03 (source links next to claims + speculative-income label)
+
+- Risk-trigger copy: the speculative/intraday form-changing flag now reads
+  "Speculative/intraday trading income is considered Business Income"
+  (`webapp/src/lib/riskTriggers.ts`, plus the matching assertion in
+  `webapp/scripts/validate-guided-ui.tsx`). Consequence text unchanged.
+- `rules/filing-mistakes-and-penalties.json` / `.md`: added an authoritative
+  source URL (ClearTax Section 234F late-filing fee, FY 2025-26) as the first
+  `source_refs` entry so the risk-trigger claims have a linkable source.
+- `rules/capital-gains-equity.json` / `.md`: added source URLs (ClearTax
+  Section 112A LTCG 12.5% and Section 111A STCG 20%, FY 2025-26) as the first
+  `source_refs` entries. No rule values changed in either file; `last_verified`
+  bumped only to record the source-link check, status kept pending.
+- New `webapp/src/components/RuleSourceLink.tsx`: a compact "Source" anchor
+  that reads the first URL out of a rule's `source_refs` at runtime (no
+  hardcoded URLs) and renders nothing when a rule only cites internal docs.
+  Wired next to risk-trigger flags (checklist panel), the Recommended ITR form
+  reason (results), capital-gains "why this number?" rows, and the old-vs-new
+  regime caveat.
+
+## 2026-07-03 (loan treatment embedded in the workflow)
+
+- New rule file `rules/loan-treatment.json` (paired with
+  `rules/loan-treatment.md`), recording how loans affect a FY 2025-26
+  (AY 2026-27) return. Covers Section 24(b) home-loan interest
+  (self-occupied ₹2,00,000 cap, old regime only; let-out uncapped in both
+  regimes with the ₹2,00,000 house-property-loss set-off ceiling and the
+  new regime's no-set-off/no-carry-forward rule), home-loan principal
+  inside the 80C ceiling (cross-referenced to `deduction-limits.json`,
+  not duplicated), the first-time-buyer top-ups 80EE (₹50,000) and 80EEA
+  (₹1,50,000) with their closed sanction windows, Section 80E education-
+  loan interest (no cap, interest-only, 8 years), Section 80EEB electric-
+  vehicle-loan interest (₹1,50,000), the "personal/gold loans deduct only
+  by what the money was used for" rule, the special loan-vs-gift clubbing
+  point (a genuine documented family loan doesn't trigger Section 64), and
+  the new Income Tax Act 2025 section renumbering (use the 1961 numbers for
+  this year's filing). Verified against multiple current filing guides
+  (ClearTax, TaxGuru, TaxSmooth); `verification.status`
+  `verified_secondary_source`, pending an incometax.gov.in cross-check.
+  Synced to `webapp/src/rules/data/` and typed as `LoanTreatmentValues` /
+  `LoanTreatmentRule`.
+- Embedded loans across the guided flow: a new orientation question ("Are
+  you repaying any loans this year?") drives a `hasLoans` profile flag,
+  which adds a "Loan interest certificate(s)" item to the personal
+  checklist. On the results screen, filers with loans get a dedicated
+  "Loans (home, education, electric vehicle)" section under "Add more
+  numbers to refine": each interest figure is capped at its section limit
+  (read from `loan-treatment.json`, never hardcoded, via a new pure
+  `computeLoanDeductions` helper) and the capped total folds into the
+  old-regime side of the old-vs-new regime comparison, both on the results
+  panel and the dashboard, so loans actually move the cheaper-regime call.
+  The generic "old regime deductions" field was relabelled to exclude home-
+  loan interest to avoid double-counting. Let-out house-property loss
+  set-off, the 80C principal, and business-use vehicle interest are left
+  to a CA and documented as out of scope in `loan-treatment.md`.
+
+## 2026-07-03 (regime rules completeness + ITR-V history upload)
+
+- `rules/regime-choice.json` / `.md`: confirmed the FY 2025-26 (AY 2026-27)
+  model is complete — universal new-regime slabs, old-regime slabs for all
+  three age bands (below 60, senior 60-79, super-senior 80+), both standard
+  deductions (old ₹50,000 / new ₹75,000), both Section 87A rebates, and the
+  new-regime marginal relief above ₹12,00,000 were already present and
+  unchanged. Added a `deductions_by_regime` block plus a much richer `.md`:
+  a plain-language "which deductions each regime allows/gives up" section
+  (80C/80D/80CCD(1B)/HRA and the Section 24(b) ₹2,00,000 home-loan-interest
+  limit under the old regime; Section 80CCD(2) employer-NPS under both), and
+  a "which should you choose?" guide (new regime if few tracked investments
+  or gross salary under ~₹12.75L; old regime with a home loan, HRA, and
+  heavy 80C/80D). The enforced rupee ceilings are cross-referenced from
+  `deduction-limits.json`, not duplicated. No rule value changed, so no
+  hardcoded duplicates needed updating; regime slabs/deductions/rebate are
+  read from the JSON in `regimeComparison.ts`, the dashboard regime
+  simulator, and the Results regime panel (the old-regime senior 60-79 band
+  is applied via the existing `seniorCitizen` flag). Honest limitation kept:
+  because orientation only asks a yes/no "senior citizen?", an 80+ filer is
+  compared on the 60-79 band, not the more generous super-senior one.
+- Dashboard past-filing history now also accepts **ITR-V acknowledgement
+  PDFs**, not just ITR JSON. The PDF is read with the existing client-side
+  pdf.js text extractor (`ingest/pdfExtract`), then a new tolerant,
+  label/regex reader (`parseItrVText` in `lib/pastFilings.ts`) pulls what it
+  can — assessment year, ITR form, gross total income, taxes paid, and
+  refund/payable, plus regime when the wording is unambiguous. It never
+  throws: anything it can't read falls back to the manual form with a clear
+  message, and auto-read fields are tagged "read from file". No bespoke PDF
+  table parser was added (CLAUDE.md), and no new dependency.
+
+## 2026-07-03 (deduction limits + visual dashboard)
+
+- New rule file `rules/deduction-limits.json` (paired with
+  `rules/deduction-limits.md`), recording the FY 2025-26 old-regime
+  ceilings for Section 80C (₹1,50,000), Section 80D (₹25,000, or ₹50,000
+  when a senior citizen is covered), and Section 80CCD(1B) NPS (₹50,000).
+  These are long-standing, well-known limits carried unchanged into
+  FY 2025-26; verification status is `verified_secondary_source` pending a
+  check against the official instructions on incometax.gov.in. Synced to
+  `webapp/src/rules/data/` and typed as `DeductionLimitsRule`.
+- Dashboard reworked into a visual, at-a-glance command centre distinct
+  from the Results working view: regime-comparison cards, a capital-gains
+  donut with a Section 112A tax-free-LTCG harvesting tracker, 80C/80D/NPS
+  deduction-progress bars (limits read from the new rule file, never
+  hardcoded), an AIS/TDS variance gauge, and an ITR-form badge with a
+  FY 2025-26 / AY 2026-27 timeline. No new charting dependencies (CSS
+  conic-gradient donuts and inline SVG only).
+
 ## 2026-07-03 (repo cleanup)
 
 - Repository hygiene pass for open source readiness. Stopped tracking

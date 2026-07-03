@@ -1,7 +1,7 @@
 # Capital gains — listed equity
 
 **Applies to:** every profile with equity/equity-MF transactions
-**Last verified:** PENDING — not yet populated against a current source.
+**Last verified:** 2026-07-03 — source links added and checked (Section 112A LTCG / Section 111A STCG, FY 2025-26); remaining values still pending full current-source verification.
 
 ## What this covers
 LTCG/STCG rates for listed equity, the annual LTCG exemption, STT and

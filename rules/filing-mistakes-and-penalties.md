@@ -1,7 +1,7 @@
 # Filing mistakes and penalties
 
 **Applies to:** every profile
-**Last verified:** PENDING — not yet populated against a current source.
+**Last verified:** 2026-07-03 — source link added and checked (Section 234F late-filing fee, FY 2025-26); underlying trigger table still pending full current-source verification.
 
 ## What this covers
 The active risk-trigger table: wrong ITR form (defective return), AIS/

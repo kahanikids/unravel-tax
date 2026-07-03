@@ -6,6 +6,7 @@ import {
   caSummaryAmountMap,
   caSummaryRows,
   compareRegimes,
+  computeRegimeBreakEven,
   estimateAdvanceTaxInterest,
   summarizeWithRules
 } from "../src/lib";
@@ -208,6 +209,106 @@ async function main() {
     );
   }
 
+  // The zero-tax window's upper edge: Rs 12,75,000 salary is exactly
+  // Rs 12,00,000 taxable after the Rs 75,000 standard deduction, landing on
+  // the Section 87A rebate threshold, so a salaried filer owes Rs 0 new-regime
+  // tax at the very top of the widely-quoted "up to Rs 12.75 lakh is tax-free"
+  // range.
+  const zeroTaxWindowEdge = compareRegimes(
+    {
+      salaryIncome: 1_275_000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  if (zeroTaxWindowEdge.newRegimeTax !== 0) {
+    throw new Error(
+      `Expected zero new-regime tax at the Rs 12.75L salary edge of the zero-tax window, got ${zeroTaxWindowEdge.newRegimeTax}.`
+    );
+  }
+
+  // Break-even deductions: the exact old-regime deductions at which old-regime
+  // tax equals the new regime's. Solved on the same slab engine (never the
+  // widely-quoted Gross - 675000 - newTax/0.30 shortcut, which only holds when
+  // the crossover old-taxable lands in the 30% band).
+  const breakEvenInputs = (salaryIncome: number) => ({
+    salaryIncome,
+    dividends: 0,
+    interestOtherIncome: 0,
+    eligibleInterestDeduction: 0,
+    debtMfShortTermDeemedGain: 0,
+    intradayGain: 0,
+    oldRegimeDeductions: 0,
+    seniorCitizen: false
+  });
+
+  // Up to Rs 12.75L salary the new regime is already zero-tax, so no amount of
+  // old-regime deductions can beat it: there's no break-even to reach.
+  const breakEven1275 = computeRegimeBreakEven(breakEvenInputs(1_275_000), ruleCatalog.regimeChoice);
+  if (!breakEven1275.newAlwaysWins || breakEven1275.breakEvenDeductions !== 0) {
+    throw new Error(
+      `Expected no break-even at Rs 12.75L (new regime already zero-tax), got newAlwaysWins=${breakEven1275.newAlwaysWins}, breakEven=${breakEven1275.breakEvenDeductions}.`
+    );
+  }
+
+  // Rs 15L: the crossover old-taxable lands in the 20% band, so the accurate
+  // break-even (Rs 5,43,750) is higher than the 30%-band shortcut's Rs 5,12,500.
+  // Rs 20L and Rs 25L: the crossover lands in the 30% band, so the accurate
+  // figure matches the shortcut (Rs 7,08,333 and Rs 8,00,000). New-regime tax
+  // is shown after the 4% cess, matching the rest of the comparison.
+  const breakEvenCases = [
+    { salary: 1_500_000, newRegimeTax: 97_500, breakEven: 543_750 },
+    { salary: 2_000_000, newRegimeTax: 192_400, breakEven: 708_333 },
+    { salary: 2_500_000, newRegimeTax: 319_800, breakEven: 800_000 }
+  ];
+  for (const testCase of breakEvenCases) {
+    const breakEven = computeRegimeBreakEven(breakEvenInputs(testCase.salary), ruleCatalog.regimeChoice);
+    if (breakEven.newRegimeTax !== testCase.newRegimeTax) {
+      throw new Error(
+        `Break-even case Rs ${testCase.salary}: expected new-regime tax ${testCase.newRegimeTax}, got ${breakEven.newRegimeTax}.`
+      );
+    }
+    if (Math.abs(breakEven.breakEvenDeductions - testCase.breakEven) > 10) {
+      throw new Error(
+        `Break-even case Rs ${testCase.salary}: expected break-even deductions ~${testCase.breakEven}, got ${breakEven.breakEvenDeductions}.`
+      );
+    }
+  }
+
+  // Old-regime senior (60-79) band must actually be applied: the Rs 3,00,000
+  // basic exemption (vs Rs 2,50,000 below 60) should make a senior's tax
+  // lower than an identical non-senior's on the same income.
+  const seniorInputs = {
+    salaryIncome: 900_000,
+    dividends: 0,
+    interestOtherIncome: 0,
+    eligibleInterestDeduction: 0,
+    debtMfShortTermDeemedGain: 0,
+    intradayGain: 0,
+    oldRegimeDeductions: 0
+  };
+  const seniorRegime = compareRegimes({ ...seniorInputs, seniorCitizen: true }, ruleCatalog.regimeChoice);
+  const nonSeniorRegime = compareRegimes({ ...seniorInputs, seniorCitizen: false }, ruleCatalog.regimeChoice);
+  // Taxable Rs 8,50,000 after the Rs 50,000 standard deduction. Senior 60-79:
+  // 5% of (5L-3L) + 20% of (8.5L-5L) = 10,000 + 70,000 = 80,000, +4% cess = 83,200.
+  if (seniorRegime.oldRegimeTax !== 83_200) {
+    throw new Error(`Expected Rs 83,200 old-regime tax for a senior on Rs 9L salary, got ${seniorRegime.oldRegimeTax}.`);
+  }
+  // Below 60 on the same income: the extra Rs 50,000 taxed at 5% = Rs 2,500,
+  // +4% cess = Rs 2,600 more, i.e. Rs 85,800.
+  if (nonSeniorRegime.oldRegimeTax !== 85_800) {
+    throw new Error(`Expected Rs 85,800 old-regime tax below 60 on Rs 9L salary, got ${nonSeniorRegime.oldRegimeTax}.`);
+  }
+  if (!(seniorRegime.oldRegimeTax < nonSeniorRegime.oldRegimeTax)) {
+    throw new Error("Senior 60-79 old-regime band should tax less than the below-60 band on the same income.");
+  }
+
   // Section 234B advance-tax interest: below the Section 208 threshold, no
   // advance tax was required at all.
   const belowThreshold = estimateAdvanceTaxInterest(
@@ -261,7 +362,7 @@ async function main() {
   }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case, Section 234B advance-tax interest matches the known shortfall case, and minor's-income clubbing matches the known two-child case."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, and minor's-income clubbing matches the known two-child case."
   );
 }
 

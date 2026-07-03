@@ -9,10 +9,13 @@ import {
   caOrSelfFileRecommendation,
   caSummaryRows,
   checklistGaps,
+  compareRegimes,
+  computeRegimeBreakEven,
   chooseLocalFolder,
   buildConfidenceReport,
   clearSession,
   clubbedMinorIncome,
+  computeLoanDeductions,
   deriveProfileFlags,
   downloadExport,
   evaluateRiskTriggers,
@@ -315,19 +318,98 @@ function App() {
 
   const openIssueCount = gaps.length + riskTriggers.length + reconciliationMismatches.length;
 
+  // The AIS/TDS/broker variance summary the dashboard gauge shows: how many
+  // figures were actually compared, how many mismatched, and the total gap.
+  // "from what you've entered vs AIS figures" - manual entry only, no sync.
+  const varianceCheckCount =
+    Object.keys(aisExpectedFigures).length +
+    tdsRows.length +
+    (brokerCheck ? brokerCheck.perClass.filter((entry) => entry.computed !== 0 || entry.broker !== 0).length : 0);
+  const varianceTotalAbs = reconciliationMismatches.reduce((sum, mismatch) => sum + Math.abs(mismatch.difference), 0);
+
+  // Old vs new regime, computed the same way the Results panel does - only
+  // when there's a salary to compare and it fits the profile (not an HUF).
+  const regimeComparable = supplementalFigures.salaryIncome > 0 && !flags.huf;
+  // Loan-interest deductions (capped per rules/loan-treatment.json) add to the
+  // old-regime side of the comparison, the same way the Results panel does it.
+  const loanDeductionsTotal = computeLoanDeductions(supplementalFigures, ruleCatalog.loanTreatment).total;
+  const regimeInputs = {
+    salaryIncome: supplementalFigures.salaryIncome,
+    dividends: supplementalFigures.dividends,
+    interestOtherIncome: supplementalFigures.interestOtherIncome,
+    eligibleInterestDeduction: supplementalFigures.eligibleInterestDeduction,
+    debtMfShortTermDeemedGain: rulesSummary.debtMfShortTermDeemedGain,
+    intradayGain: rulesSummary.intradayGain,
+    oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + loanDeductionsTotal,
+    seniorCitizen: flags.seniorCitizen
+  };
+  const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
+  const regimeBreakEven = regimeComparable ? computeRegimeBreakEven(regimeInputs, ruleCatalog.regimeChoice) : null;
+
+  // Deduction ceilings come from rules/deduction-limits.json, never hardcoded
+  // here (CLAUDE.md). The 80D limit steps up when a senior citizen is covered.
+  const deductionLimits = ruleCatalog.deductionLimits.values;
+
   // Everything the dashboard's "this year at a glance" shows, computed
   // deterministically from the same figures the results view uses. The
   // dashboard only displays it - no separate calculation lives there.
   const thisYear: ThisYearSnapshot = {
     hasStartedFiling: documents.length > 0 || orientation.residency !== null,
+    financialYear: ruleCatalog.itrFormSelection.financial_year,
     assessmentYear: `AY ${ruleCatalog.itrFormSelection.assessment_year}`,
     itrForm: itrForm.form,
+    itrDueDate: itrForm.dueDate,
     regimeNote: ruleCatalog.regimeChoice.values.new_regime_default
-      ? "New regime by default — compare old vs new in Results."
-      : "Old regime by default — compare in Results.",
+      ? "New regime by default"
+      : "Old regime by default",
+    capitalGains: {
+      stcg: rulesSummary.stcg,
+      ltcg: rulesSummary.ltcg,
+      debtMf: rulesSummary.debtMfShortTermDeemedGain,
+      intraday: rulesSummary.intradayGain,
+      ltcgExemptionLimit: ruleCatalog.capitalGainsEquity.values.listed_equity.ltcg_exemption_inr
+    },
     estimatedCapitalGainsTax: rulesSummary.estimatedStcgTax + rulesSummary.estimatedLtcgTax,
-    grossGains: rulesSummary.stcg + rulesSummary.ltcg,
-    openIssueCount
+    regime: {
+      comparable: regimeComparable,
+      newRegimeTax: regimeResult?.newRegimeTax ?? 0,
+      oldRegimeTax: regimeResult?.oldRegimeTax ?? 0,
+      cheaper: regimeResult?.cheaperRegime ?? "equal",
+      saving: regimeResult?.difference ?? 0,
+      breakEvenDeductions: regimeBreakEven?.breakEvenDeductions ?? 0,
+      actualDeductions: regimeBreakEven?.actualDeductions ?? 0,
+      newAlwaysWins: regimeBreakEven?.newAlwaysWins ?? false
+    },
+    deductions: [
+      {
+        key: "deduction80C",
+        section: "80C",
+        label: "Section 80C investments",
+        used: supplementalFigures.deduction80C,
+        limit: deductionLimits.section_80c.limit_inr
+      },
+      {
+        key: "deduction80D",
+        section: "80D",
+        label: "Section 80D health cover",
+        used: supplementalFigures.deduction80D,
+        limit: flags.seniorCitizen
+          ? deductionLimits.section_80d.self_family_senior_citizen_inr
+          : deductionLimits.section_80d.self_family_below_60_inr
+      },
+      {
+        key: "deductionNps80ccd1b",
+        section: "80CCD(1B)",
+        label: "NPS extra deduction",
+        used: supplementalFigures.deductionNps80ccd1b,
+        limit: deductionLimits.section_80ccd_1b_nps.limit_inr
+      }
+    ],
+    variance: {
+      checkCount: varianceCheckCount,
+      mismatchCount: reconciliationMismatches.length,
+      totalAbsVariance: varianceTotalAbs
+    }
   };
 
   // A single pre-export confidence check: the same signals shown throughout
@@ -502,6 +584,13 @@ function App() {
     setPastFilings((prev) => prev.filter((filing) => filing.id !== id));
   }
 
+  // The dashboard's deduction-progress widget writes each figure straight back
+  // to the shared session state (it owns this planning input the same way it
+  // owns past-filing entry), so it persists and stays a single source of truth.
+  function changeDeduction(key: "deduction80C" | "deduction80D" | "deductionNps80ccd1b", value: number) {
+    setSupplementalFigures((prev) => ({ ...prev, [key]: value }));
+  }
+
   /** Only ever jumps to a step the user has already reached - never a way to skip ahead. */
   function goToStep(target: AppStep) {
     if (STEP_ORDER.indexOf(target) > furthestStepIndex) {
@@ -643,6 +732,7 @@ function App() {
             onAddPastFiling={addPastFiling}
             onRemovePastFiling={removePastFiling}
             onGoToFiling={goToFilingFromDashboard}
+            onChangeDeduction={changeDeduction}
             showAdvanced={showAdvanced}
             onToggleAdvanced={() => setShowAdvanced((value) => !value)}
           />
@@ -748,7 +838,9 @@ function App() {
                 nri={flags.nri}
                 huf={flags.huf}
                 singleParent={flags.singleParent}
+                hasLoans={flags.hasLoans}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
+                loanTreatmentRule={ruleCatalog.loanTreatment}
                 advanceTaxRule={ruleCatalog.advanceTax}
                 aisFigures={aisFigures}
                 onChangeAisFigures={setAisFigures}

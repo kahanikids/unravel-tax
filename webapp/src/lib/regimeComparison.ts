@@ -102,3 +102,66 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
     difference: Math.abs(roundedNew - roundedOld)
   };
 }
+
+export type RegimeBreakEven = {
+  /** New-regime tax (rounded, incl. cess) the old regime has to match. */
+  newRegimeTax: number;
+  /** Old-regime deductions at which old-regime tax would equal the new regime's. */
+  breakEvenDeductions: number;
+  /** The old-regime deductions actually entered (the same total the comparison uses). */
+  actualDeductions: number;
+  /** actualDeductions - breakEvenDeductions: positive means the old regime already wins. */
+  surplus: number;
+  /** True once the new regime already brings this income to zero tax - no deduction can beat it. */
+  newAlwaysWins: boolean;
+};
+
+/**
+ * The exact old-regime deductions (80C, 80D, HRA, 24(b), etc.) at which the
+ * old regime's tax would exactly match the new regime's. Above it, the old
+ * regime saves money; below it, the new regime (the default) wins.
+ *
+ * Solved generically off the same slab engine compareRegimes uses: old-regime
+ * tax only ever falls as deductions rise, so a monotonic search finds the
+ * crossover for any income - no slab rates or offsets are restated here (a
+ * closed form like Gross - 675000 - newTax/0.30 only holds when the crossover
+ * old-taxable lands in the 30% band, which it doesn't at every income). When
+ * the new-regime tax is already zero (e.g. salary up to Rs 12.75 lakh), the
+ * old regime can at best tie, so break-even is reported as zero / not
+ * applicable rather than a large unreachable figure.
+ */
+export function computeRegimeBreakEven(inputs: RegimeComparisonInputs, rule: RegimeChoiceRule): RegimeBreakEven {
+  const base = compareRegimes({ ...inputs, oldRegimeDeductions: 0 }, rule);
+  const newRegimeTax = base.newRegimeTax;
+  const actualDeductions = Math.max(0, inputs.oldRegimeDeductions);
+  if (newRegimeTax <= 0) {
+    return { newRegimeTax, breakEvenDeductions: 0, actualDeductions, surplus: actualDeductions, newAlwaysWins: true };
+  }
+
+  let breakEvenDeductions = 0;
+  // Only search when the old regime isn't already at/below the new-regime tax
+  // with zero deductions (otherwise any deductions keep old ahead: break-even 0).
+  if (base.oldRegimeTax > newRegimeTax) {
+    let lo = 0;
+    // Deductions beyond the old-regime taxable base can't reduce tax further.
+    let hi = base.oldRegimeSlabIncome;
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      const oldRegimeTax = compareRegimes({ ...inputs, oldRegimeDeductions: mid }, rule).oldRegimeTax;
+      if (oldRegimeTax > newRegimeTax) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    breakEvenDeductions = Math.round(hi);
+  }
+
+  return {
+    newRegimeTax,
+    breakEvenDeductions,
+    actualDeductions,
+    surplus: actualDeductions - breakEvenDeductions,
+    newAlwaysWins: false
+  };
+}

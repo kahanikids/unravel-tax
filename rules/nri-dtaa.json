@@ -7,11 +7,14 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified",
+    "last_verified": "2026-07-03",
+    "note": "MF capital-gains country map checked against ITAT Mumbai Anushaka Sanjay Shah (ITA No. 174/MUM/2025, 26 Mar 2025) and current NRI filing guides. Treaty article numbers are indicative — confirm the exact article in your country's DTAA before filing."
   },
   "source_refs": [
+    "https://itatonline.org/digest/verdicts/anushaka-sanjay-shah-ms-v-ito-it-itat-mumbai/",
+    "https://economictimes.indiatimes.com/nri/invest/cap-gains-of-nris-on-mutual-fund-units-cant-be-taxed-in-india-itat/articleshow/120253938.cms",
+    "Income Tax Act, 1961, Section 90 (DTAA relief)",
     "SYSTEM_SPEC.md Section 9.4"
   ],
   "values": {
@@ -21,6 +24,97 @@
     ],
     "foreign_tax_credit_document": "form_67",
     "forms_not_interchangeable": true,
-    "requires_country_of_tax_residence": true
+    "requires_country_of_tax_residence": true,
+    "mutual_fund_units_not_shares": true,
+    "itat_mf_ruling": {
+      "case": "Anushaka Sanjay Shah v. ITO (ITAT Mumbai)",
+      "date": "2026-03-26",
+      "holding": "MF units are not company shares; gains fall under the DTAA residual clause and may be taxable only in the country of residence when that clause grants exclusive taxing rights there."
+    },
+    "mutual_fund_capital_gains": {
+      "default_treatment": "check_treaty",
+      "countries": {
+        "Singapore": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13(5)",
+          "note": "ITAT Mumbai (Mar 2025) held Indian MF gains taxable only in Singapore. Singapore does not levy personal capital-gains tax, so effective Indian tax can be zero — but you must still file an ITR in India to claim the exemption and recover any TDS."
+        },
+        "United Arab Emirates": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13(5)",
+          "note": "Residual clause: gains taxable only in the UAE. No personal income tax there."
+        },
+        "Saudi Arabia": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13(6)",
+          "note": "Residual clause: gains taxable only in Saudi Arabia."
+        },
+        "Kuwait": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13(6)",
+          "note": "Residual clause: gains taxable only in Kuwait."
+        },
+        "Oman": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "15(6)",
+          "note": "Residual clause: gains taxable only in Oman."
+        },
+        "Qatar": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13(6)",
+          "note": "Residual clause: gains taxable only in Qatar."
+        },
+        "Germany": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13",
+          "note": "Treaty assigns MF gains to Germany; taxed per German law, not Indian rates."
+        },
+        "Italy": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "14(6)",
+          "note": "Residual clause: gains taxable only in Italy."
+        },
+        "Malaysia": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "14(6)",
+          "note": "Residual clause: gains taxable only in Malaysia."
+        },
+        "Nepal": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "13(6)",
+          "note": "Residual clause: gains taxable only in Nepal."
+        },
+        "Philippines": {
+          "treatment": "country_of_residence_only",
+          "dtaa_article": "14(5)",
+          "note": "Residual clause: gains taxable only in the Philippines."
+        },
+        "United States": {
+          "treatment": "taxable_in_india",
+          "dtaa_article": "13",
+          "note": "India-US DTAA taxes these gains in India at Indian rates. You may claim foreign tax credit in the US via Form 67."
+        },
+        "United Kingdom": {
+          "treatment": "taxable_in_india",
+          "dtaa_article": "14",
+          "note": "Taxable in India; UK residents can claim foreign tax credit at home."
+        },
+        "Canada": {
+          "treatment": "taxable_in_india_with_credit",
+          "dtaa_article": "13",
+          "note": "Both countries may tax; pay in India first, then claim foreign tax credit in Canada."
+        },
+        "Australia": {
+          "treatment": "taxable_in_india",
+          "dtaa_article": "13",
+          "note": "Taxable in India at Indian rates."
+        },
+        "Hong Kong": {
+          "treatment": "taxable_in_india",
+          "dtaa_article": "14",
+          "note": "Taxable in India despite Hong Kong's territorial tax system."
+        }
+      }
+    }
   }
 }

@@ -57,7 +57,7 @@ export function evaluateRiskTriggers(
   if (hasBusinessIncome) {
     triggers.push({
       id: "business_income_itr_form",
-      label: "Speculative/intraday trading income in your documents",
+      label: "Speculative/intraday trading income is considered Business Income",
       consequence: `This moves your filing to ${itrForm.form}, due ${formatDate(itrForm.dueDate)}. That's a different, often later, date than the simplest forms.`,
       severity: "form-changing"
     });
@@ -112,6 +112,10 @@ export function caOrSelfFileRecommendation(
     matchedReasons.push("speculative/intraday income counted as business income");
   }
   for (const trigger of formChangingTriggers) {
+    // Business income is already stated above via hasBusinessIncome; don't repeat it.
+    if (hasBusinessIncome && trigger.id === "business_income_itr_form") {
+      continue;
+    }
     matchedReasons.push(trigger.label.charAt(0).toLowerCase() + trigger.label.slice(1));
   }
 

@@ -1,0 +1,74 @@
+{
+  "topic": "insurance",
+  "applies_to": [
+    "resident",
+    "senior-citizen",
+    "nri",
+    "huf",
+    "single-parent"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-03",
+    "note": "Insurance touches a return in two ways. (1) Premiums: life-insurance premiums count inside the Section 80C Rs 1,50,000 ceiling and health-insurance premiums under Section 80D (Rs 25,000, or Rs 50,000 when a senior citizen is covered), both old regime only. Those rupee ceilings live in deduction-limits.json and are cross-referenced here, not duplicated. (2) Payouts under Section 10(10D): normally exempt, but the Finance Act 2021 and Finance Act 2023 made high-premium policy maturities taxable. A ULIP issued on/after 1-Feb-2021 with aggregate annual premium over Rs 2,50,000 loses the exemption and its maturity gain is taxed as capital gains (12.5% LTCG over the Rs 1.25 lakh limit / 20% STCG, same as listed equity under capital-gains-equity.json). A traditional (non-ULIP) policy issued on/after 1-Apr-2023 with aggregate annual premium over Rs 5,00,000 loses the exemption and its maturity (payout minus premiums paid) is taxed as income from other sources at slab rate. The older rule still applies too: for any policy issued on/after 1-Apr-2012, premium must also stay within 10% of the sum assured (20% for 1-Apr-2003 to 31-Mar-2012). Death benefits are always fully exempt regardless of premium (except Keyman insurance). TDS of 2% under Section 194DA applies to the income portion of a taxable payout of Rs 1 lakh or more. Cross-checked against ClearTax, HDFC Life, Kotak Life, and Finlecture FY 2025-26 guides; confirm against incometax.gov.in before relying on this as filing advice.",
+    "source_type": "secondary"
+  },
+  "source_refs": [
+    "Income Tax Act, 1961, Sections 80C, 80D, 10(10D), 194DA",
+    "https://cleartax.in/s/life-insurance-taxability",
+    "https://www.hdfclife.com/insurance-knowledge-centre/tax-saving-insurance/section-10-10d-of-the-income-tax-act"
+  ],
+  "values": {
+    "premiums": {
+      "life_insurance_section_80c": {
+        "within_section_80c_limit": true,
+        "regime": "old_only",
+        "cross_reference": "deduction-limits.json",
+        "note": "Life-insurance premiums (for you, your spouse, or your children) count inside the single Rs 1,50,000 Section 80C ceiling, not on top of it. Old regime only. Premium qualifies only up to 10% of the sum assured (20% for policies issued 1-Apr-2003 to 31-Mar-2012, 15% where the insured has a Section 80U/80DDB disability)."
+      },
+      "health_insurance_section_80d": {
+        "regime": "old_only",
+        "cross_reference": "deduction-limits.json",
+        "note": "Health-insurance premiums are deductible under Section 80D (Rs 25,000, or Rs 50,000 when a senior citizen is covered), old regime only. The rupee limits live in deduction-limits.json."
+      }
+    },
+    "payouts_section_10_10d": {
+      "death_benefit_always_exempt": true,
+      "death_benefit_exception": "Keyman insurance is never exempt under Section 10(10D).",
+      "ulip": {
+        "issued_on_or_after": "2021-02-01",
+        "aggregate_annual_premium_exemption_cap_inr": 250000,
+        "taxed_as_if_breached": "capital_gains",
+        "capital_gains_cross_reference": "capital-gains-equity.json",
+        "note": "For ULIPs issued on/after 1-Feb-2021, if aggregate annual premium across all your ULIPs exceeds Rs 2,50,000 in any policy year, the maturity is no longer exempt and its gain is taxed as capital gains at listed-equity rates (12.5% LTCG above the Rs 1.25 lakh exemption, 20% STCG)."
+      },
+      "traditional_non_ulip": {
+        "issued_on_or_after": "2023-04-01",
+        "aggregate_annual_premium_exemption_cap_inr": 500000,
+        "taxed_as_if_breached": "income_from_other_sources_slab_rate",
+        "taxable_amount_basis": "maturity proceeds minus total premiums paid",
+        "note": "For traditional (endowment/money-back) policies issued on/after 1-Apr-2023, if aggregate annual premium across all such policies exceeds Rs 5,00,000 in any year, the maturity is taxed as income from other sources at your slab rate on (payout minus premiums paid)."
+      },
+      "sum_assured_ratio_rule": {
+        "issued_on_or_after_2012_04_01_premium_max_pct_of_sum_assured": 10,
+        "issued_2003_04_01_to_2012_03_31_premium_max_pct_of_sum_assured": 20,
+        "note": "Independent of the aggregate-premium caps above: for the payout to be exempt, annual premium must also stay within this percentage of the sum assured."
+      },
+      "tds_section_194da": {
+        "rate": 0.02,
+        "applies_when_income_portion_at_least_inr": 100000,
+        "note": "A taxable payout of Rs 1 lakh or more has 2% TDS deducted on the income portion (payout minus premiums paid) under Section 194DA."
+      }
+    },
+    "new_act_2025_renumbering": {
+      "applies_from_financial_year": "2026-27",
+      "section_80c": "Section 123",
+      "section_80d": "Section 126",
+      "section_10_10d": "Schedule II Sr. No. 2",
+      "note": "The Income Tax Act, 2025 renumbers these from FY 2026-27 onward with the rules unchanged. For a FY 2025-26 (AY 2026-27) return use the 1961 Act numbers."
+    }
+  }
+}

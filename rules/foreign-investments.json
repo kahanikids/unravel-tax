@@ -1,0 +1,81 @@
+{
+  "topic": "foreign-investments",
+  "applies_to": [
+    "resident",
+    "senior-citizen",
+    "single-parent",
+    "huf"
+  ],
+  "not_applicable_to_note": "The mandatory Schedule FA disclosure below applies to a Resident and Ordinarily Resident (ROR). A non-resident or a Resident but Not Ordinarily Resident (RNOR) is generally outside Schedule FA; see nri-residential-status.json for how status is decided.",
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-03",
+    "note": "For a Resident and Ordinarily Resident, foreign investments create obligations that a purely domestic portfolio does not. (1) Disclosure: every foreign asset held at ANY point during the calendar year ending 31-Dec-2025 must be reported in Schedule FA of ITR-2 or ITR-3 - foreign stocks, RSUs, ESPP, ETFs, foreign bank/brokerage/custodial accounts, foreign life-insurance with cash value, foreign property, even a dormant account. There is no minimum value threshold for the disclosure itself, and ITR-1/ITR-4 cannot be used. Note Schedule FA uses the calendar year (Jan-Dec), unlike capital gains which use the financial year (Apr-Mar); convert using the SBI TT buying rate. (2) Income: foreign dividends and interest are taxable in India at slab rate under income from other sources; capital gains on foreign shares go in Schedule CG (foreign shares are unlisted-in-India, so 24 months is the long-term threshold at 12.5%); RSU/ESPP vesting is a salary perquisite. (3) Foreign tax credit: tax paid abroad can be credited under Section 90/91 by filing Form 67 (before the return) plus Schedule FSI and Schedule TR. (4) TCS on remittances: from 1-Apr-2025 (Finance Act 2025) the Section 206C(1G) LRS threshold rose from Rs 7 lakh to Rs 10 lakh, TCS is 20% on most investment/gift remittances above Rs 10 lakh, education-loan-funded remittances are fully exempt, and TCS is a prepaid credit recoverable in the ITR, not a cost. (5) Penalties: non-disclosure or inaccurate disclosure of a foreign asset carries a flat Rs 10 lakh penalty per year under Section 43 of the Black Money Act (with a carve-out from 1-Oct-2024 where aggregate undisclosed movable foreign assets are Rs 20 lakh or less - the penalty is waived but the duty to disclose is not), plus 30% tax and up to 3x penalty and prosecution in serious cases. Cross-checked against incometax.gov.in Schedule FA guide, taxguru.in, vested.blog, and Finance Act 2025 summaries; confirm against incometax.gov.in before relying on this as filing advice.",
+    "source_type": "secondary"
+  },
+  "source_refs": [
+    "Black Money (Undisclosed Foreign Income and Assets) and Imposition of Tax Act, 2015, Sections 41, 42, 43",
+    "Income Tax Act, 1961, Sections 90, 91, 206C(1G), Rule 128 (Form 67)",
+    "https://www.incometax.gov.in/iec/foportal/sites/default/files/2026-03/Step%20by%20Step%20Guide%20FA%20FSI.pdf",
+    "https://taxguru.in/income-tax/foreign-assets-rsus-foreign-bank-accounts-itr-schedule-fa-reporting-notices-penalty.html"
+  ],
+  "values": {
+    "schedule_fa_disclosure": {
+      "applies_to_residential_status": "resident_and_ordinarily_resident",
+      "minimum_value_threshold_inr": 0,
+      "reporting_period": "calendar_year",
+      "reporting_period_note": "Report assets held at any time during the calendar year ending 31-Dec-2025 (Jan-Dec), not the financial year. Even one day of holding triggers disclosure.",
+      "currency_conversion": "SBI telegraphic transfer buying rate (TTBR)",
+      "requires_itr_form": ["ITR-2", "ITR-3"],
+      "cannot_use_forms": ["ITR-1", "ITR-4"],
+      "covered_assets": [
+        "foreign shares, ETFs and mutual funds",
+        "RSUs and ESPP from a foreign employer",
+        "foreign bank, brokerage and custodial accounts (including dormant)",
+        "foreign life insurance or annuity with a cash value",
+        "foreign real estate",
+        "any beneficial ownership, beneficiary interest or signing authority in a foreign account"
+      ]
+    },
+    "income_taxation": {
+      "foreign_dividends_and_interest": "Taxable in India at slab rate under income from other sources.",
+      "capital_gains_on_foreign_shares": "Reported in Schedule CG. Foreign shares are treated like unlisted shares: long-term after 24 months at 12.5%, otherwise short-term at slab rate.",
+      "rsu_espp_vesting": "Value at vesting is a salary perquisite taxed at slab rate; a later sale is a capital gain."
+    },
+    "foreign_tax_credit": {
+      "sections": ["90", "91"],
+      "forms_required": ["Form 67", "Schedule FSI", "Schedule TR"],
+      "note": "Tax paid abroad on foreign income can be credited against Indian tax on the same income. Form 67 must be filed on the e-filing portal on or before filing the return."
+    },
+    "tcs_on_lrs_remittances": {
+      "section": "206C(1G)",
+      "effective_date": "2025-04-01",
+      "threshold_inr": 1000000,
+      "previous_threshold_inr": 700000,
+      "rate_investment_gift_other": 0.20,
+      "rate_education_medical": 0.02,
+      "education_loan_funded": "exempt",
+      "overseas_tour_package": "2% on the whole amount, no threshold",
+      "annual_lrs_cap_usd": 250000,
+      "note": "From 1-Apr-2025 (Finance Act 2025) the exemption threshold rose from Rs 7 lakh to Rs 10 lakh per financial year across all LRS remittances combined. TCS is a prepaid tax credit shown in Form 26AS/AIS and recoverable in the ITR, not an added cost."
+    },
+    "black_money_act_penalties": {
+      "non_disclosure_penalty_inr": 1000000,
+      "non_disclosure_penalty_section": "43",
+      "small_asset_carve_out": {
+        "effective_date": "2024-10-01",
+        "aggregate_movable_asset_ceiling_inr": 2000000,
+        "note": "From 1-Oct-2024 the Section 43 flat penalty does not apply where aggregate undisclosed movable foreign assets (excluding immovable property) are Rs 20 lakh or less. The penalty is waived; the duty to disclose in Schedule FA is not."
+      },
+      "serious_case": "Undisclosed foreign income/asset can be taxed at 30% plus a penalty of up to three times the tax, plus prosecution (Sections 41, 49, 50)."
+    },
+    "new_act_2025_renumbering": {
+      "applies_from_financial_year": "2026-27",
+      "return_filing_provision": "Section 263 of the Income Tax Act, 2025",
+      "note": "The Income Tax Act, 2025 continues the mandatory foreign-asset filing requirement for a resident other than not ordinarily resident. The Black Money Act, 2015 is unchanged. For a FY 2025-26 (AY 2026-27) return the 1961 Act provisions apply."
+    }
+  }
+}

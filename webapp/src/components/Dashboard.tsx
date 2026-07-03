@@ -2,19 +2,39 @@ import { useState } from "react";
 import {
   BLANK_PAST_FILING_FIELDS,
   deriveHistoryInsights,
+  FILING_SOURCE_LABELS,
   normalizeAssessmentYear,
   parseItrJson,
+  parseItrVText,
   REGIME_LABELS,
   type FilingRegime,
   type FilingSource,
   type PastFiling,
   type PastFilingFields
 } from "../lib/pastFilings";
-import { CountdownBanner } from "./CountdownBanner";
+import { extractPdfText } from "../ingest/pdfExtract";
+import {
+  DeductionBar,
+  Donut,
+  formatCompactInr,
+  Meter,
+  SignedBarChart,
+  TrendChart,
+  VarianceGauge,
+  type ChartSeries,
+  type DonutSegment
+} from "./DashboardWidgets";
 
 function formatAmount(value: number) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value);
 }
+
+const CAPITAL_GAINS_COLORS = {
+  stcg: "#2bb673",
+  ltcg: "#147a47",
+  debtMf: "#9361e2",
+  intraday: "#e0982f"
+} as const;
 
 function formatSignedInr(value: number) {
   if (value > 0) {
@@ -30,17 +50,74 @@ function formatPercent(rate: number) {
   return `${(rate * 100).toLocaleString("en-IN", { maximumFractionDigits: 1 })}%`;
 }
 
+/** ISO due date (e.g. "2026-07-31") to a short "31 Jul 2026". */
+function formatDueDate(iso: string) {
+  const date = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Capital-gain buckets for the donut + the Section 112A tax-free-LTCG tracker. */
+export type CapitalGainsBreakdown = {
+  stcg: number;
+  ltcg: number;
+  debtMf: number;
+  intraday: number;
+  /** Section 112A tax-free limit, read from rules/capital-gains-equity.json. */
+  ltcgExemptionLimit: number;
+};
+
+/** Old vs new regime, on the slab-taxed portion of income (see regimeComparison.ts). */
+export type RegimeSnapshot = {
+  /** False when there's nothing to compare (no salary entered) or it doesn't fit (HUF). */
+  comparable: boolean;
+  newRegimeTax: number;
+  oldRegimeTax: number;
+  cheaper: "new" | "old" | "equal";
+  saving: number;
+  /** Old-regime deductions at which the two regimes' tax matches. */
+  breakEvenDeductions: number;
+  /** Old-regime deductions actually entered (same total the comparison uses). */
+  actualDeductions: number;
+  /** True once the new regime is already zero-tax: no deduction can beat it. */
+  newAlwaysWins: boolean;
+};
+
+/** One deduction's used amount vs its limit (limit from rules/deduction-limits.json). */
+export type DeductionProgress = {
+  key: "deduction80C" | "deduction80D" | "deductionNps80ccd1b";
+  section: string;
+  label: string;
+  used: number;
+  limit: number;
+};
+
+/** AIS/TDS variance summary, from what the user has entered vs AIS figures. */
+export type VarianceSnapshot = {
+  /** How many figures were actually compared (AIS + TDS + broker rows). */
+  checkCount: number;
+  mismatchCount: number;
+  totalAbsVariance: number;
+};
+
 /** The current in-progress filing, summarized for the "this year" panel.
  * Every figure here is computed deterministically upstream in App - the
- * dashboard only displays it. */
+ * dashboard only displays it (deduction inputs write straight back to the
+ * same session figures). */
 export type ThisYearSnapshot = {
   hasStartedFiling: boolean;
+  financialYear: string;
   assessmentYear: string;
   itrForm: string;
+  itrDueDate: string;
   regimeNote: string;
+  capitalGains: CapitalGainsBreakdown;
   estimatedCapitalGainsTax: number;
-  grossGains: number;
-  openIssueCount: number;
+  regime: RegimeSnapshot;
+  deductions: DeductionProgress[];
+  variance: VarianceSnapshot;
 };
 
 export function Dashboard({
@@ -49,6 +126,7 @@ export function Dashboard({
   onAddPastFiling,
   onRemovePastFiling,
   onGoToFiling,
+  onChangeDeduction,
   showAdvanced,
   onToggleAdvanced
 }: {
@@ -57,6 +135,7 @@ export function Dashboard({
   onAddPastFiling: (fields: PastFilingFields, source: FilingSource) => void;
   onRemovePastFiling: (id: string) => void;
   onGoToFiling: () => void;
+  onChangeDeduction: (key: DeductionProgress["key"], value: number) => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
 }) {
@@ -65,14 +144,49 @@ export function Dashboard({
   const maxIncome = Math.max(1, ...insights.sorted.map((filing) => filing.grossTotalIncome));
   const maxRate = Math.max(0.01, ...insights.effectiveRates.map((point) => point.rate));
 
+  // Year-over-year chart data. Older saved rows may predate these fields, so
+  // every figure is coerced to a number before it reaches a chart.
+  const years = insights.sorted.map((filing) => filing.assessmentYear);
+  const num = (value: number) => (Number.isFinite(value) ? value : 0);
+  const refundTrend = insights.sorted.map((filing) => num(filing.refundOrPayable));
+  const outcomeSeries: ChartSeries[] = [
+    { label: "Capital gains / losses", color: "#2bb673", values: insights.sorted.map((f) => num(f.capitalGains)) },
+    { label: "Total tax paid", color: "#147a47", values: insights.sorted.map((f) => num(f.totalTaxPaid)) },
+    { label: "Losses carried forward", color: "#9361e2", values: insights.sorted.map((f) => num(f.carryForwardLosses)) }
+  ];
+  const loanSeries: ChartSeries[] = [
+    { label: "Principal repaid", color: "#2b7fff", values: insights.sorted.map((f) => num(f.loanPrincipal)) },
+    { label: "Interest paid", color: "#e0982f", values: insights.sorted.map((f) => num(f.loanInterest)) }
+  ];
+  const hasAny = (series: ChartSeries[]) => series.some((line) => line.values.some((value) => value !== 0));
+  const hasOutcomeData = hasAny(outcomeSeries);
+  const hasLoanData = hasAny(loanSeries);
+  const hasRefundData = refundTrend.some((value) => value !== 0);
+
+  const cg = thisYear.capitalGains;
+  const netGains = cg.stcg + cg.ltcg + cg.debtMf + cg.intraday;
+  const gainSegments: DonutSegment[] = [
+    { label: "Short-term (equity)", value: cg.stcg, color: CAPITAL_GAINS_COLORS.stcg },
+    { label: "Long-term (equity)", value: cg.ltcg, color: CAPITAL_GAINS_COLORS.ltcg },
+    { label: "Debt MF (50AA)", value: cg.debtMf, color: CAPITAL_GAINS_COLORS.debtMf },
+    { label: "Intraday / speculative", value: cg.intraday, color: CAPITAL_GAINS_COLORS.intraday }
+  ];
+  const hasGains = gainSegments.some((segment) => Math.abs(segment.value) > 0);
+
+  const ltcgUsed = Math.max(0, cg.ltcg);
+  const ltcgHeadroom = Math.max(0, cg.ltcgExemptionLimit - ltcgUsed);
+  const ltcgTaxable = Math.max(0, ltcgUsed - cg.ltcgExemptionLimit);
+
+  const variance = thisYear.variance;
+  const matched = Math.max(0, variance.checkCount - variance.mismatchCount);
+
   return (
     <div className="step-card dashboard">
       <div className="panel-heading">
         <div>
           <h2>Your tax dashboard</h2>
           <p className="step-lede">
-            This year at a glance, and how your filings compare year over year. History stays in this browser, alongside
-            the rest of your filing.
+            This year at a glance, and how your filings compare year over year. Everything runs in this browser.
           </p>
         </div>
         <button type="button" className="view-toggle" onClick={onToggleAdvanced}>
@@ -80,40 +194,152 @@ export function Dashboard({
         </button>
       </div>
 
-      {/* ---- This year at a glance ---- */}
+      {/* ---- This year at a glance: visual command centre ---- */}
       <section className="dashboard-section" aria-labelledby="dashboard-this-year">
         <h3 id="dashboard-this-year">{`This year — ${thisYear.assessmentYear}`}</h3>
         {thisYear.hasStartedFiling ? (
           <>
-            <div className="dashboard-stat-grid">
-              <article className="dashboard-stat">
-                <span className="dashboard-stat-label">Open issues to check</span>
-                <strong className={thisYear.openIssueCount === 0 ? "dashboard-stat-good" : "dashboard-stat-flag"}>
-                  {thisYear.openIssueCount}
-                </strong>
-                <span className="dashboard-stat-note">
-                  {thisYear.openIssueCount === 0 ? "Nothing outstanding right now." : "Missing documents, mismatches, or risk flags."}
-                </span>
+            {/* ITR form badge + tax-year timeline */}
+            <div className="dashboard-timeline-card">
+              <div className="itr-badge">
+                <span className="itr-badge-label">Recommended form</span>
+                <strong className="itr-badge-form">{thisYear.itrForm}</strong>
+              </div>
+              <ol className="tax-timeline" aria-label="Filing timeline">
+                <li className="tax-timeline-step">
+                  <span className="tax-timeline-dot" aria-hidden="true" />
+                  <span className="tax-timeline-title">{`FY ${thisYear.financialYear}`}</span>
+                  <span className="tax-timeline-note">Income earned Apr–Mar</span>
+                </li>
+                <li className="tax-timeline-step">
+                  <span className="tax-timeline-dot" aria-hidden="true" />
+                  <span className="tax-timeline-title">{thisYear.assessmentYear}</span>
+                  <span className="tax-timeline-note">Filed this year</span>
+                </li>
+                <li className="tax-timeline-step tax-timeline-step-due">
+                  <span className="tax-timeline-dot" aria-hidden="true" />
+                  <span className="tax-timeline-title">Due {formatDueDate(thisYear.itrDueDate)}</span>
+                  <span className="tax-timeline-note">{thisYear.regimeNote}</span>
+                </li>
+              </ol>
+            </div>
+
+            <div className="dashboard-widgets">
+              {/* 1. Regime simulator */}
+              <article className="dashboard-widget" aria-labelledby="widget-regime">
+                <h4 id="widget-regime">New vs old regime</h4>
+                {thisYear.regime.comparable ? (
+                  <>
+                    <div className="regime-cards">
+                      <div className={thisYear.regime.cheaper === "new" ? "regime-card regime-card-win" : "regime-card"}>
+                        <span className="regime-card-label">New</span>
+                        <strong className="regime-card-value">{formatCompactInr(thisYear.regime.newRegimeTax)}</strong>
+                      </div>
+                      <div className={thisYear.regime.cheaper === "old" ? "regime-card regime-card-win" : "regime-card"}>
+                        <span className="regime-card-label">Old</span>
+                        <strong className="regime-card-value">{formatCompactInr(thisYear.regime.oldRegimeTax)}</strong>
+                      </div>
+                    </div>
+                    <p className="widget-note">
+                      {thisYear.regime.cheaper === "equal"
+                        ? "About the same either way on this estimate."
+                        : `${thisYear.regime.cheaper === "new" ? "New" : "Old"} regime saves about ${formatCompactInr(
+                            thisYear.regime.saving
+                          )}. Slab income only.`}
+                    </p>
+                    {thisYear.regime.newAlwaysWins ? (
+                      <p className="widget-note">New regime is already zero-tax here, so there's no break-even to beat.</p>
+                    ) : (
+                      <>
+                        <p className="widget-note">
+                          Break-even deductions <strong>{formatCompactInr(thisYear.regime.breakEvenDeductions)}</strong>
+                        </p>
+                        <Meter
+                          used={thisYear.regime.actualDeductions}
+                          limit={thisYear.regime.breakEvenDeductions}
+                          caption={`You've entered ${formatCompactInr(
+                            thisYear.regime.actualDeductions
+                          )} of old-regime deductions vs the ${formatCompactInr(
+                            thisYear.regime.breakEvenDeductions
+                          )} break-even.`}
+                          overLabel={`You're past the ${formatCompactInr(
+                            thisYear.regime.breakEvenDeductions
+                          )} break-even, so the old regime wins.`}
+                        />
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <p className="widget-empty">Add your salary in Results to compare regimes.</p>
+                )}
               </article>
-              <article className="dashboard-stat">
-                <span className="dashboard-stat-label">Recommended ITR form</span>
-                <strong>{thisYear.itrForm}</strong>
-                <span className="dashboard-stat-note">{thisYear.regimeNote}</span>
+
+              {/* 2a. Capital gains donut */}
+              <article className="dashboard-widget" aria-labelledby="widget-gains">
+                <h4 id="widget-gains">Capital gains by type</h4>
+                {hasGains ? (
+                  <Donut
+                    segments={gainSegments}
+                    centerValue={formatCompactInr(netGains)}
+                    centerLabel="net"
+                    ariaLabel="Capital gains and losses by asset type"
+                  />
+                ) : (
+                  <p className="widget-empty">No capital gains in your documents yet.</p>
+                )}
               </article>
-              <article className="dashboard-stat">
-                <span className="dashboard-stat-label">Gains this year</span>
-                <strong>₹{formatAmount(thisYear.grossGains)}</strong>
-                <span className="dashboard-stat-note">Short- and long-term capital gains from your documents.</span>
+
+              {/* 2b. Section 112A tax-free LTCG harvesting tracker */}
+              <article className="dashboard-widget" aria-labelledby="widget-ltcg">
+                <h4 id="widget-ltcg">Tax-free LTCG left (112A)</h4>
+                <strong className="widget-headline">{formatCompactInr(ltcgHeadroom)}</strong>
+                <Meter
+                  used={ltcgUsed}
+                  limit={cg.ltcgExemptionLimit}
+                  caption={`${formatCompactInr(ltcgHeadroom)} of the ${formatCompactInr(
+                    cg.ltcgExemptionLimit
+                  )} exemption still unused`}
+                  overLabel={`Exemption used in full — ${formatCompactInr(ltcgTaxable)} of LTCG is taxable`}
+                />
               </article>
-              <article className="dashboard-stat">
-                <span className="dashboard-stat-label">Estimated capital-gains tax</span>
-                <strong>₹{formatAmount(thisYear.estimatedCapitalGainsTax)}</strong>
-                <span className="dashboard-stat-note">
-                  On equity gains only (Sections 111A/112A). Slab-taxed income depends on your regime.
-                </span>
+
+              {/* 3. Deduction progress bars */}
+              <article className="dashboard-widget" aria-labelledby="widget-deductions">
+                <h4 id="widget-deductions">Deductions used (old regime)</h4>
+                <div className="deduction-bars">
+                  {thisYear.deductions.map((deduction) => (
+                    <DeductionBar
+                      key={deduction.key}
+                      label={deduction.label}
+                      section={deduction.section}
+                      used={deduction.used}
+                      limit={deduction.limit}
+                      onChange={(value) => onChangeDeduction(deduction.key, value)}
+                    />
+                  ))}
+                </div>
+              </article>
+
+              {/* 4. Reconciliation variance gauge */}
+              <article className="dashboard-widget" aria-labelledby="widget-variance">
+                <h4 id="widget-variance">AIS / TDS match</h4>
+                {variance.checkCount > 0 ? (
+                  <>
+                    <VarianceGauge matched={matched} total={variance.checkCount} />
+                    <p className="widget-note">
+                      {variance.mismatchCount === 0
+                        ? "Everything you've entered matches your AIS figures."
+                        : `${variance.mismatchCount} mismatch${variance.mismatchCount === 1 ? "" : "es"} worth ${formatCompactInr(
+                            variance.totalAbsVariance
+                          )}, from what you've entered vs AIS.`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="widget-empty">Enter your AIS/26AS figures in Results to check for mismatches.</p>
+                )}
               </article>
             </div>
-            <CountdownBanner />
+
             <button type="button" className="text-button" onClick={onGoToFiling}>
               Go to this year&apos;s results →
             </button>
@@ -134,6 +360,46 @@ export function Dashboard({
 
         {hasHistory ? (
           <>
+            {/* Main chart: tax paid vs refunded, year over year. */}
+            <div className="dashboard-chart-card">
+              <p className="dashboard-bars-caption">Tax paid or refunded, year over year</p>
+              {hasRefundData ? (
+                <SignedBarChart
+                  labels={years}
+                  values={refundTrend}
+                  positiveLabel="Refund received"
+                  negativeLabel="Tax payable"
+                  ariaLabel="Refund received or tax payable by assessment year"
+                />
+              ) : (
+                <p className="widget-empty">
+                  Add a refund or balance-payable figure to a past year to see this trend.
+                </p>
+              )}
+            </div>
+
+            {hasOutcomeData ? (
+              <div className="dashboard-chart-card">
+                <p className="dashboard-bars-caption">Gains, tax paid and carried-forward losses</p>
+                <TrendChart
+                  labels={years}
+                  series={outcomeSeries}
+                  ariaLabel="Capital gains, total tax paid and carried-forward losses by assessment year"
+                />
+              </div>
+            ) : null}
+
+            {hasLoanData ? (
+              <div className="dashboard-chart-card">
+                <p className="dashboard-bars-caption">Loan principal and interest, year over year</p>
+                <TrendChart
+                  labels={years}
+                  series={loanSeries}
+                  ariaLabel="Loan principal repaid and interest paid by assessment year"
+                />
+              </div>
+            ) : null}
+
             <div className="dashboard-insight-grid">
               <article className="dashboard-insight">
                 <span className="dashboard-stat-label">Years on record</span>
@@ -208,8 +474,8 @@ export function Dashboard({
                         <td data-label="Regime">{REGIME_LABELS[filing.regime]}</td>
                         {showAdvanced ? <td data-label="Effective rate">{formatPercent(rate)}</td> : null}
                         <td data-label="Source">
-                          <span className={filing.source === "itr-json" ? "pill pill-ready" : "pill pill-neutral"}>
-                            {filing.source === "itr-json" ? "From JSON" : "Entered"}
+                          <span className={filing.source === "manual" ? "pill pill-neutral" : "pill pill-ready"}>
+                            {FILING_SOURCE_LABELS[filing.source]}
                           </span>
                         </td>
                         <td data-label="Action">
@@ -271,12 +537,15 @@ function AddPastFilingForm({
 }) {
   const [fields, setFields] = useState<PastFilingFields>(BLANK_PAST_FILING_FIELDS);
   const [autoRead, setAutoRead] = useState<Set<keyof PastFilingFields>>(new Set());
+  // Which file type the auto-read fields came from, so the saved row is tagged
+  // correctly (JSON vs ITR-V PDF vs hand-entered).
+  const [autoSource, setAutoSource] = useState<"itr-json" | "itr-v" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function set<K extends keyof PastFilingFields>(key: K, value: PastFilingFields[K]) {
     setFields((prev) => ({ ...prev, [key]: value }));
-    // A field the user edits by hand is no longer "auto-read from JSON".
+    // A field the user edits by hand is no longer "auto-read from a file".
     setAutoRead((prev) => {
       if (!prev.has(key)) {
         return prev;
@@ -287,25 +556,37 @@ function AddPastFilingForm({
     });
   }
 
-  async function handleJsonFile(fileList: FileList | null) {
+  // One upload path for both formats: JSON is parsed directly, an ITR-V PDF
+  // is run through the existing pdf.js text extractor first, then the same
+  // tolerant reader. Either way, unreadable input routes to manual entry
+  // rather than throwing (the user said skipping-to-manual is fine).
+  async function handleFile(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) {
       return;
     }
     setError(null);
+    const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
     try {
-      const parsed = parseItrJson(await file.text());
+      const parsed = isPdf ? parseItrVText(await extractPdfText(await file.arrayBuffer())) : parseItrJson(await file.text());
       setFields({ ...BLANK_PAST_FILING_FIELDS, ...parsed.fields });
       setAutoRead(new Set(parsed.readFields));
+      setAutoSource(parsed.ok ? (isPdf ? "itr-v" : "itr-json") : null);
       setNotice(parsed.message);
     } catch {
-      setError("Couldn't read that file. Enter the figures by hand instead.");
+      setAutoSource(null);
+      setError(
+        isPdf
+          ? "Couldn't read this ITR-V automatically — enter the figures by hand below."
+          : "Couldn't read that file. Enter the figures by hand instead."
+      );
     }
   }
 
   function reset() {
     setFields(BLANK_PAST_FILING_FIELDS);
     setAutoRead(new Set());
+    setAutoSource(null);
     setNotice(null);
     setError(null);
   }
@@ -316,25 +597,30 @@ function AddPastFilingForm({
       setError("Enter the assessment year, e.g. 2024-25.");
       return;
     }
-    onAdd({ ...fields, assessmentYear }, autoRead.size > 0 ? "itr-json" : "manual");
+    onAdd({ ...fields, assessmentYear }, autoRead.size > 0 && autoSource ? autoSource : "manual");
     reset();
   }
 
   const autoTag = (key: keyof PastFilingFields) =>
-    autoRead.has(key) ? <span className="dashboard-autoread"> · read from JSON</span> : null;
+    autoRead.has(key) ? <span className="dashboard-autoread"> · read from file</span> : null;
 
   return (
     <details className="refine-panel dashboard-add" open={startOpen}>
       <summary>Add a past year</summary>
       <div className="dashboard-add-body">
         <p className="step-lede">
-          Upload the ITR JSON you downloaded from the income-tax portal to prefill these, or just type them in. PDF
-          acknowledgements (ITR-V) aren&apos;t read here — enter those figures by hand.
+          Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
+          these — or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
         </p>
 
         <label className="secondary-button dashboard-json-button">
-          Prefill from ITR JSON
-          <input type="file" accept=".json,application/json" hidden onChange={(event) => handleJsonFile(event.target.files)} />
+          Prefill from ITR JSON or ITR-V PDF
+          <input
+            type="file"
+            accept=".json,application/json,.pdf,application/pdf"
+            hidden
+            onChange={(event) => handleFile(event.target.files)}
+          />
         </label>
         {notice ? <p className="dashboard-notice">{notice}</p> : null}
 
@@ -391,6 +677,41 @@ function AddPastFilingForm({
               type="number"
               value={fields.refundOrPayable}
               onChange={(event) => set("refundOrPayable", Number(event.target.value) || 0)}
+            />
+          </label>
+          <label className="supplemental-field">
+            Capital gains (− if a loss){autoTag("capitalGains")}
+            <input
+              type="number"
+              value={fields.capitalGains}
+              onChange={(event) => set("capitalGains", Number(event.target.value) || 0)}
+            />
+          </label>
+          <label className="supplemental-field">
+            Losses carried forward{autoTag("carryForwardLosses")}
+            <input
+              type="number"
+              min={0}
+              value={fields.carryForwardLosses}
+              onChange={(event) => set("carryForwardLosses", Number(event.target.value) || 0)}
+            />
+          </label>
+          <label className="supplemental-field">
+            Loan principal repaid{autoTag("loanPrincipal")}
+            <input
+              type="number"
+              min={0}
+              value={fields.loanPrincipal}
+              onChange={(event) => set("loanPrincipal", Number(event.target.value) || 0)}
+            />
+          </label>
+          <label className="supplemental-field">
+            Loan interest paid{autoTag("loanInterest")}
+            <input
+              type="number"
+              min={0}
+              value={fields.loanInterest}
+              onChange={(event) => set("loanInterest", Number(event.target.value) || 0)}
             />
           </label>
         </div>

@@ -1,11 +1,13 @@
 import type { OrientationAnswers, ProfileFlags } from "../state/types";
 import type { ChecklistItem } from "./reconciliation";
-import type { ItrFormSelectionRule, SingleParentClubbingRule } from "../rules";
+import type { ItrFormSelectionRule, NriDtaaRule, SingleParentClubbingRule } from "../rules";
+import { ruleCatalog } from "../rules";
 
 export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
   const hraAboveThreshold = Boolean(answers.hraClaimed && answers.hraAboveThreshold);
   return {
     nri: answers.residency === "nri",
+    nriCountry: answers.residency === "nri" ? answers.nriCountry : null,
     huf: Boolean(answers.huf),
     seniorCitizen: Boolean(answers.seniorCitizen),
     singleParent: Boolean(answers.singleParent),
@@ -15,7 +17,8 @@ export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
     hasRent: answers.incomeSources.includes("rent"),
     multipleEmployers: Boolean(answers.multipleEmployers),
     hraRisk: hraAboveThreshold && answers.hasLandlordPan === false,
-    epfRisk: Boolean(answers.epfWithdrawal && answers.epfBeforeFiveYears)
+    epfRisk: Boolean(answers.epfWithdrawal && answers.epfBeforeFiveYears),
+    hasLoans: Boolean(answers.loansRepaid)
   };
 }
 
@@ -85,16 +88,23 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
   }
 
   if (flags.nri) {
-    add(
-      "Tax Residency Certificate (TRC) and Form 10F",
-      "Needed to claim double-taxation relief under the exemption method.",
-      "Needed"
-    );
+    const trcWhy =
+      flags.hasCapitalGains && flags.nriCountry
+        ? nriTrcWhy(flags, ruleCatalog.nriDtaa)
+        : "Needed to claim double-taxation relief under the treaty between India and your country of residence.";
+    add("Tax Residency Certificate (TRC) and Form 10F", trcWhy, "Needed");
     add(
       "NRE and NRO account statements, separately",
       "These two account types are taxed completely differently. Don't combine them.",
       "Needed"
     );
+    if (flags.hasRent) {
+      add(
+        "Rental income details and tenant TDS certificate (Form 16A)",
+        "Rent from Indian property is taxable here. Tenants often deduct TDS at 30% — you'll reconcile that in your return.",
+        "Needed"
+      );
+    }
   }
 
   if (flags.huf) {
@@ -121,6 +131,14 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
     );
   }
 
+  if (flags.hasLoans) {
+    add(
+      "Loan interest certificate(s)",
+      "Your lender's yearly interest certificate (home, education, or electric-vehicle loan). It shows the interest paid, which is what you can deduct, mostly under the old regime.",
+      "Needed"
+    );
+  }
+
   add(
     "80C / 80D proofs, if you're claiming deductions",
     "Investment and insurance premium proofs for any deductions you plan to claim.",
@@ -143,6 +161,57 @@ export type ProfileScopeCaveat = {
   note: string;
 };
 
+function nriTrcWhy(flags: ProfileFlags, rule: NriDtaaRule): string {
+  if (!flags.nriCountry || flags.nriCountry === "Other") {
+    return "Mandatory for any DTAA claim. India has treaties with 90+ countries — your CA needs the TRC from whichever country you are a tax resident of.";
+  }
+  const entry = rule.values.mutual_fund_capital_gains.countries[flags.nriCountry];
+  if (flags.hasCapitalGains && entry?.treatment === "country_of_residence_only") {
+    return `AMCs often deduct TDS on MF redemptions anyway. With a TRC and Form 10F you claim exemption under the India–${flags.nriCountry} DTAA (Article ${entry.dtaa_article}) and recover that TDS when you file.`;
+  }
+  return `Needed to claim treaty relief under the India–${flags.nriCountry} DTAA — lower rates on NRO interest, dividends, or foreign tax credit on gains taxed in India.`;
+}
+
+function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCaveat | null {
+  if (!flags.nri || !flags.hasCapitalGains) {
+    return null;
+  }
+  if (!flags.nriCountry) {
+    return {
+      id: "nri_mf_dtaa_unknown_country",
+      label: "MF capital gains — DTAA depends on where you live",
+      note:
+        "A 2025 ITAT ruling held that mutual fund units are not company shares, so gains may be exempt in India if your country's DTAA has a residual clause (Singapore, UAE, etc.). Tell us your country of residence in About you so we can flag the right treaty. The tax figures below still use Indian domestic rates until a CA applies the exemption."
+    };
+  }
+  if (flags.nriCountry === "Other") {
+    return {
+      id: "nri_mf_dtaa_other_country",
+      label: "MF capital gains — check your specific DTAA",
+      note:
+        "India has DTAAs with 90+ countries and article numbers differ. Mutual fund units may fall under a residual clause (exempt in India) or be taxed here. This tool cannot look up an unlisted country — bring your TRC and treaty text to a CA. Figures below use Indian domestic rates."
+    };
+  }
+  const entry =
+    rule.values.mutual_fund_capital_gains.countries[flags.nriCountry] ??
+    null;
+  if (!entry) {
+    return null;
+  }
+  if (entry.treatment === "country_of_residence_only") {
+    return {
+      id: "nri_mf_dtaa_exempt",
+      label: `MF gains may be exempt in India (${flags.nriCountry} DTAA)`,
+      note: `${entry.note} This tool still shows Indian domestic tax on capital gains above — it does not apply the DTAA exemption to those numbers. You must file ITR-2, disclose the gains, and claim relief under Section 90 with your TRC and Form 10F. Direct equity shares are treated differently from MF units.`
+    };
+  }
+  return {
+    id: "nri_mf_dtaa_taxable_india",
+    label: `MF gains taxable in India (${flags.nriCountry} DTAA)`,
+    note: `${entry.note} TDS is often deducted at source on redemptions — reconcile against your return. Figures below use Indian rates.`
+  };
+}
+
 /**
  * Honesty check: the orientation flow asks about every profile from
  * SYSTEM_SPEC.md Section 6.2, and the checklist above lists the right
@@ -155,13 +224,17 @@ export type ProfileScopeCaveat = {
  */
 export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   const caveats: ProfileScopeCaveat[] = [];
+  const mfCaveat = mfDtaaCaveat(flags, ruleCatalog.nriDtaa);
+  if (mfCaveat) {
+    caveats.push(mfCaveat);
+  }
 
   if (flags.nri) {
     caveats.push({
       id: "nri_scope",
       label: "Most NRI-specific numbers aren't calculated here yet",
       note:
-        "NRE interest can now be entered as its own exempt line under \"A few more numbers\", so it's kept out of your taxable total. This tool still doesn't apply DTAA relief to NRO TDS or track repatriation limits. TDS withheld can be checked against AIS/26AS in the reconciliation panel above. Bring your NRO TDS certificates and DTAA paperwork to a CA."
+        "NRE interest can be entered as its own exempt line under \"A few more numbers\", so it's kept out of your taxable total. This tool still doesn't apply DTAA relief to NRO TDS amounts or track repatriation limits. TDS withheld can be checked against AIS/26AS in the reconciliation panel above. Bring your NRO TDS certificates and DTAA paperwork to a CA."
     });
   }
 

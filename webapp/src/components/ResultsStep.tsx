@@ -2,16 +2,34 @@ import type { BrokerGainCheck, CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
-import type { AdvanceTaxRule, RegimeChoiceRule } from "../rules";
+import { computeLoanDeductions } from "../lib/loanDeductions";
+import { ruleCatalog, type AdvanceTaxRule, type LoanTreatmentRule, type RegimeChoiceRule } from "../rules";
 import type { AisReportedFigures, SupplementalFigures } from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
+import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
+import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
 import { RegimeComparisonPanel } from "./RegimeComparisonPanel";
 import type { UploadedDocument } from "./UploadStep";
 
 function formatAmount(value: number) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value);
+}
+
+/** Rows whose "why this number?" explanation is grounded in a rule with a
+ * linkable source. Keeps the source link on genuine claims (ITR-form choice,
+ * capital-gains treatment) rather than every summary row. */
+const CAPITAL_GAINS_RULE_SECTIONS = new Set(["Business income", "111A", "112A", "50AA"]);
+
+function sourceRefsForRow(row: CaSummaryRow): readonly string[] | null {
+  if (row.head === "Recommended ITR form") {
+    return ruleCatalog.itrFormSelection.source_refs;
+  }
+  if (CAPITAL_GAINS_RULE_SECTIONS.has(row.ruleSection)) {
+    return ruleCatalog.capitalGainsEquity.source_refs;
+  }
+  return null;
 }
 
 const SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
@@ -46,7 +64,9 @@ export function ResultsStep({
   nri = false,
   huf = false,
   singleParent = false,
+  hasLoans = false,
   regimeChoiceRule,
+  loanTreatmentRule = ruleCatalog.loanTreatment,
   advanceTaxRule,
   aisFigures,
   onChangeAisFigures,
@@ -76,7 +96,9 @@ export function ResultsStep({
   nri?: boolean;
   huf?: boolean;
   singleParent?: boolean;
+  hasLoans?: boolean;
   regimeChoiceRule: RegimeChoiceRule;
+  loanTreatmentRule?: LoanTreatmentRule;
   advanceTaxRule: AdvanceTaxRule;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
@@ -112,20 +134,24 @@ export function ResultsStep({
         <div className="summary-rows">
           {/* Simple view: the five income heads. The sale/cost totals rows
               (ruleSection "Totals") are supporting detail, shown in full view. */}
-          {(showAdvanced ? rows : rows.filter((row) => row.ruleSection !== "Totals").slice(0, 5)).map((row) => (
-            <article className="summary-row" key={row.head}>
-              <div className="summary-row-main">
-                <span>{row.head}</span>
-                <strong>{typeof row.amount === "number" ? formatAmount(row.amount) : row.amount}</strong>
-              </div>
-              {row.notes ? (
-                <details className="summary-row-why">
-                  <summary>Why this number?</summary>
-                  <p>{row.notes}</p>
-                </details>
-              ) : null}
-            </article>
-          ))}
+          {(showAdvanced ? rows : rows.filter((row) => row.ruleSection !== "Totals").slice(0, 5)).map((row) => {
+            const sourceRefs = sourceRefsForRow(row);
+            return (
+              <article className="summary-row" key={row.head}>
+                <div className="summary-row-main">
+                  <span>{row.head}</span>
+                  <strong>{typeof row.amount === "number" ? formatAmount(row.amount) : row.amount}</strong>
+                </div>
+                {row.notes ? (
+                  <details className="summary-row-why">
+                    <summary>Why this number?</summary>
+                    <p>{row.notes}</p>
+                    {sourceRefs ? <RuleSourceLink refs={sourceRefs} /> : null}
+                  </details>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
 
         {showAdvanced ? (
@@ -217,6 +243,17 @@ export function ResultsStep({
           </section>
         </details>
 
+        {hasLoans ? (
+          <details className="refine-section" open>
+            <summary>Loans (home, education, electric vehicle)</summary>
+            <LoanDeductionsPanel
+              supplementalFigures={supplementalFigures}
+              onChangeSupplementalFigures={onChangeSupplementalFigures}
+              rule={loanTreatmentRule}
+            />
+          </details>
+        ) : null}
+
         <details className="refine-section">
           <summary>Old vs new regime</summary>
           {huf ? (
@@ -234,6 +271,7 @@ export function ResultsStep({
               debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
               intradayGain={intradayGain}
               seniorCitizen={seniorCitizen}
+              loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
               rule={regimeChoiceRule}
             />
           )}

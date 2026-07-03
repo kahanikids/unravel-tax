@@ -101,13 +101,48 @@ export type RegimeChoiceValues = {
     slabs_above_80: TaxSlab[];
     rebate_87a: RegimeRebate87a;
   };
+  deductions_by_regime?: {
+    old_regime_allows: string;
+    old_regime_home_loan_interest_24b_inr: number;
+    new_regime_allows_only: string;
+    section_80ccd_2_note: string;
+    cross_reference: string;
+  };
   comparison_scope_caveat: string;
+  break_even?: {
+    method: string;
+    note: string;
+  };
 };
 
 export type NriNreNroValues = {
   nre: { holds: string; interest_taxable_in_india: boolean; exemption_section: string; withholding: boolean };
   nro: { holds: string; interest_taxable_in_india: boolean; withholding: boolean; withholding_section: string };
   common_error: string;
+};
+
+export type NriDtaaMfTreatment =
+  | "country_of_residence_only"
+  | "taxable_in_india"
+  | "taxable_in_india_with_credit";
+
+export type NriDtaaCountryEntry = {
+  treatment: NriDtaaMfTreatment;
+  dtaa_article: string;
+  note: string;
+};
+
+export type NriDtaaValues = {
+  exemption_method_documents: string[];
+  foreign_tax_credit_document: string;
+  forms_not_interchangeable: boolean;
+  requires_country_of_tax_residence: boolean;
+  mutual_fund_units_not_shares: boolean;
+  itat_mf_ruling: { case: string; date: string; holding: string };
+  mutual_fund_capital_gains: {
+    default_treatment: string;
+    countries: Record<string, NriDtaaCountryEntry>;
+  };
 };
 
 export type HufBasicsValues = {
@@ -149,12 +184,69 @@ export type DeductionLimitsValues = {
   section_80ccd_1b_nps: { limit_inr: number; covers: string };
 };
 
+export type LoanTreatmentValues = {
+  regime_applicability: string;
+  home_loan: {
+    self_occupied_interest_24b: {
+      limit_inr: number;
+      regime: string;
+      reduced_limit_if_construction_over_5_years_inr: number;
+      conditions: string;
+    };
+    let_out_interest_24b: {
+      limit_inr: number | null;
+      regime: string;
+      house_property_loss_setoff_cap_against_other_heads_inr: number;
+      old_regime_loss_carry_forward_years: number;
+      new_regime_no_setoff_against_other_heads: boolean;
+      new_regime_no_carry_forward: boolean;
+      note: string;
+    };
+    principal_repayment_80c: {
+      within_section_80c_limit: boolean;
+      regime: string;
+      cross_reference: string;
+      note: string;
+    };
+    additional_interest_80ee: { limit_inr: number; regime: string; note: string };
+    additional_interest_80eea: {
+      limit_inr: number;
+      regime: string;
+      first_time_buyer_only: boolean;
+      cannot_combine_with_80ee: boolean;
+      note: string;
+    };
+    self_occupied_homes_allowed: number;
+    self_occupied_homes_note: string;
+  };
+  education_loan_80e: {
+    limit_inr: number | null;
+    interest_only: boolean;
+    max_claim_years: number;
+    eligible_borrowers: string;
+    individuals_only: boolean;
+    regime: string;
+    note: string;
+  };
+  electric_vehicle_loan_80eeb: {
+    limit_inr: number;
+    regime: string;
+    individuals_only: boolean;
+    note: string;
+  };
+  personal_and_other_loans: { interest_generally_deductible: boolean; exceptions: string };
+  loans_and_clubbing: { note: string; cross_reference: string };
+  new_act_2025_renumbering: Record<string, string>;
+};
+
 export type CapitalGainsEquityRule = RuleDocument<CapitalGainsEquityValues>;
 export type DeductionLimitsRule = RuleDocument<DeductionLimitsValues>;
+export type LoanTreatmentRule = RuleDocument<LoanTreatmentValues>;
 export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
 export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;
 export type RegimeChoiceRule = RuleDocument<RegimeChoiceValues>;
 export type NriNreNroRule = RuleDocument<NriNreNroValues>;
+export type NriDtaaRule = RuleDocument<NriDtaaValues>;
 export type HufBasicsRule = RuleDocument<HufBasicsValues>;
 export type SingleParentClubbingRule = RuleDocument<SingleParentClubbingValues>;
 export type AdvanceTaxRule = RuleDocument<AdvanceTaxValues>;

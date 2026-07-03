@@ -19,13 +19,14 @@ import {
   WHO_ITS_FOR,
   WHO_ITS_FOR_EXCLUDES
 } from "../src/lib/copy";
-import { clubbedMinorIncome, deriveProfileFlags, selectItrForm } from "../src/lib/profile";
+import { clubbedMinorIncome, deriveProfileFlags, profileScopeCaveats, selectItrForm } from "../src/lib/profile";
 import type { ProfileFlags } from "../src/state/types";
 import { saveSession } from "../src/lib/persistence";
 import {
   deriveHistoryInsights,
   normalizeAssessmentYear,
   parseItrJson,
+  parseItrVText,
   type PastFiling
 } from "../src/lib/pastFilings";
 import { ruleCatalog } from "../src/rules";
@@ -235,8 +236,9 @@ function checkSideNavReflectsResumedSession() {
         `Expected 2 reachable side-nav steps (orientation/documents) from the saved session, found ${reachableStepCount}.`
       );
     }
-    // "Your results" is past furthestStepIndex, so it should still be inert.
-    assertIncludes(html, 'aria-disabled="true" title="Your results"');
+    // "Current Filing" (results step) is past furthestStepIndex, so it should still be inert.
+    assertIncludes(html, 'title="Current Filing"');
+    assertIncludes(html, 'aria-disabled="true"');
   });
 
   console.log(
@@ -362,6 +364,47 @@ function checkOrientationForm() {
   console.log("Validated orientation flow: blank answers start the one-question flow at residency; saved answers show an editable recap first; Start over is no longer in the card.");
 }
 
+function checkNriOrientationAndDtaa() {
+  const nriFlowHtml = renderToString(
+    <OrientationForm answers={{ ...BLANK_ORIENTATION, residency: "nri" }} onChange={noop as never} onComplete={noop} />
+  );
+  // Saved NRI residency shows the recap first; country and days-in-India are dedicated follow-up rows.
+  assertIncludes(nriFlowHtml, "Country of tax residence");
+  assertIncludes(nriFlowHtml, "Days in India this year");
+  if (nriFlowHtml.includes("HRA")) {
+    throw new Error("HRA questions should be hidden for the NRI profile.");
+  }
+
+  const residentHtml = renderToString(
+    <OrientationForm answers={{ ...BLANK_ORIENTATION, residency: "resident" }} onChange={noop as never} onComplete={noop} />
+  );
+  if (residentHtml.includes("Days in India this year")) {
+    throw new Error("Days-in-India question should only show for the NRI profile.");
+  }
+
+  const singaporeFlags = deriveProfileFlags({
+    ...BLANK_ORIENTATION,
+    residency: "nri",
+    nriCountry: "Singapore",
+    incomeSources: ["capital_gains"]
+  });
+  if (!profileScopeCaveats(singaporeFlags).some((caveat) => caveat.id === "nri_mf_dtaa_exempt")) {
+    throw new Error("Singapore NRI with MF gains should surface the DTAA exempt caveat.");
+  }
+
+  const usFlags = deriveProfileFlags({
+    ...BLANK_ORIENTATION,
+    residency: "nri",
+    nriCountry: "United States",
+    incomeSources: ["capital_gains"]
+  });
+  if (!profileScopeCaveats(usFlags).some((caveat) => caveat.id === "nri_mf_dtaa_taxable_india")) {
+    throw new Error("US NRI with MF gains should surface the taxable-in-India DTAA caveat.");
+  }
+
+  console.log("Validated NRI orientation branch: country-of-residence question, resident-only questions hidden, DTAA MF caveats by country.");
+}
+
 function checkUploadStep() {
   const html = renderToString(
     <UploadStep
@@ -393,7 +436,7 @@ function checkChecklistPanel() {
       riskTriggers={[
         {
           id: "business_income_itr_form",
-          label: "Speculative/intraday trading income in your documents",
+          label: "Speculative/intraday trading income is considered Business Income",
           consequence: "Moves your filing to ITR-3.",
           severity: "form-changing"
         }
@@ -409,7 +452,7 @@ function checkChecklistPanel() {
   );
   assertIncludes(html, "Things to gather");
   assertIncludes(html, "Broker/AMC capital gains statement");
-  assertIncludes(html, "Speculative/intraday trading income");
+  assertIncludes(html, "Speculative/intraday trading income is considered Business Income");
   assertIncludes(html, "checklist-item-flag");
   assertIncludes(html, "Heads up — this tool has limits");
   assertIncludes(html, "NRI-specific numbers");
@@ -568,6 +611,10 @@ function checkRegimeComparisonPanel() {
   if (withSalaryHtml.includes("Enter your salary/pension income above to see an estimate.")) {
     throw new Error("Regime comparison should show an estimate once salary income is entered.");
   }
+  // At Rs 12L salary the new regime is already zero-tax, so the break-even
+  // block explains there's no break-even to reach rather than a large figure.
+  assertIncludes(withSalaryHtml, "Break-even deductions");
+  assertIncludes(withSalaryHtml, "no amount of old-regime deductions can beat");
 
   console.log("Validated regime comparison panel: scope caveat always shown, estimate appears only once salary is entered.");
 }
@@ -815,6 +862,7 @@ function checkConfidenceReportPanel() {
 
 const BLANK_FLAGS: ProfileFlags = {
   nri: false,
+  nriCountry: null,
   huf: false,
   seniorCitizen: false,
   singleParent: false,
@@ -824,7 +872,8 @@ const BLANK_FLAGS: ProfileFlags = {
   hasRent: false,
   multipleEmployers: false,
   hraRisk: false,
-  epfRisk: false
+  epfRisk: false,
+  hasLoans: false
 };
 
 function checkItrFormSelection() {
@@ -882,6 +931,10 @@ const SAMPLE_PAST_FILINGS: PastFiling[] = [
     grossTotalIncome: 1_000_000,
     totalTaxPaid: 90_000,
     refundOrPayable: 3_000,
+    capitalGains: 40_000,
+    carryForwardLosses: 0,
+    loanPrincipal: 120_000,
+    loanInterest: 180_000,
     source: "manual"
   },
   {
@@ -892,18 +945,39 @@ const SAMPLE_PAST_FILINGS: PastFiling[] = [
     grossTotalIncome: 1_200_000,
     totalTaxPaid: 90_000,
     refundOrPayable: -5_000,
+    capitalGains: -20_000,
+    carryForwardLosses: 20_000,
+    loanPrincipal: 150_000,
+    loanInterest: 160_000,
     source: "itr-json"
   }
 ];
 
 const SAMPLE_THIS_YEAR: ThisYearSnapshot = {
   hasStartedFiling: true,
+  financialYear: "2025-26",
   assessmentYear: "AY 2026-27",
   itrForm: "ITR-3",
-  regimeNote: "New regime by default — compare old vs new in Results.",
-  estimatedCapitalGainsTax: 1100,
-  grossGains: 5000,
-  openIssueCount: 2
+  itrDueDate: "2026-08-31",
+  regimeNote: "New regime by default",
+  capitalGains: { stcg: -500, ltcg: 90000, debtMf: 12000, intraday: 4000, ltcgExemptionLimit: 125000 },
+  estimatedCapitalGainsTax: 0,
+  regime: {
+    comparable: true,
+    newRegimeTax: 90000,
+    oldRegimeTax: 105000,
+    cheaper: "new",
+    saving: 15000,
+    breakEvenDeductions: 250000,
+    actualDeductions: 90000,
+    newAlwaysWins: false
+  },
+  deductions: [
+    { key: "deduction80C", section: "80C", label: "Section 80C investments", used: 90000, limit: 150000 },
+    { key: "deduction80D", section: "80D", label: "Section 80D health cover", used: 12000, limit: 25000 },
+    { key: "deductionNps80ccd1b", section: "80CCD(1B)", label: "NPS extra deduction", used: 50000, limit: 50000 }
+  ],
+  variance: { checkCount: 3, mismatchCount: 1, totalAbsVariance: 4200 }
 };
 
 function checkDashboardDestination() {
@@ -916,13 +990,34 @@ function checkDashboardDestination() {
       onAddPastFiling={noop}
       onRemovePastFiling={noop}
       onGoToFiling={noop}
+      onChangeDeduction={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
     />
   );
   assertIncludes(simpleHtml, "Your tax dashboard");
   assertIncludes(simpleHtml, "This year — AY 2026-27");
-  assertIncludes(simpleHtml, "Recommended ITR form");
+  // The this-year panel is a visual command centre, distinct from the Results
+  // working view: an ITR-form badge + tax-year timeline, and the five widgets.
+  assertIncludes(simpleHtml, "Recommended form");
+  assertIncludes(simpleHtml, "FY 2025-26");
+  assertIncludes(simpleHtml, "New vs old regime");
+  assertIncludes(simpleHtml, "New regime saves about");
+  // Break-even deductions surface on the regime widget (a headline number + a
+  // progress bar of entered deductions vs the break-even target).
+  assertIncludes(simpleHtml, "Break-even deductions");
+  assertIncludes(simpleHtml, "Capital gains by type");
+  assertIncludes(simpleHtml, "Tax-free LTCG left");
+  assertIncludes(simpleHtml, "Deductions used");
+  assertIncludes(simpleHtml, "80CCD(1B)");
+  assertIncludes(simpleHtml, "AIS / TDS match");
+  assertIncludes(simpleHtml, "mismatch");
+  // A conic-gradient donut (no charting dependency) renders the gains split.
+  assertIncludes(simpleHtml, "conic-gradient");
+  // The old plain-number restatements of Results must be gone from here.
+  if (simpleHtml.includes("Recommended ITR form") || simpleHtml.includes("Gains this year")) {
+    throw new Error("Dashboard should no longer duplicate the Results-style plain stat grid ('Recommended ITR form'/'Gains this year').");
+  }
   assertIncludes(simpleHtml, "Your filing history");
   // Year-over-year history table renders both synthetic years and their heads.
   assertIncludes(simpleHtml, "Assessment year");
@@ -948,6 +1043,7 @@ function checkDashboardDestination() {
       onAddPastFiling={noop}
       onRemovePastFiling={noop}
       onGoToFiling={noop}
+      onChangeDeduction={noop}
       showAdvanced
       onToggleAdvanced={noop}
     />
@@ -963,6 +1059,7 @@ function checkDashboardDestination() {
       onAddPastFiling={noop}
       onRemovePastFiling={noop}
       onGoToFiling={noop}
+      onChangeDeduction={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
     />
@@ -970,6 +1067,8 @@ function checkDashboardDestination() {
   assertIncludes(emptyHtml, "No past years yet");
   assertIncludes(emptyHtml, "Add a past year");
   assertIncludes(emptyHtml, "Prefill from ITR JSON");
+  // The add-past-filing upload now also accepts an ITR-V acknowledgement PDF.
+  assertIncludes(emptyHtml, "ITR-V PDF");
   assertIncludes(emptyHtml, "Start this year");
 
   console.log(
@@ -1036,6 +1135,70 @@ function checkItrJsonParsing() {
   );
 }
 
+function checkItrVTextParsing() {
+  // Synthetic ITR-V acknowledgement text, shaped like what pdf.js extraction
+  // yields (labels then values on one run) - never real data, per CLAUDE.md.
+  const sampleItrVText = [
+    "INDIAN INCOME TAX RETURN ACKNOWLEDGEMENT",
+    "Assessment Year 2024-25",
+    "ITR Form Number ITR-2",
+    "Whether opting for new tax regime u/s 115BAC ? No",
+    "Gross Total Income 12,00,000",
+    "Total Income 11,50,000",
+    "Total Taxes Paid 90,000",
+    "Refund 5,000",
+    "This is ITR-V, the acknowledgement of your e-filed return."
+  ].join(" ");
+  const parsed = parseItrVText(sampleItrVText);
+  if (!parsed.ok) {
+    throw new Error(`Expected the synthetic ITR-V text to parse, got: ${parsed.message}`);
+  }
+  if (parsed.fields.assessmentYear !== "2024-25") {
+    throw new Error(`Expected AY 2024-25 from the ITR-V, got ${parsed.fields.assessmentYear}.`);
+  }
+  if (parsed.fields.itrForm !== "ITR-2") {
+    throw new Error(`Expected ITR-2 (not the "ITR-V" label) from the acknowledgement, got ${parsed.fields.itrForm}.`);
+  }
+  if (parsed.fields.grossTotalIncome !== 1_200_000) {
+    throw new Error(`Expected gross total income 1,200,000 from "12,00,000", got ${parsed.fields.grossTotalIncome}.`);
+  }
+  if (parsed.fields.totalTaxPaid !== 90_000) {
+    throw new Error(`Expected total taxes paid 90,000, got ${parsed.fields.totalTaxPaid}.`);
+  }
+  if (parsed.fields.refundOrPayable !== 5_000) {
+    throw new Error(`Expected a 5,000 refund, got ${parsed.fields.refundOrPayable}.`);
+  }
+  if (parsed.fields.regime !== "old") {
+    throw new Error(`"new tax regime ... No" should read as the old regime, got ${parsed.fields.regime}.`);
+  }
+
+  // A payable (not refund) ITR-V: negative refundOrPayable, and regime read
+  // from the 115BAC phrasing this time.
+  const payableItrV = parseItrVText(
+    "Assessment Year 2023-24 ITR-1 Opting for section 115BAC Yes Gross Total Income 800000 Net Tax Payable 12500"
+  );
+  if (payableItrV.fields.refundOrPayable !== -12_500) {
+    throw new Error(`Expected -12,500 (payable) from the ITR-V, got ${payableItrV.fields.refundOrPayable}.`);
+  }
+  if (payableItrV.fields.regime !== "new") {
+    throw new Error(`"115BAC ... Yes" should read as the new regime, got ${payableItrV.fields.regime}.`);
+  }
+
+  // Tolerant fallback: unreadable text never throws, routes to manual entry.
+  const unreadable = parseItrVText("just some scanned image text with no recognisable ITR figures at all");
+  if (unreadable.ok || unreadable.readFields.length !== 0) {
+    throw new Error("Unreadable ITR-V text should come back ok:false with no auto-read fields, for manual entry.");
+  }
+  const empty = parseItrVText("   ");
+  if (empty.ok) {
+    throw new Error("Empty ITR-V text (e.g. an image-only scan) should not report a successful read.");
+  }
+
+  console.log(
+    "Validated ITR-V text parsing: tolerant label/regex extraction of AY/form/income/tax/refund/regime, refund vs payable sign, and a graceful manual-entry fallback on unreadable or empty text. No PDF table parser."
+  );
+}
+
 function assertIncludes(value: string, expected: string) {
   if (!value.includes(expected)) {
     throw new Error(`Rendered output is missing: ${expected}`);
@@ -1050,6 +1213,7 @@ function main() {
   checkHelpPanel();
   checkCapabilitiesPanel();
   checkOrientationForm();
+  checkNriOrientationAndDtaa();
   checkItrFormSelection();
   checkUploadStep();
   checkRegimeComparisonPanel();
@@ -1062,6 +1226,7 @@ function main() {
   checkConfidenceReportPanel();
   checkDashboardDestination();
   checkItrJsonParsing();
+  checkItrVTextParsing();
 }
 
 main();

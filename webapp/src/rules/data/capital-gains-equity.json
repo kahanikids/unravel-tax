@@ -12,10 +12,12 @@
   "assessment_year": "2026-27",
   "verification": {
     "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "last_verified": "2026-07-03",
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Source links (Section 112A LTCG 12.5% / Section 111A STCG 20%, FY 2025-26) added and checked 2026-07-03; remaining values still pending full current-source verification."
   },
   "source_refs": [
+    "https://cleartax.in/s/long-term-capital-gains-on-shares",
+    "https://cleartax.in/s/short-term-capital-gain-on-shares",
     "BUILD_PLAN.md Sections 15.1, 15.2, 15.4",
     "SYSTEM_SPEC.md Section 8"
   ],

@@ -2,6 +2,7 @@ export * from "./calculations";
 export * from "./confidence";
 export * from "./advanceTax";
 export * from "./regimeComparison";
+export * from "./loanDeductions";
 export * from "./exports";
 export * from "./reconciliation";
 export * from "./pastFilings";

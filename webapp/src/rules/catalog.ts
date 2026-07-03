@@ -7,6 +7,7 @@ import filingMistakesAndPenalties from "./data/filing-mistakes-and-penalties.jso
 import hufBasics from "./data/huf-basics.json";
 import hufClubbing from "./data/huf-clubbing.json";
 import itrFormSelection from "./data/itr-form-selection.json";
+import loanTreatment from "./data/loan-treatment.json";
 import newActTransition from "./data/new-act-2025-transition.json";
 import nriDtaa from "./data/nri-dtaa.json";
 import nriNreNro from "./data/nri-nre-nro.json";
@@ -26,7 +27,9 @@ import type {
   FilingMistakesRule,
   HufBasicsRule,
   ItrFormSelectionRule,
+  LoanTreatmentRule,
   NriNreNroRule,
+  NriDtaaRule,
   RegimeChoiceRule,
   RuleDocument,
   SingleParentClubbingRule
@@ -50,8 +53,9 @@ export const ruleCatalog = {
   hufBasics: hufBasics as HufBasicsRule,
   hufClubbing: hufClubbing as RuleDocument,
   itrFormSelection: itrFormSelection as ItrFormSelectionRule,
+  loanTreatment: loanTreatment as LoanTreatmentRule,
   newActTransition: newActTransition as RuleDocument,
-  nriDtaa: nriDtaa as RuleDocument,
+  nriDtaa: nriDtaa as NriDtaaRule,
   nriNreNro: nriNreNro as NriNreNroRule,
   nriRepatriation: nriRepatriation as RuleDocument,
   nriResidentialStatus: nriResidentialStatus as RuleDocument,

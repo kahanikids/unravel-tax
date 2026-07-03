@@ -1,6 +1,8 @@
-import { compareRegimes } from "../lib/regimeComparison";
+import { compareRegimes, computeRegimeBreakEven } from "../lib/regimeComparison";
 import type { RegimeChoiceRule } from "../rules";
 import type { SupplementalFigures } from "../state/types";
+import { Meter } from "./DashboardWidgets";
+import { RuleSourceLink } from "./RuleSourceLink";
 
 function formatAmount(value: number) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value);
@@ -17,6 +19,7 @@ export function RegimeComparisonPanel({
   debtMfShortTermDeemedGain,
   intradayGain,
   seniorCitizen,
+  loanDeductionsTotal = 0,
   rule
 }: {
   supplementalFigures: SupplementalFigures;
@@ -24,29 +27,30 @@ export function RegimeComparisonPanel({
   debtMfShortTermDeemedGain: number;
   intradayGain: number;
   seniorCitizen: boolean;
+  /** Capped loan-interest deductions from the Loans section, added to the old-regime side. */
+  loanDeductionsTotal?: number;
   rule: RegimeChoiceRule;
 }) {
   const hasEnoughToCompare = supplementalFigures.salaryIncome > 0;
-  const result = hasEnoughToCompare
-    ? compareRegimes(
-        {
-          salaryIncome: supplementalFigures.salaryIncome,
-          dividends: supplementalFigures.dividends,
-          interestOtherIncome: supplementalFigures.interestOtherIncome,
-          eligibleInterestDeduction: supplementalFigures.eligibleInterestDeduction,
-          debtMfShortTermDeemedGain,
-          intradayGain,
-          oldRegimeDeductions: supplementalFigures.oldRegimeDeductions,
-          seniorCitizen
-        },
-        rule
-      )
-    : null;
+  const comparisonInputs = {
+    salaryIncome: supplementalFigures.salaryIncome,
+    dividends: supplementalFigures.dividends,
+    interestOtherIncome: supplementalFigures.interestOtherIncome,
+    eligibleInterestDeduction: supplementalFigures.eligibleInterestDeduction,
+    debtMfShortTermDeemedGain,
+    intradayGain,
+    oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + Math.max(0, loanDeductionsTotal),
+    seniorCitizen
+  };
+  const result = hasEnoughToCompare ? compareRegimes(comparisonInputs, rule) : null;
+  const breakEven = hasEnoughToCompare ? computeRegimeBreakEven(comparisonInputs, rule) : null;
 
   return (
     <section className="regime-panel">
       <h3>Old vs new regime: which costs less?</h3>
-      <p className="step-lede">{rule.values.comparison_scope_caveat}</p>
+      <p className="step-lede">
+        {rule.values.comparison_scope_caveat} <RuleSourceLink refs={rule.source_refs} />
+      </p>
 
       <div className="supplemental-grid">
         <label className="supplemental-field">
@@ -65,7 +69,7 @@ export function RegimeComparisonPanel({
           />
         </label>
         <label className="supplemental-field">
-          Old regime deductions (80C, 80D, HRA, home loan interest, etc.)
+          Other old regime deductions (80C, 80D, HRA, etc.)
           <input
             type="number"
             min={0}
@@ -80,6 +84,12 @@ export function RegimeComparisonPanel({
           />
         </label>
       </div>
+      {loanDeductionsTotal > 0 ? (
+        <p className="step-lede">
+          Plus ₹{formatAmount(loanDeductionsTotal)} of loan-interest deductions from the Loans section, already added to
+          the old-regime side. Don't re-enter those in the field above.
+        </p>
+      ) : null}
 
       {result ? (
         <div className="regime-result">
@@ -96,6 +106,34 @@ export function RegimeComparisonPanel({
               ? "Both regimes work out about the same on this estimate."
               : `The ${result.cheaperRegime} regime looks cheaper by about ₹${formatAmount(result.difference)}, on this estimate.`}
           </p>
+          {breakEven ? (
+            <div className="regime-breakeven">
+              <span className="regime-breakeven-label">Break-even deductions</span>
+              {breakEven.newAlwaysWins ? (
+                <p className="regime-verdict">
+                  The new regime already brings this income to zero tax, so no amount of old-regime deductions can beat
+                  it. There's no break-even to reach.
+                </p>
+              ) : (
+                <>
+                  <strong className="regime-breakeven-value">₹{formatAmount(breakEven.breakEvenDeductions)}</strong>
+                  <Meter
+                    used={breakEven.actualDeductions}
+                    limit={breakEven.breakEvenDeductions}
+                    caption={`You've entered ₹${formatAmount(breakEven.actualDeductions)} of old-regime deductions, ₹${formatAmount(
+                      Math.abs(breakEven.surplus)
+                    )} ${breakEven.surplus >= 0 ? "above" : "below"} the break-even, so the ${
+                      breakEven.surplus >= 0 ? "old regime is cheaper" : "new regime (the default) is cheaper"
+                    }.`}
+                    overLabel={`You've entered ₹${formatAmount(breakEven.actualDeductions)}, ₹${formatAmount(
+                      breakEven.surplus
+                    )} past the break-even, so the old regime is cheaper.`}
+                  />
+                </>
+              )}
+              {rule.values.break_even ? <p className="regime-verdict">{rule.values.break_even.note}</p> : null}
+            </div>
+          ) : null}
         </div>
       ) : (
         <p className="checklist-empty">Enter your salary/pension income above to see an estimate.</p>
