@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { IconChecklist, IconCompass, IconUpload } from "./icons";
-import { LEGAL_INTRO, LEGAL_SECTIONS, REPORT_ISSUE_URL, REPO_URL } from "../lib/copy";
+import { LEGAL_INTRO, LEGAL_SECTIONS, REPORT_ISSUE_URL, REPO_URL, WELCOME_DISCLAIMER_BANNER } from "../lib/copy";
+
+const WELCOME_DISCLAIMER_KEY = "unravel-tax-welcome-disclaimer-dismissed";
 
 export function WelcomeScreen({
   onStart,
@@ -22,8 +25,29 @@ export function WelcomeScreen({
   localFolderSupported: boolean;
   onRestoreFromFolder: () => void;
 }) {
+  const [disclaimerDismissed, setDisclaimerDismissed] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem(WELCOME_DISCLAIMER_KEY) === "1") {
+      setDisclaimerDismissed(true);
+    }
+  }, []);
+
+  function dismissDisclaimer() {
+    localStorage.setItem(WELCOME_DISCLAIMER_KEY, "1");
+    setDisclaimerDismissed(true);
+  }
+
   return (
     <div className="welcome-card">
+      {!disclaimerDismissed ? (
+        <div className="welcome-disclaimer-banner" role="status">
+          <p>{WELCOME_DISCLAIMER_BANNER}</p>
+          <button type="button" className="text-button welcome-disclaimer-dismiss" onClick={dismissDisclaimer}>
+            Got it
+          </button>
+        </div>
+      ) : null}
       <div className="welcome-card-header">
         <p className="eyebrow">Unravel Tax</p>
         <button type="button" className="secondary-button welcome-capabilities-trigger" onClick={onShowCapabilities}>

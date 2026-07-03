@@ -793,6 +793,11 @@ button.side-nav-step.side-nav-step-current:hover {
   cursor: not-allowed;
 }
 
+.primary-button:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+}
+
 .secondary-button,
 .danger-button {
   appearance: none;
@@ -2378,6 +2383,53 @@ button.side-nav-step.side-nav-step-current:hover {
 }
 
 /* ---------- Welcome legal / disclaimer ---------- */
+
+.welcome-disclaimer-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.welcome-disclaimer-dismiss {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.error-boundary {
+  max-width: 520px;
+  margin: 48px auto;
+  padding: 32px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.error-boundary h1 {
+  font-size: 1.35rem;
+  margin-bottom: 12px;
+}
+
+.error-boundary p {
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.error-boundary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
 
 .welcome-legal {
   margin-top: 8px;

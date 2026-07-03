@@ -1,5 +1,9 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToString } from "react-dom/server";
 import App from "../src/App";
+import { ErrorBoundary } from "../src/components/ErrorBoundary";
+import { WelcomeScreen } from "../src/components/WelcomeScreen";
 import { ChecklistPanel } from "../src/components/ChecklistPanel";
 import { OrientationForm } from "../src/components/OrientationForm";
 import { ResultsStep } from "../src/components/ResultsStep";
@@ -16,6 +20,7 @@ import {
   ITR_FORM_REASONS,
   REPORT_ISSUE_URL,
   TOOL_TOUR_USE_CASES,
+  WELCOME_DISCLAIMER_BANNER,
   WHO_ITS_FOR,
   WHO_ITS_FOR_EXCLUDES
 } from "../src/lib/copy";
@@ -1342,6 +1347,47 @@ function checkItrVTextParsing() {
   );
 }
 
+function checkWelcomeDisclaimerBanner() {
+  const html = renderToString(
+    <WelcomeScreen
+      onStart={noop}
+      onStartComputationFirst={noop}
+      onResume={noop}
+      onStartOver={noop}
+      hasSavedSession={false}
+      onShowCapabilities={noop}
+      onShowTour={noop}
+      localFolderSupported={false}
+      onRestoreFromFolder={noop}
+    />
+  );
+  assertIncludes(html, WELCOME_DISCLAIMER_BANNER);
+  assertIncludes(html, 'class="welcome-disclaimer-banner"');
+  assertIncludes(html, "Got it");
+  console.log("Validated welcome disclaimer banner: Stage-1 dismissible CA line renders on first visit.");
+}
+
+function checkErrorBoundaryRecovery() {
+  const html = renderToString(
+    <ErrorBoundary>
+      <p>App content</p>
+    </ErrorBoundary>
+  );
+  assertIncludes(html, "App content");
+  const source = readFileSync(resolve(import.meta.dirname, "../src/components/ErrorBoundary.tsx"), "utf8");
+  for (const phrase of [
+    "Something went wrong",
+    "Your filing may still be saved in this browser",
+    "Reload this page",
+    "Report an issue"
+  ]) {
+    if (!source.includes(phrase)) {
+      throw new Error(`ErrorBoundary is missing recovery copy: ${phrase}`);
+    }
+  }
+  console.log("Validated error boundary: wraps app content and ships recovery copy for uncaught render errors.");
+}
+
 function assertIncludes(value: string, expected: string) {
   if (!value.includes(expected)) {
     throw new Error(`Rendered output is missing: ${expected}`);
@@ -1350,6 +1396,8 @@ function assertIncludes(value: string, expected: string) {
 
 function main() {
   checkWelcomeScreen();
+  checkWelcomeDisclaimerBanner();
+  checkErrorBoundaryRecovery();
   checkComputationFirstPathIsReachable();
   checkSideNavReflectsResumedSession();
   checkToolTour();

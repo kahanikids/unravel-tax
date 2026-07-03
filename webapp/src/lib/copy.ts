@@ -13,6 +13,10 @@
 export const SCOPE_AND_DISCLAIMER_NOTE =
   "For FY 2025-26 (AY 2026-27) filings. Not tax advice, and not a substitute for a CA.";
 
+/** Stage-1 welcome banner (BUILD_PLAN.md §1.4): dismissible, remembered in localStorage. */
+export const WELCOME_DISCLAIMER_BANNER =
+  "This organizes your numbers. It does not replace a CA.";
+
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";
 

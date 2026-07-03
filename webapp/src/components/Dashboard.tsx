@@ -12,7 +12,6 @@ import {
   type PastFiling,
   type PastFilingFields
 } from "../lib/pastFilings";
-import { extractPdfText } from "../ingest/pdfExtract";
 import type { InsurancePayoutCheck } from "../lib/insurance";
 import type { ForeignRemittanceTcs } from "../lib/foreignInvestments";
 import { RuleSourceLink } from "./RuleSourceLink";
@@ -683,7 +682,9 @@ function AddPastFilingForm({
     setError(null);
     const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
     try {
-      const parsed = isPdf ? parseItrVText(await extractPdfText(await file.arrayBuffer())) : parseItrJson(await file.text());
+      const parsed = isPdf
+        ? parseItrVText(await (await import("../ingest/pdfExtract")).extractPdfText(await file.arrayBuffer()))
+        : parseItrJson(await file.text());
       setFields({ ...BLANK_PAST_FILING_FIELDS, ...parsed.fields });
       setAutoRead(new Set(parsed.readFields));
       setAutoSource(parsed.ok ? (isPdf ? "itr-v" : "itr-json") : null);
