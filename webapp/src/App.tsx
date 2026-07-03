@@ -270,7 +270,25 @@ function App() {
     scopeCaveats
   });
 
+  // Sample mode fills orientation/documents with demo data and pauses
+  // autosaving. Leaving it for a real path must clear that demo data too,
+  // or the first autosave after the switch writes sample transactions over
+  // the user's real saved filing.
+  function clearSampleData() {
+    if (!sampleMode) {
+      return;
+    }
+    setSampleMode(false);
+    setOrientation(BLANK_ORIENTATION);
+    setDocuments([]);
+    setSupplementalFigures(BLANK_SUPPLEMENTAL_FIGURES);
+    setAcknowledgedTriggerIds([]);
+    setAisFigures(BLANK_AIS_REPORTED_FIGURES);
+    setTdsRows([]);
+  }
+
   function startOrientation() {
+    clearSampleData();
     setSampleMode(false);
     setStep("orientation");
   }
@@ -283,6 +301,7 @@ function App() {
   // resident/no-special-circumstances default until the user goes back and
   // answers the questions, which they can always do from the step nav.
   function startComputationFirst() {
+    clearSampleData();
     setSampleMode(false);
     setStep("documents");
   }
@@ -311,7 +330,14 @@ function App() {
   }
 
   function commitDocument(newTransactions: NormalizedTransaction[], fileName: string) {
-    setDocuments((prev) => [...prev, { fileName, rowCount: newTransactions.length, transactions: newTransactions }]);
+    // A real document added while viewing sample data starts a real filing:
+    // drop the demo transactions instead of mixing them into real numbers.
+    if (sampleMode) {
+      clearSampleData();
+      setDocuments([{ fileName, rowCount: newTransactions.length, transactions: newTransactions }]);
+    } else {
+      setDocuments((prev) => [...prev, { fileName, rowCount: newTransactions.length, transactions: newTransactions }]);
+    }
     if (folderHandle) {
       saveDocumentCopyToFolder(folderHandle, fileName, transactionsCsv(newTransactions)).catch(() => {
         setExportMessage(`Could not save a copy of ${fileName} to your chosen folder. It's still added to your filing.`);
