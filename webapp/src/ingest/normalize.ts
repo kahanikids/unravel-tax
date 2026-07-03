@@ -7,6 +7,13 @@ import {
   type TaxClass,
   type TransactionSummary
 } from "./types";
+import { ruleCatalog } from "../rules";
+
+// Sourced from rules/capital-gains-equity.json, never hardcoded here, so a
+// listed-equity holding-period change lands in one place (the rule file) and
+// row editing classifies exactly the same way as summarizeWithRules().
+const LONG_TERM_HOLDING_DAYS_GT =
+  ruleCatalog.capitalGainsEquity.values.listed_equity.long_term_holding_period_days_gt;
 
 export type EditableTransactionFields = Pick<
   NormalizedTransaction,
@@ -176,7 +183,7 @@ export function deriveComputedFields(fields: EditableTransactionFields): Normali
     taxClass = "ST";
   } else if (holdPeriodDays === 0) {
     taxClass = "Intraday";
-  } else if (holdPeriodDays > 365) {
+  } else if (holdPeriodDays > LONG_TERM_HOLDING_DAYS_GT) {
     taxClass = "LT";
   } else {
     taxClass = "ST";
