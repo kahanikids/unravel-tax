@@ -137,6 +137,21 @@ export function resolveTransactionHeaders(rawHeaders: string[]): HeaderResolutio
   const matchedColumns = new Set<CanonicalTransactionColumn>();
   const unmatchedHeaders = () => rawHeaders.filter((header) => !(header in headerMap));
 
+  // Canonical names first, then synonyms: a statement with both an "ISIN"
+  // column and a "Scrip Name" column must map "Scrip Name" to Scrip Name,
+  // even when ISIN (a synonym for it) appears earlier in the header row.
+  for (const raw of unmatchedHeaders()) {
+    const normalized = normalizeHeaderText(raw);
+    const column = ALL_COLUMNS.find(
+      (candidate) => !matchedColumns.has(candidate) && normalizeHeaderText(candidate) === normalized
+    );
+    if (column) {
+      headerMap[raw] = column;
+      matchedColumns.add(column);
+      details.push({ raw, canonical: column, confidence: "exact" });
+    }
+  }
+
   for (const raw of unmatchedHeaders()) {
     const normalized = normalizeHeaderText(raw);
     const column = ALL_COLUMNS.find((candidate) => !matchedColumns.has(candidate) && candidatesFor(candidate).includes(normalized));
