@@ -20,7 +20,7 @@ export function WelcomeScreen({
       <div className="welcome-card-header">
         <p className="eyebrow">Unravel Tax</p>
         <button type="button" className="secondary-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
-          What can this do?
+          Tools Features
         </button>
       </div>
       <h1 className="welcome-title">

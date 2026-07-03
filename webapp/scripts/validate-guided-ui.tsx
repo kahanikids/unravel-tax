@@ -107,10 +107,10 @@ function checkWelcomeScreen() {
     throw new Error("Help panel content should be closed by default, not present in the initial render.");
   }
 
-  // "What can this do?" is back as a small corner trigger on the welcome
+  // "Tools Features" is a small corner trigger on the welcome
   // card itself, in addition to the "Get to know the tool" card - both open
   // the same capabilities panel/state, just two doors into it.
-  assertIncludes(html, "What can this do?");
+  assertIncludes(html, "Tools Features");
   assertIncludes(html, 'class="welcome-card-header"');
   if (html.includes("Available now") || html.includes(CAPABILITIES[0].detail.slice(0, 20))) {
     throw new Error("Capabilities panel content should be closed by default, not present in the initial render.");
