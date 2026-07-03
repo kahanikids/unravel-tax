@@ -1118,6 +1118,62 @@ button.progress-step.progress-step-current:hover {
   margin-top: 2px;
 }
 
+.confidence-report {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  background: var(--surface-soft);
+}
+
+.confidence-report h3 {
+  font-size: 1.05rem;
+}
+
+.confidence-group h4 {
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+}
+
+.confidence-group ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confidence-group li {
+  border-left: 3px solid var(--line);
+  padding-left: 12px;
+}
+
+.confidence-group li p {
+  color: var(--muted);
+  font-size: 0.87rem;
+  margin-top: 2px;
+}
+
+.confidence-missing h4 {
+  color: var(--flag);
+}
+
+.confidence-missing li {
+  border-left-color: var(--flag);
+}
+
+.confidence-may-change h4 {
+  color: var(--accent-ink, var(--ink));
+}
+
+.confidence-may-change li {
+  border-left-color: var(--accent);
+}
+
+.confidence-safe li {
+  border-left-color: var(--line);
+}
+
 .result-summary {
   display: flex;
   flex-direction: column;

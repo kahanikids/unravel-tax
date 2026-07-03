@@ -1,4 +1,5 @@
 export * from "./calculations";
+export * from "./confidence";
 export * from "./exports";
 export * from "./reconciliation";
 export * from "./profile";

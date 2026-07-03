@@ -8,6 +8,7 @@ import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
 import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
 import type { CaSummaryRow } from "../src/lib/calculations";
+import type { ConfidenceReport } from "../src/lib/confidence";
 import type { CaRecommendation } from "../src/lib/riskTriggers";
 
 const SAMPLE_ROWS: CaSummaryRow[] = [
@@ -21,6 +22,13 @@ const SAMPLE_RECOMMENDATION: CaRecommendation = {
   recommendCa: true,
   headline: "Get a CA to review this before filing",
   reason: "Speculative income detected."
+};
+
+const SAMPLE_CONFIDENCE_REPORT: ConfidenceReport = {
+  missing: [],
+  mayChange: [],
+  safeToIgnore: [],
+  ready: true
 };
 
 function noop() {
@@ -182,6 +190,7 @@ function checkResultsStepDefaultsToSimple() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
       exportMessage="Exports are generated in this browser."
@@ -219,6 +228,7 @@ function checkResultsStepAdvancedToggle() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced
       onToggleAdvanced={noop}
       exportMessage=""
@@ -252,6 +262,7 @@ function resultsStepWithReconciliation(props: {
       onChangeAisFigures={noop}
       tdsRows={props.tdsRows}
       onChangeTdsRows={noop}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
       exportMessage=""
@@ -295,6 +306,56 @@ function checkReconciliationPanel() {
   console.log("Validated reconciliation panel: blank/matched/mismatched AIS and TDS states all render correctly.");
 }
 
+function resultsStepWithConfidence(report: ConfidenceReport) {
+  return renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      onChangeSupplementalFigures={noop}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
+      confidenceReport={report}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+}
+
+function checkConfidenceReportPanel() {
+  const cleanHtml = resultsStepWithConfidence({ missing: [], mayChange: [], safeToIgnore: [], ready: true });
+  assertIncludes(cleanHtml, "Before you export");
+  if (cleanHtml.includes("Still missing") || cleanHtml.includes("May change your numbers")) {
+    throw new Error("Confidence report should not show empty groups when nothing is flagged.");
+  }
+
+  const flaggedHtml = resultsStepWithConfidence({
+    missing: [{ label: "Form 16", detail: "Shows salary and TDS already deducted." }],
+    mayChange: [{ label: "Speculative income detected", detail: "Moves your filing to ITR-3." }],
+    safeToIgnore: [{ label: "More than one employer this year", detail: "Worth mentioning to your CA." }],
+    ready: false
+  });
+  assertIncludes(flaggedHtml, "Still missing");
+  assertIncludes(flaggedHtml, "Form 16");
+  assertIncludes(flaggedHtml, "May change your numbers");
+  assertIncludes(flaggedHtml, "Speculative income detected");
+  assertIncludes(flaggedHtml, "Flagged, but safe to export as-is");
+  assertIncludes(flaggedHtml, "More than one employer this year");
+
+  console.log("Validated confidence report panel: clean and flagged states both render the right groups.");
+}
+
 function assertIncludes(value: string, expected: string) {
   if (!value.includes(expected)) {
     throw new Error(`Rendered output is missing: ${expected}`);
@@ -310,6 +371,7 @@ function main() {
   checkResultsStepDefaultsToSimple();
   checkResultsStepAdvancedToggle();
   checkReconciliationPanel();
+  checkConfidenceReportPanel();
 }
 
 main();

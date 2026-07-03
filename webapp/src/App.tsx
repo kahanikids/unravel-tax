@@ -9,6 +9,7 @@ import {
   checklistGaps,
   chooseLocalFolder,
   classifyTransactionWithRules,
+  buildConfidenceReport,
   clearSession,
   deriveProfileFlags,
   downloadExport,
@@ -173,11 +174,22 @@ function App() {
     aisExpectedFigures["Interest & other income"] = supplementalFigures.interestOtherIncome;
     aisReportedFiguresPresent["Interest & other income"] = aisFigures.interestOtherIncome;
   }
-  const reconciliationMismatchCount =
-    figureMismatches(aisExpectedFigures, aisReportedFiguresPresent, "AIS/Form 26AS").length +
-    tdsMismatches(tdsRows).length;
+  const reconciliationMismatches = [
+    ...figureMismatches(aisExpectedFigures, aisReportedFiguresPresent, "AIS/Form 26AS"),
+    ...tdsMismatches(tdsRows)
+  ];
 
-  const openIssueCount = checklistGaps(checklistItems).length + riskTriggers.length + reconciliationMismatchCount;
+  const openIssueCount = checklistGaps(checklistItems).length + riskTriggers.length + reconciliationMismatches.length;
+
+  // A single pre-export confidence check: the same signals shown throughout
+  // the flow (checklist, risk triggers, reconciliation, scope caveats),
+  // regrouped by how urgently each one matters before you export.
+  const confidenceReport = buildConfidenceReport({
+    checklistGaps: checklistGaps(checklistItems),
+    riskTriggers,
+    mismatches: reconciliationMismatches,
+    scopeCaveats
+  });
 
   function startOrientation() {
     setSampleMode(false);
@@ -429,6 +441,7 @@ function App() {
                 onChangeAisFigures={setAisFigures}
                 tdsRows={tdsRows}
                 onChangeTdsRows={setTdsRows}
+                confidenceReport={confidenceReport}
                 showAdvanced={showAdvanced}
                 onToggleAdvanced={() => setShowAdvanced((value) => !value)}
                 exportMessage={exportMessage}

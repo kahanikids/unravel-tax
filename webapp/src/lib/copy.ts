@@ -128,8 +128,8 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     label: "A final pre-export confidence check",
-    status: "planned",
-    detail: "A single \"here's what's missing, what might change your numbers, and what's safe to ignore\" summary before you export isn't built yet."
+    status: "available",
+    detail: "A single \"here's what's missing, what might change your numbers, and what's safe to ignore\" summary sits right above the export buttons."
   },
   {
     label: "Editable extraction review",

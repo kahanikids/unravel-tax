@@ -1,7 +1,9 @@
 import type { CaSummaryRow } from "../lib/calculations";
+import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
 import type { AisReportedFigures, SupplementalFigures } from "../state/types";
+import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
 import type { UploadedDocument } from "./UploadStep";
 
@@ -28,6 +30,7 @@ export function ResultsStep({
   onChangeAisFigures,
   tdsRows,
   onChangeTdsRows,
+  confidenceReport,
   showAdvanced,
   onToggleAdvanced,
   exportMessage,
@@ -48,6 +51,7 @@ export function ResultsStep({
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
   onChangeTdsRows: (rows: TdsRow[]) => void;
+  confidenceReport: ConfidenceReport;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
   exportMessage: string;
@@ -144,6 +148,8 @@ export function ResultsStep({
           </div>
         ) : null}
       </section>
+
+      <ConfidenceReportPanel report={confidenceReport} />
 
       <section className="handover-panel" aria-labelledby="handover-title">
         <div>

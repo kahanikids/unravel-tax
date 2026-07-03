@@ -6,6 +6,14 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added a pre-export confidence report (`ConfidenceReportPanel`) to the
+  results screen: one glanceable "still missing / may change your numbers
+  / flagged but safe to export as-is" summary right above the export
+  buttons. Regroups signals that already exist elsewhere in the flow
+  (checklist gaps, form-changing risk triggers, AIS/26AS/TDS mismatches,
+  NRI/HUF/single-parent scope caveats) by how urgently each one matters
+  before you hand the files off, so nothing gets forgotten between the
+  checklist step and export. Marked "available" in the capabilities panel.
 - Added a manual AIS / Form 26AS / Form 16 reconciliation panel to the
   results screen (`ReconciliationPanel`): enter what those documents show
   for dividends, interest, and TDS per source, and any mismatch against
