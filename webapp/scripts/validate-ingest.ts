@@ -78,6 +78,19 @@ async function main() {
     );
   }
 
+  // Multi-sheet workbook: sheet 1 is a summary/disclaimer page; the real
+  // transaction table lives on sheet 2 and must still be found.
+  const multiSheetBuffer = await readFile(resolve(fixturesDir, "sample-broker-statement-multi-sheet.xlsx"));
+  const multiSheet = await parseExcelBuffer(
+    multiSheetBuffer.buffer.slice(multiSheetBuffer.byteOffset, multiSheetBuffer.byteOffset + multiSheetBuffer.byteLength)
+  );
+  if (JSON.stringify(comparableRows(multiSheet)) !== JSON.stringify(baseline)) {
+    throw new Error("Multi-sheet Excel fixture did not resolve to the baseline transactions from its Equity sheet.");
+  }
+  if (!multiSheet.warnings.some((warning) => warning.message.includes('read "Equity"'))) {
+    throw new Error("Multi-sheet Excel fixture should note which sheet was read.");
+  }
+
   const missingColumn = parseCsvText(
     await readFile(resolve(fixturesDir, "sample-broker-statement-missing-column.csv"), "utf8")
   );

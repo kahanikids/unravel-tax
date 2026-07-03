@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { readSheet } from "read-excel-file/universal";
+import readXlsxFile from "read-excel-file/universal";
 import {
   EXPECTED_TRANSACTION_COLUMNS,
   type IngestionKind,
@@ -234,20 +234,38 @@ export function parseStructuredText(text: string): IngestResult {
 }
 
 export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<IngestResult> {
-  const rows = (await readSheet(new Blob([buffer]))) as ExcelCell[][];
-  if (rows.length === 0) {
+  // Broker workbooks often have several sheets (summary, equity, MF,
+  // disclaimers). Read them all and use the sheet whose headers match the
+  // transaction columns best, the same way HTML ingestion picks between
+  // multiple tables on a page.
+  const sheets = (await readXlsxFile(new Blob([buffer]))) as { sheet: string; data: ExcelCell[][] }[];
+  const nonEmptySheets = sheets.filter((s) => s.data.length > 0);
+  if (nonEmptySheets.length === 0) {
     return emptyResult("excel", routePdfOrFreeform("Excel file is empty."));
   }
 
-  const headerRowIndex = findHeaderRowIndex(rows);
-  const headers = rows[headerRowIndex]?.map((cell: ExcelCell) => String(cell ?? "").trim()) ?? [];
-  const resolution = resolveTransactionHeaders(headers);
+  const candidates = nonEmptySheets.map(({ sheet, data }) => {
+    const headerRowIndex = findHeaderRowIndex(data);
+    const headers = data[headerRowIndex]?.map((cell: ExcelCell) => String(cell ?? "").trim()) ?? [];
+    return { sheet, data, headerRowIndex, headers, resolution: resolveTransactionHeaders(headers) };
+  });
 
-  const sourceRecords = rows
-    .slice(headerRowIndex + 1)
-    .map((row: ExcelCell[]) => rowToRecord(headers, row.map(cellToFieldValue)));
+  const best =
+    candidates.find((candidate) => candidate.resolution.missing.length === 0) ??
+    [...candidates].sort((a, b) => a.resolution.missing.length - b.resolution.missing.length)[0];
 
-  return buildIngestResult("excel", headers, sourceRecords, resolution);
+  const sourceRecords = best.data
+    .slice(best.headerRowIndex + 1)
+    .map((row: ExcelCell[]) => rowToRecord(best.headers, row.map(cellToFieldValue)));
+
+  const result = buildIngestResult("excel", best.headers, sourceRecords, best.resolution);
+  if (nonEmptySheets.length > 1) {
+    result.warnings.unshift({
+      code: "low_confidence_header",
+      message: `This workbook has ${nonEmptySheets.length} sheets; read "${best.sheet}". If your transactions are on a different sheet, save that sheet as its own file and add it too.`
+    });
+  }
+  return result;
 }
 
 export function parseHtmlText(text: string): IngestResult {
