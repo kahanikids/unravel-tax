@@ -2,9 +2,11 @@ import type { CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
+import type { RegimeChoiceRule } from "../rules";
 import type { AisReportedFigures, SupplementalFigures } from "../state/types";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
+import { RegimeComparisonPanel } from "./RegimeComparisonPanel";
 import type { UploadedDocument } from "./UploadStep";
 
 function formatAmount(value: number) {
@@ -26,6 +28,10 @@ export function ResultsStep({
   caRecommendation,
   supplementalFigures,
   onChangeSupplementalFigures,
+  debtMfShortTermDeemedGain,
+  intradayGain,
+  seniorCitizen,
+  regimeChoiceRule,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -47,6 +53,10 @@ export function ResultsStep({
   caRecommendation: CaRecommendation;
   supplementalFigures: SupplementalFigures;
   onChangeSupplementalFigures: (figures: SupplementalFigures) => void;
+  debtMfShortTermDeemedGain: number;
+  intradayGain: number;
+  seniorCitizen: boolean;
+  regimeChoiceRule: RegimeChoiceRule;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -93,6 +103,15 @@ export function ResultsStep({
           ))}
         </div>
       </section>
+
+      <RegimeComparisonPanel
+        supplementalFigures={supplementalFigures}
+        onChangeSupplementalFigures={onChangeSupplementalFigures}
+        debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
+        intradayGain={intradayGain}
+        seniorCitizen={seniorCitizen}
+        rule={regimeChoiceRule}
+      />
 
       <ReconciliationPanel
         calculatedDividends={supplementalFigures.dividends}

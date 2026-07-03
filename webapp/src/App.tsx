@@ -239,7 +239,10 @@ function App() {
     }
     setOrientation(session.orientation);
     setDocuments(session.documents);
-    setSupplementalFigures(session.supplementalFigures);
+    // Merge over defaults: sessions saved before salaryIncome/oldRegimeDeductions
+    // existed won't have them, and a missing number would break the regime
+    // comparison's inputs rather than just showing as zero.
+    setSupplementalFigures({ ...BLANK_SUPPLEMENTAL_FIGURES, ...session.supplementalFigures });
     setAcknowledgedTriggerIds(session.acknowledgedTriggerIds);
     setAisFigures(session.aisFigures ?? BLANK_AIS_REPORTED_FIGURES);
     setTdsRows(session.tdsRows ?? []);
@@ -434,6 +437,10 @@ function App() {
                 caRecommendation={caRecommendation}
                 supplementalFigures={supplementalFigures}
                 onChangeSupplementalFigures={setSupplementalFigures}
+                debtMfShortTermDeemedGain={calculationSummary.debtMfShortTermDeemedGain}
+                intradayGain={calculationSummary.intradayGain}
+                seniorCitizen={flags.seniorCitizen}
+                regimeChoiceRule={ruleCatalog.regimeChoice}
                 aisFigures={aisFigures}
                 onChangeAisFigures={setAisFigures}
                 tdsRows={tdsRows}

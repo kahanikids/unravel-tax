@@ -8,6 +8,7 @@ import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { UploadStep } from "../src/components/UploadStep";
 import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
 import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, SCOPE_YEAR_NOTE, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
+import { ruleCatalog } from "../src/rules";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { ConfidenceReport } from "../src/lib/confidence";
 import type { CaRecommendation } from "../src/lib/riskTriggers";
@@ -234,6 +235,10 @@ function checkResultsStepDefaultsToSimple() {
       caRecommendation={SAMPLE_RECOMMENDATION}
       supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
       onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -272,6 +277,10 @@ function checkResultsStepAdvancedToggle() {
       caRecommendation={SAMPLE_RECOMMENDATION}
       supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
       onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -293,6 +302,76 @@ function checkResultsStepAdvancedToggle() {
   console.log("Validated results step: advanced toggle reveals full detail and the documents ledger.");
 }
 
+function checkRegimeComparisonPanel() {
+  const withoutSalaryHtml = renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+  assertIncludes(withoutSalaryHtml, "Old vs new regime: which costs less?");
+  assertIncludes(withoutSalaryHtml, "Capital gains taxed under Sections 111A");
+  assertIncludes(withoutSalaryHtml, "Enter your salary/pension income above to see an estimate.");
+
+  const withSalaryHtml = renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, salaryIncome: 1_200_000 }}
+      onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+  assertIncludes(withSalaryHtml, "New regime");
+  assertIncludes(withSalaryHtml, "new regime looks cheaper");
+  if (withSalaryHtml.includes("Enter your salary/pension income above to see an estimate.")) {
+    throw new Error("Regime comparison should show an estimate once salary income is entered.");
+  }
+
+  console.log("Validated regime comparison panel: scope caveat always shown, estimate appears only once salary is entered.");
+}
+
 function resultsStepWithReconciliation(props: {
   aisFigures: { dividends: number | null; interestOtherIncome: number | null };
   tdsRows: { source: string; tdsPerDocument: number; tdsPerAis: number }[];
@@ -306,6 +385,10 @@ function resultsStepWithReconciliation(props: {
       caRecommendation={SAMPLE_RECOMMENDATION}
       supplementalFigures={props.supplementalFigures ?? BLANK_SUPPLEMENTAL_FIGURES}
       onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
       aisFigures={props.aisFigures}
       onChangeAisFigures={noop}
       tdsRows={props.tdsRows}
@@ -363,6 +446,10 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       caRecommendation={SAMPLE_RECOMMENDATION}
       supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
       onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -416,6 +503,7 @@ function main() {
   checkCapabilitiesPanel();
   checkOrientationForm();
   checkUploadStep();
+  checkRegimeComparisonPanel();
   checkChecklistPanel();
   checkResultsStepDefaultsToSimple();
   checkResultsStepAdvancedToggle();

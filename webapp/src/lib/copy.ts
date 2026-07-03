@@ -140,8 +140,8 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     label: "Old vs new tax regime comparison",
-    status: "planned",
-    detail: "Working out which regime is cheaper for you isn't built yet."
+    status: "available",
+    detail: "Enter your salary and old-regime deductions to see an estimate of which regime costs less, on the slab-taxed part of your income. Doesn't include surcharge or the 80+ super senior slab yet."
   },
   {
     label: "Advance tax interest estimator (234B/234C)",

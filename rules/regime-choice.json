@@ -9,11 +9,12 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified",
+    "last_verified": "2026-07-03",
+    "note": "Slabs, standard deductions, and Section 87A rebate thresholds verified against the Income Tax Department's official Budget 2025 FAQ. Switching-rule fields (business_income_switching etc.) are still structured from BUILD_PLAN.md/SYSTEM_SPEC.md draft content pending a dedicated re-check."
   },
   "source_refs": [
+    "https://incometaxindia.gov.in/Documents/Budget/budget-2025/faqs-budget-2025.pdf",
     "BUILD_PLAN.md Sections 15.5, 15.6",
     "SYSTEM_SPEC.md Section 10"
   ],
@@ -31,6 +32,42 @@
     "non_business_income_switching": {
       "can_choose_yearly": true
     },
-    "special_rate_income_rebate_caution": true
+    "special_rate_income_rebate_caution": true,
+    "cess_rate": 0.04,
+    "new_regime": {
+      "standard_deduction_inr": 75000,
+      "slabs": [
+        { "up_to_inr": 400000, "rate": 0 },
+        { "up_to_inr": 800000, "rate": 0.05 },
+        { "up_to_inr": 1200000, "rate": 0.1 },
+        { "up_to_inr": 1600000, "rate": 0.15 },
+        { "up_to_inr": 2000000, "rate": 0.2 },
+        { "up_to_inr": 2400000, "rate": 0.25 },
+        { "up_to_inr": null, "rate": 0.3 }
+      ],
+      "rebate_87a": { "taxable_income_at_or_below_inr": 1200000, "max_rebate_inr": 60000 }
+    },
+    "old_regime": {
+      "standard_deduction_inr": 50000,
+      "slabs_below_60": [
+        { "up_to_inr": 250000, "rate": 0 },
+        { "up_to_inr": 500000, "rate": 0.05 },
+        { "up_to_inr": 1000000, "rate": 0.2 },
+        { "up_to_inr": null, "rate": 0.3 }
+      ],
+      "slabs_60_to_80": [
+        { "up_to_inr": 300000, "rate": 0 },
+        { "up_to_inr": 500000, "rate": 0.05 },
+        { "up_to_inr": 1000000, "rate": 0.2 },
+        { "up_to_inr": null, "rate": 0.3 }
+      ],
+      "slabs_above_80": [
+        { "up_to_inr": 500000, "rate": 0 },
+        { "up_to_inr": 1000000, "rate": 0.2 },
+        { "up_to_inr": null, "rate": 0.3 }
+      ],
+      "rebate_87a": { "taxable_income_at_or_below_inr": 500000, "max_rebate_inr": 12500 }
+    },
+    "comparison_scope_caveat": "A regime comparison only covers income taxed at slab rates: salary, dividends, bank interest, and similar. Capital gains taxed under Sections 111A/112A are the same amount either way, so they're not part of the comparison. Surcharge above Rs 50 lakh of income, and the age 80+ super senior slab, are not modelled yet."
   }
 }

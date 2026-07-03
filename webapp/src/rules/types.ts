@@ -58,6 +58,35 @@ export type FilingMistakesValues = {
   };
 };
 
+export type TaxSlab = {
+  up_to_inr: number | null;
+  rate: number;
+};
+
+export type RegimeRebate87a = {
+  taxable_income_at_or_below_inr: number;
+  max_rebate_inr: number;
+};
+
+export type RegimeChoiceValues = {
+  new_regime_default: boolean;
+  cess_rate: number;
+  new_regime: {
+    standard_deduction_inr: number;
+    slabs: TaxSlab[];
+    rebate_87a: RegimeRebate87a;
+  };
+  old_regime: {
+    standard_deduction_inr: number;
+    slabs_below_60: TaxSlab[];
+    slabs_60_to_80: TaxSlab[];
+    slabs_above_80: TaxSlab[];
+    rebate_87a: RegimeRebate87a;
+  };
+  comparison_scope_caveat: string;
+};
+
 export type CapitalGainsEquityRule = RuleDocument<CapitalGainsEquityValues>;
 export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
 export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;
+export type RegimeChoiceRule = RuleDocument<RegimeChoiceValues>;

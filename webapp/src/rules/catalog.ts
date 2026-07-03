@@ -21,15 +21,17 @@ import type {
   CapitalGainsEquityRule,
   FilingMistakesRule,
   ItrFormSelectionRule,
+  RegimeChoiceRule,
   RuleDocument
 } from "./types";
 
 // Every rules/*.json topic, mirrored 1:1 from the top-level rules/ directory.
-// capitalGainsEquity, itrFormSelection, and filingMistakesAndPenalties are
-// typed for programmatic use (calculations, ITR selection, risk triggers).
-// The rest are typed generically (RuleDocument) - they're surfaced as
-// reference/explanatory content today, not yet consumed by calculation
-// logic. See CLAUDE.md: never hardcode a rate that belongs in one of these.
+// capitalGainsEquity, itrFormSelection, filingMistakesAndPenalties, and
+// regimeChoice are typed for programmatic use (calculations, ITR selection,
+// risk triggers, regime comparison). The rest are typed generically
+// (RuleDocument) - they're surfaced as reference/explanatory content today,
+// not yet consumed by calculation logic. See CLAUDE.md: never hardcode a
+// rate that belongs in one of these.
 export const ruleCatalog = {
   capitalGainsEquity: capitalGainsEquity as CapitalGainsEquityRule,
   capitalGainsMutualFunds: capitalGainsMutualFunds as RuleDocument,
@@ -44,7 +46,7 @@ export const ruleCatalog = {
   nriRepatriation: nriRepatriation as RuleDocument,
   nriResidentialStatus: nriResidentialStatus as RuleDocument,
   nriTdsAndRefunds: nriTdsAndRefunds as RuleDocument,
-  regimeChoice: regimeChoice as RuleDocument,
+  regimeChoice: regimeChoice as RegimeChoiceRule,
   seniorCitizenAdvanceTaxAndRegime: seniorCitizenAdvanceTaxAndRegime as RuleDocument,
   seniorCitizenBasics: seniorCitizenBasics as RuleDocument,
   singleParentAlimony: singleParentAlimony as RuleDocument,

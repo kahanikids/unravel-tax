@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import Papa from "papaparse";
-import { caSummaryAmountMap, caSummaryRows, summarizeWithRules } from "../src/lib";
+import { caSummaryAmountMap, caSummaryRows, compareRegimes, summarizeWithRules } from "../src/lib";
 import { parseCsvText } from "../src/ingest";
 import { ruleCatalog } from "../src/rules";
 
@@ -90,8 +90,36 @@ async function main() {
     throw new Error("Synthetic fixture should not owe special-rate capital gains tax after losses/exemption.");
   }
 
+  // Regime comparison: a well-publicized FY2025-26 fact is that salary up to
+  // Rs 12.75 lakh is effectively tax-free under the new regime (Rs 75,000
+  // standard deduction plus the Section 87A rebate up to Rs 12 lakh taxable).
+  // A plain Rs 12 lakh salary with nothing else should land exactly on that,
+  // while the old regime (no equivalent rebate at this level) owes real tax.
+  const regimeResult = compareRegimes(
+    {
+      salaryIncome: 1_200_000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  if (regimeResult.newRegimeTax !== 0) {
+    throw new Error(`Expected zero new-regime tax on Rs 12L salary (standard deduction + 87A rebate), got ${regimeResult.newRegimeTax}.`);
+  }
+  if (regimeResult.oldRegimeTax !== 163800) {
+    throw new Error(`Expected Rs 163800 old-regime tax on Rs 12L salary, got ${regimeResult.oldRegimeTax}.`);
+  }
+  if (regimeResult.cheaperRegime !== "new") {
+    throw new Error("New regime should be cheaper for a plain Rs 12L salary with no other income or deductions.");
+  }
+
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, and fixture totals match M2 buckets."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, and regime comparison matches the known Rs 12L salary case."
   );
 }
 

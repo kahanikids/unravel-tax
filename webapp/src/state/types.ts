@@ -62,6 +62,10 @@ export type SupplementalFigures = {
   eligibleInterestDeduction: number;
   deductibleTransactionCharges: number;
   carryForwardLossesAvailable: number;
+  /** Gross salary/pension income, before standard deduction. Only used for the optional regime comparison. */
+  salaryIncome: number;
+  /** Lump sum of 80C, 80D, HRA, home loan interest, and similar. Old regime only, only used for the optional regime comparison. */
+  oldRegimeDeductions: number;
 };
 
 export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
@@ -69,7 +73,9 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   interestOtherIncome: 0,
   eligibleInterestDeduction: 0,
   deductibleTransactionCharges: 0,
-  carryForwardLossesAvailable: 0
+  carryForwardLossesAvailable: 0,
+  salaryIncome: 0,
+  oldRegimeDeductions: 0
 };
 
 /**

@@ -6,6 +6,17 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added an old vs new tax regime comparison. `rules/regime-choice.json`
+  now has FY 2025-26/AY 2026-27 slabs, standard deductions, and Section
+  87A rebate thresholds for both regimes, verified against the Income
+  Tax Department's official Budget 2025 FAQ (previously a stub pending
+  verification). Enter your salary and old-regime deductions on the
+  results screen to see an estimated cheaper-regime call. Scoped
+  honestly: only the slab-taxed portion of income is compared (capital
+  gains under 111A/112A are the same either way and excluded), and
+  surcharge plus the 80+ super senior slab aren't modelled yet, both
+  stated up front alongside the estimate. Marked "available" in the
+  capabilities panel.
 - Added an editable extraction review step to document upload. The
   "confirm what we read" screen is no longer read-only: every row's scrip
   name, dates, and buy/sell values can be corrected inline, or a single
