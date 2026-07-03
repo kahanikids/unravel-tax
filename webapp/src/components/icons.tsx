@@ -104,6 +104,15 @@ export function IconHourglass({ className }: IconProps) {
   );
 }
 
+export function IconPlus({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
 export function IconShield({ className }: IconProps) {
   return (
     <svg {...svgProps} className={className} aria-hidden="true">

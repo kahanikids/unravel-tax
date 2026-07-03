@@ -27,6 +27,7 @@ import {
   type ChartSeries,
   type DonutSegment
 } from "./DashboardWidgets";
+import { IconPlus } from "./icons";
 
 function formatAmount(value: number) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value);
@@ -720,13 +721,24 @@ function AddPastFilingForm({
 
   return (
     <details className="refine-panel dashboard-add" open={startOpen}>
-      <summary>Add a past year</summary>
+      <summary>
+        Add a past year
+        <span className="info-tip dashboard-add-tip">
+          <button
+            type="button"
+            className="info-tip-trigger"
+            aria-label="About adding a past year"
+            onClick={(event) => event.preventDefault()}
+          >
+            i
+          </button>
+          <span className="info-tip-bubble" role="tooltip">
+            Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
+            these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
+          </span>
+        </span>
+      </summary>
       <div className="dashboard-add-body">
-        <p className="step-lede">
-          Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
-          these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
-        </p>
-
         <label className="secondary-button dashboard-json-button">
           Prefill from ITR JSON or ITR-V PDF
           <input
@@ -833,8 +845,14 @@ function AddPastFilingForm({
         {error ? <p className="inline-error">{error}</p> : null}
 
         <div className="step-actions">
-          <button type="button" className="primary-button" onClick={submit}>
-            Add to history
+          <button
+            type="button"
+            className="primary-button dashboard-add-submit"
+            onClick={submit}
+            aria-label="Add to history"
+            title="Add to history"
+          >
+            <IconPlus />
           </button>
         </div>
       </div>

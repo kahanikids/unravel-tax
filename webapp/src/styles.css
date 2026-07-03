@@ -3425,6 +3425,22 @@ button.side-nav-step.side-nav-step-current:hover {
   border-radius: var(--radius-sm);
 }
 
+.dashboard-add-tip {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.dashboard-add-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-add-submit svg {
+  width: 20px;
+  height: 20px;
+}
+
 .dashboard-add-body {
   display: flex;
   flex-direction: column;
