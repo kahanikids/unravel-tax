@@ -81,7 +81,10 @@ const QUESTIONS: Question[] = [
   {
     id: "singleParent",
     kind: "yes-no",
-    prompt: "Are you the only parent or guardian handling this, for yourself and any children?",
+    prompt: "Are you a single parent or guardian with children under 18?",
+    helper:
+      "Answer No if you don't have minor children. This only changes things when a child has money in their own name — bank interest or investments in a minor's name get added to your return.",
+    mobileHelper: "No minor children? Answer No.",
     visible: () => true,
     skippable: true,
     value: (a) => a.singleParent,
