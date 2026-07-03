@@ -441,7 +441,7 @@ function coerceAmount(value: unknown): number | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
-  const cleaned = value.replace(/[₹,\s]/g, "").replace(/[^0-9.\-]/g, "");
+  const cleaned = value.replace(/[₹,\s]/g, "").replace(/[^0-9.-]/g, "");
   if (!cleaned || cleaned === "-" || cleaned === ".") {
     return undefined;
   }

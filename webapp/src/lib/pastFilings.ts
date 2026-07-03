@@ -319,7 +319,7 @@ export function parseItrVText(text: string): ParsedItrFiling {
     };
   }
 
-  const ayMatch = normalized.match(/Assessment\s*Year\s*[:\-]?\s*(\d{4}\s*[-/]\s*\d{2,4})/i);
+  const ayMatch = normalized.match(/Assessment\s*Year\s*[:-]?\s*(\d{4}\s*[-/]\s*\d{2,4})/i);
   const assessmentYear = normalizeAssessmentYear(ayMatch?.[1]);
   if (assessmentYear) {
     fields.assessmentYear = assessmentYear;

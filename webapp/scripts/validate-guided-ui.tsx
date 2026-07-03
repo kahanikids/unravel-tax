@@ -455,7 +455,7 @@ function checkChecklistPanel() {
   assertIncludes(html, "Broker/AMC capital gains statement");
   assertIncludes(html, "Speculative/intraday trading income is considered Business Income");
   assertIncludes(html, "checklist-item-flag");
-  assertIncludes(html, "Heads up — this tool has limits");
+  assertIncludes(html, "Heads up: this tool has limits");
   assertIncludes(html, "NRI-specific numbers");
   console.log(
     "Validated checklist panel: missing documents, form-changing risk triggers, and profile-scope caveats all render, flagged visually."
@@ -646,7 +646,7 @@ function checkResultsStepSummaryPrefill() {
       netGainMissingDetail
     />
   );
-  assertIncludes(prefilledHtml, "Some of these were filled in from your statement — please check them.");
+  assertIncludes(prefilledHtml, "Some of these were filled in from your statement. Please check them.");
   assertIncludes(prefilledHtml, "Still needed:");
   // Auto-fill/missing-detail forces the panel open so it isn't left undiscovered.
   assertIncludes(prefilledHtml, 'class="refine-panel" open');
@@ -1137,7 +1137,7 @@ function checkDashboardDestination() {
     />
   );
   assertIncludes(simpleHtml, "Your tax dashboard");
-  assertIncludes(simpleHtml, "This year — AY 2026-27");
+  assertIncludes(simpleHtml, "This year: AY 2026-27");
   // The this-year panel is a visual command centre, distinct from the Results
   // working view: an ITR-form badge + tax-year timeline, and the five widgets.
   assertIncludes(simpleHtml, "Recommended form");

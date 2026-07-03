@@ -1,11 +1,10 @@
 name: Deploy webapp to GitHub Pages
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Validate"]
+    types: [completed]
     branches: [main]
-    paths:
-      - "webapp/**"
-      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -18,7 +17,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Validate passed or manual dispatch"
+
   build:
+    needs: gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

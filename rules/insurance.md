@@ -1,8 +1,9 @@
 # Insurance (life and health)
 
 **Applies to:** anyone who pays an insurance premium or receives an
-insurance payout. **Last verified:** 2026-07-03, against multiple current
-FY 2025-26 filing guides (see `source_refs` in the paired JSON).
+insurance payout.
+
+**Last verified:** 2026-07-03, against multiple current FY 2025-26 filing guides (see `source_refs` in the paired JSON).
 
 ## The one thing to understand first
 
