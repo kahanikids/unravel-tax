@@ -1,3 +1,5 @@
+import type { CanonicalTransactionColumn } from "./headerMatching";
+
 export const EXPECTED_TRANSACTION_COLUMNS = [
   "Scrip Name",
   "Purchase Date",
@@ -48,10 +50,27 @@ export type TransactionSummary = {
   ltcg: number;
 };
 
-export type ParsedTransactionSource = {
-  kind: Exclude<IngestionKind, "pdf_or_freeform">;
-  transactions: NormalizedTransaction[];
-  summary: TransactionSummary;
+export type IngestWarningCode =
+  | "missing_column"
+  | "low_confidence_header"
+  | "invalid_date"
+  | "invalid_number"
+  | "assumed_instrument_type"
+  | "parse_error";
+
+export type IngestWarning = {
+  code: IngestWarningCode;
+  message: string;
+  rowIndex?: number;
+  column?: string;
+};
+
+export type HeaderMatchConfidence = "exact" | "substring" | "typo";
+
+export type ResolvedHeader = {
+  raw: string;
+  canonical: CanonicalTransactionColumn;
+  confidence: HeaderMatchConfidence;
 };
 
 export type PromptRoute = {
@@ -61,4 +80,22 @@ export type PromptRoute = {
   reason: string;
 };
 
-export type IngestionResult = ParsedTransactionSource | PromptRoute;
+/** Unified ingest outcome: rows + warnings when parseable; promptRoute when not. */
+export type IngestResult = {
+  kind: IngestionKind;
+  transactions: NormalizedTransaction[];
+  summary: TransactionSummary;
+  warnings: IngestWarning[];
+  headerMap: Record<string, CanonicalTransactionColumn>;
+  headerDetails: ResolvedHeader[];
+  sourceHeaders: string[];
+  sourceRecords: Record<string, string | number | Date>[];
+  promptRoute?: PromptRoute;
+};
+
+/** @deprecated Use IngestResult — kept for scripts that only need transactions. */
+export type ParsedTransactionSource = {
+  kind: Exclude<IngestionKind, "pdf_or_freeform">;
+  transactions: NormalizedTransaction[];
+  summary: TransactionSummary;
+};

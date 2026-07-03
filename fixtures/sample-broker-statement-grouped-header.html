@@ -1,0 +1,40 @@
+<!--
+  Synthetic fixture mirroring a CMOTS/ABML-style capital gains export:
+  - a layout table that is NOT the transaction table
+  - a real table whose <thead> has a decorative group-banner row of blank
+    cells above the actual column names
+  - duplicate "Buy Value" / "Realized Gain" columns (the real Buy Value is the
+    first one; the later one is grandfathering data and must be ignored)
+  - a subtotal row with a blank scrip name that must be dropped
+  Values match sample-broker-statement.csv so it can be diffed against the baseline.
+-->
+<html>
+  <body>
+    <table class="layout">
+      <tr><td>Account</td><td>Statement</td></tr>
+      <tr><td>Generated</td><td>today</td></tr>
+    </table>
+    <table class="borrower_table">
+      <thead>
+        <tr class="footable-group-row">
+          <th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th>
+          <th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th>
+          <th>Short Term</th><th>As on 31st Jan</th><th>&nbsp;</th><th>Long Term</th><th>&nbsp;</th>
+        </tr>
+        <tr>
+          <th>Scrip Name</th><th>Purchase Date</th><th>Sell Date</th><th>Units</th><th>Hold Period</th>
+          <th>Buy Value</th><th>Sell Value</th><th>Buy Price</th><th>Sell Price</th><th>Speculative Gain/Lose</th>
+          <th>Realized Gain</th><th>High Price</th><th>Buy Value</th><th>Realized Gain</th><th>Taxable Gain</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Acme Industries</td><td>01-Apr-2025</td><td>15-Apr-2025</td><td>100</td><td>14</td><td>50000</td><td>51000</td><td>500</td><td>510</td><td>0.00</td><td>1000</td><td>NA</td><td>999999</td><td>NA</td><td>1000</td></tr>
+        <tr><td>Acme Industries</td><td>10-Jan-2024</td><td>20-May-2025</td><td>50</td><td>496</td><td>25000</td><td>27500</td><td>500</td><td>550</td><td>0.00</td><td>2500</td><td>NA</td><td>999999</td><td>NA</td><td>2500</td></tr>
+        <tr><td colspan="5">&nbsp;</td><td>75000</td><td>78500</td><td colspan="8">&nbsp;</td></tr>
+        <tr><td>Sample Metals Ltd</td><td>05-Jun-2025</td><td>05-Jun-2025</td><td>200</td><td>0</td><td>40000</td><td>40800</td><td>200</td><td>204</td><td>800</td><td>0.00</td><td>NA</td><td>999999</td><td>NA</td><td>0.00</td></tr>
+        <tr><td>Sample Metals Ltd</td><td>12-Feb-2023</td><td>18-Jun-2025</td><td>75</td><td>857</td><td>30000</td><td>33000</td><td>400</td><td>440</td><td>0.00</td><td>3000</td><td>NA</td><td>999999</td><td>NA</td><td>3000</td></tr>
+        <tr><td>Test Pharma Co</td><td>01-Aug-2025</td><td>30-Aug-2025</td><td>150</td><td>29</td><td>45000</td><td>43500</td><td>300</td><td>290</td><td>0.00</td><td>-1500</td><td>NA</td><td>999999</td><td>NA</td><td>-1500</td></tr>
+      </tbody>
+    </table>
+  </body>
+</html>

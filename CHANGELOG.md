@@ -6,6 +6,28 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Folder session backup and restore (Chromium): when the user picks a local
+  folder, the app now writes `unravel-tax-session.json` there on every save
+  alongside document copies and exports. A "Restore from a folder" action on
+  the welcome screen re-picks that folder and reloads the full filing if
+  browser storage was wiped. Deliberately did not persist the folder handle
+  in IndexedDB — a "clear browsing data" wipe clears that too; the on-disk
+  JSON is the durable backup.
+- CMOTS/ABML-style HTML broker exports: HTML ingest now scans the first few
+  rows of each table for the real header row (same as Excel), instead of
+  assuming row 0. Fixes saved webpages with a decorative group-banner row
+  above column names. Duplicate column labels (two "Buy Value" columns) keep
+  the first occurrence; subtotal rows with blank scrip names are dropped.
+  Added `fixtures/sample-broker-statement-grouped-header.html` to
+  `validate-ingest.ts`.
+- Ingest UX overhaul (Stage 4 handoff): parsing returns rows plus warnings
+  instead of throwing on odd headers or bad cells. PDFs get client-side text
+  extraction (pdf.js) before routing to the guided LLM prompt; CSV/Excel/HTML
+  failures route to the same prompt instead of dead-ending. Review modal shows
+  row-level warnings, buy/sell price columns, and a manual column mapper when
+  required headers are missing. Expanded date parsing (DD/MM/YYYY, DD-MM-YYYY,
+  Excel serials); Excel title-row scan; tightened substring header matching;
+  debounced session save and memoised derived state in `App.tsx`.
 - Mobile UI compression pass: dedicated phone density layer in
   `webapp/src/styles.css` (620px/420px breakpoints), bottom step bar with
   short labels (`About` / `List` / `Docs` / `Files`), and screen-by-screen

@@ -1,12 +1,17 @@
 import {
   OPTIONAL_INSTRUMENT_TYPE_COLUMN,
+  type IngestWarning,
   type InstrumentType,
   type NormalizedTransaction,
   type RawTransactionRow,
   type TaxClass,
   type TransactionSummary
 } from "./types";
-import { missingColumnsMessage, resolveTransactionHeaders } from "./headerMatching";
+
+export type EditableTransactionFields = Pick<
+  NormalizedTransaction,
+  "scripName" | "purchaseDate" | "sellDate" | "units" | "buyValue" | "sellValue" | "buyPrice" | "sellPrice" | "instrumentType"
+>;
 
 const MONTHS: Record<string, number> = {
   Jan: 0,
@@ -23,36 +28,71 @@ const MONTHS: Record<string, number> = {
   Dec: 11
 };
 
-/**
- * Kept for backward compatibility with anything checking for exact headers.
- * Parsers in parsers.ts call resolveTransactionHeaders() directly instead,
- * since they also need the header map to remap fuzzy-matched columns.
- */
-export function assertTransactionColumns(headers: string[]): void {
-  const { missing } = resolveTransactionHeaders(headers);
-  if (missing.length > 0) {
-    throw new Error(missingColumnsMessage(missing));
-  }
-}
+const MONTH_NAMES = Object.keys(MONTHS);
 
 export function parseFixtureDate(value: string | number | Date): Date {
   if (value instanceof Date) {
     return value;
   }
 
+  if (typeof value === "number" && value > 0 && value < 100_000) {
+    const excelEpoch = Date.UTC(1899, 11, 30);
+    return new Date(excelEpoch + value * 86_400_000);
+  }
+
   const text = String(value).trim();
-  const match = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(text);
-  if (!match) {
-    throw new Error(`Unsupported date value: ${text}`);
+  const dmyMatch = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(text);
+  if (dmyMatch) {
+    const [, day, month, year] = dmyMatch;
+    const monthIndex = MONTHS[month];
+    if (monthIndex === undefined) {
+      throw new Error(`Unsupported month value: ${month}`);
+    }
+    return new Date(Date.UTC(Number(year), monthIndex, Number(day)));
   }
 
-  const [, day, month, year] = match;
-  const monthIndex = MONTHS[month];
-  if (monthIndex === undefined) {
-    throw new Error(`Unsupported month value: ${month}`);
+  const slashMatch = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/.exec(text);
+  if (slashMatch) {
+    const [, day, month, year] = slashMatch;
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
   }
 
-  return new Date(Date.UTC(Number(year), monthIndex, Number(day)));
+  throw new Error(`Unsupported date value: ${text}`);
+}
+
+export function parseDateSoft(
+  value: string | number | Date,
+  rowIndex: number,
+  column: string
+): { text: string; warning?: IngestWarning } {
+  try {
+    const date = parseFixtureDate(value);
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = MONTH_NAMES.find((name) => MONTHS[name] === date.getUTCMonth()) ?? "Jan";
+    return { text: `${day}-${month}-${date.getUTCFullYear()}` };
+  } catch {
+    const text = String(value).trim();
+    if (!text) {
+      return {
+        text: "",
+        warning: {
+          code: "invalid_date",
+          message: `Row ${rowIndex + 1}, ${column}: date is empty.`,
+          rowIndex,
+          column
+        }
+      };
+    }
+    return {
+      text,
+      warning: {
+        code: "invalid_date",
+        message: `Row ${rowIndex + 1}, ${column}: "${text}" is not a recognised date format.`,
+        rowIndex,
+        column
+      }
+    };
+  }
 }
 
 export function formatFixtureDate(value: string | number | Date): string {
@@ -62,7 +102,7 @@ export function formatFixtureDate(value: string | number | Date): string {
 
   const date = parseFixtureDate(value);
   const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = Object.entries(MONTHS).find(([, index]) => index === date.getUTCMonth())?.[0];
+  const month = MONTH_NAMES.find((name) => MONTHS[name] === date.getUTCMonth());
   return `${day}-${month}-${date.getUTCFullYear()}`;
 }
 
@@ -73,7 +113,43 @@ export function parseNumber(value: string | number | Date): number {
   if (typeof value === "number") {
     return value;
   }
-  return Number(value.replace(/,/g, "").trim());
+  const cleaned = value.replace(/[₹,\s]/g, "").trim();
+  if (!cleaned || cleaned === "-" || cleaned.toLowerCase() === "n/a") {
+    return NaN;
+  }
+  return Number(cleaned);
+}
+
+export function parseNumberSoft(
+  value: string | number | Date,
+  rowIndex: number,
+  column: string
+): { number: number; userWarning?: IngestWarning } {
+  try {
+    const number = parseNumber(value);
+    if (Number.isNaN(number)) {
+      return {
+        number: 0,
+        userWarning: {
+          code: "invalid_number",
+          message: `Row ${rowIndex + 1}, ${column}: "${String(value)}" is not a valid number.`,
+          rowIndex,
+          column
+        }
+      };
+    }
+    return { number };
+  } catch {
+    return {
+      number: 0,
+      userWarning: {
+        code: "invalid_number",
+        message: `Row ${rowIndex + 1}, ${column}: could not read as a number.`,
+        rowIndex,
+        column
+      }
+    };
+  }
 }
 
 export function parseInstrumentType(value: string | number | Date | undefined): InstrumentType {
@@ -83,11 +159,6 @@ export function parseInstrumentType(value: string | number | Date | undefined): 
   }
   return "equity";
 }
-
-export type EditableTransactionFields = Pick<
-  NormalizedTransaction,
-  "scripName" | "purchaseDate" | "sellDate" | "units" | "buyValue" | "sellValue" | "buyPrice" | "sellPrice" | "instrumentType"
->;
 
 /**
  * Recomputes holdPeriodDays/taxClass/gainLoss from the editable fields. Used
@@ -100,8 +171,6 @@ export function deriveComputedFields(fields: EditableTransactionFields): Normali
   const sellDate = parseFixtureDate(fields.sellDate);
   const holdPeriodDays = Math.round((sellDate.getTime() - purchaseDate.getTime()) / 86_400_000);
 
-  // Section 50AA specified (debt) mutual funds are always short-term-deemed,
-  // regardless of holding period - see rules/capital-gains-mutual-funds.json.
   let taxClass: TaxClass;
   if (fields.instrumentType === "debt_mutual_fund") {
     taxClass = "ST";
@@ -123,33 +192,73 @@ export function deriveComputedFields(fields: EditableTransactionFields): Normali
   };
 }
 
+function parseRowSoft(row: RawTransactionRow, rowIndex: number): { fields: EditableTransactionFields; warnings: IngestWarning[] } {
+  const warnings: IngestWarning[] = [];
+  const purchase = parseDateSoft(row["Purchase Date"], rowIndex, "Purchase Date");
+  const sell = parseDateSoft(row["Sell Date"], rowIndex, "Sell Date");
+  if (purchase.warning) warnings.push(purchase.warning);
+  if (sell.warning) warnings.push(sell.warning);
+
+  const units = parseNumberSoft(row.Units, rowIndex, "Units");
+  const buyValue = parseNumberSoft(row["Buy Value"], rowIndex, "Buy Value");
+  const sellValue = parseNumberSoft(row["Sell Value"], rowIndex, "Sell Value");
+  const buyPrice = parseNumberSoft(row["Buy Price"], rowIndex, "Buy Price");
+  const sellPrice = parseNumberSoft(row["Sell Price"], rowIndex, "Sell Price");
+  for (const w of [units, buyValue, sellValue, buyPrice, sellPrice]) {
+    if (w.userWarning) warnings.push(w.userWarning);
+  }
+
+  const instrumentType = parseInstrumentType(row[OPTIONAL_INSTRUMENT_TYPE_COLUMN]);
+
+  return {
+    fields: {
+      scripName: String(row["Scrip Name"] ?? "").trim(),
+      purchaseDate: purchase.text,
+      sellDate: sell.text,
+      units: units.number,
+      buyValue: buyValue.number,
+      sellValue: sellValue.number,
+      buyPrice: buyPrice.number,
+      sellPrice: sellPrice.number,
+      instrumentType
+    },
+    warnings
+  };
+}
+
 export function normalizeRows(rows: RawTransactionRow[]): NormalizedTransaction[] {
-  return rows.map((row) =>
-    deriveComputedFields({
-      scripName: String(row["Scrip Name"]).trim(),
-      purchaseDate: formatFixtureDate(row["Purchase Date"]),
-      sellDate: formatFixtureDate(row["Sell Date"]),
-      units: parseNumber(row.Units),
-      buyValue: parseNumber(row["Buy Value"]),
-      sellValue: parseNumber(row["Sell Value"]),
-      buyPrice: parseNumber(row["Buy Price"]),
-      sellPrice: parseNumber(row["Sell Price"]),
-      instrumentType: parseInstrumentType(row[OPTIONAL_INSTRUMENT_TYPE_COLUMN])
-    })
-  );
+  return normalizeRowsSoft(rows).transactions;
+}
+
+export function normalizeRowsSoft(rows: RawTransactionRow[]): { transactions: NormalizedTransaction[]; warnings: IngestWarning[] } {
+  const transactions: NormalizedTransaction[] = [];
+  const warnings: IngestWarning[] = [];
+
+  rows.forEach((row, rowIndex) => {
+    const { fields, warnings: rowWarnings } = parseRowSoft(row, rowIndex);
+    warnings.push(...rowWarnings);
+    try {
+      transactions.push(deriveComputedFields(fields));
+    } catch {
+      warnings.push({
+        code: "invalid_date",
+        message: `Row ${rowIndex + 1}: could not compute tax class — check dates.`,
+        rowIndex
+      });
+    }
+  });
+
+  return { transactions, warnings };
 }
 
 export function summarizeTransactions(transactions: NormalizedTransaction[]): TransactionSummary {
-  return {
-    rows: transactions.length,
-    intradayGain: transactions
-      .filter((transaction) => transaction.taxClass === "Intraday")
-      .reduce((total, transaction) => total + transaction.gainLoss, 0),
-    stcg: transactions
-      .filter((transaction) => transaction.taxClass === "ST")
-      .reduce((total, transaction) => total + transaction.gainLoss, 0),
-    ltcg: transactions
-      .filter((transaction) => transaction.taxClass === "LT")
-      .reduce((total, transaction) => total + transaction.gainLoss, 0)
-  };
+  let intradayGain = 0;
+  let stcg = 0;
+  let ltcg = 0;
+  for (const transaction of transactions) {
+    if (transaction.taxClass === "Intraday") intradayGain += transaction.gainLoss;
+    else if (transaction.taxClass === "ST") stcg += transaction.gainLoss;
+    else ltcg += transaction.gainLoss;
+  }
+  return { rows: transactions.length, intradayGain, stcg, ltcg };
 }

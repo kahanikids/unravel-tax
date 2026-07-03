@@ -11,11 +11,15 @@
     "validate:calculations": "tsx scripts/validate-calculations.ts",
     "validate:reconciliation": "tsx scripts/validate-reconciliation.ts",
     "validate:guided-ui": "tsx scripts/validate-guided-ui.tsx",
-    "validate:exports": "tsx scripts/validate-exports.ts"
+    "validate:exports": "tsx scripts/validate-exports.ts",
+    "sync-rules": "node ../scripts/sync-rules.mjs",
+    "validate:rules-sync": "node ../scripts/validate-rules-sync.mjs",
+    "validate:all": "npm run validate:rules-sync && npm run validate:ingest && npm run validate:calculations && npm run validate:reconciliation && npm run validate:guided-ui && npm run validate:exports"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "papaparse": "^5.5.4",
+    "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "read-excel-file": "^9.2.0",

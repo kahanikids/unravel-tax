@@ -12,6 +12,7 @@ import {
   CAPABILITIES,
   DISCLAIMER_FULL,
   HOW_IT_WORKS,
+  REPORT_ISSUE_URL,
   TOOL_TOUR_USE_CASES,
   WHO_ITS_FOR,
   WHO_ITS_FOR_EXCLUDES
@@ -93,7 +94,8 @@ function checkWelcomeScreen() {
   // shown on every screen including welcome - not duplicated on the card.
   // (Checked as a substring before the apostrophe: React's SSR renderer
   // escapes "doesn't" to "doesn&#x27;t" in the rendered HTML.)
-  assertIncludes(html, "Built for FY 2025-26 (AY 2026-27) filings only. It organizes your numbers.");
+  assertIncludes(html, "Built for FY 2025-26 (AY 2026-27) filings only.");
+  assertIncludes(html, "Not affiliated with the Income Tax Department");
   assertIncludes(html, 'class="app-footer"');
 
   for (const jargon of ["Milestone readiness", "Static Constraints", "Next Slices", "M4E", "Working plan"]) {
@@ -241,8 +243,12 @@ function checkToolTour() {
 }
 
 function checkHelpPanel() {
-  const html = renderToString(<HelpPanel />);
-  assertIncludes(html, 'aria-label="How this works');
+  const closedHtml = renderToString(<HelpPanel />);
+  assertIncludes(closedHtml, 'aria-label="How this works');
+
+  const html = renderToString(<HelpPanel initialOpen />);
+  assertIncludes(html, "Report it on GitHub");
+  assertIncludes(html, REPORT_ISSUE_URL);
 
   if (HOW_IT_WORKS.length === 0 || HOW_IT_WORKS.some((step) => !step.title.trim() || !step.detail.trim())) {
     throw new Error("Every How It Works step needs a non-empty title and detail.");
@@ -255,7 +261,7 @@ function checkHelpPanel() {
       throw new Error(`"Who it's for" exclusion copy should mention "${term}".`);
     }
   }
-  for (const term of ["Chartered Accountant", "browser"]) {
+  for (const term of ["Chartered Accountant", "browser", "not affiliated", "Income Tax Department"]) {
     if (!DISCLAIMER_FULL.includes(term)) {
       throw new Error(`Full disclaimer copy should mention "${term}".`);
     }

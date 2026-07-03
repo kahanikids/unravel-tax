@@ -1,28 +1,28 @@
-import { useState } from "react";
-import { deriveComputedFields, parseFile, parsePastedExtraction, type NormalizedTransaction } from "../ingest";
+import { useEffect, useState } from "react";
+import {
+  deriveComputedFields,
+  parseFile,
+  parsePastedExtraction,
+  reparseWithColumnMap,
+  type IngestResult,
+  type IngestWarning,
+  type NormalizedTransaction
+} from "../ingest";
+import { EXPECTED_TRANSACTION_COLUMNS } from "../ingest/types";
+import type { CanonicalTransactionColumn } from "../ingest/headerMatching";
 
 export type UploadedDocument = {
   fileName: string;
   rowCount: number;
 };
 
-type Pending = {
+type PendingReview = {
   fileName: string;
+  ingest: IngestResult;
   transactions: NormalizedTransaction[];
+  warnings: IngestWarning[];
+  columnAssignments: Partial<Record<CanonicalTransactionColumn, string>>;
 };
-
-const EXTRACTION_PROMPT = `I'm sharing one document — it could be a PDF, an Excel file, a CSV, a saved webpage, or pasted text. Read it and output ONLY a table with these exact columns, one row per transaction:
-
-Scrip/Fund Name | Purchase Date | Sell Date | Units | Buy Value | Sell Value | Buy Price | Sell Price
-
-Rules:
-- If the source has more than one table, use the one that actually contains transaction rows, not a summary or disclaimer table — tell me which one you used.
-- If the file has subtotal or summary rows mixed in with transaction rows, drop the subtotal rows — I only want individual transaction lines.
-- Use DD-MMM-YYYY date format.
-- Do not classify long-term/short-term yourself, and do not calculate gains yourself.
-- If any transaction is missing a purchase date or sell date, flag it in a separate line after the table instead of guessing.
-- Output the table in a format I can copy straight into a spreadsheet (tab-separated or markdown table, your choice, just tell me which).
-- End with one line summarizing what you read and how confident you are.`;
 
 export function UploadStep({
   documents,
@@ -41,12 +41,58 @@ export function UploadStep({
   localFolderName: string | null;
   onChooseLocalFolder: () => void;
 }) {
-  const [pending, setPending] = useState<Pending | null>(null);
-  const [awaitingPaste, setAwaitingPaste] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingReview | null>(null);
+  const [awaitingPaste, setAwaitingPaste] = useState<{ fileName: string; reason?: string } | null>(null);
   const [pasteText, setPasteText] = useState("");
+  const [extractionPrompt, setExtractionPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+
+  useEffect(() => {
+    if (!awaitingPaste || extractionPrompt) {
+      return;
+    }
+    fetch(`${import.meta.env.BASE_URL}extraction-prompt.txt`)
+      .then((response) => response.text())
+      .then(setExtractionPrompt)
+      .catch(() => setExtractionPrompt("Could not load extraction prompt. See prompts/01-extract-statement.md in the repo."));
+  }, [awaitingPaste, extractionPrompt]);
+
+  function openReview(fileName: string, result: IngestResult) {
+    const missingCols = EXPECTED_TRANSACTION_COLUMNS.filter(
+      (col) => !Object.values(result.headerMap).includes(col)
+    );
+
+    if (result.transactions.length > 0) {
+      setPending({
+        fileName,
+        ingest: result,
+        transactions: result.transactions,
+        warnings: result.warnings,
+        columnAssignments: {}
+      });
+      return;
+    }
+
+    if (result.sourceHeaders.length > 0 && missingCols.length > 0) {
+      setPending({
+        fileName,
+        ingest: result,
+        transactions: [],
+        warnings: result.warnings,
+        columnAssignments: {}
+      });
+      return;
+    }
+
+    if (result.promptRoute) {
+      setAwaitingPaste({ fileName, reason: result.promptRoute.reason });
+      return;
+    }
+
+    setError(result.warnings[0]?.message ?? "Could not read any transaction rows from that file.");
+  }
 
   async function handleFile(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -56,14 +102,9 @@ export function UploadStep({
     setError(null);
     setParsing(true);
     try {
-      const result = await parseFile(file);
-      if (result.kind === "pdf_or_freeform") {
-        setAwaitingPaste(file.name);
-      } else {
-        setPending({ fileName: file.name, transactions: result.transactions });
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not read that file.");
+      openReview(file.name, await parseFile(file));
+    } catch {
+      setError("Could not read that file.");
     } finally {
       setParsing(false);
       setIsDragOver(false);
@@ -75,14 +116,42 @@ export function UploadStep({
       return;
     }
     setError(null);
-    try {
-      const source = parsePastedExtraction(pasteText);
-      setPending({ fileName: awaitingPaste, transactions: source.transactions });
-      setAwaitingPaste(null);
-      setPasteText("");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not read that table.");
+    const result = parsePastedExtraction(pasteText);
+    if (result.transactions.length === 0) {
+      setError(result.warnings[0]?.message ?? "Could not read that table.");
+      return;
     }
+    setPending({
+      fileName: awaitingPaste.fileName,
+      ingest: result,
+      transactions: result.transactions,
+      warnings: result.warnings,
+      columnAssignments: {}
+    });
+    setAwaitingPaste(null);
+    setPasteText("");
+  }
+
+  function applyColumnMap() {
+    if (!pending) {
+      return;
+    }
+    const result = reparseWithColumnMap(
+      pending.ingest.kind,
+      pending.ingest.sourceHeaders,
+      pending.ingest.sourceRecords,
+      pending.columnAssignments
+    );
+    if (result.transactions.length === 0) {
+      setError(result.warnings.find((w) => w.code === "missing_column")?.message ?? "Still missing required columns.");
+      return;
+    }
+    setPending({
+      ...pending,
+      ingest: result,
+      transactions: result.transactions,
+      warnings: result.warnings
+    });
   }
 
   function confirmPending() {
@@ -93,25 +162,18 @@ export function UploadStep({
     setPending(null);
   }
 
-  // Recomputes hold period/tax class/gain-loss from the edited fields, same
-  // as a freshly parsed row. Invalid in-progress edits (e.g. a half-typed
-  // date) are kept as typed without recalculating, rather than crashing.
   function updatePendingRow(index: number, patch: Partial<NormalizedTransaction>) {
     setPending((prev) => {
       if (!prev) {
         return prev;
       }
-      const transactions = prev.transactions.map((row, rowIndex) => {
-        if (rowIndex !== index) {
-          return row;
-        }
-        const merged = { ...row, ...patch };
-        try {
-          return deriveComputedFields(merged);
-        } catch {
-          return merged;
-        }
-      });
+      const transactions = [...prev.transactions];
+      const merged = { ...transactions[index], ...patch };
+      try {
+        transactions[index] = deriveComputedFields(merged);
+      } catch {
+        transactions[index] = merged;
+      }
       return { ...prev, transactions };
     });
   }
@@ -119,6 +181,10 @@ export function UploadStep({
   function removePendingRow(index: number) {
     setPending((prev) => (prev ? { ...prev, transactions: prev.transactions.filter((_, i) => i !== index) } : prev));
   }
+
+  const missingColumns = pending
+    ? EXPECTED_TRANSACTION_COLUMNS.filter((col) => !Object.values(pending.ingest.headerMap).includes(col))
+    : [];
 
   return (
     <div className="step-card">
@@ -167,13 +233,13 @@ export function UploadStep({
               Saving a copy of each document to <strong>{localFolderName}</strong> on your computer as you go.
             </p>
           ) : (
-            <>
-              <p className="folder-panel-copy">Want a copy of each document saved to a folder on your computer as you add it?</p>
-              <button type="button" className="text-button" onClick={onChooseLocalFolder}>
-                Save to a folder instead
-              </button>
-            </>
+            <p className="folder-panel-copy">Want a copy of each document saved to a folder on your computer as you add it?</p>
           )}
+          {!localFolderName ? (
+            <button type="button" className="text-button" onClick={onChooseLocalFolder}>
+              Save to a folder instead
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -182,8 +248,8 @@ export function UploadStep({
       {awaitingPaste ? (
         <div className="paste-panel">
           <p>
-            <strong>{awaitingPaste}</strong> needs the AI extraction step. This app doesn't parse PDFs or free-form
-            text itself.
+            <strong>{awaitingPaste.fileName}</strong> needs the AI extraction step.
+            {awaitingPaste.reason ? ` ${awaitingPaste.reason}` : " This app couldn't find a transaction table on its own."}
           </p>
           <ol className="paste-steps">
             <li>Copy the prompt below.</li>
@@ -192,7 +258,7 @@ export function UploadStep({
           </ol>
           <details className="extraction-prompt">
             <summary>Show the extraction prompt</summary>
-            <pre>{EXTRACTION_PROMPT}</pre>
+            <pre>{extractionPrompt || "Loading prompt…"}</pre>
           </details>
           <textarea
             className="paste-textarea"
@@ -217,6 +283,74 @@ export function UploadStep({
           <div className="modal-card modal-card-wide" role="dialog" aria-labelledby="confirm-title">
             <h3 id="confirm-title">Here's what we read from {pending.fileName}</h3>
             <p>Fix anything that's wrong, or remove a row entirely, before it's used anywhere.</p>
+
+            {pending.warnings.length > 0 ? (
+              <details className="ingest-warnings" open>
+                <summary>{pending.warnings.length} note(s) about this file</summary>
+                <ul>
+                  {pending.warnings.map((warning, index) => (
+                    <li key={`${warning.code}-${index}`}>{warning.message}</li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+
+            {missingColumns.length > 0 && pending.ingest.sourceHeaders.length > 0 ? (
+              <div className="column-mapper">
+                <p>
+                  <strong>Map columns:</strong> we couldn't match every required column automatically. Pick the right
+                  source column for each, then click Apply mapping.
+                </p>
+                {pending.ingest.promptRoute ? (
+                  <p className="column-mapper-alt">
+                    Or{" "}
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => {
+                        setAwaitingPaste({ fileName: pending.fileName, reason: pending.ingest.promptRoute?.reason });
+                        setPending(null);
+                      }}
+                    >
+                      use the AI extraction prompt
+                    </button>{" "}
+                    instead.
+                  </p>
+                ) : null}
+                {missingColumns.map((column) => (
+                  <label key={column} className="column-mapper-row">
+                    <span>{column}</span>
+                    <select
+                      value={pending.columnAssignments[column] ?? ""}
+                      onChange={(event) =>
+                        setPending((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                columnAssignments: {
+                                  ...prev.columnAssignments,
+                                  [column]: event.target.value || undefined
+                                }
+                              }
+                            : prev
+                        )
+                      }
+                    >
+                      <option value="">— pick a column —</option>
+                      {pending.ingest.sourceHeaders.map((header) => (
+                        <option key={header} value={header}>
+                          {header}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+                <button type="button" className="text-button" onClick={applyColumnMap}>
+                  Apply mapping
+                </button>
+              </div>
+            ) : null}
+
             {pending.transactions.length === 0 ? (
               <p className="checklist-empty">Every row has been removed. Discard, or go back and re-add the document.</p>
             ) : (
@@ -230,6 +364,8 @@ export function UploadStep({
                       <th className="col-units">Units</th>
                       <th className="col-buy">Buy value</th>
                       <th className="col-sell">Sell value</th>
+                      <th className="col-price">Buy price</th>
+                      <th className="col-price">Sell price</th>
                       <th>Gain/(Loss)</th>
                       <th>Class</th>
                       <th aria-label="Remove row" />
@@ -286,6 +422,22 @@ export function UploadStep({
                             value={row.sellValue}
                             aria-label="Sell value"
                             onChange={(event) => updatePendingRow(index, { sellValue: Number(event.target.value) || 0 })}
+                          />
+                        </td>
+                        <td className="col-price" data-label="Buy price">
+                          <input
+                            type="number"
+                            value={row.buyPrice}
+                            aria-label="Buy price"
+                            onChange={(event) => updatePendingRow(index, { buyPrice: Number(event.target.value) || 0 })}
+                          />
+                        </td>
+                        <td className="col-price" data-label="Sell price">
+                          <input
+                            type="number"
+                            value={row.sellPrice}
+                            aria-label="Sell price"
+                            onChange={(event) => updatePendingRow(index, { sellPrice: Number(event.target.value) || 0 })}
                           />
                         </td>
                         <td data-label="Gain">{row.gainLoss}</td>

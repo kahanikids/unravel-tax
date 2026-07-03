@@ -399,6 +399,12 @@ button.side-nav-step.side-nav-step-current:hover {
   margin: 0;
 }
 
+.welcome-restore {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .entry-path-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -947,6 +953,53 @@ button.side-nav-step.side-nav-step-current:hover {
 .upload-empty-hint {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.ingest-warnings {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  font-size: 0.88rem;
+}
+
+.ingest-warnings ul {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+
+.column-mapper {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  font-size: 0.88rem;
+}
+
+.column-mapper-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.column-mapper-row span {
+  min-width: 120px;
+  font-weight: 600;
+}
+
+.column-mapper-row select {
+  flex: 1;
+  max-width: 280px;
+}
+
+.column-mapper-alt {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.preview-table .col-price {
+  min-width: 72px;
 }
 
 .folder-panel {

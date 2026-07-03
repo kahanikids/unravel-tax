@@ -67,6 +67,8 @@ const HEADER_SYNONYMS: Record<CanonicalTransactionColumn, string[]> = {
 
 const ALL_COLUMNS: CanonicalTransactionColumn[] = [...EXPECTED_TRANSACTION_COLUMNS, OPTIONAL_INSTRUMENT_TYPE_COLUMN];
 
+const MIN_SUBSTRING_SYNONYM_LENGTH = 4;
+
 function normalizeHeaderText(value: string): string {
   return value
     .toLowerCase()
@@ -105,7 +107,22 @@ export type HeaderResolution = {
   headerMap: Record<string, CanonicalTransactionColumn>;
   /** Required columns (EXPECTED_TRANSACTION_COLUMNS) that no header could be matched to. */
   missing: CanonicalTransactionColumn[];
+  /** Match confidence per mapped header. */
+  details: ResolvedHeaderDetail[];
 };
+
+export type ResolvedHeaderDetail = {
+  raw: string;
+  canonical: CanonicalTransactionColumn;
+  confidence: "exact" | "substring" | "typo";
+};
+
+function substringMatch(normalized: string, synonym: string): boolean {
+  if (synonym.length < MIN_SUBSTRING_SYNONYM_LENGTH) {
+    return normalized === synonym;
+  }
+  return normalized.includes(synonym) || synonym.includes(normalized);
+}
 
 /**
  * Matches a document's raw header row to the canonical transaction columns.
@@ -113,12 +130,10 @@ export type HeaderResolution = {
  *   1. Exact match (normalized) against the canonical name or a known synonym.
  *   2. Substring match, for headers with extra words like "Scrip Name (NSE)".
  *   3. Typo tolerance (small edit distance), for misspellings like "Purchse Date".
- * Deliberately stops here per ponytail: a value-shape fallback (e.g. "this
- * column parses as a date so it must be a date column") would add real
- * complexity for cases the synonym list doesn't already cover well.
  */
 export function resolveTransactionHeaders(rawHeaders: string[]): HeaderResolution {
   const headerMap: Record<string, CanonicalTransactionColumn> = {};
+  const details: ResolvedHeaderDetail[] = [];
   const matchedColumns = new Set<CanonicalTransactionColumn>();
   const unmatchedHeaders = () => rawHeaders.filter((header) => !(header in headerMap));
 
@@ -128,6 +143,7 @@ export function resolveTransactionHeaders(rawHeaders: string[]): HeaderResolutio
     if (column) {
       headerMap[raw] = column;
       matchedColumns.add(column);
+      details.push({ raw, canonical: column, confidence: "exact" });
     }
   }
 
@@ -137,11 +153,12 @@ export function resolveTransactionHeaders(rawHeaders: string[]): HeaderResolutio
     const column = ALL_COLUMNS.find(
       (candidate) =>
         !matchedColumns.has(candidate) &&
-        candidatesFor(candidate).some((text) => normalized.includes(text) || text.includes(normalized))
+        candidatesFor(candidate).some((text) => substringMatch(normalized, text))
     );
     if (column) {
       headerMap[raw] = column;
       matchedColumns.add(column);
+      details.push({ raw, canonical: column, confidence: "substring" });
     }
   }
 
@@ -164,15 +181,16 @@ export function resolveTransactionHeaders(rawHeaders: string[]): HeaderResolutio
     if (bestColumn && bestDistance <= tolerance) {
       headerMap[raw] = bestColumn;
       matchedColumns.add(bestColumn);
+      details.push({ raw, canonical: bestColumn, confidence: "typo" });
     }
   }
 
   const missing = EXPECTED_TRANSACTION_COLUMNS.filter((column) => !matchedColumns.has(column));
-  return { headerMap, missing };
+  return { headerMap, missing, details };
 }
 
 export function missingColumnsMessage(missing: CanonicalTransactionColumn[]): string {
-  return `Could not find a transaction table with the expected headers. Missing or unrecognized column(s): ${missing.join(", ")}. Check your document has a column for each of these (a similarly worded column name works too).`;
+  return `Missing or unrecognized column(s): ${missing.join(", ")}. Map them below or use the extraction prompt.`;
 }
 
 /** Renames each key in a raw record from its original header text to the matched canonical column, dropping unmatched columns. */
@@ -185,4 +203,18 @@ export function remapRecordKeys<T>(record: Record<string, T>, headerMap: Record<
     }
   }
   return result;
+}
+
+/** Re-parse source records after the user maps columns manually. */
+export function buildHeaderMapFromAssignments(
+  sourceHeaders: string[],
+  assignments: Partial<Record<CanonicalTransactionColumn, string>>
+): Record<string, CanonicalTransactionColumn> {
+  const headerMap: Record<string, CanonicalTransactionColumn> = {};
+  for (const [canonical, raw] of Object.entries(assignments) as [CanonicalTransactionColumn, string][]) {
+    if (raw && sourceHeaders.includes(raw)) {
+      headerMap[raw] = canonical;
+    }
+  }
+  return headerMap;
 }

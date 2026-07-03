@@ -20,6 +20,7 @@ type FileSystemWritableFileStream = {
 
 type FileSystemFileHandle = {
   createWritable(): Promise<FileSystemWritableFileStream>;
+  getFile(): Promise<Blob>;
 };
 
 export type LocalFolderHandle = {
@@ -72,4 +73,16 @@ export async function saveDocumentCopyToFolder(
   const safeName = fileName.replace(/[\\/:*?"<>|]/g, "_");
   const targetName = safeName.toLowerCase().endsWith(".csv") ? safeName : `${safeName}.csv`;
   await writeFileToFolder(directory, `submitted - ${targetName}`, new Blob([csvText], { type: "text/csv;charset=utf-8" }));
+}
+
+/** Returns the file's text, or null if it isn't in the folder. */
+export async function readTextFromFolder(directory: LocalFolderHandle, filename: string): Promise<string | null> {
+  try {
+    const fileHandle = await directory.getFileHandle(filename);
+    const file = await fileHandle.getFile();
+    return await file.text();
+  } catch {
+    // NotFoundError (no such file) or a permission issue - caller decides what to do.
+    return null;
+  }
 }

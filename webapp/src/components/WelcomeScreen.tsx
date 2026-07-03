@@ -6,7 +6,9 @@ export function WelcomeScreen({
   onResume,
   hasSavedSession,
   onShowCapabilities,
-  onShowTour
+  onShowTour,
+  localFolderSupported,
+  onRestoreFromFolder
 }: {
   onStart: () => void;
   onStartComputationFirst: () => void;
@@ -14,6 +16,8 @@ export function WelcomeScreen({
   hasSavedSession: boolean;
   onShowCapabilities: () => void;
   onShowTour: () => void;
+  localFolderSupported: boolean;
+  onRestoreFromFolder: () => void;
 }) {
   return (
     <div className="welcome-card">
@@ -77,6 +81,15 @@ export function WelcomeScreen({
           </span>
         </button>
       </div>
+
+      {localFolderSupported ? (
+        <p className="welcome-restore">
+          Saved a filing to a folder before?{" "}
+          <button type="button" className="text-button" onClick={onRestoreFromFolder}>
+            Restore from a folder
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 }

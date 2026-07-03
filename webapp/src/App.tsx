@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
@@ -8,7 +8,6 @@ import {
   caSummaryRows,
   checklistGaps,
   chooseLocalFolder,
-  classifyTransactionWithRules,
   buildConfidenceReport,
   clearSession,
   clubbedMinorIncome,
@@ -21,10 +20,15 @@ import {
   SCOPE_AND_DISCLAIMER_NOTE,
   isLocalFolderSupported,
   loadSession,
+  parseSession,
   profileScopeCaveats as deriveProfileScopeCaveats,
+  readTextFromFolder,
   saveDocumentCopyToFolder,
   saveExportToFolder,
   saveSession,
+  serializeSession,
+  SESSION_BACKUP_FILENAME,
+  writeFileToFolder,
   selectItrForm,
   summarizeWithRules,
   tdsMismatches,
@@ -110,16 +114,31 @@ function App() {
     if (step === "welcome" || sampleMode) {
       return;
     }
-    saveSession({
-      step,
-      furthestStepIndex,
-      orientation,
-      documents,
-      supplementalFigures,
-      acknowledgedTriggerIds,
-      aisFigures,
-      tdsRows
-    });
+    const timer = window.setTimeout(() => {
+      const input = {
+        step,
+        furthestStepIndex,
+        orientation,
+        documents,
+        supplementalFigures,
+        acknowledgedTriggerIds,
+        aisFigures,
+        tdsRows
+      };
+      saveSession(input);
+      // The folder is a disk-durable backup: write the same session there so
+      // it can be recovered even if the browser's storage is wiped.
+      if (folderHandle) {
+        writeFileToFolder(
+          folderHandle,
+          SESSION_BACKUP_FILENAME,
+          new Blob([serializeSession(input)], { type: "application/json" })
+        ).catch(() => {
+          // Non-fatal: localStorage still has it; the folder copy is a bonus.
+        });
+      }
+    }, 500);
+    return () => window.clearTimeout(timer);
   }, [
     step,
     furthestStepIndex,
@@ -129,19 +148,38 @@ function App() {
     acknowledgedTriggerIds,
     aisFigures,
     tdsRows,
-    sampleMode
+    sampleMode,
+    folderHandle
   ]);
 
-  const transactions = documents.flatMap((document) => document.transactions);
-  const flags = deriveProfileFlags(orientation);
-  const hasBusinessIncome = transactions.some(
-    (transaction) => classifyTransactionWithRules(transaction, ruleCatalog.capitalGainsEquity) === "Intraday"
+  const transactions = useMemo(() => documents.flatMap((document) => document.transactions), [documents]);
+  const flags = useMemo(() => deriveProfileFlags(orientation), [orientation]);
+  const hasBusinessIncome = useMemo(
+    () => transactions.some((transaction) => transaction.taxClass === "Intraday"),
+    [transactions]
   );
-  const itrForm = selectItrForm(flags, hasBusinessIncome, ruleCatalog.itrFormSelection);
-  const riskTriggers = evaluateRiskTriggers(flags, hasBusinessIncome, itrForm, new Date());
-  const caRecommendation = caOrSelfFileRecommendation(flags, riskTriggers, hasBusinessIncome);
-  const checklistItems: ChecklistItem[] = buildChecklist(flags, transactions.length > 0);
-  const scopeCaveats = deriveProfileScopeCaveats(flags);
+  const itrForm = useMemo(
+    () => selectItrForm(flags, hasBusinessIncome, ruleCatalog.itrFormSelection),
+    [flags, hasBusinessIncome]
+  );
+  const riskTriggers = useMemo(
+    () => evaluateRiskTriggers(flags, hasBusinessIncome, itrForm, new Date()),
+    [flags, hasBusinessIncome, itrForm]
+  );
+  const caRecommendation = useMemo(
+    () => caOrSelfFileRecommendation(flags, riskTriggers, hasBusinessIncome),
+    [flags, riskTriggers, hasBusinessIncome]
+  );
+  const checklistItems: ChecklistItem[] = useMemo(
+    () => buildChecklist(flags, transactions.length > 0),
+    [flags, transactions.length]
+  );
+  const scopeCaveats = useMemo(() => deriveProfileScopeCaveats(flags), [flags]);
+  const gaps = useMemo(() => checklistGaps(checklistItems), [checklistItems]);
+  const rulesSummary = useMemo(
+    () => summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
+    [transactions]
+  );
 
   // BUILD_PLAN.md Section 1.4: form-changing/recommendation-changing triggers get a
   // hard-block popup, not just inline sidebar text. Show one the first time each
@@ -193,7 +231,7 @@ function App() {
   }
 
   const calculationSummary = {
-    ...summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
+    ...rulesSummary,
     recommendedItrForm: itrForm.form,
     caReviewRecommendation: caRecommendation.headline
   };
@@ -219,13 +257,13 @@ function App() {
     ...tdsMismatches(tdsRows)
   ];
 
-  const openIssueCount = checklistGaps(checklistItems).length + riskTriggers.length + reconciliationMismatches.length;
+  const openIssueCount = gaps.length + riskTriggers.length + reconciliationMismatches.length;
 
   // A single pre-export confidence check: the same signals shown throughout
   // the flow (checklist, risk triggers, reconciliation, scope caveats),
   // regrouped by how urgently each one matters before you export.
   const confidenceReport = buildConfidenceReport({
-    checklistGaps: checklistGaps(checklistItems),
+    checklistGaps: gaps,
     riskTriggers,
     mismatches: reconciliationMismatches,
     scopeCaveats
@@ -359,6 +397,25 @@ function App() {
     }
   }
 
+  // Recovery path: point at a previously-used folder and restore the filing
+  // from its backup, even after browser storage was wiped. Picking the folder
+  // is the permission grant the browser requires; there's no silent auto-load.
+  async function restoreFromFolder() {
+    const handle = await chooseLocalFolder();
+    if (!handle) {
+      return;
+    }
+    setFolderHandle(handle);
+    const session = parseSession(await readTextFromFolder(handle, SESSION_BACKUP_FILENAME));
+    if (!session) {
+      setExportMessage(`No saved filing found in "${handle.name}". New documents will be saved there from now on.`);
+      return;
+    }
+    hydrateSession(session);
+    setFurthestStepIndex(session.furthestStepIndex ?? STEP_ORDER.indexOf(session.step));
+    setStep(session.step);
+  }
+
   async function deliverExport(file: ExportFile) {
     if (folderHandle) {
       await saveExportToFolder(folderHandle, file);
@@ -432,6 +489,8 @@ function App() {
             hasSavedSession={hasSavedSession}
             onShowCapabilities={() => setShowCapabilities(true)}
             onShowTour={() => setShowTour(true)}
+            localFolderSupported={isLocalFolderSupported()}
+            onRestoreFromFolder={restoreFromFolder}
           />
         </div>
       ) : null}

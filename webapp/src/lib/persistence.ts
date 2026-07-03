@@ -35,24 +35,20 @@ export type PersistedSession = {
 
 const STORAGE_KEY = "unravel-tax-session";
 
-export function saveSession(session: Omit<PersistedSession, "version" | "savedAt">): void {
-  if (typeof localStorage === "undefined") {
-    return;
-  }
+/** File written into the user's chosen folder, so the folder is a full,
+ * disk-durable backup that survives a browser-storage wipe (unlike
+ * localStorage/IndexedDB, both cleared together by "clear browsing data"). */
+export const SESSION_BACKUP_FILENAME = "unravel-tax-session.json";
+
+export type SessionInput = Omit<PersistedSession, "version" | "savedAt">;
+
+export function serializeSession(session: SessionInput): string {
   const payload: PersistedSession = { version: 1, savedAt: new Date().toISOString(), ...session };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    // Storage full or unavailable (e.g. private browsing) - caching is a
-    // convenience, not a requirement, so fail silently rather than block the user.
-  }
+  return JSON.stringify(payload);
 }
 
-export function loadSession(): PersistedSession | null {
-  if (typeof localStorage === "undefined") {
-    return null;
-  }
-  const raw = localStorage.getItem(STORAGE_KEY);
+/** Parses and validates a stored/backed-up session, from either source. */
+export function parseSession(raw: string | null): PersistedSession | null {
   if (!raw) {
     return null;
   }
@@ -65,6 +61,25 @@ export function loadSession(): PersistedSession | null {
   } catch {
     return null;
   }
+}
+
+export function saveSession(session: SessionInput): void {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, serializeSession(session));
+  } catch {
+    // Storage full or unavailable (e.g. private browsing) - caching is a
+    // convenience, not a requirement, so fail silently rather than block the user.
+  }
+}
+
+export function loadSession(): PersistedSession | null {
+  if (typeof localStorage === "undefined") {
+    return null;
+  }
+  return parseSession(localStorage.getItem(STORAGE_KEY));
 }
 
 export function clearSession(): void {

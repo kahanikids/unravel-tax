@@ -1,20 +1,22 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { readSheet } from "read-excel-file/universal";
 import {
   deriveComputedFields,
+  findHeaderRowIndex,
   parseCsvText,
   parseExcelBuffer,
   parseHtmlText,
   parseTextSource,
   parseStructuredText,
-  type NormalizedTransaction,
-  type ParsedTransactionSource
+  type IngestResult,
+  type NormalizedTransaction
 } from "../src/ingest";
 
 const repoRoot = resolve(import.meta.dirname, "..", "..");
 const fixturesDir = resolve(repoRoot, "fixtures");
 
-function comparableRows(result: ParsedTransactionSource): string[] {
+function comparableRows(result: IngestResult): string[] {
   return result.transactions.map((transaction: NormalizedTransaction) =>
     [
       transaction.scripName,
@@ -51,11 +53,6 @@ async function main() {
     }
   }
 
-  // Fuzzy header matching: real broker exports rename, reorder, and sometimes
-  // misspell these columns. This fixture uses synonyms ("Security Name" for
-  // "Scrip Name", "Qty" for "Units"), reordered columns, extra whitespace
-  // ("BUY  RATE"), and one deliberate typo ("Purchse Date"), and must still
-  // resolve to the exact same transactions as the exact-header baseline.
   const fuzzyHeaders = parseCsvText(
     await readFile(resolve(fixturesDir, "sample-broker-statement-fuzzy-headers.csv"), "utf8")
   );
@@ -63,20 +60,38 @@ async function main() {
     throw new Error("Fuzzy-header CSV fixture did not resolve to the same transactions as the exact-header baseline.");
   }
 
-  // A document genuinely missing a required column (here, no Sell Price/Sale
-  // Rate equivalent at all) must fail gracefully and name the missing field,
-  // not just report a generic "expected headers" error.
-  const missingColumnText = await readFile(resolve(fixturesDir, "sample-broker-statement-missing-column.csv"), "utf8");
-  let missingColumnError: string | undefined;
-  try {
-    parseCsvText(missingColumnText);
-  } catch (error) {
-    missingColumnError = error instanceof Error ? error.message : String(error);
+  const altDates = parseCsvText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement-alt-dates.csv"), "utf8")
+  );
+  if (JSON.stringify(comparableRows(altDates)) !== JSON.stringify(baseline)) {
+    throw new Error("DD/MM/YYYY date fixture did not resolve to the same transactions as the baseline.");
   }
-  if (!missingColumnError || !missingColumnError.includes("Sell Price")) {
+
+  // CMOTS/ABML-style HTML: group-banner header row above the real column names,
+  // duplicate Buy Value/Realized Gain columns, and a blank-scrip subtotal row.
+  const groupedHeader = parseHtmlText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement-grouped-header.html"), "utf8")
+  );
+  if (JSON.stringify(comparableRows(groupedHeader)) !== JSON.stringify(baseline)) {
     throw new Error(
-      `Expected a missing-column error naming "Sell Price", got: ${missingColumnError ?? "no error thrown"}`
+      `Grouped-header HTML fixture did not resolve to the baseline transactions. Got ${groupedHeader.transactions.length} rows: ${JSON.stringify(comparableRows(groupedHeader))}`
     );
+  }
+
+  const missingColumn = parseCsvText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement-missing-column.csv"), "utf8")
+  );
+  if (missingColumn.transactions.length !== 0) {
+    throw new Error("Missing-column fixture should not produce transactions until columns are mapped.");
+  }
+  if (!missingColumn.promptRoute || missingColumn.promptRoute.route !== "guided_prompt") {
+    throw new Error("Missing-column fixture should route to the guided extraction prompt.");
+  }
+  if (!missingColumn.warnings.some((warning) => warning.code === "missing_column" && warning.message.includes("Sell Price"))) {
+    throw new Error('Missing-column fixture should warn about "Sell Price".');
+  }
+  if (missingColumn.sourceHeaders.length === 0) {
+    throw new Error("Missing-column fixture should keep source headers for manual column mapping.");
   }
 
   const pdfRoute = parseTextSource(
@@ -85,19 +100,28 @@ async function main() {
     "text/plain"
   );
   if (
-    pdfRoute.kind !== "pdf_or_freeform" ||
-    pdfRoute.route !== "guided_prompt" ||
-    pdfRoute.prompt !== "prompts/01-extract-statement.md"
+    pdfRoute.promptRoute?.route !== "guided_prompt" ||
+    pdfRoute.promptRoute.prompt !== "prompts/01-extract-statement.md"
   ) {
     throw new Error("PDF/free-form fixture did not route to the guided extraction prompt.");
+  }
+
+  const excelRows = (await readSheet(new Blob([excelBuffer]))) as (string | number | Date | boolean | null)[][];
+  const headerIndex = findHeaderRowIndex(excelRows);
+  if (headerIndex !== 0) {
+    throw new Error(`Expected Excel header row at index 0 for the baseline fixture, got ${headerIndex}.`);
+  }
+
+  const promptTxt = await readFile(resolve(import.meta.dirname, "..", "public", "extraction-prompt.txt"), "utf8");
+  const canonicalPrompt = await readFile(resolve(repoRoot, "prompts", "01-extract-statement.md"), "utf8");
+  if (promptTxt.trim() !== canonicalPrompt.trim()) {
+    throw new Error("webapp/public/extraction-prompt.txt is out of sync with prompts/01-extract-statement.md.");
   }
 
   if (csv.summary.rows !== 5 || csv.summary.intradayGain !== 800 || csv.summary.stcg !== -500 || csv.summary.ltcg !== 5500) {
     throw new Error(`Unexpected CSV summary: ${JSON.stringify(csv.summary)}`);
   }
 
-  // Editable extraction review: hand-editing a row's fields must reclassify
-  // it exactly like a freshly parsed one, not just patch the field in place.
   const original = csv.transactions[0];
   const stretchedToLongTerm = deriveComputedFields({ ...original, sellDate: "20-Jun-2026" });
   if (stretchedToLongTerm.taxClass !== "LT" || stretchedToLongTerm.holdPeriodDays <= 365) {
@@ -109,7 +133,7 @@ async function main() {
   }
 
   console.log(
-    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; PDF/free-form routes to prompt; edited rows reclassify correctly."
+    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; fuzzy/alt-date headers parse; missing columns warn + route; PDF/free-form routes to prompt; edited rows reclassify correctly."
   );
 }
 

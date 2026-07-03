@@ -1,100 +1,112 @@
 # Unravel Tax
 
-![Unravel Tax logo](assets/unravel-tax-logo-generated.png)
+![Unravel Tax logo](assets/unravel-tax-logo.svg)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg)](CONTRIBUTING.md)
 
-Untangle your tax filings.
+**Untangle your tax filings.** Turn PDFs, Excel files, CSVs, and saved
+webpages into two clean files: one to send your CA, one to keep. Open source,
+no signup — everything runs in your browser; nothing you enter leaves your
+device.
 
-Turn PDFs, Excel files, CSVs, saved webpages, and whatever else you have
-into two clean files: one to send your CA, one to keep. Open source, no
-signup. Nothing you enter ever leaves your device: there's no server
-for it to go to.
+**Not tax advice. Not affiliated with the Income Tax Department, CBDT, or
+Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
+[DISCLAIMER.md](DISCLAIMER.md).
+
+**[Open the webapp](https://kahanikids.github.io/unravel-tax/)** ·
+[Report an issue](https://github.com/kahanikids/unravel-tax/issues/new/choose) ·
+[Fix a rule](CONTRIBUTING.md) ·
+[Disclaimer](DISCLAIMER.md)
+
+---
 
 ## Start here
 
-**[Open the webapp](https://kahanikids.github.io/unravel-tax/)**. No install,
-no signup, nothing to run. Everything happens in your browser, and nothing
-you enter ever leaves your device.
+**[Open the webapp](https://kahanikids.github.io/unravel-tax/)** — no install,
+no signup. Everything happens in your browser.
 
-Prefer not to use a browser app at all? Use the manual path instead:
-[open the guided chat prompt](prompts/00-master-guide.md). Copy the whole
-file into ChatGPT or another AI chat and follow along, pairing it with the
-[template workbook](templates/master-template.gsheet-link.md) (a Google
-Sheets copy link isn't published yet, so for now open the `.xlsx` in
-`templates/excel-export/` directly).
+**Manual path (no browser app):** copy
+[prompts/00-master-guide.md](prompts/00-master-guide.md) into an AI chat and
+use the [template workbook](templates/master-template.gsheet-link.md) (for now,
+open `templates/excel-export/UnravelTax-Template.xlsx` directly).
 
-Prefer to run it yourself instead of using the hosted version? Clone this
-repo, open a terminal in the `webapp/` folder, run `npm install` then
-`npm run dev`, and open the local address it prints.
+**Run locally:** clone this repo, then `cd webapp`, `npm install`, `npm run dev`.
 
-That's it. Everything else on this page is background, come back to it
-if you want to understand how it works.
+That's the whole journey. The sections below are background.
+
+---
 
 ## How it works
 
-- **Infer, don't interrogate.** You answer a few plain-language questions
-  once; the tool works out which sections, checklist, and forms apply.
-  You never have to pick a tax category yourself.
-- **The spreadsheet is the engine, the chat is the guide.** All the
-  arithmetic runs in auditable formulas. The AI's job is reading messy
-  documents and explaining results in plain language, never doing the
-  maths.
-- **Consequences before numbers.** Anything you're still missing, or any
-  risk flag, comes before totals every time.
-- **Simple by default, advanced on request.** You start on the plain
-  version. Full working detail is one click away, never the starting
-  point.
-- **Nothing is stored anywhere but your own file.** No account, no
-  server, no login. The exported workbook is the thing to keep.
+- **Infer, don't interrogate.** Plain-language questions once; the tool works
+  out which checklist and forms apply.
+- **Spreadsheet engine, chat guide.** Arithmetic is deterministic. AI only reads
+  messy documents and explains results — never does the maths.
+- **Consequences before numbers.** Missing items and risk flags come before totals.
+- **Simple by default.** Full detail is one click away, never the starting view.
+- **Your file is the record.** No account, no server. Export the workbook and keep it.
 
-## For NRIs, joint families (HUF), senior citizens, or single parents
+More detail: [BUILD_PLAN.md](BUILD_PLAN.md) (maintainers).
 
-The webapp asks about each of these profiles and hands back a checklist
-and rule citations that account for them, but as of now it only
-*calculates* the resident/senior-citizen path (equity capital gains,
-debt/specified mutual funds, dividends, interest). The NRI, HUF, and
-single-parent-specific numbers (NRE/NRO separation, TDS-withheld-vs-owed
-reconciliation, HUF partition/clubbing amounts, minor's-income clubbing
-amounts) aren't wired into the calculation engine yet (see `SYSTEM_SPEC.md`
-Section 14, which phases this deliberately). If one of those profiles
-applies to you, the webapp says so plainly and points you to a CA for that
-part. See `rules/` for the profile-specific detail in the meantime.
+---
+
+## Profiles (NRI, HUF, senior citizens, single parents)
+
+The webapp orients each profile and builds the right checklist. NRE exempt
+interest and minor's-income clubbing are partially calculated; full NRI/HUF
+paths remain deferred. The app says so in "Things to check". See
+[ROADMAP.md](ROADMAP.md) and `rules/` for profile-specific rules.
+
+---
 
 ## Contributing
 
-See `CONTRIBUTING.md`. Rule updates after each Union Budget or
-mid-year Finance Act amendment are the highest-value contribution:
-tax rates and thresholds change more often than the code does.
+Rule updates after each Union Budget are the highest-value contribution.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [ROADMAP.md](ROADMAP.md).
+
+Questions that are not bugs: enable **GitHub Discussions** on the repo (Q&A)
+and ask there — noted in CONTRIBUTING for maintainers setting up the repo.
+
+---
+
+## Maintainer
+
+Independent open source project. The hosted demo on GitHub Pages
+([kahanikids.github.io/unravel-tax](https://kahanikids.github.io/unravel-tax/))
+tracks `main`. Maintained part-time; rule corrections are prioritised over
+new features.
+
+---
 
 ## Status
 
-All four `WORKING_PLAN.md` milestone slices are built and validated
-(`npm run validate:*` in `webapp/`), but "built" means the code exists and
-passes its checks, not "ready for a first-time non-technical user". What's
-still the gap:
+Milestones 1–4 are built and covered by `npm run validate:all` in `webapp/`.
+"Built" means the code passes checks, not that every profile is fully
+calculated yet. Highlights:
 
-- **Hosted at [kahanikids.github.io/unravel-tax](https://kahanikids.github.io/unravel-tax/),
-  free, via GitHub Pages.** Rebuilds and redeploys automatically on every
-  push to `main` that touches `webapp/` (`.github/workflows/deploy-pages.yml`).
-- **Resident + senior-citizen calculations are real.** Equity capital
-  gains, Section 50AA debt/specified mutual funds, dividends, and interest
-  are computed from `rules/*.json`, not guessed.
-- **NRI/HUF/single-parent orientation and checklists work, their numbers
-  don't yet.** The webapp is upfront about this in the "Things to check"
-  panel rather than implying full support (see the section above).
-- **Session caching and local-folder saving are in place.** Your
-  in-progress answers/documents are cached in this browser so you can close
-  the tab and resume, and in Chromium browsers you can save submitted
-  documents and the exported workbook straight to a folder on your
-  computer instead of your Downloads folder. Neither leaves your browser.
+- Hosted free on GitHub Pages; redeploys on push to `main` when `webapp/` changes
+- Resident + senior-citizen calculations from `rules/*.json`
+- Partial NRI/single-parent numbers; HUF regime comparison explicitly skipped
+- Fuzzy header matching, PDF text extraction path, session cache, local-folder save (Chromium)
 
-See `BUILD_PLAN.md` Section 12 for the milestone sequence and
-`WORKING_PLAN.md` for the day-to-day loop.
+Day-to-day build loop: [WORKING_PLAN.md](WORKING_PLAN.md).
+
+---
+
+## Other docs
+
+| Doc | For |
+|-----|-----|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to submit rule fixes and code |
+| [CHANGELOG.md](CHANGELOG.md) | Dated rule and project changes |
+| [DISCLAIMER.md](DISCLAIMER.md) | Legal scope and non-affiliation |
+| [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
+| [ROADMAP.md](ROADMAP.md) | Planned features |
+| [BUILD_PLAN.md](BUILD_PLAN.md) | Full product and architecture spec (maintainers) |
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Use it, fork it, adapt it for a different
-country's tax rules if that's useful to you; just keep the copyright
-notice intact.
+MIT. See [LICENSE](LICENSE). Fork and adapt freely; keep the copyright notice.
+Not tax or legal advice — see [DISCLAIMER.md](DISCLAIMER.md).

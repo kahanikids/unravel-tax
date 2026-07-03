@@ -181,7 +181,17 @@ section for the honest gap list. In priority order, what's actually left:
    needs income dated by quarter to avoid overstating it for gains/
    dividends that arrive later in the year, and this tool doesn't capture
    income by quarter yet. See `rules/advance-tax.md`.
-5. **Add a year-rollover / import-last-year workflow.** Re-assessed
+5. ~~Ingest UX overhaul (Stage 4 handoff)~~ - done 2026-07-03. Soft
+   warnings instead of hard upload failures; client-side PDF text extract
+   via pdf.js with LLM prompt fallback; universal extraction prompt route
+   for unparseable CSV/Excel/HTML; manual column mapper; expanded date
+   formats; Excel/HTML multi-row header scan; buy/sell price in review
+   modal; CMOTS/ABML grouped-header HTML fixture. See CHANGELOG.md.
+6. ~~Folder session backup and restore~~ - done 2026-07-03. Chosen local
+   folder gets `unravel-tax-session.json` on every save; welcome screen
+   offers "Restore from a folder" after browser storage is wiped
+   (Chromium, File System Access API).
+7. **Add a year-rollover / import-last-year workflow.** Re-assessed
    2026-07-03: this is genuinely blocked, not just unbuilt. The tool has
    only existed for one financial year (FY 2025-26), so there is no prior
    year's export this tool itself ever produced to import from, and
@@ -191,5 +201,5 @@ section for the honest gap list. In priority order, what's actually left:
    used, and untestable end-to-end until a second FY genuinely exists.
    Revisit once FY 2026-27 rules are added and at least one real filer has
    gone through a full year with this tool.
-6. Real first-time-user dry run against the hosted webapp (not just the
+8. Real first-time-user dry run against the hosted webapp (not just the
    validation scripts), the same bar Milestone 1 used.
