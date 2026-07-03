@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
+  deriveComputedFields,
   parseCsvText,
   parseExcelBuffer,
   parseHtmlText,
@@ -67,8 +68,20 @@ async function main() {
     throw new Error(`Unexpected CSV summary: ${JSON.stringify(csv.summary)}`);
   }
 
+  // Editable extraction review: hand-editing a row's fields must reclassify
+  // it exactly like a freshly parsed one, not just patch the field in place.
+  const original = csv.transactions[0];
+  const stretchedToLongTerm = deriveComputedFields({ ...original, sellDate: "20-Jun-2026" });
+  if (stretchedToLongTerm.taxClass !== "LT" || stretchedToLongTerm.holdPeriodDays <= 365) {
+    throw new Error("Editing a row's sell date past 365 days should reclassify it as long-term.");
+  }
+  const correctedValues = deriveComputedFields({ ...original, buyValue: 1000, sellValue: 1500 });
+  if (correctedValues.gainLoss !== 500) {
+    throw new Error("Editing buy/sell value should recompute gain/loss, not keep the original figure.");
+  }
+
   console.log(
-    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; PDF/free-form routes to prompt."
+    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; PDF/free-form routes to prompt; edited rows reclassify correctly."
   );
 }
 

@@ -914,6 +914,29 @@ button.progress-step.progress-step-current:hover {
   padding: 8px 12px;
 }
 
+.modal-card-wide {
+  max-width: 920px;
+}
+
+.preview-table-editable input {
+  width: 100%;
+  min-width: 84px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 0.85rem;
+  background: var(--surface);
+}
+
+.preview-table-editable input:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.preview-table-editable td {
+  padding: 6px 8px;
+}
+
 .modal-actions {
   display: flex;
   gap: 16px;

@@ -79,44 +79,59 @@ export function parseInstrumentType(value: string | number | Date | undefined): 
   return "equity";
 }
 
+export type EditableTransactionFields = Pick<
+  NormalizedTransaction,
+  "scripName" | "purchaseDate" | "sellDate" | "units" | "buyValue" | "sellValue" | "buyPrice" | "sellPrice" | "instrumentType"
+>;
+
+/**
+ * Recomputes holdPeriodDays/taxClass/gainLoss from the editable fields. Used
+ * both when first parsing a document and when a user corrects a row during
+ * the extraction review step, so a hand-edited row is classified exactly the
+ * same way a freshly parsed one would be.
+ */
+export function deriveComputedFields(fields: EditableTransactionFields): NormalizedTransaction {
+  const purchaseDate = parseFixtureDate(fields.purchaseDate);
+  const sellDate = parseFixtureDate(fields.sellDate);
+  const holdPeriodDays = Math.round((sellDate.getTime() - purchaseDate.getTime()) / 86_400_000);
+
+  // Section 50AA specified (debt) mutual funds are always short-term-deemed,
+  // regardless of holding period - see rules/capital-gains-mutual-funds.json.
+  let taxClass: TaxClass;
+  if (fields.instrumentType === "debt_mutual_fund") {
+    taxClass = "ST";
+  } else if (holdPeriodDays === 0) {
+    taxClass = "Intraday";
+  } else if (holdPeriodDays > 365) {
+    taxClass = "LT";
+  } else {
+    taxClass = "ST";
+  }
+
+  return {
+    ...fields,
+    purchaseDate: formatFixtureDate(fields.purchaseDate),
+    sellDate: formatFixtureDate(fields.sellDate),
+    holdPeriodDays,
+    taxClass,
+    gainLoss: fields.sellValue - fields.buyValue
+  };
+}
+
 export function normalizeRows(rows: RawTransactionRow[]): NormalizedTransaction[] {
-  return rows.map((row) => {
-    const purchaseDate = parseFixtureDate(row["Purchase Date"]);
-    const sellDate = parseFixtureDate(row["Sell Date"]);
-    const holdPeriodDays = Math.round((sellDate.getTime() - purchaseDate.getTime()) / 86_400_000);
-    const instrumentType = parseInstrumentType(row[OPTIONAL_INSTRUMENT_TYPE_COLUMN]);
-
-    // Section 50AA specified (debt) mutual funds are always short-term-deemed,
-    // regardless of holding period - see rules/capital-gains-mutual-funds.json.
-    let taxClass: TaxClass;
-    if (instrumentType === "debt_mutual_fund") {
-      taxClass = "ST";
-    } else if (holdPeriodDays === 0) {
-      taxClass = "Intraday";
-    } else if (holdPeriodDays > 365) {
-      taxClass = "LT";
-    } else {
-      taxClass = "ST";
-    }
-
-    const buyValue = parseNumber(row["Buy Value"]);
-    const sellValue = parseNumber(row["Sell Value"]);
-
-    return {
+  return rows.map((row) =>
+    deriveComputedFields({
       scripName: String(row["Scrip Name"]).trim(),
       purchaseDate: formatFixtureDate(row["Purchase Date"]),
       sellDate: formatFixtureDate(row["Sell Date"]),
       units: parseNumber(row.Units),
-      buyValue,
-      sellValue,
+      buyValue: parseNumber(row["Buy Value"]),
+      sellValue: parseNumber(row["Sell Value"]),
       buyPrice: parseNumber(row["Buy Price"]),
       sellPrice: parseNumber(row["Sell Price"]),
-      holdPeriodDays,
-      taxClass,
-      instrumentType,
-      gainLoss: sellValue - buyValue
-    };
-  });
+      instrumentType: parseInstrumentType(row[OPTIONAL_INSTRUMENT_TYPE_COLUMN])
+    })
+  );
 }
 
 export function summarizeTransactions(transactions: NormalizedTransaction[]): TransactionSummary {

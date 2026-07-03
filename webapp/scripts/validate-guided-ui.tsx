@@ -5,6 +5,7 @@ import { OrientationForm } from "../src/components/OrientationForm";
 import { ResultsStep } from "../src/components/ResultsStep";
 import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
+import { UploadStep } from "../src/components/UploadStep";
 import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
 import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, SCOPE_YEAR_NOTE, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
 import type { CaSummaryRow } from "../src/lib/calculations";
@@ -167,6 +168,27 @@ function checkOrientationForm() {
   assertIncludes(hufHtml, "Skip this question");
 
   console.log("Validated orientation flow: renders one question at a time, starting with residency, with Skip offered only where it's safe.");
+}
+
+function checkUploadStep() {
+  const html = renderToString(
+    <UploadStep
+      documents={[{ fileName: "broker-statement.csv", rowCount: 5 }]}
+      onCommit={noop as never}
+      onRemove={noop}
+      onContinue={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+  assertIncludes(html, "Add your documents");
+  assertIncludes(html, "Choose a file");
+  assertIncludes(html, "broker-statement.csv");
+  if (html.includes("Here's what we read from")) {
+    throw new Error("The extraction review modal should be closed until a document is actually parsed.");
+  }
+  console.log("Validated upload step: single upload action, previously added documents listed, review modal closed by default.");
 }
 
 function checkChecklistPanel() {
@@ -393,6 +415,7 @@ function main() {
   checkHelpPanel();
   checkCapabilitiesPanel();
   checkOrientationForm();
+  checkUploadStep();
   checkChecklistPanel();
   checkResultsStepDefaultsToSimple();
   checkResultsStepAdvancedToggle();

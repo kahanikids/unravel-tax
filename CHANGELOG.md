@@ -6,6 +6,13 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added an editable extraction review step to document upload. The
+  "confirm what we read" screen is no longer read-only: every row's scrip
+  name, dates, and buy/sell values can be corrected inline, or a single
+  bad row removed, without discarding and re-adding the whole document.
+  Gain/loss and short-term/long-term/intraday classification recompute
+  live as you edit, using the same rules a freshly parsed row gets.
+  Marked "available" in the capabilities panel.
 - Follow-up polish on the welcome screen and orientation flow:
   - Renamed the sample-data link to "See with Sample Data".
   - The "What can this do?" capabilities preview now has exactly one entry

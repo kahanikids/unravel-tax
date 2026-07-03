@@ -135,8 +135,8 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     label: "Editable extraction review",
-    status: "planned",
-    detail: "Fixing a single wrong row from an upload currently means discarding and re-adding the whole document. Inline editing isn't built yet."
+    status: "available",
+    detail: "Fix a scrip name, date, or value right in the review table before it's added, or remove a single bad row, instead of discarding the whole document."
   },
   {
     label: "Old vs new tax regime comparison",
