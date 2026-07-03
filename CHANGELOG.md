@@ -6,6 +6,41 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Welcome screen redesign, "show value first": replaced the single
+  "Get started" call to action with 3 entry-path cards so a new user picks
+  how they want to begin instead of being funneled straight into
+  orientation questions:
+  - "Checklist": the existing 8-question orientation flow, unchanged.
+  - "Start with Computation": jumps straight to the document upload step
+    for people who just want to drop in statements and see numbers first.
+    Orientation answers stay at their safe null/default state (resident,
+    no special circumstances); `deriveProfileFlags()` already treats a
+    null answer as "No" everywhere, and the capital gains/dividends/
+    interest math never reads orientation at all, so the numbers are
+    correct immediately. A banner on the checklist/documents/results
+    screens says plainly that defaults are in use, with a one-click way
+    back to "About you" to answer the real questions. The step nav
+    already makes "About you" and "Your checklist" reachable again once
+    you land past them, reusing the existing furthest-step tracking with
+    no special-cased jump logic.
+  - "Get to know the tool": opens the capabilities preview panel. This
+    replaces the old standalone "What can this do?" corner link in the
+    welcome card, folded into this card instead.
+- Moved "Start over" again: it now lives inside `OrientationForm` itself
+  (bottom-left, next to "Back"), styled as a green CTA with the same
+  visual weight as "Get started", instead of a plain text link next to
+  the header's step nav. Removed from the header entirely. Note: since
+  it's scoped to the orientation step only, there's currently no
+  "Start over" affordance once you're past it (checklist/documents/
+  results); reaching orientation again via the step nav is the way back.
+- Changed the orientation "Skip this question" link to just "Skip", in
+  the brand accent green, so it reads faster without competing with the
+  Yes/No buttons above it.
+- Merged the two separate scope notes into one line, shown once, in the
+  footer's note box on every screen: "Built for FY 2025-26 (AY 2026-27)
+  filings only. It organizes your numbers. It doesn't replace a CA."
+  Removed the standalone note that used to sit above the welcome card
+  and the disclaimer line that used to sit inside it.
 - Added an old vs new tax regime comparison. `rules/regime-choice.json`
   now has FY 2025-26/AY 2026-27 slabs, standard deductions, and Section
   87A rebate thresholds for both regimes, verified against the Income

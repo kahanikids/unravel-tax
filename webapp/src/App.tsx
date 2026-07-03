@@ -17,6 +17,7 @@ import {
   figureMismatches,
   FOOTER_NOTE,
   ITR_FORM_REASONS,
+  SCOPE_AND_DISCLAIMER_NOTE,
   isLocalFolderSupported,
   loadSession,
   profileScopeCaveats as deriveProfileScopeCaveats,
@@ -196,6 +197,18 @@ function App() {
     setStep("orientation");
   }
 
+  // "Start with Computation": the least-friction path that still produces
+  // correct numbers. caSummaryRows() only reads transactions and rules, never
+  // orientation answers, so capital gains/dividends/interest figures are
+  // right immediately. What DOES depend on orientation (ITR form, risk
+  // triggers, CA recommendation, checklist) just falls back to the
+  // resident/no-special-circumstances default until the user goes back and
+  // answers the questions, which they can always do from the step nav.
+  function startComputationFirst() {
+    setSampleMode(false);
+    setStep("documents");
+  }
+
   function trySampleData() {
     setSampleMode(true);
     setOrientation({
@@ -329,11 +342,6 @@ function App() {
           className="brand-mark"
         />
         <ProgressSteps current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
-        {step !== "welcome" ? (
-          <button type="button" className="text-button header-reset" onClick={startFresh}>
-            Start over
-          </button>
-        ) : null}
         <HelpPanel />
       </header>
 
@@ -343,6 +351,7 @@ function App() {
         <div className="stage-single">
           <WelcomeScreen
             onStart={startOrientation}
+            onStartComputationFirst={startComputationFirst}
             onTrySample={trySampleData}
             onResume={resumeSession}
             hasSavedSession={hasSavedSession}
@@ -353,7 +362,12 @@ function App() {
 
       {step === "orientation" ? (
         <div className="stage-single">
-          <OrientationForm answers={orientation} onChange={setOrientation} onComplete={() => setStep("checklist")} />
+          <OrientationForm
+            answers={orientation}
+            onChange={setOrientation}
+            onComplete={() => setStep("checklist")}
+            onStartOver={startFresh}
+          />
         </div>
       ) : null}
 
@@ -390,6 +404,17 @@ function App() {
 
           <div className="stage-main">
             {sampleMode ? <p className="sample-banner">You're viewing sample data. Nothing here is real.</p> : null}
+
+            {!sampleMode && orientation.residency === null ? (
+              <p className="defaults-banner">
+                You skipped the questions, so this checklist and recommendation use default assumptions: resident,
+                no special circumstances.{" "}
+                <button type="button" className="text-button" onClick={() => setStep("orientation")}>
+                  Answer them now
+                </button>{" "}
+                for a more accurate one.
+              </p>
+            ) : null}
 
             {step === "checklist" ? (
               <div className="step-card">
@@ -462,6 +487,7 @@ function App() {
       ) : null}
 
       <footer className="app-footer">
+        <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
         <p>{FOOTER_NOTE}</p>
       </footer>
     </main>

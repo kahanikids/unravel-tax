@@ -1,15 +1,14 @@
 /**
  * Single source for copy that appears in more than one place, so wording
- * stays in sync instead of drifting across components. Three disclaimer
- * variants on purpose, shortest to longest: DISCLAIMER_SHORT is the fixed
- * banner text BUILD_PLAN.md Section 1.4 specifies for Stage 1; FOOTER_NOTE
- * is what sits at the bottom of every screen; DISCLAIMER_FULL is the "?"
- * help panel's fuller version. None of these replace the others.
+ * stays in sync instead of drifting across components. Two disclaimer
+ * variants on purpose, shortest to longest: SCOPE_AND_DISCLAIMER_NOTE is the
+ * short year-scope-plus-CA line shown once at the bottom of every screen;
+ * DISCLAIMER_FULL is the "?" help panel's fuller version. Neither replaces
+ * the other.
  */
 
-export const DISCLAIMER_SHORT = "This organizes your numbers. It doesn't replace a CA.";
-
-export const SCOPE_YEAR_NOTE = "Built for FY 2025-26 (AY 2026-27) filings only.";
+export const SCOPE_AND_DISCLAIMER_NOTE =
+  "Built for FY 2025-26 (AY 2026-27) filings only. It organizes your numbers. It doesn't replace a CA.";
 
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";

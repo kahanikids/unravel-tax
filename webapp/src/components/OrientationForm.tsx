@@ -162,11 +162,13 @@ function isUnanswered(question: Question, answers: OrientationAnswers): boolean 
 export function OrientationForm({
   answers,
   onChange,
-  onComplete
+  onComplete,
+  onStartOver
 }: {
   answers: OrientationAnswers;
   onChange: (answers: OrientationAnswers) => void;
   onComplete: () => void;
+  onStartOver: () => void;
 }) {
   const visible = QUESTIONS.filter((question) => question.visible(answers));
   // If this mounts with answers already filled in (e.g. navigated back to
@@ -238,18 +240,21 @@ export function OrientationForm({
 
       {current.skippable ? (
         <button type="button" className="text-button orientation-skip" onClick={skip}>
-          Skip this question
+          Skip
         </button>
       ) : null}
 
       <div className="orientation-nav">
-        {index > 0 ? (
-          <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
-            ← Back
+        <div className="orientation-nav-left">
+          {index > 0 ? (
+            <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
+              ← Back
+            </button>
+          ) : null}
+          <button type="button" className="primary-button orientation-start-over" onClick={onStartOver}>
+            Start over
           </button>
-        ) : (
-          <span />
-        )}
+        </div>
         <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p>
       </div>
     </div>

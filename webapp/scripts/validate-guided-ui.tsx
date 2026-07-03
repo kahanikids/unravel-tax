@@ -6,8 +6,9 @@ import { ResultsStep } from "../src/components/ResultsStep";
 import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { UploadStep } from "../src/components/UploadStep";
-import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
-import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, SCOPE_YEAR_NOTE, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
+import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES, STEP_ORDER } from "../src/state/types";
+import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
+import { deriveProfileFlags } from "../src/lib/profile";
 import { ruleCatalog } from "../src/rules";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { ConfidenceReport } from "../src/lib/confidence";
@@ -40,11 +41,25 @@ function noop() {
 function checkWelcomeScreen() {
   const html = renderToString(<App />);
 
-  assertIncludes(html, "Get started");
+  // "Show value first" redesign: welcome no longer funnels straight into
+  // orientation. It offers 3 equally-weighted entry paths as cards.
+  assertIncludes(html, "Checklist");
+  assertIncludes(html, "Start with Computation");
+  assertIncludes(html, "Get to know the tool");
+  assertIncludes(html, 'class="entry-path-cards"');
+  const entryPathCardCount = html.split('class="entry-path-card"').length - 1;
+  if (entryPathCardCount !== 3) {
+    throw new Error(`Expected exactly 3 entry-path cards on the welcome screen, found ${entryPathCardCount}.`);
+  }
+
   assertIncludes(html, "See with Sample Data");
-  assertIncludes(html, "This organizes your numbers");
   assertIncludes(html, "Unravel Tax");
-  assertIncludes(html, SCOPE_YEAR_NOTE);
+  // The merged FY-scope-and-CA-disclaimer line lives once, in the footer,
+  // shown on every screen including welcome - not duplicated on the card.
+  // (Checked as a substring before the apostrophe: React's SSR renderer
+  // escapes "doesn't" to "doesn&#x27;t" in the rendered HTML.)
+  assertIncludes(html, "Built for FY 2025-26 (AY 2026-27) filings only. It organizes your numbers.");
+  assertIncludes(html, 'class="app-footer"');
 
   for (const jargon of ["Milestone readiness", "Static Constraints", "Next Slices", "M4E", "Working plan"]) {
     if (html.includes(jargon)) {
@@ -57,18 +72,14 @@ function checkWelcomeScreen() {
     throw new Error("Help panel content should be closed by default, not present in the initial render.");
   }
 
-  // The capabilities preview must be reachable from welcome, since that's
-  // exactly when a skeptical first-time user wants to check scope before
-  // entering anything. One trigger only, in the welcome card's corner, not
-  // duplicated in the persistent header - closed by default, same as HelpPanel.
-  assertIncludes(html, "What can this do?");
-  assertIncludes(html, 'class="welcome-card-header"');
-  assertIncludes(html, 'class="text-button welcome-capabilities-trigger"');
+  // The "Get to know the tool" card is now the only capabilities-preview
+  // trigger. It reuses the same panel/state as before, just relabeled onto
+  // one of the 3 entry-path cards instead of a standalone corner link.
+  if (html.includes("What can this do?")) {
+    throw new Error("The old standalone 'What can this do?' trigger should be gone, folded into the 'Get to know the tool' card.");
+  }
   if (html.includes("Available now") || html.includes(CAPABILITIES[0].detail.slice(0, 20))) {
     throw new Error("Capabilities panel content should be closed by default, not present in the initial render.");
-  }
-  if (html.includes('class="text-button capabilities-button"')) {
-    throw new Error("The header should no longer have its own 'What can this do?' trigger; the welcome card owns it.");
   }
 
   // The step nav shows on every screen, including welcome - as an inert
@@ -79,14 +90,47 @@ function checkWelcomeScreen() {
     throw new Error("No step should be a clickable button before the user has reached any of them.");
   }
 
-  // "Start over" only makes sense once there's something to reset; it sits
-  // right next to the step nav (the app's closest equivalent to a "back"
-  // control) and stays hidden on the welcome screen itself.
+  // "Start over" now lives inside OrientationForm only, so it should never
+  // appear on the welcome screen, where OrientationForm hasn't mounted yet.
   if (html.includes("Start over")) {
-    throw new Error("'Start over' should not render on the welcome screen, where there's nothing to reset yet.");
+    throw new Error("'Start over' should not render on the welcome screen; it now lives inside OrientationForm.");
   }
 
-  console.log("Validated welcome screen: single clear next action, no dev/milestone jargon leaking into the UI.");
+  console.log("Validated welcome screen: 3 entry-path cards (Checklist / Start with Computation / Get to know the tool), no dev/milestone jargon leaking into the UI.");
+}
+
+/**
+ * "Start with Computation" is the least-friction path that still produces a
+ * correct number: it jumps straight to the documents step and leaves
+ * orientation answers at their null/blank defaults. deriveProfileFlags()
+ * treats every null answer as "No" (see lib/profile.ts), and caSummaryRows()
+ * never reads orientation at all, only transactions and rules - so capital
+ * gains/dividends/interest figures come out right immediately, while
+ * profile-driven bits (ITR form, risk triggers, checklist, CA
+ * recommendation) fall back to a resident/no-special-circumstances default
+ * until the user goes back and answers the questions. STEP_ORDER already
+ * puts "documents" after "orientation" and "checklist", so App's existing
+ * generic furthestStepIndex effect (bump to Math.max(prev, index of new
+ * step)) makes both of those steps reachable again from the header nav
+ * without any special-cased jump logic.
+ */
+function checkComputationFirstPathIsReachable() {
+  const documentsIndex = STEP_ORDER.indexOf("documents");
+  const orientationIndex = STEP_ORDER.indexOf("orientation");
+  const checklistIndex = STEP_ORDER.indexOf("checklist");
+  if (!(documentsIndex > orientationIndex && documentsIndex > checklistIndex)) {
+    throw new Error("STEP_ORDER must keep 'documents' after 'orientation' and 'checklist' for the computation-first jump to leave them reachable.");
+  }
+
+  // deriveProfileFlags() must treat every still-null orientation answer as a
+  // safe "No"/baseline default, since the computation-first path can reach
+  // documents/results with orientation left exactly at BLANK_ORIENTATION.
+  const flags = deriveProfileFlags(BLANK_ORIENTATION);
+  if (flags.nri || flags.huf || flags.seniorCitizen || flags.singleParent || flags.hasCapitalGains) {
+    throw new Error("Blank orientation answers must resolve to the resident/no-special-circumstances default, or the computation-first shortcut isn't safe.");
+  }
+
+  console.log("Validated 'Start with Computation' jump: documents step stays reachable back to orientation/checklist, and blank orientation resolves to a safe default profile.");
 }
 
 function checkHelpPanel() {
@@ -148,11 +192,12 @@ function checkCapabilitiesPanel() {
 
 function checkOrientationForm() {
   const html = renderToString(
-    <OrientationForm answers={BLANK_ORIENTATION} onChange={noop as never} onComplete={noop} />
+    <OrientationForm answers={BLANK_ORIENTATION} onChange={noop as never} onComplete={noop} onStartOver={noop} />
   );
   assertIncludes(html, "Question 1 of");
   assertIncludes(html, "Are you living in India right now");
-  if (html.includes("Skip this question")) {
+  assertIncludes(html, ">Start over<");
+  if (html.includes(">Skip<")) {
     throw new Error("Residency decides the whole checklist/rules branch and should not be skippable.");
   }
 
@@ -163,12 +208,13 @@ function checkOrientationForm() {
       answers={{ ...BLANK_ORIENTATION, residency: "resident" }}
       onChange={noop as never}
       onComplete={noop}
+      onStartOver={noop}
     />
   );
   assertIncludes(hufHtml, "Is any of this income or investment held through a family");
-  assertIncludes(hufHtml, "Skip this question");
+  assertIncludes(hufHtml, ">Skip<");
 
-  console.log("Validated orientation flow: renders one question at a time, starting with residency, with Skip offered only where it's safe.");
+  console.log("Validated orientation flow: renders one question at a time, starting with residency, Start over available, Skip offered only where it's safe.");
 }
 
 function checkUploadStep() {
@@ -499,6 +545,7 @@ function assertIncludes(value: string, expected: string) {
 
 function main() {
   checkWelcomeScreen();
+  checkComputationFirstPathIsReachable();
   checkHelpPanel();
   checkCapabilitiesPanel();
   checkOrientationForm();
