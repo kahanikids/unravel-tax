@@ -1,0 +1,61 @@
+name: Bug report
+description: Calculation, document ingest, export, or webapp behaviour is wrong
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste real PAN numbers, account details, or actual filing figures.
+        Use synthetic data or files from `fixtures/` when possible.
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the webapp
+        2. Upload ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Document ingest (CSV, Excel, HTML, PDF path)
+        - Calculations / totals
+        - Checklist / reconciliation
+        - Export (CA summary or workbook)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Hosted demo, local dev, browser name/version
+      placeholder: "Hosted demo, Chrome 125"
+
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Sample file or fixture
+      description: Attach a synthetic file or name a fixture from `fixtures/`

@@ -6,6 +6,9 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- RKM-style full workbook export: styled Excel output with per-broker sheets,
+  live formulas, and cross-sheet traceability. Added `health_education_cess_rate`
+  (0.04) to `rules/capital-gains-equity.json` for workbook tax-estimate seeding.
 - Folder session backup and restore (Chromium): when the user picks a local
   folder, the app now writes `unravel-tax-session.json` there on every save
   alongside document copies and exports. A "Restore from a folder" action on

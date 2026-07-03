@@ -129,7 +129,10 @@ function checkWelcomeScreen() {
   // preview there (nothing's been reached yet), never a way to skip ahead.
   assertIncludes(html, 'class="side-nav"');
   assertIncludes(html, "About you");
-  if (html.includes('<button type="button" class="side-nav-step')) {
+  // Match step buttons specifically (they carry a side-nav-step-<state> class);
+  // the always-available utility buttons (Help/Features/Tour/Legal) also reuse
+  // side-nav-step for layout but are not steps and are fine to be clickable.
+  if (html.includes('<button type="button" class="side-nav-step side-nav-step-')) {
     throw new Error("No step should be a clickable button before the user has reached any of them.");
   }
 
@@ -206,7 +209,7 @@ function checkSideNavReflectsResumedSession() {
 
     // ...but orientation/checklist/documents are already clickable in the
     // side nav, since they're all <= the saved furthestStepIndex.
-    const reachableStepCount = html.split('<button type="button" class="side-nav-step').length - 1;
+    const reachableStepCount = html.split('<button type="button" class="side-nav-step side-nav-step-').length - 1;
     if (reachableStepCount !== 3) {
       throw new Error(
         `Expected 3 reachable side-nav steps (orientation/checklist/documents) from the saved session, found ${reachableStepCount}.`

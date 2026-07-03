@@ -9,7 +9,7 @@ import {
   type RawTransactionRow,
   type ResolvedHeader
 } from "./types";
-import { normalizeRowsSoft, summarizeTransactions } from "./normalize";
+import { formatFixtureDate, normalizeRowsSoft, summarizeTransactions } from "./normalize";
 import {
   buildHeaderMapFromAssignments,
   missingColumnsMessage,
@@ -160,12 +160,26 @@ function buildIngestResult(
     });
   }
 
-  const rawRows = sourceRecords
-    .map((record) => remapRecordKeys(record, resolution.headerMap) as RawTransactionRow)
-    // A row with no scrip name isn't a transaction - drops subtotal/blank rows across every format.
-    .filter((row) => String(row["Scrip Name"] ?? "").trim() !== "");
+  const mappedHeaderKeys = new Set(Object.keys(resolution.headerMap));
+  const unmappedHeaders = sourceHeaders.filter((header) => !mappedHeaderKeys.has(header));
 
-  const { transactions, warnings: rowWarnings } = normalizeRowsSoft(rawRows);
+  const rowInputs = sourceRecords
+    .map((record) => {
+      const brokerColumns: Record<string, string | number> = {};
+      for (const header of unmappedHeaders) {
+        const value = record[header];
+        if (value === undefined || value === null || String(value).trim() === "") {
+          continue;
+        }
+        brokerColumns[header] = value instanceof Date ? formatFixtureDate(value) : (value as string | number);
+      }
+      const row = remapRecordKeys(record, resolution.headerMap) as RawTransactionRow;
+      return { row, brokerColumns };
+    })
+    // A row with no scrip name isn't a transaction - drops subtotal/blank rows across every format.
+    .filter(({ row }) => String(row["Scrip Name"] ?? "").trim() !== "");
+
+  const { transactions, warnings: rowWarnings } = normalizeRowsSoft(rowInputs);
   return {
     kind,
     transactions,

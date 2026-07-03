@@ -41,6 +41,8 @@ export type NormalizedTransaction = {
   taxClass: TaxClass;
   instrumentType: InstrumentType;
   gainLoss: number;
+  /** Source columns not mapped to canonical fields (broker-reported gains, etc.). */
+  brokerColumns?: Record<string, string | number>;
 };
 
 export type TransactionSummary = {

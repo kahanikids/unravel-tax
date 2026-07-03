@@ -1,0 +1,57 @@
+name: Rule correction
+description: Report a wrong tax rate, threshold, or rule after a Budget or Finance Act change
+title: "[Rule] "
+labels: ["rules"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep the rule files accurate. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full update process.
+
+  - type: input
+    id: financial-year
+    attributes:
+      label: Financial year
+      description: Which FY/AY does this apply to?
+      placeholder: "FY 2025-26 (AY 2026-27)"
+    validations:
+      required: true
+
+  - type: input
+    id: rule-file
+    attributes:
+      label: Rule file stem
+      description: Filename in `rules/` without extension (e.g. `regime-choice`)
+      placeholder: regime-choice
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Official source link
+      description: Budget note, Finance Act section, CBDT circular, or incometax.gov.in page
+    validations:
+      required: true
+
+  - type: textarea
+    id: old-value
+    attributes:
+      label: Current (wrong) value in the repo
+      description: Quote the value or JSON path as it appears today
+    validations:
+      required: true
+
+  - type: textarea
+    id: new-value
+    attributes:
+      label: Correct value
+      description: What it should be after the amendment
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Edge cases, profiles affected (NRI, HUF, senior citizen), etc.

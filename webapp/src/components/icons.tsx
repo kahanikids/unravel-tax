@@ -62,3 +62,31 @@ export function IconCompass({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconHelp({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M9.6 9.4a2.5 2.5 0 0 1 4.6 1.3c0 1.6-2.2 1.8-2.2 3.3" />
+      <path d="M12 17.2h.01" />
+    </svg>
+  );
+}
+
+export function IconSparkles({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z" />
+      <path d="M18 15l.7 1.8L20.5 17.5l-1.8.7L18 20l-.7-1.8L15.5 17.5l1.8-.7z" />
+    </svg>
+  );
+}
+
+export function IconShield({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <path d="M12 3.2l6.6 2.4v5c0 4.3-2.8 7.2-6.6 8.6-3.8-1.4-6.6-4.3-6.6-8.6v-5z" />
+      <path d="M9.3 12l1.9 1.9 3.6-3.8" />
+    </svg>
+  );
+}

@@ -3,6 +3,7 @@ import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
   buildFullWorkbookExport,
+  rateInputsFromRule,
   buildChecklist,
   caOrSelfFileRecommendation,
   caSummaryRows,
@@ -15,7 +16,6 @@ import {
   downloadExport,
   evaluateRiskTriggers,
   figureMismatches,
-  FOOTER_NOTE,
   ITR_FORM_REASONS,
   SCOPE_AND_DISCLAIMER_NOTE,
   isLocalFolderSupported,
@@ -86,6 +86,7 @@ function App() {
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
   const [showCapabilities, setShowCapabilities] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   // Every step the user has already reached this filing stays reachable from
   // the side nav - lets them jump back to the checklist/documents/results
@@ -442,21 +443,32 @@ function App() {
   }
 
   async function exportFullWorkbook() {
+    const cgRule = ruleCatalog.capitalGainsEquity;
     await deliverExport(
       await buildFullWorkbookExport({
+        documents: documents.map(({ fileName, transactions: docTxns }) => ({
+          name: fileName,
+          transactions: docTxns
+        })),
         caSummaryRows: rows,
-        transactions,
-        calculationSummary,
-        checklistItems,
-        tdsRows,
-        openIssueCount
+        rateInputs: rateInputsFromRule(cgRule),
+        financialYear: `FY${cgRule.financial_year}`,
+        assessmentYear: `AY${cgRule.assessment_year}`
       })
     );
   }
 
   return (
     <div className="app-frame">
-      <SideNav current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
+      <SideNav
+        current={step}
+        furthestIndex={furthestStepIndex}
+        onNavigate={goToStep}
+        onShowHelp={() => setShowHelp(true)}
+        onShowCapabilities={() => setShowCapabilities(true)}
+        onShowTour={() => setShowTour(true)}
+        onShowLegal={() => goToStep("welcome")}
+      />
       <main className="app-shell">
       <header className="app-header">
         <button type="button" className="brand-mark-button" onClick={() => setStep("welcome")} aria-label="Back to home">
@@ -466,7 +478,7 @@ function App() {
             className="brand-mark"
           />
         </button>
-        <HelpPanel />
+        <HelpPanel open={showHelp} onOpenChange={setShowHelp} />
       </header>
 
       <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />
@@ -634,7 +646,12 @@ function App() {
 
       <footer className="app-footer">
         <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
-        <p>{FOOTER_NOTE}</p>
+        <p className="footer-legal-line">
+          Runs locally in your browser; nothing is uploaded.{" "}
+          <button type="button" className="text-button" onClick={() => goToStep("welcome")}>
+            Full disclaimer, AI use &amp; privacy
+          </button>
+        </p>
       </footer>
       </main>
     </div>

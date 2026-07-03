@@ -1,0 +1,53 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "rules/**"
+      - "webapp/**"
+      - "scripts/**"
+      - "fixtures/**"
+      - ".github/workflows/validate.yml"
+  pull_request:
+    paths:
+      - "rules/**"
+      - "webapp/**"
+      - "scripts/**"
+      - "fixtures/**"
+      - ".github/workflows/validate.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate rule markdown/json pairs
+        run: python scripts/validate-rule-pairs.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Sync rules into webapp
+        working-directory: webapp
+        run: npm run sync-rules
+
+      - name: Validate rule sync
+        working-directory: webapp
+        run: npm run validate:rules-sync
+
+      - name: Run all webapp validators
+        working-directory: webapp
+        run: npm run validate:all

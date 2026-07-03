@@ -84,8 +84,7 @@ ol {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
-  padding: 20px 8px;
+  padding: 28px 8px 20px;
   border-right: 1px solid var(--line);
   background: var(--surface);
   position: sticky;
@@ -93,6 +92,39 @@ ol {
   align-self: flex-start;
   height: 100vh;
   overflow-y: auto;
+}
+
+.side-nav-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Utility/info actions sit at the very bottom of the rail so the column reads
+   as intentional (steps top, help bottom) instead of a long empty gap, and so
+   they stay clearly separate from the numbered filing steps. */
+.side-nav-utility {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.side-nav-util {
+  color: var(--muted);
+}
+
+.side-nav-util .side-nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.85;
+}
+
+.side-nav-util .side-nav-label {
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .side-nav-step {
@@ -250,7 +282,7 @@ button.side-nav-step.side-nav-step-current:hover {
   flex: 1;
   display: grid;
   place-items: start center;
-  padding: clamp(24px, 6vw, 72px) 20px;
+  padding: clamp(16px, 2.5vw, 32px) clamp(24px, 5vw, 64px) clamp(24px, 5vw, 56px);
 }
 
 .stage-with-sidebar {
@@ -316,7 +348,8 @@ button.side-nav-step.side-nav-step-current:hover {
 /* ---------- Welcome ---------- */
 
 .welcome-card {
-  max-width: 680px;
+  width: 100%;
+  max-width: 1040px;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -417,8 +450,8 @@ button.side-nav-step.side-nav-step-current:hover {
   border: 1.5px solid var(--line);
   background: var(--surface);
   border-radius: var(--radius-md);
-  padding: 20px;
-  aspect-ratio: 1 / 1;
+  padding: 22px;
+  min-height: 168px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1589,22 +1622,62 @@ button.side-nav-step.side-nav-step-current:hover {
 .summary-rows {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(28, 154, 91, 0.07), rgba(120, 170, 255, 0.06) 55%, rgba(190, 150, 255, 0.06));
 }
 
+/* Notion-style glass cards: a soft per-row tint cycling through a small
+   palette, with a translucent frost over the tinted container behind it. */
 .summary-row {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line);
+  --row-tint: 28, 154, 91;
+  padding: 13px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--row-tint), 0.28);
+  border-left: 3px solid rgba(var(--row-tint), 0.85);
+  background: linear-gradient(135deg, rgba(var(--row-tint), 0.14), rgba(255, 255, 255, 0.55));
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+
+.summary-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(20, 20, 20, 0.08);
+}
+
+.summary-row:nth-child(5n + 1) { --row-tint: 28, 154, 91; }
+.summary-row:nth-child(5n + 2) { --row-tint: 59, 130, 246; }
+.summary-row:nth-child(5n + 3) { --row-tint: 217, 149, 45; }
+.summary-row:nth-child(5n + 4) { --row-tint: 147, 97, 226; }
+.summary-row:nth-child(5n + 5) { --row-tint: 220, 90, 120; }
 
 .summary-row-main {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
 .summary-row span {
-  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.summary-row span::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: none;
+  background: rgb(var(--row-tint));
+  box-shadow: 0 0 0 3px rgba(var(--row-tint), 0.18);
 }
 
 .summary-row strong {
@@ -1613,6 +1686,10 @@ button.side-nav-step.side-nav-step-current:hover {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   text-align: right;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(var(--row-tint), 0.25);
 }
 
 .summary-row-why {
@@ -1790,6 +1867,96 @@ button.side-nav-step.side-nav-step-current:hover {
   font-size: 0.88rem;
 }
 
+.footer-legal-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* ---------- Welcome legal / disclaimer ---------- */
+
+.welcome-legal {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.welcome-legal > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.welcome-legal > summary::-webkit-details-marker {
+  display: none;
+}
+
+.welcome-legal > summary::before {
+  content: "+";
+  display: inline-flex;
+  justify-content: center;
+  width: 1.1em;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.welcome-legal[open] > summary::before {
+  content: "\2212";
+}
+
+.welcome-legal-summary-hint {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.84rem;
+}
+
+.welcome-legal-body {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  padding: clamp(16px, 2.5vw, 24px);
+}
+
+.welcome-legal-intro {
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.welcome-legal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.welcome-legal-section h3 {
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.welcome-legal-section p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.welcome-legal-links {
+  padding-top: 4px;
+  font-size: 0.86rem;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 860px) {
@@ -1850,6 +2017,17 @@ button.side-nav-step.side-nav-step-current:hover {
     border-right: none;
     box-shadow: 0 -8px 20px rgba(20, 20, 20, 0.06);
     overflow: visible;
+  }
+
+  /* Flatten the desktop step group into the bottom bar's flex row, and drop the
+     utility/info actions here - they'd overcrowd the bar and are already
+     reachable from the header "?" and the welcome screen on small screens. */
+  .side-nav-steps {
+    display: contents;
+  }
+
+  .side-nav-utility {
+    display: none;
   }
 
   .side-nav-step {

@@ -1,16 +1,25 @@
 import writeXlsxFile from "write-excel-file/browser";
 import type { SheetData } from "write-excel-file/browser";
-import type { ChecklistItem, TdsRow } from "./reconciliation";
-import type { CaSummaryRow, RuleBackedSummary } from "./calculations";
+import type { CaSummaryRow } from "./calculations";
 import type { NormalizedTransaction } from "../ingest";
+import type { CapitalGainsEquityRule } from "../rules";
+import {
+  buildBrokerSheet,
+  buildDetailedSummarySheet,
+  buildLinkedCaSummarySheet,
+  buildStandaloneCaSummarySheet,
+  type ExportDocument,
+  type RateInputs
+} from "./workbookExport";
+
+export type { ExportDocument, RateInputs };
 
 export type ExportState = {
+  documents: ExportDocument[];
   caSummaryRows: CaSummaryRow[];
-  transactions: NormalizedTransaction[];
-  calculationSummary: RuleBackedSummary;
-  checklistItems: ChecklistItem[];
-  tdsRows: TdsRow[];
-  openIssueCount: number;
+  rateInputs: RateInputs;
+  financialYear: string;
+  assessmentYear: string;
 };
 
 export type ExportFile = {
@@ -22,6 +31,18 @@ export type ExportFile = {
 export const CA_SUMMARY_CSV_FILENAME = "UnravelTax-CA-Summary.csv";
 export const CA_SUMMARY_XLSX_FILENAME = "UnravelTax-CA-Summary.xlsx";
 export const FULL_WORKBOOK_XLSX_FILENAME = "UnravelTax-Full-Workbook.xlsx";
+
+export function rateInputsFromRule(rule: CapitalGainsEquityRule): RateInputs {
+  const eq = rule.values.listed_equity;
+  return {
+    ltHoldingDays: eq.long_term_holding_period_days_gt,
+    stcgRate: eq.stcg_rate,
+    ltcgRate: eq.ltcg_rate,
+    ltcgExemptionInr: eq.ltcg_exemption_inr,
+    surchargeCapRate: eq.surcharge_cap_rate,
+    healthEducationCessRate: eq.health_education_cess_rate
+  };
+}
 
 export function transactionsCsv(transactions: NormalizedTransaction[]) {
   return [
@@ -67,11 +88,9 @@ export function caSummaryCsv(rows: CaSummaryRow[]) {
     .join("\r\n");
 }
 
+/** @deprecated Use buildStandaloneCaSummarySheet via buildCaSummaryWorkbookExport */
 export function caSummarySheet(rows: CaSummaryRow[]): SheetData {
-  return [
-    ["Head", "Rule/Section", "Amount", "Notes"],
-    ...rows.map((row) => [row.head, row.ruleSection, row.amount, row.notes])
-  ];
+  return buildStandaloneCaSummarySheet(rows, "FY2025-26", "AY2026-27");
 }
 
 export async function buildCaSummaryCsvExport(rows: CaSummaryRow[]): Promise<ExportFile> {
@@ -82,8 +101,12 @@ export async function buildCaSummaryCsvExport(rows: CaSummaryRow[]): Promise<Exp
   };
 }
 
-export async function buildCaSummaryWorkbookExport(rows: CaSummaryRow[]): Promise<ExportFile> {
-  const blob = await writeXlsxFile(caSummarySheet(rows)).toBlob();
+export async function buildCaSummaryWorkbookExport(
+  rows: CaSummaryRow[],
+  financialYear = "FY2025-26",
+  assessmentYear = "AY2026-27"
+): Promise<ExportFile> {
+  const blob = await writeXlsxFile(buildStandaloneCaSummarySheet(rows, financialYear, assessmentYear)).toBlob();
   return {
     filename: CA_SUMMARY_XLSX_FILENAME,
     mimeType: xlsxMimeType,
@@ -92,32 +115,38 @@ export async function buildCaSummaryWorkbookExport(rows: CaSummaryRow[]): Promis
 }
 
 export async function buildFullWorkbookExport(state: ExportState): Promise<ExportFile> {
-  const blob = await writeXlsxFile([
-    {
-      sheet: "CA Summary",
-      data: caSummarySheet(state.caSummaryRows)
-    },
-    {
-      sheet: "Transactions",
-      data: transactionsSheet(state.transactions)
-    },
+  const brokerOutputs =
+    state.documents.length > 0
+      ? state.documents.map((doc) => buildBrokerSheet(doc.name, doc.transactions, state.financialYear))
+      : [buildBrokerSheet("Transactions", [], state.financialYear)];
+
+  const brokerMetas = brokerOutputs.map((b) => b.meta);
+  const detailed = buildDetailedSummarySheet(
+    brokerMetas,
+    state.rateInputs,
+    state.financialYear,
+    state.assessmentYear
+  );
+
+  const sheets = [
+    ...brokerOutputs.map((b) => ({
+      sheet: b.sheet,
+      data: b.data,
+      columns: b.columns
+    })),
     {
       sheet: "Detailed Summary",
-      data: detailedSummarySheet(state.calculationSummary)
+      data: detailed.data,
+      columns: detailed.columns
     },
     {
-      sheet: "Checklist State",
-      data: checklistSheet(state.checklistItems)
-    },
-    {
-      sheet: "TDS Reconciliation",
-      data: tdsSheet(state.tdsRows)
-    },
-    {
-      sheet: "Manifest",
-      data: manifestSheet(state.openIssueCount)
+      sheet: "CA Summary",
+      data: buildLinkedCaSummarySheet(state.caSummaryRows, state.financialYear, state.assessmentYear),
+      columns: [{ width: 34 }, { width: 14 }, { width: 18 }, { width: 40 }]
     }
-  ]).toBlob();
+  ];
+
+  const blob = await writeXlsxFile(sheets).toBlob();
 
   return {
     filename: FULL_WORKBOOK_XLSX_FILENAME,
@@ -133,83 +162,6 @@ export function downloadExport(file: ExportFile) {
   anchor.download = file.filename;
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function transactionsSheet(transactions: NormalizedTransaction[]): SheetData {
-  return [
-    [
-      "Scrip Name",
-      "Purchase Date",
-      "Sell Date",
-      "Units",
-      "Buy Value",
-      "Sell Value",
-      "Buy Price",
-      "Sell Price",
-      "Hold Period (Days)",
-      "Instrument Type",
-      "Tax Class",
-      "Gain/(Loss)"
-    ],
-    ...transactions.map((transaction) => [
-      transaction.scripName,
-      transaction.purchaseDate,
-      transaction.sellDate,
-      transaction.units,
-      transaction.buyValue,
-      transaction.sellValue,
-      transaction.buyPrice,
-      transaction.sellPrice,
-      transaction.holdPeriodDays,
-      transaction.instrumentType,
-      transaction.taxClass,
-      transaction.gainLoss
-    ])
-  ];
-}
-
-function detailedSummarySheet(summary: RuleBackedSummary): SheetData {
-  return [
-    ["Metric", "Value", "Notes"],
-    ["Rows parsed", summary.rows, "All lightweight fixture formats validate to this shape."],
-    ["Intraday gain", summary.intradayGain, "Taxed as speculative/business income."],
-    ["STCG", summary.stcg, "Section 111A bucket."],
-    ["LTCG", summary.ltcg, "Section 112A bucket before exemption."],
-    ["LTCG taxable after exemption", summary.ltcgTaxableAfterExemption, "Uses rule JSON exemption value."],
-    ["Estimated STCG tax", summary.estimatedStcgTax, "Uses rule JSON STCG rate."],
-    ["Estimated LTCG tax", summary.estimatedLtcgTax, "Uses rule JSON LTCG rate."],
-    [
-      "Debt/specified mutual fund gains (50AA)",
-      summary.debtMfShortTermDeemedGain,
-      "Short-term-deemed, slab rate. Not part of STCG/LTCG totals above."
-    ],
-    ["Recommended ITR form", summary.recommendedItrForm, "Selected from rule JSON."],
-    ["CA review recommendation", summary.caReviewRecommendation, "Derived from selected form."]
-  ];
-}
-
-function checklistSheet(items: ChecklistItem[]): SheetData {
-  return [
-    ["Document", "Needed?", "Status", "Why needed"],
-    ...items.map((item) => [item.document, String(item.needed), item.status, item.whyNeeded])
-  ];
-}
-
-function tdsSheet(rows: TdsRow[]): SheetData {
-  return [
-    ["Source", "TDS per Document", "TDS per AIS/26AS", "Difference"],
-    ...rows.map((row) => [row.source, row.tdsPerDocument, row.tdsPerAis, row.tdsPerDocument - row.tdsPerAis])
-  ];
-}
-
-function manifestSheet(openIssueCount: number): SheetData {
-  return [
-    ["Field", "Value"],
-    ["Generated by", "Unravel Tax webapp"],
-    ["Milestone", "M4E exports"],
-    ["Source", "Synthetic fixtures only"],
-    ["Open checklist/reconciliation issues", openIssueCount]
-  ];
 }
 
 function csvCell(value: string | number) {

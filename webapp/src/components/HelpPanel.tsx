@@ -1,5 +1,17 @@
 import { useEffect, useState } from "react";
-import { DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES, WHO_ITS_FOR_TAGLINE } from "../lib/copy";
+import { DISCLAIMER_FULL, HOW_IT_WORKS, REPORT_ISSUE_URL, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES, WHO_ITS_FOR_TAGLINE } from "../lib/copy";
+
+type HelpPanelProps = {
+  /** Test-only: render the dialog open on first paint (validate-guided-ui). */
+  initialOpen?: boolean;
+  /**
+   * Optional controlled mode: when `open` is passed, App owns the state so the
+   * side-nav "Help" item and the header "?" open the same panel. Left
+   * undefined, the panel manages its own open state (standalone in the header).
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
 
 /**
  * The "?" help affordance: how the guided flow works, who it's built for,
@@ -9,8 +21,16 @@ import { DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES, WHO_I
  * Unlike the confirm/risk-trigger modals, this one is informational, not a
  * decision to make - closes on backdrop click, Escape, or the button.
  */
-export function HelpPanel() {
-  const [open, setOpen] = useState(false);
+export function HelpPanel({ initialOpen = false, open: controlledOpen, onOpenChange }: HelpPanelProps) {
+  const [internalOpen, setInternalOpen] = useState(initialOpen);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(value);
+    }
+    onOpenChange?.(value);
+  };
 
   useEffect(() => {
     if (!open) {
@@ -67,6 +87,11 @@ export function HelpPanel() {
 
             <h3>Before you rely on this</h3>
             <p>{DISCLAIMER_FULL}</p>
+            <p>
+              <a href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+                Something wrong? Report it on GitHub
+              </a>
+            </p>
 
             <div className="modal-actions">
               <button type="button" className="primary-button" onClick={() => setOpen(false)}>

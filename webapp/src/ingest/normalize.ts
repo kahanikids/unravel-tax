@@ -226,19 +226,34 @@ function parseRowSoft(row: RawTransactionRow, rowIndex: number): { fields: Edita
   };
 }
 
+export type NormalizeRowInput = {
+  row: RawTransactionRow;
+  brokerColumns?: Record<string, string | number>;
+};
+
 export function normalizeRows(rows: RawTransactionRow[]): NormalizedTransaction[] {
-  return normalizeRowsSoft(rows).transactions;
+  return normalizeRowsSoft(rows.map((row) => ({ row }))).transactions;
 }
 
-export function normalizeRowsSoft(rows: RawTransactionRow[]): { transactions: NormalizedTransaction[]; warnings: IngestWarning[] } {
+export function normalizeRowsSoft(
+  inputs: NormalizeRowInput[] | RawTransactionRow[]
+): { transactions: NormalizedTransaction[]; warnings: IngestWarning[] } {
   const transactions: NormalizedTransaction[] = [];
   const warnings: IngestWarning[] = [];
+  const normalizedInputs: NormalizeRowInput[] =
+    inputs.length > 0 && "row" in (inputs[0] as NormalizeRowInput)
+      ? (inputs as NormalizeRowInput[])
+      : (inputs as RawTransactionRow[]).map((row) => ({ row }));
 
-  rows.forEach((row, rowIndex) => {
+  normalizedInputs.forEach(({ row, brokerColumns }, rowIndex) => {
     const { fields, warnings: rowWarnings } = parseRowSoft(row, rowIndex);
     warnings.push(...rowWarnings);
     try {
-      transactions.push(deriveComputedFields(fields));
+      const transaction = deriveComputedFields(fields);
+      if (brokerColumns && Object.keys(brokerColumns).length > 0) {
+        transaction.brokerColumns = brokerColumns;
+      }
+      transactions.push(transaction);
     } catch {
       warnings.push({
         code: "invalid_date",

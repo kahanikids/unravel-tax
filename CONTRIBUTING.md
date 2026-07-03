@@ -1,45 +1,82 @@
 # Contributing
 
-The highest-value contribution to this project is a rules update after
-a Union Budget or a mid-year Finance Act amendment — tax rates and
-thresholds change more often than the code does, and a stale rate is
-the single most damaging kind of bug here.
+Thank you for helping improve Unravel Tax. The highest-value contribution
+is a **rules update after a Union Budget or mid-year Finance Act amendment** —
+tax rates and thresholds change more often than the code does, and a stale
+rate is the single most damaging kind of bug here.
+
+This project is maintained part-time. **Rule corrections are prioritised**
+over new features. We aim to acknowledge issues within about a week.
+
+## How to report problems
+
+Use the [issue templates](https://github.com/kahanikids/unravel-tax/issues/new/choose):
+
+- **Rule correction** — wrong rate, threshold, or due date after a Budget
+- **Bug report** — calculation, ingest, or export behaviour
+- **UX or copy** — confusing screen or wording
+
+For security issues, see [SECURITY.md](SECURITY.md) — do not post exploits publicly.
+
+For general questions (not bugs), use **GitHub Discussions** once enabled on
+the repo (Settings → General → Discussions → Q&A category).
+
+Read [DISCLAIMER.md](DISCLAIMER.md) before relying on any output for filing.
 
 ## Updating a rule after a Budget or Finance Act change
 
-1. Update the relevant `rules/*.json` file (machine-readable, what the
-   app/templates actually read) and its paired `rules/*.md` file
-   (human-readable explanation) together — never one without the other.
-2. Bump the "Last verified: [date] against [source]" line at the top of
-   the `.md` file.
-3. Add a dated entry to `CHANGELOG.md` describing what changed and why.
-4. Search the repo for the old value (rate, threshold, due date) before
-   assuming you've caught every place it appears — hardcoded due dates
-   or rates sometimes leak into copy, prompts, or fixtures.
-5. If the change affects which ITR form applies to any profile, or a due
-   date, check `rules/itr-form-selection-*.md` specifically — form
-   selection logic is a common place for a change to have a
-   second-order effect.
+1. Update the relevant `rules/*.json` file (machine-readable) and its paired
+   `rules/*.md` file (human-readable) together — never one without the other.
+2. Run `cd webapp && npm run sync-rules` to copy JSON into
+   `webapp/src/rules/data/`.
+3. Bump the **Last verified:** line at the top of the `.md` file.
+4. Add a dated entry to [CHANGELOG.md](CHANGELOG.md) describing what changed and why.
+5. Search the repo for the old value (rate, threshold, due date) before
+   assuming you've caught every place it appears.
+6. If the change affects ITR form selection or a due date, check
+   `rules/itr-form-selection.md` specifically.
 
 ## Adding a new profile-specific rule
 
-Follow the tone already used in the existing `rules/` files: explain the
-rule to someone who's never heard of it, not to someone who already
-knows the Income Tax Act. Cite a source. State which financial year or
-assessment year it applies from.
+Follow the tone in existing `rules/` files: explain the rule to someone who's
+never heard of it, not to someone who already knows the Income Tax Act. Cite a
+source. State which financial year or assessment year it applies from.
 
-## Code contributions (webapp/, notebooks/)
+## Code contributions (webapp/, notebooks/, scripts/)
 
-Not started yet — see `BUILD_PLAN.md` Section 12 for the milestone
-order. Please don't start on `webapp/` ahead of Milestones 1–3; the
-spreadsheet + prompt pack path needs to work standalone first, both
-because it ships value immediately and because it's the reference
-implementation later work gets checked against.
+### Local setup
+
+```bash
+cd webapp
+npm install
+npm run validate:all
+```
+
+`validate:all` runs rule-sync check plus ingest, calculations, reconciliation,
+guided UI, and export validators.
+
+When you edit `rules/*.json`, always run `npm run sync-rules` before committing.
+
+Root rule pairs (markdown + JSON structure) are also checked by:
+
+```bash
+python scripts/validate-rule-pairs.py
+```
+
+### Pull requests
+
+- Keep PRs small and focused.
+- Match existing naming and plain-language copy conventions.
+- Use the [pull request template](.github/pull_request_template.md).
+- CI runs validators on changes to `rules/`, `webapp/`, `scripts/`, or `fixtures/`.
+
+Planned work is listed in [ROADMAP.md](ROADMAP.md). Open an issue before
+starting a large feature so scope matches maintainer expectations.
 
 ## Ground rules
 
 - Never commit real personal or financial data — PAN numbers, account
-  details, actual filing figures. Use `fixtures/` for synthetic test
-  data only.
-- No backend, no database, no accounts — this is a hard constraint, not
-  a preference. See `CLAUDE.md` and `BUILD_PLAN.md` Section 9.
+  details, actual filing figures. Use `fixtures/` for synthetic test data only.
+- No backend, no database, no accounts — hard constraint. See `CLAUDE.md` and
+  `BUILD_PLAN.md` Section 9.
+- Be kind. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

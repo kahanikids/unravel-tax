@@ -1,5 +1,14 @@
 import { STEP_LABELS, STEP_ORDER, type AppStep } from "../state/types";
-import { IconChart, IconChecklist, IconPerson, IconUpload } from "./icons";
+import {
+  IconChart,
+  IconChecklist,
+  IconCompass,
+  IconHelp,
+  IconPerson,
+  IconShield,
+  IconSparkles,
+  IconUpload
+} from "./icons";
 
 const RAIL_STEPS = STEP_ORDER.filter((step): step is Exclude<AppStep, "welcome"> => step !== "welcome");
 
@@ -25,19 +34,46 @@ const MOBILE_STEP_LABELS: Record<Exclude<AppStep, "welcome">, string> = {
  * instead of looking like a reset back to step 1. Never a way to skip
  * ahead: only steps already reached (index <= furthestIndex) are clickable.
  */
+/**
+ * Always-available utility actions, kept visually and structurally separate
+ * from the filing steps (bottom-anchored group) so they never look like a way
+ * to skip ahead in the flow. Info/help only - no step-jump guard applies.
+ */
+const UTILITY_ITEMS = [
+  { key: "help", label: "Help", mobileLabel: "Help", Icon: IconHelp },
+  { key: "features", label: "Features", mobileLabel: "Tools", Icon: IconSparkles },
+  { key: "tour", label: "Take a tour", mobileLabel: "Tour", Icon: IconCompass },
+  { key: "legal", label: "Legal", mobileLabel: "Legal", Icon: IconShield }
+] as const;
+
 export function SideNav({
   current,
   furthestIndex,
-  onNavigate
+  onNavigate,
+  onShowHelp,
+  onShowCapabilities,
+  onShowTour,
+  onShowLegal
 }: {
   current: AppStep;
   furthestIndex: number;
   onNavigate: (step: AppStep) => void;
+  onShowHelp: () => void;
+  onShowCapabilities: () => void;
+  onShowTour: () => void;
+  onShowLegal: () => void;
 }) {
   const currentIndex = STEP_ORDER.indexOf(current);
+  const utilityHandlers: Record<(typeof UTILITY_ITEMS)[number]["key"], () => void> = {
+    help: onShowHelp,
+    features: onShowCapabilities,
+    tour: onShowTour,
+    legal: onShowLegal
+  };
 
   return (
     <nav className="side-nav" aria-label="Filing steps">
+      <div className="side-nav-steps">
       {RAIL_STEPS.map((step) => {
         const index = STEP_ORDER.indexOf(step);
         const state = index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming";
@@ -73,6 +109,23 @@ export function SideNav({
           </span>
         );
       })}
+      </div>
+
+      <div className="side-nav-utility" aria-label="Help and information">
+        {UTILITY_ITEMS.map(({ key, label, mobileLabel, Icon }) => (
+          <button
+            type="button"
+            key={key}
+            className="side-nav-step side-nav-util"
+            onClick={utilityHandlers[key]}
+            title={label}
+          >
+            <Icon className="side-nav-icon" />
+            <span className="side-nav-label side-nav-label-full">{label}</span>
+            <span className="side-nav-label side-nav-label-mobile">{mobileLabel}</span>
+          </button>
+        ))}
+      </div>
     </nav>
   );
 }

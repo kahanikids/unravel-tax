@@ -1,4 +1,5 @@
 import { IconChecklist, IconCompass, IconUpload } from "./icons";
+import { LEGAL_INTRO, LEGAL_SECTIONS, REPORT_ISSUE_URL, REPO_URL } from "../lib/copy";
 
 export function WelcomeScreen({
   onStart,
@@ -35,7 +36,7 @@ export function WelcomeScreen({
       <div className="welcome-badges">
         <span className="welcome-badge">No signup</span>
         <span className="welcome-badge welcome-badge-formats">
-          <span className="welcome-badge-desktop">CSV, Excel, HTML — PDF needs one extra step</span>
+          <span className="welcome-badge-desktop">Most File Formats</span>
           <span className="welcome-badge-mobile">CSV/Excel/PDF</span>
         </span>
         <span className="welcome-badge">
@@ -43,7 +44,7 @@ export function WelcomeScreen({
           <span className="welcome-badge-mobile">Browser-only</span>
         </span>
       </div>
-      <p className="welcome-time-estimate">Most people finish in 15–20 minutes.</p>
+      <p className="welcome-time-estimate">Just takes about 15-20 mins.</p>
 
       {hasSavedSession ? (
         <div className="resume-banner">
@@ -90,6 +91,37 @@ export function WelcomeScreen({
           </button>
         </p>
       ) : null}
+
+      <details className="welcome-legal">
+        <summary>
+          <span className="welcome-legal-summary-text">Disclaimer, AI use, privacy &amp; terms</span>
+          <span className="welcome-legal-summary-hint">Please read before you rely on this</span>
+        </summary>
+        <div className="welcome-legal-body">
+          {LEGAL_INTRO.map((part) => (
+            <p className="welcome-legal-intro" key={part.label}>
+              <strong>{part.label}:</strong> {part.text}
+            </p>
+          ))}
+          {LEGAL_SECTIONS.map((section) => (
+            <section className="welcome-legal-section" key={section.heading}>
+              <h3>{section.heading}</h3>
+              {section.paragraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </section>
+          ))}
+          <p className="welcome-legal-links">
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+              View the source on GitHub
+            </a>
+            <span aria-hidden="true"> · </span>
+            <a href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+              Report an issue
+            </a>
+          </p>
+        </div>
+      </details>
     </div>
   );
 }

@@ -24,6 +24,7 @@ export type CapitalGainsEquityValues = {
     indexation_allowed: boolean;
     surcharge_cap_rate: number;
     section_87a_rebate_allowed: boolean;
+    health_education_cess_rate: number;
   };
   transaction_costs: {
     stt_deductible_for_capital_gains: boolean;

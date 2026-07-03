@@ -1,20 +1,118 @@
 /**
  * Single source for copy that appears in more than one place, so wording
- * stays in sync instead of drifting across components. Two disclaimer
- * variants on purpose, shortest to longest: SCOPE_AND_DISCLAIMER_NOTE is the
- * short year-scope-plus-CA line shown once at the bottom of every screen;
- * DISCLAIMER_FULL is the "?" help panel's fuller version. Neither replaces
- * the other.
+ * stays in sync instead of drifting across components. Disclaimer copy comes
+ * in three lengths, shortest to longest: SCOPE_AND_DISCLAIMER_NOTE is the one
+ * short year-scope-plus-CA line in the footer on every screen; DISCLAIMER_FULL
+ * is the "?" help panel's mid-length version; LEGAL_SECTIONS (below) is the
+ * full, structured legal text shown in the welcome screen's collapsible
+ * disclaimer. Each is a deliberate step up in detail, not a duplicate.
  */
 
 export const SCOPE_AND_DISCLAIMER_NOTE =
-  "Built for FY 2025-26 (AY 2026-27) filings only. It organizes your numbers. It doesn't replace a CA.";
+  "Built for FY 2025-26 (AY 2026-27) filings only. Not affiliated with the Income Tax Department or CBDT. It organizes your numbers. It doesn't replace a CA.";
 
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";
 
+export const REPORT_ISSUE_URL =
+  "https://github.com/kahanikids/unravel-tax/issues/new/choose";
+
+export const REPO_URL = "https://github.com/kahanikids/unravel-tax";
+
+/**
+ * Consolidated legal/disclaimer content shown in the collapsible section at the
+ * bottom of the welcome screen. Structured (heading + plain-language
+ * paragraphs) so it renders once and stays the single source of truth, rather
+ * than being duplicated as long prose in the footer. Substance is written to
+ * be legally clear; framing is kept plain so a non-technical filer can follow
+ * it. Accuracy of the AI and Privacy sections matters most - both describe
+ * what the code actually does (client-side parsing for structured files, a
+ * copy-paste prompt into the user's own LLM for PDFs/free text, deterministic
+ * tax maths, nothing sent to any server by the app).
+ */
+export type LegalSection = { heading: string; paragraphs: string[] };
+
+export const LEGAL_INTRO: { label: string; text: string }[] = [
+  {
+    label: "What this tool is",
+    text: "A friendly helper that gathers and organizes your own tax numbers, on your own device, into files that you and your CA can use."
+  },
+  {
+    label: "What this is not",
+    text: "It isn't tax advice, and it isn't a replacement for a CA. Please review the numbers yourself, or have your CA review the final numbers, so they tally with your original documents."
+  }
+];
+
+export const LEGAL_SECTIONS: LegalSection[] = [
+  {
+    heading: "Disclaimer / No professional advice",
+    paragraphs: [
+      "This tool is built for Indian income tax filings for the financial year 2025-26 (assessment year 2026-27) only. Rates, thresholds, and due dates for other years are not covered.",
+      "It is an independent, open-source project. It is not a government service and is not affiliated with, endorsed by, or connected to the Income Tax Department, the Central Board of Direct Taxes (CBDT), or the Ministry of Finance.",
+      "It organizes and calculates from the information you provide. It does not give tax, legal, financial, or accounting advice, and it is not a substitute for a Chartered Accountant (CA) or other qualified professional. Whether a particular treatment applies to your situation is a judgement only a professional can make for you.",
+      "Everything here is provided \"as is\", without warranties of any kind, express or implied, including accuracy, completeness, or fitness for a particular purpose. To the fullest extent permitted by law, the authors and contributors accept no liability for any loss, penalty, interest, or damage arising from using, or being unable to use, this tool. You are responsible for checking every figure and confirming it on incometax.gov.in before you file."
+    ]
+  },
+  {
+    heading: "Not a government service",
+    paragraphs: [
+      "This tool does not connect to, submit to, or file anything with the Income Tax Department. It never logs into the e-filing portal on your behalf. Filing your return, and confirming your figures against your official AIS, Form 26AS, and the portal, remains something you do yourself or through your CA."
+    ]
+  },
+  {
+    heading: "AI / LLM tools used, and for what",
+    paragraphs: [
+      "The app itself does not call any AI service and has no AI API keys. Tax calculations are always deterministic: they run from versioned rule files and plain formulas in your browser, and are never done by an AI or language model.",
+      "AI is used for one narrow job only: reading data out of documents that are not already structured. CSV, Excel, and saved-webpage (HTML) statements are parsed directly in your browser with no AI involved. Only PDFs and free-form / unstructured text use the AI extraction step.",
+      "That extraction step is something you run yourself. The app gives you a copy-paste prompt; you paste it, together with your document, into whichever AI chat you choose (for example ChatGPT, Claude, or Gemini), and paste the AI's result back into the app. The app does not send the document anywhere for you.",
+      "Because the AI only ever reads and transcribes numbers into a table you then review and edit, it never decides your tax. You confirm every extracted row before it is used."
+    ]
+  },
+  {
+    heading: "Privacy",
+    paragraphs: [
+      "Everything runs locally in your browser. There is no account, no sign-up, no server, and no analytics or tracking. Nothing you enter is uploaded to or stored by us, because there is no \"us\" server to store it on.",
+      "Your in-progress filing is saved only in this browser's local storage as a convenience so you can resume later, and, on supported browsers, optionally to a folder you choose on your own computer for backup. Both stay on your device and you can clear them at any time.",
+      "The one place your data can leave your machine is the optional AI extraction step: if you paste document contents into a third-party AI chat, that text is handled by that provider under their own privacy policy and terms, not ours. If a document is sensitive, review that provider's policy first, or use a structured format (CSV/Excel) that is parsed entirely in your browser instead."
+    ]
+  },
+  {
+    heading: "Data accuracy / your responsibility",
+    paragraphs: [
+      "The numbers come from documented tax rules, but software and source documents can both contain mistakes. Treat every output as a draft to be checked, not a final figure.",
+      "You are responsible for the accuracy of what you enter and of what you ultimately file. Always reconcile against your AIS, Form 26AS, and Form 16, and have your CA review the results before you submit anything."
+    ]
+  },
+  {
+    heading: "Terms of use",
+    paragraphs: [
+      "You may use this tool freely, at your own risk. It is provided without any guarantee of correctness or availability, and the authors and contributors are not liable for how you use it or for the outcome of your filing.",
+      "By using it you accept that it is a self-help organizing aid, that you remain responsible for verifying your numbers, and that final responsibility for your tax return rests with you and your professional adviser."
+    ]
+  },
+  {
+    heading: "Jurisdiction",
+    paragraphs: [
+      "Scope is Indian personal income tax only. It is not built for business or professional income that needs full bookkeeping, and it does not cover taxes of any other country."
+    ]
+  },
+  {
+    heading: "Open source, license & contributions",
+    paragraphs: [
+      "This is an open-source project. The source code is public, so you (or anyone) can inspect exactly how a number is calculated and how your data is handled. Fixes, corrections, and suggestions are welcome.",
+      "The code is released under the license included in the project repository; your use of it is subject to that license."
+    ]
+  },
+  {
+    heading: "Contact / reporting issues",
+    paragraphs: [
+      "If a number looks wrong, a rule is out of date, or something could be clearer, please report it on the project's GitHub so it can be fixed for everyone."
+    ]
+  }
+];
+
 export const DISCLAIMER_FULL =
-  "This is an open source project. If something looks wrong or could be better, that feedback is welcome. The numbers come from documented tax rules, but mistakes happen, so always check the final numbers before you file. This tool organizes your data; it doesn't submit or complete your return, and it's not a substitute for a Chartered Accountant (CA), so send the results to yours for a final check. Nothing you enter is stored or sent anywhere: everything runs locally, in your browser.";
+  "This is an open source project, not affiliated with the Income Tax Department, CBDT, or the Ministry of Finance. If something looks wrong or could be better, that feedback is welcome. The numbers come from documented tax rules, but mistakes happen, so always check the final numbers before you file and verify on incometax.gov.in. This tool organizes your data; it doesn't submit or complete your return, and it's not a substitute for a Chartered Accountant (CA), so send the results to yours for a final check. Nothing you enter is stored or sent anywhere: everything runs locally, in your browser.";
 
 export const WHO_ITS_FOR_TAGLINE = "This is for you if:";
 

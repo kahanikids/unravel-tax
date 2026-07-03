@@ -1,0 +1,30 @@
+name: UX or copy feedback
+description: A screen, label, or explanation is confusing or misleading
+title: "[UX] "
+labels: ["ux"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Plain-language feedback is welcome. This project avoids tax jargon in user-facing copy.
+
+  - type: input
+    id: screen
+    attributes:
+      label: Which screen or step?
+      placeholder: Welcome, Checklist, Add documents, Results, Help panel, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What was confusing or wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording (optional)
+      description: If you have clearer plain-language copy in mind, paste it here
