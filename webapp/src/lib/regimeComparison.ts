@@ -64,6 +64,16 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
   // The new regime doesn't have separate age-based slabs, unlike the old one.
   let newRegimeTax = taxFromSlabs(newRegimeSlabIncome, rule.values.new_regime.slabs);
   newRegimeTax = applyRebate(newRegimeTax, newRegimeSlabIncome, rule.values.new_regime.rebate_87a);
+  // Marginal relief: just above the rebate threshold, tax (before cess) is
+  // capped at the income earned above the threshold, so crossing Rs 12L by
+  // Rs 100 can't cost Rs 60,000 - see rules/regime-choice.md.
+  const relief = rule.values.new_regime.marginal_relief;
+  if (
+    relief?.tax_capped_at_income_above_threshold &&
+    newRegimeSlabIncome > relief.applies_above_taxable_income_inr
+  ) {
+    newRegimeTax = Math.min(newRegimeTax, newRegimeSlabIncome - relief.applies_above_taxable_income_inr);
+  }
   newRegimeTax *= 1 + rule.values.cess_rate;
 
   const oldRegimeOtherIncome = Math.max(0, otherSlabIncome - Math.max(0, inputs.eligibleInterestDeduction));

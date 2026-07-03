@@ -119,6 +119,51 @@ async function main() {
     throw new Error("New regime should be cheaper for a plain Rs 12L salary with no other income or deductions.");
   }
 
+  // Marginal relief: Rs 12,85,000 salary is Rs 12,10,000 taxable after the
+  // standard deduction - Rs 10,000 over the rebate threshold. Slab tax would
+  // be Rs 61,500, but Section 87A marginal relief caps it at the Rs 10,000
+  // earned above the threshold; plus 4% cess = Rs 10,400.
+  const marginalReliefResult = compareRegimes(
+    {
+      salaryIncome: 1_285_000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  if (marginalReliefResult.newRegimeTax !== 10400) {
+    throw new Error(
+      `Expected Rs 10400 new-regime tax on Rs 12.85L salary (marginal relief + cess), got ${marginalReliefResult.newRegimeTax}.`
+    );
+  }
+
+  // The standard deduction only applies to salary: interest-only income
+  // must not have it subtracted under either regime.
+  const noSalaryResult = compareRegimes(
+    {
+      salaryIncome: 0,
+      dividends: 0,
+      interestOtherIncome: 600_000,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  // Old regime on Rs 6L with no deductions: 5% of 2.5L + 20% of 1L = 32,500, +4% cess = 33,800.
+  if (noSalaryResult.oldRegimeTax !== 33800) {
+    throw new Error(
+      `Expected Rs 33800 old-regime tax on Rs 6L interest-only income (no standard deduction), got ${noSalaryResult.oldRegimeTax}.`
+    );
+  }
+
   // Section 234B advance-tax interest: below the Section 208 threshold, no
   // advance tax was required at all.
   const belowThreshold = estimateAdvanceTaxInterest(

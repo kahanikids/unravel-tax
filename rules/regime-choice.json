@@ -11,7 +11,7 @@
   "verification": {
     "status": "verified",
     "last_verified": "2026-07-03",
-    "note": "Slabs, standard deductions, and Section 87A rebate thresholds verified against the Income Tax Department's official Budget 2025 FAQ. Switching-rule fields (business_income_switching etc.) are still structured from BUILD_PLAN.md/SYSTEM_SPEC.md draft content pending a dedicated re-check."
+    "note": "Slabs, standard deductions, Section 87A rebate thresholds, and the new-regime marginal relief above Rs 12,00,000 verified against the Income Tax Department's official Budget 2025 FAQ. Switching-rule fields (business_income_switching etc.) are still structured from BUILD_PLAN.md/SYSTEM_SPEC.md draft content pending a dedicated re-check."
   },
   "source_refs": [
     "https://incometaxindia.gov.in/Documents/Budget/budget-2025/faqs-budget-2025.pdf",
@@ -45,7 +45,11 @@
         { "up_to_inr": 2400000, "rate": 0.25 },
         { "up_to_inr": null, "rate": 0.3 }
       ],
-      "rebate_87a": { "taxable_income_at_or_below_inr": 1200000, "max_rebate_inr": 60000 }
+      "rebate_87a": { "taxable_income_at_or_below_inr": 1200000, "max_rebate_inr": 60000 },
+      "marginal_relief": {
+        "applies_above_taxable_income_inr": 1200000,
+        "tax_capped_at_income_above_threshold": true
+      }
     },
     "old_regime": {
       "standard_deduction_inr": 50000,

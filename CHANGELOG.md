@@ -4,6 +4,22 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-03 (quality pass)
+
+- Section 87A marginal relief (new regime): added
+  `values.new_regime.marginal_relief` to `rules/regime-choice.json` and the
+  explanation to `rules/regime-choice.md` (source: Income Tax Department
+  Budget 2025 FAQ, already in `source_refs`). The webapp regime comparison
+  now caps new-regime tax (before cess) at the income earned above the
+  Rs 12,00,000 rebate threshold, removing the false Rs ~60,000 tax cliff
+  for incomes just above it. Validation case added.
+- Regime comparison fix: the old-regime standard deduction is now clamped
+  to salary income, so interest/dividend-only filers no longer had
+  Rs 50,000 wrongly knocked off their non-salary income.
+- Sample-mode fix: leaving sample data via a welcome-screen card, or adding
+  a real document while viewing sample data, now clears the demo data
+  instead of letting the next autosave overwrite a real saved filing.
+
 ## 2026-07-03
 
 - RKM-style full workbook export: styled Excel output with per-broker sheets,

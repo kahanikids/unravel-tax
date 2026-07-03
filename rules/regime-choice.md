@@ -29,6 +29,15 @@ rebate: if your slab-taxed income is ₹12,00,000 or less, you owe no tax
 on it at all (rebate capped at ₹60,000). Almost no other deductions are
 allowed under this regime.
 
+**Marginal relief just above ₹12,00,000:** without it, earning ₹100 over
+the rebate threshold would suddenly cost about ₹60,000 in tax. The law
+smooths this: if your slab-taxed income is just above ₹12,00,000, your
+tax (before cess) is capped at the amount you earned above ₹12,00,000.
+So at ₹12,10,000 of income you owe at most ₹10,000 of tax, not ₹61,500.
+The relief phases itself out naturally (around ₹12,75,000, normal slab
+tax becomes the smaller number). The old regime's ₹5,00,000 rebate has
+no such relief - that cliff is real.
+
 ## Old regime (opt in)
 
 Same slabs for everyone below 60. Senior citizens (60 to 79) and super

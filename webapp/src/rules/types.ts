@@ -76,6 +76,10 @@ export type RegimeChoiceValues = {
     standard_deduction_inr: number;
     slabs: TaxSlab[];
     rebate_87a: RegimeRebate87a;
+    marginal_relief: {
+      applies_above_taxable_income_inr: number;
+      tax_capped_at_income_above_threshold: boolean;
+    };
   };
   old_regime: {
     standard_deduction_inr: number;
