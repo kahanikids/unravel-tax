@@ -18,7 +18,7 @@ export function WelcomeScreen({
 
       <div className="welcome-badges">
         <span className="welcome-badge">No signup</span>
-        <span className="welcome-badge">Any file format</span>
+        <span className="welcome-badge">Most File Formats</span>
         <span className="welcome-badge">Stays in your browser</span>
       </div>
 

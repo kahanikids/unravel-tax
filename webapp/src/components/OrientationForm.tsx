@@ -56,7 +56,7 @@ const QUESTIONS: Question[] = [
     id: "huf",
     kind: "yes-no",
     prompt: "Is any of this income or investment held through a family (HUF) rather than just you personally?",
-    helper: "Skip this if that term is unfamiliar - it almost certainly doesn't apply to you.",
+    helper: "Skip this if that term is unfamiliar. It almost certainly doesn't apply to you.",
     visible: () => true,
     value: (a) => a.huf,
     set: (a, value) => ({ ...a, huf: value })
@@ -225,7 +225,7 @@ export function OrientationForm({
         ) : (
           <span />
         )}
-        <p className="orientation-note">Answers only shape what's asked next - nothing is submitted anywhere.</p>
+        <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p>
       </div>
     </div>
   );

@@ -79,7 +79,7 @@ export function UploadStep({
       <h2>Add your documents</h2>
       <p className="step-lede">
         One at a time: add a document, confirm what we read, then the next. CSV, Excel, and saved webpages are read
-        in your browser - PDFs and pasted text go through the guided extraction prompt.
+        in your browser. PDFs and pasted text go through the guided extraction prompt.
       </p>
 
       <div className="upload-dropzone">
@@ -117,7 +117,7 @@ export function UploadStep({
       {awaitingPaste ? (
         <div className="paste-panel">
           <p>
-            <strong>{awaitingPaste}</strong> needs the AI extraction step - this app doesn't parse PDFs or free-form
+            <strong>{awaitingPaste}</strong> needs the AI extraction step. This app doesn't parse PDFs or free-form
             text itself.
           </p>
           <ol className="paste-steps">
@@ -177,7 +177,7 @@ export function UploadStep({
             </div>
             <div className="modal-actions">
               <button type="button" className="primary-button" onClick={confirmPending}>
-                Looks right - add to my filing
+                Looks right, add to my filing
               </button>
               <button type="button" className="text-button" onClick={() => setPending(null)}>
                 Something's off, discard

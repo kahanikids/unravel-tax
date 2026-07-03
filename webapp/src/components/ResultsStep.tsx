@@ -58,7 +58,7 @@ export function ResultsStep({
       <section className="supplemental-form">
         <h3>A few more numbers</h3>
         <p className="step-lede">
-          These don't come from an uploaded document - enter them yourself, or leave at zero to skip.
+          These don't come from an uploaded document. Enter them yourself, or leave at zero to skip.
         </p>
         <div className="supplemental-grid">
           {SUPPLEMENTAL_FIELDS.map((field) => (
@@ -153,7 +153,7 @@ export function ResultsStep({
       </section>
 
       <p className="closing-note">
-        Once you've filed: keep the full workbook, not this chat or session - it's the record you'll want next year,
+        Once you've filed, keep the full workbook, not this chat or session. It's the record you'll want next year,
         especially for carrying forward any losses. The CA Summary file is the one to hand off for review.
       </p>
     </div>

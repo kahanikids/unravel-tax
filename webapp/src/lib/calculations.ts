@@ -139,7 +139,7 @@ export function caSummaryRows(
       ruleSection: "50AA",
       amount: summary.debtMfShortTermDeemedGain,
       notes:
-        "Short-term-deemed, taxed at your slab rate - not the equity 20%/12.5% rates above and not included in those totals. Confirm the fund's classification with a CA."
+        "Short-term-deemed, taxed at your slab rate. Not the equity 20%/12.5% rates above, and not included in those totals. Confirm the fund's classification with a CA."
     },
     {
       head: "Dividends",

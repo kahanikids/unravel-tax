@@ -6,6 +6,14 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Copy pass across all user-visible webapp text and README.md: removed
+  dashes used as sentence punctuation (" - " standing in for a comma,
+  period, or parenthesis), rewriting as separate sentences or comma/colon
+  joins instead. Left hyphens in actual compound words (`self-file`,
+  `non-technical`, etc.) and code comments untouched. Also fixed the
+  welcome screen's "Any file format" badge to "Most File Formats" (it
+  overstated PDF/free-form handling, which routes through the guided
+  extraction prompt rather than being parsed directly).
 - Added a "?" help button in the header (`HelpPanel`, visible on every
   screen including welcome): how the guided flow works, who the tool is
   for, and a fuller plain-language disclaimer, all in one place instead of

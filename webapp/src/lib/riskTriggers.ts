@@ -30,7 +30,7 @@ export function evaluateRiskTriggers(
       id: "multiple_employers_unreconciled_tds",
       label: "More than one employer this year",
       consequence:
-        "Each employer withholds TDS independently, without knowing about the other salary - an unreconciled shortfall can surface as an unexpected tax bill.",
+        "Each employer withholds TDS independently, without knowing about the other salary. An unreconciled shortfall can surface as an unexpected tax bill.",
       severity: "routine"
     });
   }
@@ -49,7 +49,7 @@ export function evaluateRiskTriggers(
       id: "epf_withdrawal_before_minimum_service",
       label: "Provident fund withdrawn before 5 years of service",
       consequence:
-        "TDS applies at withdrawal, and it counts as taxable income for the year - easy to mistake for a tax-free lump sum.",
+        "TDS applies at withdrawal, and it counts as taxable income for the year. It's easy to mistake for a tax-free lump sum.",
       severity: "routine"
     });
   }
@@ -58,7 +58,7 @@ export function evaluateRiskTriggers(
     triggers.push({
       id: "business_income_itr_form",
       label: "Speculative/intraday trading income in your documents",
-      consequence: `This moves your filing to ${itrForm.form}, due ${formatDate(itrForm.dueDate)} - a different, often later, date than the simplest forms.`,
+      consequence: `This moves your filing to ${itrForm.form}, due ${formatDate(itrForm.dueDate)}. That's a different, often later, date than the simplest forms.`,
       severity: "form-changing"
     });
   }
@@ -94,7 +94,7 @@ export function caOrSelfFileRecommendation(
     recommendCa,
     headline: recommendCa ? "Get a CA to review this before filing" : "Self-filing may be reasonable here",
     reason: recommendCa
-      ? "Your profile includes NRI, HUF, single-parent clubbing, business/speculative income, or a form-changing risk trigger - each of those is worth a professional's eyes before you file."
+      ? "Your profile includes NRI, HUF, single-parent clubbing, business/speculative income, or a form-changing risk trigger. Each of those is worth a professional's eyes before you file."
       : "Nothing in your profile or documents points to added complexity, but it's still worth a final sanity check on the numbers before filing."
   };
 }

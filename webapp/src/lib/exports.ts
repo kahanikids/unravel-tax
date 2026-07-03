@@ -181,7 +181,7 @@ function detailedSummarySheet(summary: RuleBackedSummary): SheetData {
     [
       "Debt/specified mutual fund gains (50AA)",
       summary.debtMfShortTermDeemedGain,
-      "Short-term-deemed, slab rate - not part of STCG/LTCG totals above."
+      "Short-term-deemed, slab rate. Not part of STCG/LTCG totals above."
     ],
     ["Recommended ITR form", summary.recommendedItrForm, "Selected from rule JSON."],
     ["CA review recommendation", summary.caReviewRecommendation, "Derived from selected form."]

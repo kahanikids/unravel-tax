@@ -56,7 +56,7 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
 
   add(
     "Form 26AS / Annual Information Statement (AIS)",
-    "Shows the TDS and transactions the tax department already has on record - the main way mismatches get caught.",
+    "Shows the TDS and transactions the tax department already has on record. This is the main way mismatches get caught.",
     "Needed"
   );
 
@@ -71,7 +71,7 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
   if (flags.hasCapitalGains) {
     add(
       "Broker/AMC capital gains statement",
-      "Needed to classify and calculate your capital gains - upload it in the next step.",
+      "Needed to classify and calculate your capital gains. Upload it in the next step.",
       capitalGainsDocumentLoaded ? "Loaded" : "Needed"
     );
   }
@@ -92,7 +92,7 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
     );
     add(
       "NRE and NRO account statements, separately",
-      "These two account types are taxed completely differently - don't combine them.",
+      "These two account types are taxed completely differently. Don't combine them.",
       "Needed"
     );
   }
@@ -170,7 +170,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
       id: "huf_scope",
       label: "HUF-specific numbers aren't calculated here yet",
       note:
-        "Coparcener details, transfers-without-consideration clubbing, and partition tracking aren't computed by this tool. The figures below only cover capital gains/dividends/interest - a CA needs to handle the HUF-entity side."
+        "Coparcener details, transfers-without-consideration clubbing, and partition tracking aren't computed by this tool. The figures below only cover capital gains, dividends, and interest. A CA needs to handle the HUF-entity side."
     });
   }
 
