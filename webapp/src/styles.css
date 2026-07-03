@@ -169,11 +169,21 @@ button.side-nav-step.side-nav-step-current:hover {
   flex-wrap: wrap;
 }
 
+.brand-mark-button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-right: auto;
+  cursor: pointer;
+  display: inline-flex;
+  line-height: 0;
+}
+
 .brand-mark {
   height: 40px;
   width: auto;
   object-fit: contain;
-  margin-right: auto;
 }
 
 .help-button {
@@ -361,13 +371,6 @@ button.side-nav-step.side-nav-step-current:hover {
   content: "✓";
   color: var(--accent);
   font-weight: 800;
-}
-
-.welcome-actions {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
 }
 
 .resume-banner {
@@ -1019,6 +1022,23 @@ button.side-nav-step.side-nav-step-current:hover {
   display: flex;
   gap: 16px;
   align-items: center;
+  justify-content: space-between;
+}
+
+.tour-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.tour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.tour-dot-current {
+  background: var(--accent);
 }
 
 .trigger-list {

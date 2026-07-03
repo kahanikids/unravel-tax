@@ -3,17 +3,17 @@ import { IconChecklist, IconCompass, IconUpload } from "./icons";
 export function WelcomeScreen({
   onStart,
   onStartComputationFirst,
-  onTrySample,
   onResume,
   hasSavedSession,
-  onShowCapabilities
+  onShowCapabilities,
+  onShowTour
 }: {
   onStart: () => void;
   onStartComputationFirst: () => void;
-  onTrySample: () => void;
   onResume: () => void;
   hasSavedSession: boolean;
   onShowCapabilities: () => void;
+  onShowTour: () => void;
 }) {
   return (
     <div className="welcome-card">
@@ -59,18 +59,12 @@ export function WelcomeScreen({
             <p>Skip ahead. See your numbers first.</p>
           </span>
         </button>
-        <button type="button" className="entry-path-card" onClick={onShowCapabilities}>
+        <button type="button" className="entry-path-card" onClick={onShowTour}>
           <IconCompass className="entry-path-icon" />
           <span className="entry-path-text">
             <h3>Get to know the tool</h3>
-            <p>See what this can and can't do.</p>
+            <p>A quick tour, then try it with sample data.</p>
           </span>
-        </button>
-      </div>
-
-      <div className="welcome-actions">
-        <button type="button" className="text-button" onClick={onTrySample}>
-          See with Sample Data
         </button>
       </div>
     </div>

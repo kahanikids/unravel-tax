@@ -6,6 +6,28 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Redesigned "Get to know the tool" into a 3-step tour (`ToolTour`): plain
+  use cases ("turns your statements into numbers a CA can check", not a
+  feature list), a walk-through of the real flow including "rules-based,
+  never AI-guessed" computation and the two export files, then a direct
+  "See with sample data" button that drops you straight into the existing
+  sample-data flow. Distinct from the "What can this do?" panel, which
+  stays the honest available-vs-planned scope list for a more skeptical
+  reader; the two are separate doors for two different readers.
+- Removed the standalone "See with Sample Data" link from the bottom of
+  the welcome card, since it's now step 3 of the tour above; sample data
+  is still one click away, just through the tour instead of a second,
+  redundant link.
+- Made the header logo a "back to home" control: click it from any step to
+  return to the welcome screen. Non-destructive by design, since it only
+  changes which screen is showing; it doesn't touch saved session state,
+  so nothing is lost and the same filing is still there if you navigate
+  forward again (or the side nav/"Resume" still gets you back to it).
+- Simplify pass over this session's diff: fixed a validation check that
+  used `.some()` where it needed to check every entry (so a single empty
+  string could have slipped through unnoticed), removed a redundant
+  re-check of `HOW_IT_WORKS` content already covered elsewhere, and
+  collapsed two `loadSession()` calls on `App` mount into one shared read.
 - Replaced the header's horizontal step indicator with a persistent
   vertical icon rail (`SideNav`) down the left edge of the whole app,
   visible on every screen including welcome. Same underlying step model as

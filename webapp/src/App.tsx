@@ -55,6 +55,7 @@ import { ResultsStep } from "./components/ResultsStep";
 import { SideNav } from "./components/SideNav";
 import { HelpPanel } from "./components/HelpPanel";
 import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
+import { ToolTour } from "./components/ToolTour";
 import { DocumentSourceHint } from "./components/DocumentSourceHint";
 
 type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[] };
@@ -72,19 +73,22 @@ function App() {
   );
   const [exportMessage, setExportMessage] = useState("Exports are generated in this browser. Nothing is uploaded anywhere.");
   const [acknowledgedTriggerIds, setAcknowledgedTriggerIds] = useState<string[]>([]);
-  const [hasSavedSession] = useState(() => loadSession() !== null);
+  // Read once on mount and shared below, so a saved session isn't parsed
+  // out of localStorage twice on first render.
+  const [initialSession] = useState(() => loadSession());
+  const [hasSavedSession] = useState(() => initialSession !== null);
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
   const [showCapabilities, setShowCapabilities] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   // Every step the user has already reached this filing stays reachable from
   // the side nav - lets them jump back to the checklist/documents/results
   // without restarting, without ever offering to skip ahead to a step they
   // haven't gotten to yet. Seeded from any saved session on mount, not just
   // 0, so the side nav shows real progress on the welcome screen even
   // before "Resume" is clicked (e.g. after a reload/crash lands back there).
-  const [furthestStepIndex, setFurthestStepIndex] = useState(() => {
-    const session = loadSession();
-    return session ? session.furthestStepIndex ?? STEP_ORDER.indexOf(session.step) : 0;
-  });
+  const [furthestStepIndex, setFurthestStepIndex] = useState(() =>
+    initialSession ? initialSession.furthestStepIndex ?? STEP_ORDER.indexOf(initialSession.step) : 0
+  );
 
   useEffect(() => {
     if (typeof localStorage !== "undefined") {
@@ -363,25 +367,28 @@ function App() {
       <SideNav current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
       <main className="app-shell">
       <header className="app-header">
-        <img
-          src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
-          alt="Unravel Tax"
-          className="brand-mark"
-        />
+        <button type="button" className="brand-mark-button" onClick={() => setStep("welcome")} aria-label="Back to home">
+          <img
+            src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
+            alt="Unravel Tax"
+            className="brand-mark"
+          />
+        </button>
         <HelpPanel />
       </header>
 
       <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />
+      <ToolTour open={showTour} onClose={() => setShowTour(false)} onTrySample={trySampleData} />
 
       {step === "welcome" ? (
         <div className="stage-single">
           <WelcomeScreen
             onStart={startOrientation}
             onStartComputationFirst={startComputationFirst}
-            onTrySample={trySampleData}
             onResume={resumeSession}
             hasSavedSession={hasSavedSession}
             onShowCapabilities={() => setShowCapabilities(true)}
+            onShowTour={() => setShowTour(true)}
           />
         </div>
       ) : null}

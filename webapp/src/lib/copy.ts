@@ -55,6 +55,18 @@ export const HOW_IT_WORKS: HowToStep[] = [
   { title: "Your results", detail: "What you owe, what's missing, and whether to self-file or get a CA." }
 ];
 
+/**
+ * "What can it do" step of the welcome tour (ToolTour): real jobs the tool
+ * does for you, in plain language, not a restatement of the CAPABILITIES
+ * feature list below. Keep each one grounded in something actually shipped.
+ */
+export const TOOL_TOUR_USE_CASES: string[] = [
+  "Turns your broker, bank, and dividend statements into numbers a CA can check.",
+  "Tells you exactly which documents you're still missing, and why.",
+  "Flags the kind of mistakes that tend to trigger a tax notice, before you file.",
+  "Hands you two files at the end: a short summary for your CA, and a full workbook to keep."
+];
+
 export type Capability = { label: string; status: "available" | "planned"; detail: string };
 
 /**

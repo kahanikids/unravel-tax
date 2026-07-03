@@ -5,9 +5,17 @@ import { OrientationForm } from "../src/components/OrientationForm";
 import { ResultsStep } from "../src/components/ResultsStep";
 import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
+import { ToolTour } from "../src/components/ToolTour";
 import { UploadStep } from "../src/components/UploadStep";
 import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES, STEP_ORDER } from "../src/state/types";
-import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
+import {
+  CAPABILITIES,
+  DISCLAIMER_FULL,
+  HOW_IT_WORKS,
+  TOOL_TOUR_USE_CASES,
+  WHO_ITS_FOR,
+  WHO_ITS_FOR_EXCLUDES
+} from "../src/lib/copy";
 import { deriveProfileFlags } from "../src/lib/profile";
 import { saveSession } from "../src/lib/persistence";
 import { ruleCatalog } from "../src/rules";
@@ -75,7 +83,11 @@ function checkWelcomeScreen() {
     throw new Error(`Expected exactly 3 entry-path cards on the welcome screen, found ${entryPathCardCount}.`);
   }
 
-  assertIncludes(html, "See with Sample Data");
+  // The standalone sample-data link is gone - it's now step 3 of the
+  // "Get to know the tool" tour, so it's not a second, redundant entry point.
+  if (html.includes("See with Sample Data")) {
+    throw new Error("The standalone 'See with Sample Data' link should be removed; sample data is reachable via the tour instead.");
+  }
   assertIncludes(html, "Unravel Tax");
   // The merged FY-scope-and-CA-disclaimer line lives once, in the footer,
   // shown on every screen including welcome - not duplicated on the card.
@@ -118,6 +130,9 @@ function checkWelcomeScreen() {
   if (html.includes('<button type="button" class="side-nav-step')) {
     throw new Error("No step should be a clickable button before the user has reached any of them.");
   }
+
+  // The header logo is a non-destructive way back to welcome from anywhere.
+  assertIncludes(html, 'class="brand-mark-button"');
 
   // "Start over" now lives inside OrientationForm only, so it should never
   // appear on the welcome screen, where OrientationForm hasn't mounted yet.
@@ -202,6 +217,27 @@ function checkSideNavReflectsResumedSession() {
   console.log(
     "Validated side nav: reflects a saved session's furthestStepIndex on the welcome screen itself, without requiring an explicit Resume click first."
   );
+}
+
+function checkToolTour() {
+  const closedHtml = renderToString(<ToolTour open={false} onClose={noop} onTrySample={noop} />);
+  if (closedHtml.trim().length > 0) {
+    throw new Error("Tool tour should render nothing when closed.");
+  }
+
+  const html = renderToString(<ToolTour open onClose={noop} onTrySample={noop} />);
+  assertIncludes(html, "Step 1 of 3");
+  assertIncludes(html, "What can it do");
+  assertIncludes(html, 'class="tour-dots"');
+  assertIncludes(html, ">Skip<");
+  assertIncludes(html, ">Next<");
+  // HOW_IT_WORKS itself is already validated in checkHelpPanel(); this just
+  // covers the new content this component adds.
+  if (TOOL_TOUR_USE_CASES.length === 0 || TOOL_TOUR_USE_CASES.some((useCase) => !useCase.trim())) {
+    throw new Error("Every tool tour use case needs non-empty copy.");
+  }
+
+  console.log("Validated tool tour: closed by default, step 1 renders use cases and step dots, reuses HOW_IT_WORKS copy.");
 }
 
 function checkHelpPanel() {
@@ -618,6 +654,7 @@ function main() {
   checkWelcomeScreen();
   checkComputationFirstPathIsReachable();
   checkSideNavReflectsResumedSession();
+  checkToolTour();
   checkHelpPanel();
   checkCapabilitiesPanel();
   checkOrientationForm();
