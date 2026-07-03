@@ -67,9 +67,13 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
   newRegimeTax *= 1 + rule.values.cess_rate;
 
   const oldRegimeOtherIncome = Math.max(0, otherSlabIncome - Math.max(0, inputs.eligibleInterestDeduction));
+  // The standard deduction only applies against salary income, so clamp it
+  // there - otherwise a low or zero salary would let the unused part of the
+  // deduction wrongly reduce interest/dividend income too.
+  const oldRegimeSalaryAfterStandardDeduction = Math.max(0, salary - rule.values.old_regime.standard_deduction_inr);
   const oldRegimeSlabIncome = Math.max(
     0,
-    salary - rule.values.old_regime.standard_deduction_inr + oldRegimeOtherIncome - Math.max(0, inputs.oldRegimeDeductions)
+    oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome - Math.max(0, inputs.oldRegimeDeductions)
   );
   const oldRegimeSlabs = inputs.seniorCitizen ? rule.values.old_regime.slabs_60_to_80 : rule.values.old_regime.slabs_below_60;
   let oldRegimeTax = taxFromSlabs(oldRegimeSlabIncome, oldRegimeSlabs);
