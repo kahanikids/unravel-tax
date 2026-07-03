@@ -95,7 +95,9 @@ export const calculationRows = caSummaryRows(
 );
 export const expectedFigures = Object.fromEntries(
   calculationRows
-    .filter((row) => typeof row.amount === "number")
+    // The sale/cost totals rows are derivation detail, not income heads the
+    // reported CA summary would restate - keep the demo check to real heads.
+    .filter((row) => typeof row.amount === "number" && row.ruleSection !== "Totals")
     .map((row) => [row.head, row.amount as number])
 );
 export const checksReport = reconciliationReport({

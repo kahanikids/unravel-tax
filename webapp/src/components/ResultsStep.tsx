@@ -1,4 +1,4 @@
-import type { CaSummaryRow } from "../lib/calculations";
+import type { BrokerGainCheck, CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
@@ -52,6 +52,7 @@ export function ResultsStep({
   onChangeAisFigures,
   tdsRows,
   onChangeTdsRows,
+  brokerCheck,
   confidenceReport,
   showAdvanced,
   onToggleAdvanced,
@@ -81,6 +82,7 @@ export function ResultsStep({
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
   onChangeTdsRows: (rows: TdsRow[]) => void;
+  brokerCheck: BrokerGainCheck | null;
   confidenceReport: ConfidenceReport;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
@@ -108,7 +110,9 @@ export function ResultsStep({
         </div>
 
         <div className="summary-rows">
-          {(showAdvanced ? rows : rows.slice(0, 5)).map((row) => (
+          {/* Simple view: the five income heads. The sale/cost totals rows
+              (ruleSection "Totals") are supporting detail, shown in full view. */}
+          {(showAdvanced ? rows : rows.filter((row) => row.ruleSection !== "Totals").slice(0, 5)).map((row) => (
             <article className="summary-row" key={row.head}>
               <div className="summary-row-main">
                 <span>{row.head}</span>
@@ -139,6 +143,40 @@ export function ResultsStep({
                     </div>
                   ))}
                 </dl>
+              )}
+            </div>
+            <div className="panel-inline">
+              <h4>Check against your broker's own figures</h4>
+              {brokerCheck ? (
+                <>
+                  <p className="broker-check-lede">
+                    Your statement has its own "{brokerCheck.columnName}" column. Computed gain (sale − cost) vs that
+                    column, per bucket:
+                  </p>
+                  <dl>
+                    {brokerCheck.perClass
+                      .filter((entry) => entry.computed !== 0 || entry.broker !== 0)
+                      .map((entry) => {
+                        const matches = Math.abs(entry.computed - entry.broker) <= 1;
+                        return (
+                          <div className="fact-row" key={entry.label}>
+                            <dt>{entry.label}</dt>
+                            <dd className={matches ? "broker-check-match" : "broker-check-mismatch"}>
+                              {formatAmount(entry.computed)} vs {formatAmount(entry.broker)} {matches ? "✓" : "✗"}
+                            </dd>
+                          </div>
+                        );
+                      })}
+                  </dl>
+                  <p className="broker-check-note">
+                    A difference usually means the broker netted charges we kept gross. Mismatches are also counted in
+                    the open-issues total above.
+                  </p>
+                </>
+              ) : (
+                <p className="checklist-empty">
+                  No document carried its own gain/taxable column, so there's no broker figure to check against.
+                </p>
               )}
             </div>
           </div>

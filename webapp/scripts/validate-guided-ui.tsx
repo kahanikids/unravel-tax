@@ -406,6 +406,7 @@ function checkResultsStepDefaultsToSimple() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
@@ -449,6 +450,7 @@ function checkResultsStepAdvancedToggle() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced
       onToggleAdvanced={noop}
@@ -484,6 +486,7 @@ function checkRegimeComparisonPanel() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
@@ -517,6 +520,7 @@ function checkRegimeComparisonPanel() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
@@ -560,6 +564,7 @@ function resultsStepWithReconciliation(props: {
       onChangeAisFigures={noop}
       tdsRows={props.tdsRows}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
@@ -622,6 +627,7 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={report}
       showAdvanced={false}
       onToggleAdvanced={noop}
@@ -654,6 +660,7 @@ function checkAdvanceTaxPanel() {
       onChangeAisFigures={noop}
       tdsRows={[]}
       onChangeTdsRows={noop}
+      brokerCheck={null}
       confidenceReport={SAMPLE_CONFIDENCE_REPORT}
       showAdvanced={false}
       onToggleAdvanced={noop}
@@ -689,6 +696,7 @@ function checkNriHufSingleParentPartialCalculations() {
     onChangeAisFigures: noop,
     tdsRows: [],
     onChangeTdsRows: noop,
+    brokerCheck: null,
     confidenceReport: SAMPLE_CONFIDENCE_REPORT,
     showAdvanced: false,
     onToggleAdvanced: noop,

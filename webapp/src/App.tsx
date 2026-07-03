@@ -3,6 +3,7 @@ import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
   buildFullWorkbookExport,
+  brokerGainCheck,
   rateInputsFromRule,
   buildChecklist,
   caOrSelfFileRecommendation,
@@ -253,8 +254,31 @@ function App() {
     aisExpectedFigures["Interest & other income"] = supplementalFigures.interestOtherIncome;
     aisReportedFiguresPresent["Interest & other income"] = aisFigures.interestOtherIncome;
   }
+  // The checking value from the broker's own sheet: when a statement carried
+  // its own gain/taxable column, compare its per-bucket sum against our
+  // computed (sale - cost) figures. Tolerance of Rs 1 absorbs broker rounding;
+  // a real difference usually means the broker netted charges we kept gross.
+  const brokerCheck = useMemo(
+    () => brokerGainCheck(transactions, ruleCatalog.capitalGainsEquity),
+    [transactions]
+  );
+  const brokerExpectedFigures: Record<string, number> = {};
+  const brokerReportedFigures: Record<string, number> = {};
+  if (brokerCheck) {
+    for (const entry of brokerCheck.perClass) {
+      if (entry.computed === 0 && entry.broker === 0) {
+        continue;
+      }
+      brokerExpectedFigures[entry.label] = entry.computed;
+      brokerReportedFigures[entry.label] = entry.broker;
+    }
+  }
+
   const reconciliationMismatches = [
     ...figureMismatches(aisExpectedFigures, aisReportedFiguresPresent, "AIS/Form 26AS"),
+    ...(brokerCheck
+      ? figureMismatches(brokerExpectedFigures, brokerReportedFigures, `Broker's own "${brokerCheck.columnName}" column`, 1)
+      : []),
     ...tdsMismatches(tdsRows)
   ];
 
@@ -654,6 +678,7 @@ function App() {
                 onChangeAisFigures={setAisFigures}
                 tdsRows={tdsRows}
                 onChangeTdsRows={setTdsRows}
+                brokerCheck={brokerCheck}
                 confidenceReport={confidenceReport}
                 showAdvanced={showAdvanced}
                 onToggleAdvanced={() => setShowAdvanced((value) => !value)}

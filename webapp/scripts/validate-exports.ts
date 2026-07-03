@@ -67,15 +67,38 @@ async function main() {
   if (detailedRows.length < 40) {
     throw new Error(`Detailed Summary sheet looks too short (${detailedRows.length} rows).`);
   }
+  const assetClassHeader = detailedRows.find((row) => String(row[0]) === "Asset Class");
+  if (!assetClassHeader) {
+    throw new Error("Detailed Summary should have the asset-class table header row.");
+  }
+  for (const expectedColumn of ["Total Sale Value", "Total Cost", "Broker-reported", "Variance"]) {
+    if (!assetClassHeader.some((cell) => String(cell).includes(expectedColumn))) {
+      throw new Error(`Detailed Summary asset-class table missing column: ${expectedColumn}`);
+    }
+  }
 
   const linkedCa = sheetData(fullSheets, "CA Summary");
+
+  // The Totals & check section links to the Detailed Summary's Sale/Cost
+  // columns by formula (no literal values), so assert presence, not amounts.
+  for (const totalsHead of [
+    "Total sale value (all documents)",
+    "Total cost of purchase (all documents)",
+    "Combined gain/(loss) — sale minus cost"
+  ]) {
+    if (!linkedCa.some((r) => String(r[0]) === totalsHead)) {
+      throw new Error(`CA Summary missing totals/check row: ${totalsHead}`);
+    }
+  }
+
   const supplementalHeads = calculationRows
     .filter(
       (r) =>
         !r.head.includes("Speculative") &&
         !r.head.includes("Short-Term Capital") &&
         !r.head.includes("Long-Term Capital") &&
-        !r.head.includes("Debt")
+        !r.head.includes("Debt") &&
+        r.ruleSection !== "Totals"
     )
     .map((r) => r.head);
   for (const head of supplementalHeads) {

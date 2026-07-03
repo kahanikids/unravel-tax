@@ -32,6 +32,22 @@ change (Budget, Finance Act, CBDT circular).
   step and reach results (income typed in on the results screen); the
   single-parent orientation question now asks specifically about minor
   children so solo filers without kids don't get clubbing guidance.
+- Sale/cost totals and broker cross-check: every gain bucket (intraday,
+  STCG, LTCG, debt MF) is now derived explicitly as total sale value
+  minus total cost. The CA summary gains rows show that derivation in
+  their notes, and two new rows carry the overall Total sale value /
+  Total cost of purchase. The full workbook's Detailed Summary asset-
+  class table gained Total Sale Value, Total Cost, Gain (=Sale−Cost),
+  Broker-reported, and Variance (should be 0) columns per asset class -
+  equity intraday/ST/LT and debt MF - with the broker check driven by
+  the statement's own "Taxable Gain"/"Realised Gain"/"Net Gain" column
+  when present (intraday checks against a separate speculative column
+  when the broker reports one). The linked CA Summary sheet gained a
+  formula-linked "Totals & check" section. On screen, the same broker
+  check runs automatically: per-bucket computed vs broker-reported in
+  the full-detail view, with differences counted as reconciliation
+  mismatches in the open-issues total. Validation cases added for the
+  totals round-trip and the broker check (grouped-header HTML fixture).
 
 ## 2026-07-03
 

@@ -1740,6 +1740,25 @@ button.side-nav-step.side-nav-step-current:hover {
   font-weight: 600;
 }
 
+.broker-check-lede,
+.broker-check-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.broker-check-note {
+  margin: 8px 0 0;
+}
+
+.broker-check-match {
+  color: var(--ok, #1a7f4e);
+}
+
+.broker-check-mismatch {
+  color: var(--danger, #c0392b);
+}
+
 .handover-panel {
   display: flex;
   flex-direction: column;

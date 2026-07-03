@@ -1,5 +1,5 @@
 import type { Cell, Row, SheetData } from "write-excel-file/browser";
-import type { CaSummaryRow } from "./calculations";
+import { findBrokerSpeculativeColumn, findBrokerTaxableColumn, type CaSummaryRow } from "./calculations";
 import type { NormalizedTransaction } from "../ingest";
 import { parseFixtureDate } from "../ingest/normalize";
 
@@ -24,6 +24,8 @@ export type BrokerSheetMeta = {
   classCol: string;
   gainCol: string;
   brokerTaxableCol?: string;
+  /** Brokers often report intraday in a separate speculative column, kept out of the taxable-gain column. */
+  brokerSpeculativeCol?: string;
 };
 
 const DETAILED_SHEET = "Detailed Summary";
@@ -232,18 +234,6 @@ function brokerColumnKeys(transactions: NormalizedTransaction[]): string[] {
   return keys;
 }
 
-function findBrokerTaxableColumn(headers: string[]): string | undefined {
-  return headers.find((header) => {
-    const n = header.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-    return (
-      n.includes("taxable gain") ||
-      (n.includes("realised gain") && !n.includes("short term") && !n.includes("long term")) ||
-      (n.includes("realized gain") && !n.includes("short term") && !n.includes("long term")) ||
-      n === "net gain"
-    );
-  });
-}
-
 function classificationFormula(row: number, instCol: string, holdCol: string): string {
   const ltDays = cellRef(DETAILED_SHEET, "B", DS_LT_DAYS_ROW);
   return `IF(${instCol}${row}="debt_mutual_fund","Debt-MF",IF(${holdCol}${row}=0,"Intraday",IF(${holdCol}${row}>${ltDays},"LT","ST")))`;
@@ -286,6 +276,7 @@ export function buildBrokerSheet(
   const sheetName = sheetNameOverride ?? sanitizeSheetName(documentName);
   const brokerKeys = brokerColumnKeys(transactions);
   const brokerTaxableKey = findBrokerTaxableColumn(brokerKeys);
+  const brokerSpeculativeKey = findBrokerSpeculativeColumn(brokerKeys);
   const nBroker = brokerKeys.length;
   const classColIdx = 11 + nBroker;
   const gainColIdx = classColIdx + 1;
@@ -299,6 +290,9 @@ export function buildBrokerSheet(
   const flagCol = colLetter(flagColIdx);
   const brokerTaxableCol = brokerTaxableKey
     ? colLetter(11 + brokerKeys.indexOf(brokerTaxableKey))
+    : undefined;
+  const brokerSpeculativeCol = brokerSpeculativeKey
+    ? colLetter(11 + brokerKeys.indexOf(brokerSpeculativeKey))
     : undefined;
 
   const totalCols = flagColIdx;
@@ -335,10 +329,17 @@ export function buildBrokerSheet(
 
   transactions.forEach((tx, i) => {
     const rowNum = BROKER_DATA_START + i;
-    const varianceCell: Cell =
-      brokerTaxableCol
-        ? f(`${gainCol}${rowNum}-${brokerTaxableCol}${rowNum}`, C.currency())
-        : txt("", C.td);
+    // Intraday rows check against the speculative column when the broker
+    // reports it separately from taxable capital gains.
+    const brokerFigure =
+      brokerTaxableCol && brokerSpeculativeCol
+        ? `IF(${classCol}${rowNum}="Intraday",${brokerSpeculativeCol}${rowNum},${brokerTaxableCol}${rowNum})`
+        : brokerTaxableCol
+          ? `${brokerTaxableCol}${rowNum}`
+          : undefined;
+    const varianceCell: Cell = brokerFigure
+      ? f(`${gainCol}${rowNum}-(${brokerFigure})`, C.currency())
+      : txt("", C.td);
 
     const row: Row = [
       txt(tx.scripName, C.td),
@@ -392,20 +393,29 @@ export function buildBrokerSheet(
       dataEndRow,
       classCol,
       gainCol,
-      brokerTaxableCol
+      brokerTaxableCol,
+      brokerSpeculativeCol
     }
   };
 }
 
+function sumifAcrossBrokersOn(
+  brokers: BrokerSheetMeta[],
+  classValue: string,
+  valueColOf: (broker: BrokerSheetMeta) => string | undefined
+): string {
+  const parts = brokers.flatMap((b) => {
+    const valueCol = valueColOf(b);
+    if (!valueCol) return [];
+    const rangeClass = `$${b.classCol}$${b.dataStartRow}:$${b.classCol}$${b.dataEndRow}`;
+    const rangeValue = `$${valueCol}$${b.dataStartRow}:$${valueCol}$${b.dataEndRow}`;
+    return [`SUMIF(${quoteSheet(b.name)}!${rangeClass},"${classValue}",${quoteSheet(b.name)}!${rangeValue})`];
+  });
+  return parts.length > 0 ? parts.join("+") : "0";
+}
+
 function sumifAcrossBrokers(brokers: BrokerSheetMeta[], classValue: string): string {
-  if (brokers.length === 0) return "0";
-  return brokers
-    .map((b) => {
-      const rangeClass = `$${b.classCol}$${b.dataStartRow}:$${b.classCol}$${b.dataEndRow}`;
-      const rangeGain = `$${b.gainCol}$${b.dataStartRow}:$${b.gainCol}$${b.dataEndRow}`;
-      return `SUMIF(${quoteSheet(b.name)}!${rangeClass},"${classValue}",${quoteSheet(b.name)}!${rangeGain})`;
-    })
-    .join("+");
+  return sumifAcrossBrokersOn(brokers, classValue, (b) => b.gainCol);
 }
 
 export function buildDetailedSummarySheet(
@@ -415,12 +425,41 @@ export function buildDetailedSummarySheet(
   assessmentYear: string
 ): { data: SheetData; columns: { width: number }[] } {
   const data: SheetData = [];
-  const cols = 6;
+  const cols = 9;
+  const anyBrokerReported = brokers.some((b) => b.brokerTaxableCol);
+  // Broker sheets keep extracted values in fixed columns: F = Buy Value
+  // (cost), G = Sell Value (sale proceeds).
+  const classRow = (
+    assetClass: string,
+    incomeHead: string,
+    section: string,
+    classValue: string,
+    treatment: string,
+    rowNum: number
+  ): Row => [
+    txt(assetClass, C.td),
+    txt(incomeHead, C.td),
+    txt(section, C.td),
+    f(sumifAcrossBrokersOn(brokers, classValue, () => "G"), C.currency()),
+    f(sumifAcrossBrokersOn(brokers, classValue, () => "F"), C.currency()),
+    f(`D${rowNum}-E${rowNum}`, C.currencyBold()),
+    anyBrokerReported
+      ? f(
+          sumifAcrossBrokersOn(brokers, classValue, (b) =>
+            classValue === "Intraday" ? b.brokerSpeculativeCol ?? b.brokerTaxableCol : b.brokerTaxableCol
+          ),
+          C.currency()
+        )
+      : txt("—", C.td),
+    anyBrokerReported ? f(`F${rowNum}-G${rowNum}`, C.currency()) : txt("—", C.td),
+    txt(treatment, { ...C.tdWrap })
+  ];
+
   data.push(mergeTitle(emptyRow(cols), "Unravel Tax — Detailed Tax Working (Internal)", cols));
   data.push(
     mergeTitle(
       emptyRow(cols),
-      `${financialYear} (${assessmentYear}). Rates seeded from rules JSON — edit yellow cells to override.`,
+      `${financialYear} (${assessmentYear}). Rates seeded from rules JSON — edit yellow cells to override. Gain/(Loss) is always Total Sale Value minus Total Cost; the Variance column checks it against the broker's own reported figure and should be zero (or explainable, e.g. the broker netting charges).`,
       cols
     )
   );
@@ -430,44 +469,53 @@ export function buildDetailedSummarySheet(
     txt("Asset Class", C.th),
     txt("Income Head", C.th),
     txt("Section", C.th),
-    txt("Gross Gain/(Loss) ₹ this FY", C.th),
-    txt("Treatment this FY", C.th),
-    null
+    txt("Total Sale Value ₹", C.th),
+    txt("Total Cost ₹", C.th),
+    txt("Gain/(Loss) ₹\n(Sale − Cost)", C.th),
+    txt("Broker-reported ₹\n(check value)", C.th),
+    txt("Variance ₹\n(should be 0)", C.th),
+    txt("Treatment this FY", C.th)
   ]);
-  data.push([
-    txt("Equity", C.td),
-    txt("Speculative / Intraday", C.td),
-    txt("43(5)", C.td),
-    f(sumifAcrossBrokers(brokers, "Intraday"), C.currency()),
-    txt("Business income — taxed at your slab rate with other income.", { ...C.tdWrap }),
-    null
-  ]);
-  data.push([
-    txt("Equity", C.td),
-    txt("Short-Term Capital Gains", C.td),
-    txt("111A", C.td),
-    f(sumifAcrossBrokers(brokers, "ST"), C.currency()),
-    txt("20% flat if net gain. Net loss carries forward 8 AYs if ITR filed on time.", { ...C.tdWrap }),
-    null
-  ]);
-  data.push([
-    txt("Equity", C.td),
-    txt("Long-Term Capital Gains", C.td),
-    txt("112A", C.td),
-    f(sumifAcrossBrokers(brokers, "LT"), C.currency()),
-    txt("12.5% flat above exemption if net gain. Net loss carries forward 8 AYs for future LTCG only.", {
-      ...C.tdWrap
-    }),
-    null
-  ]);
-  data.push([
-    txt("Mutual Funds / Debt", C.td),
-    txt("Debt/specified MF (Sec 50AA)", C.td),
-    txt("50AA", C.td),
-    f(sumifAcrossBrokers(brokers, "Debt-MF"), C.currency()),
-    txt("Short-term-deemed, taxed at slab rate — not the equity 111A/112A rates.", { ...C.tdWrap }),
-    null
-  ]);
+  data.push(
+    classRow(
+      "Equity",
+      "Speculative / Intraday",
+      "43(5)",
+      "Intraday",
+      "Business income — taxed at your slab rate with other income.",
+      DS_INTRADAY_ROW
+    )
+  );
+  data.push(
+    classRow(
+      "Equity",
+      "Short-Term Capital Gains",
+      "111A",
+      "ST",
+      "20% flat if net gain. Net loss carries forward 8 AYs if ITR filed on time.",
+      DS_STCG_ROW
+    )
+  );
+  data.push(
+    classRow(
+      "Equity",
+      "Long-Term Capital Gains",
+      "112A",
+      "LT",
+      "12.5% flat above exemption if net gain. Net loss carries forward 8 AYs for future LTCG only.",
+      DS_LTCG_ROW
+    )
+  );
+  data.push(
+    classRow(
+      "Mutual Funds / Debt",
+      "Debt/specified MF (Sec 50AA)",
+      "50AA",
+      "Debt-MF",
+      "Short-term-deemed, taxed at slab rate — not the equity 111A/112A rates.",
+      DS_DEBT_ROW
+    )
+  );
   data.push(emptyRow(cols));
   data.push(mergeTitle(emptyRow(cols), "Rate inputs (from rules)", cols));
   data.push([txt("LT holding period (days >)", C.td), num(rates.ltHoldingDays, C.inputNum), null, null, null, null]);
@@ -480,9 +528,9 @@ export function buildDetailedSummarySheet(
   while (data.length < DS_NET_LTCG_ROW - 2) data.push(emptyRow(cols));
   data.push(mergeTitle(emptyRow(cols), "Tax Estimate — Equity (all brokers)", cols));
 
-  const dLtcg = `D${DS_LTCG_ROW}`;
-  const dStcg = `D${DS_STCG_ROW}`;
-  const dIntra = `D${DS_INTRADAY_ROW}`;
+  const dLtcg = `F${DS_LTCG_ROW}`;
+  const dStcg = `F${DS_STCG_ROW}`;
+  const dIntra = `F${DS_INTRADAY_ROW}`;
   const bExempt = `B${DS_LTCG_EXEMPT_ROW}`;
   const bLtcgRate = `B${DS_LTCG_RATE_ROW}`;
   const bStcgRate = `B${DS_STCG_RATE_ROW}`;
@@ -537,7 +585,17 @@ export function buildDetailedSummarySheet(
 
   return {
     data,
-    columns: [{ width: 34 }, { width: 18 }, { width: 12 }, { width: 22 }, { width: 40 }, { width: 10 }]
+    columns: [
+      { width: 34 },
+      { width: 24 },
+      { width: 10 },
+      { width: 16 },
+      { width: 16 },
+      { width: 16 },
+      { width: 16 },
+      { width: 14 },
+      { width: 44 }
+    ]
   };
 }
 
@@ -570,17 +628,17 @@ export function buildLinkedCaSummarySheet(
   data.push(mergeTitle(emptyRow(span), "Capital Gains — Equity", span));
   data.push([txt("Head", C.th), txt("Section", C.th), txt("Amount ₹", C.th), null]);
 
-  const equityHeads: { label: string; section: string; ref: string }[] = [
-    { label: "Speculative / Intraday (business income)", section: "43(5)", ref: `D${DS_INTRADAY_ROW}` },
-    { label: "Short-Term Capital Gains", section: "111A", ref: `D${DS_STCG_ROW}` },
-    { label: "Long-Term Capital Gains", section: "112A", ref: `D${DS_LTCG_ROW}` }
+  const equityHeads: { label: string; section: string; row: number }[] = [
+    { label: "Speculative / Intraday (business income)", section: "43(5)", row: DS_INTRADAY_ROW },
+    { label: "Short-Term Capital Gains", section: "111A", row: DS_STCG_ROW },
+    { label: "Long-Term Capital Gains", section: "112A", row: DS_LTCG_ROW }
   ];
   const equityStart = data.length + 1;
   for (const h of equityHeads) {
     data.push([
       txt(h.label, C.td),
       txt(h.section, C.td),
-      f(cellRef(DETAILED_SHEET, "D", Number(h.ref.slice(1))), C.currency()),
+      f(cellRef(DETAILED_SHEET, "F", h.row), C.currency()),
       null
     ]);
   }
@@ -600,18 +658,36 @@ export function buildLinkedCaSummarySheet(
     data.push([
       txt(debtRow.head, C.td),
       txt(debtRow.ruleSection, C.td),
-      f(cellRef(DETAILED_SHEET, "D", DS_DEBT_ROW), C.currency()),
+      f(cellRef(DETAILED_SHEET, "F", DS_DEBT_ROW), C.currency()),
       null
     ]);
     data.push(emptyRow(span));
   }
+
+  // Totals and the sale-minus-cost check, linked to the Detailed Summary's
+  // per-class Sale/Cost columns so a CA can trace every figure.
+  const saleRange = `SUM(${quoteSheet(DETAILED_SHEET)}!$D$${DS_INTRADAY_ROW}:$D$${DS_DEBT_ROW})`;
+  const costRange = `SUM(${quoteSheet(DETAILED_SHEET)}!$E$${DS_INTRADAY_ROW}:$E$${DS_DEBT_ROW})`;
+  data.push(mergeTitle(emptyRow(span), "Totals & check", span));
+  data.push([txt("Head", C.th), txt("Section", C.th), txt("Amount ₹", C.th), null]);
+  const totalsStart = data.length + 1;
+  data.push([txt("Total sale value (all documents)", C.td), txt("Totals", C.td), f(saleRange, C.currency()), null]);
+  data.push([txt("Total cost of purchase (all documents)", C.td), txt("Totals", C.td), f(costRange, C.currency()), null]);
+  data.push([
+    txt("Combined gain/(loss) — sale minus cost", C.total),
+    txt("Check", C.total),
+    f(`C${totalsStart}-C${totalsStart + 1}`, C.currencyBold()),
+    null
+  ]);
+  data.push(emptyRow(span));
 
   const supplemental = rows.filter(
     (r) =>
       !r.head.includes("Speculative") &&
       !r.head.includes("Short-Term Capital") &&
       !r.head.includes("Long-Term Capital") &&
-      !r.head.includes("Debt")
+      !r.head.includes("Debt") &&
+      r.ruleSection !== "Totals"
   );
 
   if (supplemental.length > 0) {

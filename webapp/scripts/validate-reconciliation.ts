@@ -36,7 +36,9 @@ async function main() {
   const transactions = parseCsvText(csv).transactions;
   const expectedFigures = Object.fromEntries(
     caSummaryRows(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection)
-      .filter((row) => typeof row.amount === "number")
+      // Totals rows are derivation detail, not income heads a reported CA
+      // summary would restate - same filter as demo/sampleState.ts.
+      .filter((row) => typeof row.amount === "number" && row.ruleSection !== "Totals")
       .map((row) => [row.head, row.amount as number])
   );
 

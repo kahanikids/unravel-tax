@@ -1,9 +1,16 @@
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import Papa from "papaparse";
-import { caSummaryAmountMap, caSummaryRows, compareRegimes, estimateAdvanceTaxInterest, summarizeWithRules } from "../src/lib";
+import {
+  brokerGainCheck,
+  caSummaryAmountMap,
+  caSummaryRows,
+  compareRegimes,
+  estimateAdvanceTaxInterest,
+  summarizeWithRules
+} from "../src/lib";
 import { clubbedMinorIncome } from "../src/lib/profile";
-import { parseCsvText } from "../src/ingest";
+import { parseCsvText, parseHtmlText } from "../src/ingest";
 import { ruleCatalog } from "../src/rules";
 
 const repoRoot = resolve(import.meta.dirname, "..", "..");
@@ -89,6 +96,43 @@ async function main() {
 
   if (summary.estimatedStcgTax !== 0 || summary.estimatedLtcgTax !== 0) {
     throw new Error("Synthetic fixture should not owe special-rate capital gains tax after losses/exemption.");
+  }
+
+  // Sale/cost totals: every bucket's gain must equal its own sale minus cost,
+  // and the fixture's known totals must round-trip exactly.
+  const t = summary.totals;
+  if (t.all.saleValue !== 195800 || t.all.cost !== 190000) {
+    throw new Error(`Unexpected overall totals: sale ${t.all.saleValue}, cost ${t.all.cost}.`);
+  }
+  for (const [name, bucket] of Object.entries(t)) {
+    if (bucket.gain !== bucket.saleValue - bucket.cost) {
+      throw new Error(`Bucket ${name}: gain ${bucket.gain} != sale ${bucket.saleValue} - cost ${bucket.cost}.`);
+    }
+  }
+  if (t.stcg.saleValue !== 94500 || t.stcg.cost !== 95000 || t.stcg.gain !== summary.stcg) {
+    throw new Error(`STCG bucket totals wrong: ${JSON.stringify(t.stcg)}.`);
+  }
+  if (generated["Total sale value"] !== 195800 || generated["Total cost of purchase"] !== 190000) {
+    throw new Error("CA Summary should carry the Total sale value / Total cost of purchase rows.");
+  }
+
+  // Broker check: the grouped-header HTML fixture carries the broker's own
+  // "Taxable Gain" column, whose per-bucket sums match the computed gains.
+  const groupedHtml = parseHtmlText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement-grouped-header.html"), "utf8")
+  );
+  const check = brokerGainCheck(groupedHtml.transactions, ruleCatalog.capitalGainsEquity);
+  if (!check || check.columnName !== "Taxable Gain") {
+    throw new Error(`Expected the broker check to pick the "Taxable Gain" column, got ${JSON.stringify(check?.columnName)}.`);
+  }
+  for (const entry of check.perClass) {
+    if (Math.abs(entry.computed - entry.broker) > 1) {
+      throw new Error(`Broker check mismatch for ${entry.label}: computed ${entry.computed} vs broker ${entry.broker}.`);
+    }
+  }
+  const noBrokerColumn = brokerGainCheck(parsed.transactions, ruleCatalog.capitalGainsEquity);
+  if (noBrokerColumn !== null) {
+    throw new Error("CSV fixture has no broker gain column, so the broker check should be unavailable, not passing.");
   }
 
   // Regime comparison: a well-publicized FY2025-26 fact is that salary up to
