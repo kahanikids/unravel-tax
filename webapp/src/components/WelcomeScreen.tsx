@@ -64,7 +64,7 @@ export function WelcomeScreen({
       ) : null}
 
       <p className="entry-path-lede">
-        {hasSavedSession ? "Or start something new. Pick how you'd like to begin:" : "Pick how you'd like to begin:"}
+        Pick how you'd like to begin:
       </p>
 
       <div className="entry-path-cards">

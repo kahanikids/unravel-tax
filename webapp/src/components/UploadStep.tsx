@@ -45,6 +45,7 @@ export function UploadStep({
   documents,
   onCommit,
   onCommitReference,
+  onApplySummaryFigures,
   onRemove,
   onContinue,
   localFolderSupported,
@@ -54,6 +55,8 @@ export function UploadStep({
   documents: UploadedDocument[];
   onCommit: (transactions: NormalizedTransaction[], fileName: string) => void;
   onCommitReference: (fileName: string, rawSheet: RawSheet) => void;
+  /** Push recognised annual totals into the results-screen "A few more numbers" fields, plus a net-gain-with-no-detail flag. */
+  onApplySummaryFigures?: (figures: ExtractionSummaryFigures, netGainOnly: boolean) => void;
   onRemove: (index: number) => void;
   onContinue: () => void;
   localFolderSupported: boolean;
@@ -200,6 +203,11 @@ export function UploadStep({
         documentType: result.documentType,
         notes: result.notes
       });
+      // Populate the results-screen fields now rather than asking the user to
+      // retype these annual totals; the guidance panel below just points there.
+      if (result.summaryFigures || result.netGainOnly) {
+        onApplySummaryFigures?.(result.summaryFigures ?? {}, Boolean(result.netGainOnly));
+      }
       setAwaitingPaste(null);
       setPasteText("");
       return;
@@ -208,8 +216,19 @@ export function UploadStep({
   }
 
   function dismissSummaryGuidance() {
+    // A summary-only paste commits no document, so the step's own "Continue to
+    // your results" stays disabled - if we only dismissed here, the recognised
+    // figures would sit unseen on the results screen with no obvious way to get
+    // there. So once there are no more queued files, take the user straight to
+    // the results screen (where those figures now live) instead of stranding
+    // them on the upload step.
+    const recognised = Boolean(summaryGuidance?.figures || summaryGuidance?.netGainOnly);
     setSummaryGuidance(null);
-    advanceQueue();
+    if (queue.length > 0) {
+      advanceQueue();
+    } else if (recognised) {
+      onContinue();
+    }
   }
 
   function applyColumnMap() {
@@ -289,11 +308,11 @@ export function UploadStep({
       <h2>Add your documents</h2>
       <p className="step-lede">
         <span className="upload-lede-desktop">
-          Add all your statements at once, or a few at a time — we'll walk through them one by one and show what we read
+          Add all your statements at once, or a few at a time. We'll walk through them one by one and show what we read
           before using anything. CSV, Excel, and saved webpages are read in your browser. PDFs and pasted text go through
           the guided extraction prompt.
         </span>
-        <span className="upload-lede-mobile">Add your statements — pick several at once if you like. We'll show what we read before using each.</span>
+        <span className="upload-lede-mobile">Add your statements. Pick several at once if you like. We'll show what we read before using each.</span>
       </p>
 
       {parsing ? (
@@ -317,7 +336,7 @@ export function UploadStep({
               i
             </button>
             <span className="info-tip-bubble" role="tooltip">
-              Drop files here, or click to choose — you can pick several at once. Broker/AMC capital gains statements
+              Drop files here, or click to choose. You can pick several at once. Broker/AMC capital gains statements
               are the main thing this step is for; bank interest, dividend, and MF statements can be added too.
             </span>
           </span>
@@ -417,8 +436,8 @@ export function UploadStep({
             return annualRows.length > 0 ? (
               <div>
                 <p>
-                  We recognised these annual figures. They aren't added automatically — type them into the results
-                  screen under <strong>"A few more numbers"</strong> when you get there:
+                  We recognised these annual figures and added them for you under{" "}
+                  <strong>"A few more numbers"</strong> on the Current Filing page. Open that section and check them:
                 </p>
                 <ul className="paste-steps">
                   {annualRows.map(([label, value]) => (
@@ -443,7 +462,7 @@ export function UploadStep({
           ) : null}
           <div className="paste-actions">
             <button type="button" className="primary-button" onClick={dismissSummaryGuidance}>
-              Got it — continue
+              {summaryGuidance.figures ? "See these on your results" : "Got it, continue"}
             </button>
           </div>
         </div>
@@ -629,8 +648,8 @@ export function UploadStep({
                 Not a capital-gains statement (e.g. bank interest, dividends, or an MF holdings list)?{" "}
                 <button type="button" className="text-button" onClick={addAsReference}>
                   Keep it as a reference sheet
-                </button>{" "}
-                — its rows go into your workbook as-is, without being tax-calculated.
+                </button>
+                . Its rows go into your workbook as-is, without being tax-calculated.
               </p>
             ) : null}
             <div className="modal-actions">
@@ -672,7 +691,7 @@ export function UploadStep({
       </div>
       {documents.length === 0 ? (
         <p className="upload-empty-hint">
-          Add a document to continue — or, if you didn't sell any shares or mutual funds this year,{" "}
+          Add a document to continue. Or, if you didn't sell any shares or mutual funds this year,{" "}
           <button type="button" className="text-button" onClick={onContinue}>
             skip this step
           </button>{" "}

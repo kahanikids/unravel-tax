@@ -37,6 +37,7 @@ import {
   saveExportToFolder,
   saveSession,
   serializeSession,
+  applySummaryFiguresToSupplemental,
   SESSION_BACKUP_FILENAME,
   writeFileToFolder,
   selectItrForm,
@@ -53,7 +54,7 @@ import {
   type RawSheet,
   type TdsRow
 } from "./lib";
-import type { NormalizedTransaction } from "./ingest";
+import type { ExtractionSummaryFigures, NormalizedTransaction } from "./ingest";
 import { ruleCatalog } from "./rules";
 import {
   BLANK_AIS_REPORTED_FIGURES,
@@ -86,6 +87,13 @@ function App() {
   const [orientation, setOrientation] = useState<OrientationAnswers>(BLANK_ORIENTATION);
   const [documents, setDocuments] = useState<DocumentEntry[]>([]);
   const [supplementalFigures, setSupplementalFigures] = useState<SupplementalFigures>(BLANK_SUPPLEMENTAL_FIGURES);
+  // Which "A few more numbers" fields were auto-filled from a pasted statement
+  // (drives the check-these banner on the results screen). Ephemeral UI hint:
+  // not persisted, so a resumed session keeps the values but drops the banner.
+  const [prefilledFigureKeys, setPrefilledFigureKeys] = useState<(keyof SupplementalFigures)[]>([]);
+  // A pasted statement gave a net realised gain with no per-transaction detail:
+  // flagged so the results screen can say the detailed statement is still needed.
+  const [netGainMissingDetail, setNetGainMissingDetail] = useState(false);
   const [aisFigures, setAisFigures] = useState<AisReportedFigures>(BLANK_AIS_REPORTED_FIGURES);
   const [tdsRows, setTdsRows] = useState<TdsRow[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
@@ -284,7 +292,7 @@ function App() {
       ruleSection: "10(4)(ii)",
       amount: supplementalFigures.nreExemptInterest,
       notes:
-        "Entered by you under \"A few more numbers\" below. NRE account interest is exempt from Indian income tax entirely, so it's kept separate here rather than folded into the taxable \"Interest & other income\" row above."
+        "Entered by you under \"A few more numbers\" on the Current Filing page. NRE account interest is exempt from Indian income tax entirely, so it's kept separate here rather than folded into the taxable \"Interest & other income\" row above."
     });
   }
   if (flags.singleParent) {
@@ -297,7 +305,7 @@ function App() {
         supplementalFigures.numberOfMinors,
         ruleCatalog.singleParentClubbing
       ),
-      notes: `Entered by you under "A few more numbers" below. The minor's income minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
+      notes: `Entered by you under "A few more numbers" on the Current Filing page. The minor's income minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
     });
   }
 
@@ -489,6 +497,8 @@ function App() {
     setOrientation(BLANK_ORIENTATION);
     setDocuments([]);
     setSupplementalFigures(BLANK_SUPPLEMENTAL_FIGURES);
+    setPrefilledFigureKeys([]);
+    setNetGainMissingDetail(false);
     setAcknowledgedTriggerIds([]);
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
@@ -569,6 +579,25 @@ function App() {
     setDocuments((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   }
 
+  // A pasted summary statement (PMS annual report, AIS) with no per-transaction
+  // rows but real annual totals: route each recognised figure to its existing
+  // "A few more numbers" home and remember which ones we touched, so the results
+  // screen can flag them for a check. TDS lands in advanceTaxPaid ("TDS +
+  // instalments already paid"), the leanest existing field for it - no new
+  // schema. netRealisedGainNoDetail is never routed into a figure; it only sets
+  // the missing-detail flag. Merge rule: fill a field only when it's still 0, so
+  // a number the user already typed is never clobbered or doubled.
+  function applySummaryFigures(figures: ExtractionSummaryFigures, netGainOnly: boolean) {
+    const { next, applied } = applySummaryFiguresToSupplemental(supplementalFigures, figures);
+    if (applied.length > 0) {
+      setSupplementalFigures(next);
+      setPrefilledFigureKeys((prev) => Array.from(new Set([...prev, ...applied])));
+    }
+    if (netGainOnly) {
+      setNetGainMissingDetail(true);
+    }
+  }
+
   // Shared by the "Resume" button and by clicking a side-nav step while
   // still on welcome (a saved session's real data, not just its step
   // pointer): loads everything except step/furthestStepIndex, which each
@@ -608,6 +637,8 @@ function App() {
     setOrientation(BLANK_ORIENTATION);
     setDocuments([]);
     setSupplementalFigures(BLANK_SUPPLEMENTAL_FIGURES);
+    setPrefilledFigureKeys([]);
+    setNetGainMissingDetail(false);
     setAcknowledgedTriggerIds([]);
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
@@ -890,6 +921,7 @@ function App() {
                 documents={displayDocuments}
                 onCommit={commitDocument}
                 onCommitReference={commitReferenceDocument}
+                onApplySummaryFigures={applySummaryFigures}
                 onRemove={removeDocument}
                 onContinue={() => setStep("results")}
                 localFolderSupported={isLocalFolderSupported()}
@@ -906,6 +938,8 @@ function App() {
                 caRecommendation={caRecommendation}
                 supplementalFigures={supplementalFigures}
                 onChangeSupplementalFigures={setSupplementalFigures}
+                prefilledFigureKeys={prefilledFigureKeys}
+                netGainMissingDetail={netGainMissingDetail}
                 debtMfShortTermDeemedGain={calculationSummary.debtMfShortTermDeemedGain}
                 intradayGain={calculationSummary.intradayGain}
                 seniorCitizen={flags.seniorCitizen}

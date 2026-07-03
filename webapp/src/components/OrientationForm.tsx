@@ -124,7 +124,7 @@ const QUESTIONS: Question[] = [
     kind: "choice",
     prompt: "Which country are you a tax resident of?",
     helper:
-      "Where you live and pay tax — not your passport. This decides which India treaty (DTAA) applies. For some countries, mutual fund gains may be exempt in India after a 2025 tribunal ruling.",
+      "Where you live and pay tax, not your passport. This decides which India treaty (DTAA) applies. For some countries, mutual fund gains may be exempt in India after a 2025 tribunal ruling.",
     mobileHelper: "Where you pay tax, not your passport.",
     options: NRI_COUNTRY_OPTIONS,
     visible: isNri,
@@ -169,7 +169,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Are you a single parent or guardian with children under 18?",
     helper:
-      "Answer No if you don't have minor children. This only changes things when a child has money in their own name — bank interest or investments in a minor's name get added to your return.",
+      "Answer No if you don't have minor children. This only changes things when a child has money in their own name: bank interest or investments in a minor's name get added to your return.",
     mobileHelper: "No minor children? Answer No.",
     visible: () => true,
     skippable: true,
@@ -183,7 +183,7 @@ const QUESTIONS: Question[] = [
     promptNri: "What kinds of income do you have from India?",
     helper: "Pick everything that applies.",
     helperNri:
-      "Pick everything that applies. NRE account interest is tax-free and doesn't go here — you'll enter it separately later if needed.",
+      "Pick everything that applies. NRE account interest is tax-free and doesn't go here. You'll enter it separately later if needed.",
     options: INCOME_OPTIONS,
     optionsNri: INCOME_OPTIONS_NRI,
     visible: () => true,
@@ -262,7 +262,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Did you receive a life-insurance maturity or survival payout this year?",
     helper:
-      "Not a death benefit (always tax-free) — a policy that matured or paid out to you. Usually tax-free, but high-premium policies aren't, so we'll flag it. Answer No if you only paid premiums.",
+      "Not a death benefit (always tax-free): a policy that matured or paid out to you. Usually tax-free, but high-premium policies aren't, so we'll flag it. Answer No if you only paid premiums.",
     mobileHelper: "Policy matured and paid you? Say Yes.",
     visible: () => true,
     skippable: true,

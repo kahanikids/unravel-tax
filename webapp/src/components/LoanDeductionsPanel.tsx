@@ -36,7 +36,7 @@ export function LoanDeductionsPanel({
         {lines.map((line) => (
           <label key={line.key} className="supplemental-field">
             {line.label} (Section {line.section})
-            {line.limit === null ? " — no cap" : ` — up to ₹${formatAmount(line.limit)}`}
+            {line.limit === null ? ", no cap" : `, up to ₹${formatAmount(line.limit)}`}
             <input
               type="number"
               min={0}

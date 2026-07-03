@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { BrokerGainCheck, CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
@@ -43,7 +44,7 @@ function sourceRefsForRow(row: CaSummaryRow): readonly string[] | null {
 const SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
   { key: "dividends", label: "Dividends received this year" },
   { key: "interestOtherIncome", label: "Bank interest & other income" },
-  { key: "eligibleInterestDeduction", label: "Interest deduction (savings/FD — Section 80TTA/B)" },
+  { key: "eligibleInterestDeduction", label: "Interest deduction (savings/FD, Section 80TTA/B)" },
   { key: "deductibleTransactionCharges", label: "Brokerage/STT charges you can deduct" },
   { key: "carryForwardLossesAvailable", label: "Losses you're carrying forward from a previous year" }
 ];
@@ -66,6 +67,8 @@ export function ResultsStep({
   caRecommendation,
   supplementalFigures,
   onChangeSupplementalFigures,
+  prefilledFigureKeys = [],
+  netGainMissingDetail = false,
   debtMfShortTermDeemedGain,
   intradayGain,
   seniorCitizen,
@@ -98,6 +101,10 @@ export function ResultsStep({
   caRecommendation: CaRecommendation;
   supplementalFigures: SupplementalFigures;
   onChangeSupplementalFigures: (figures: SupplementalFigures) => void;
+  /** Fields that were auto-filled from a pasted statement, so we show a check-these banner. */
+  prefilledFigureKeys?: (keyof SupplementalFigures)[];
+  /** A pasted statement gave a net capital gain with no per-transaction detail: surface the still-needed note. */
+  netGainMissingDetail?: boolean;
   debtMfShortTermDeemedGain: number;
   intradayGain: number;
   seniorCitizen: boolean;
@@ -124,6 +131,11 @@ export function ResultsStep({
   localFolderName: string | null;
   onChooseLocalFolder: () => void;
 }) {
+  const hasPrefilled = prefilledFigureKeys.length > 0;
+  // Open "A few more numbers" by default when there's something in it to check
+  // (auto-filled figures or a still-needed note), so it isn't left undiscovered.
+  // Local state, seeded from that signal, so the user can still collapse it.
+  const [refineOpen, setRefineOpen] = useState(hasPrefilled || netGainMissingDetail);
   return (
     <div className="step-card">
       <div className={caRecommendation.recommendCa ? "recommendation-banner recommendation-ca" : "recommendation-banner"}>
@@ -217,11 +229,24 @@ export function ResultsStep({
         ) : null}
       </section>
 
-      <details className="refine-panel">
-        <summary>Add more numbers to refine (optional)</summary>
+      <details className="refine-panel" open={refineOpen} onToggle={(event) => setRefineOpen(event.currentTarget.open)}>
+        <summary>A few more numbers</summary>
         <details className="refine-section" open>
           <summary>Income you type in</summary>
           <section className="supplemental-form">
+          {hasPrefilled ? (
+            <p className="defaults-banner">
+              Some of these were filled in from your statement. Please check them.
+            </p>
+          ) : null}
+          {netGainMissingDetail ? (
+            <p className="inline-error">
+              <strong>Still needed:</strong> your detailed per-transaction capital-gains statement. Your document only
+              gave a net realised gain, which can't be split into short-term and long-term, so it isn't used in any
+              calculation here. Get the per-transaction statement from your broker/AMC/PMS, or enter the
+              short-term/long-term split yourself.
+            </p>
+          ) : null}
           <p className="step-lede">
             These don't come from an uploaded document. Enter them yourself, or leave at zero to skip.
           </p>

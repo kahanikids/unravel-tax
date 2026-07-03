@@ -203,13 +203,13 @@ export function caSummaryRows(
       head: "Dividends",
       ruleSection: "Schedule OS",
       amount: supplementalInputs.dividends,
-      notes: "Entered by you under \"A few more numbers\" below, not read from an uploaded document. Taxed at your slab rate under Schedule OS."
+      notes: "Entered by you under \"A few more numbers\" on the Current Filing page, not read from an uploaded document. Taxed at your slab rate under Schedule OS."
     },
     {
       head: "Interest & other income",
       ruleSection: "Schedule OS",
       amount: supplementalInputs.interestOtherIncome,
-      notes: "Entered by you under \"A few more numbers\" below. Bank/FD interest and similar income, taxed at your slab rate under Schedule OS."
+      notes: "Entered by you under \"A few more numbers\" on the Current Filing page. Bank/FD interest and similar income, taxed at your slab rate under Schedule OS."
     },
     {
       head: "Eligible interest deduction",

@@ -44,7 +44,7 @@ export function CountdownBanner({ variant }: { variant?: "header" } = {}) {
           ))}
         </div>
       ) : (
-        <span className="countdown-closed">Closed on {dueLabel} — a late return may still be possible.</span>
+        <span className="countdown-closed">Closed on {dueLabel}. A late return may still be possible.</span>
       )}
     </div>
   );

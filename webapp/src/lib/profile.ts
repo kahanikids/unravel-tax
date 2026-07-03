@@ -258,7 +258,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
       id: "nri_scope",
       label: "Most NRI-specific numbers aren't calculated here yet",
       note:
-        "NRE interest can be entered as its own exempt line under \"A few more numbers\", so it's kept out of your taxable total. This tool still doesn't apply DTAA relief to NRO TDS amounts or track repatriation limits. TDS withheld can be checked against AIS/26AS in the reconciliation panel above. Bring your NRO TDS certificates and DTAA paperwork to a CA."
+        "NRE interest can be entered as its own exempt line under \"A few more numbers\" on the Current Filing page, so it's kept out of your taxable total. This tool still doesn't apply DTAA relief to NRO TDS amounts or track repatriation limits. TDS withheld can be checked against AIS/26AS in the reconciliation panel above. Bring your NRO TDS certificates and DTAA paperwork to a CA."
     });
   }
 
@@ -276,7 +276,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
       id: "single_parent_scope",
       label: "Minor's-income clubbing is only partly calculated here",
       note:
-        "Enter the minor's income and child count under \"A few more numbers\" and this tool computes the clubbed amount after the Section 10(32) per-child exemption. It doesn't check whether an exception applies (the minor's own manual work, skill/talent income, or a Section 80U disability), and it doesn't place the figure in Schedule SPI itself. Confirm those with a CA."
+        "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. It doesn't check whether an exception applies (the minor's own manual work, skill/talent income, or a Section 80U disability), and it doesn't place the figure in Schedule SPI itself. Confirm those with a CA."
     });
   }
 

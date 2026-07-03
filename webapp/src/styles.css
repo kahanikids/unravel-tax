@@ -542,9 +542,11 @@ button.side-nav-step.side-nav-step-current:hover {
   align-items: center;
   justify-content: center;
   flex-wrap: nowrap;
-  gap: 4px;
+  /* Fluid: scale continuously from the mobile end (small) to the desktop end
+     (large), reaching the desktop values around ~860px. */
+  gap: clamp(2px, calc(0.56px + 0.4vw), 4px);
   margin-left: auto;
-  padding: 8px 18px;
+  padding: clamp(3px, calc(-0.6px + 1vw), 8px) clamp(7px, calc(-0.92px + 2.2vw), 18px);
   border-radius: 14px;
   background:
     linear-gradient(135deg, rgba(232, 131, 58, 0.1) 0%, rgba(255, 255, 255, 0.55) 55%, rgba(255, 255, 255, 0.35) 100%);
@@ -568,11 +570,11 @@ button.side-nav-step.side-nav-step-current:hover {
 .countdown-banner-header .countdown-unit {
   flex-direction: row;
   align-items: baseline;
-  gap: 5px;
+  gap: clamp(3px, calc(1.56px + 0.4vw), 5px);
 }
 
 .countdown-banner-header .countdown-value {
-  padding: 2px 7px;
+  padding: clamp(1px, calc(0.28px + 0.2vw), 2px) clamp(5px, calc(3.56px + 0.4vw), 7px);
   min-width: 0;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.65);
@@ -581,30 +583,30 @@ button.side-nav-step.side-nav-step-current:hover {
 }
 
 .countdown-banner-header .countdown-icon {
-  width: 18px;
-  height: 18px;
+  width: clamp(14px, calc(11.12px + 0.8vw), 18px);
+  height: clamp(14px, calc(11.12px + 0.8vw), 18px);
 }
 
 .countdown-banner-header .countdown-lede {
-  gap: 7px;
+  gap: clamp(5px, calc(3.56px + 0.4vw), 7px);
 }
 
 .countdown-banner-header .countdown-title {
-  font-size: 0.92rem;
+  font-size: clamp(0.62rem, calc(6.46px + 0.96vw), 0.92rem);
 }
 
 .countdown-banner-header .countdown-units {
-  gap: 12px;
+  gap: clamp(6px, calc(1.68px + 1.2vw), 12px);
 }
 
 .countdown-banner-header .countdown-value {
   color: var(--ink);
-  font-size: 1.1rem;
+  font-size: clamp(0.72rem, calc(7.14px + 1.22vw), 1.1rem);
 }
 
 .countdown-banner-header .countdown-label {
   color: var(--muted);
-  font-size: 0.62rem;
+  font-size: clamp(0.5rem, calc(6.62px + 0.38vw), 0.62rem);
 }
 
 .countdown-banner-header .countdown-closed {
@@ -612,27 +614,35 @@ button.side-nav-step.side-nav-step-current:hover {
   font-size: 0.82rem;
 }
 
-@media (max-width: 620px) {
-  .countdown-banner-header {
-    flex-basis: 100%;
-    margin-left: 0;
-    gap: 3px;
-    padding: 6px 12px;
-  }
+/* Stepped reveal: keep the pill narrow on small screens and bring the finer
+   units back one at a time as the viewport widens, so the counter grows
+   gradually rather than in one jump. Sizing itself is fluid (clamp) in the base
+   block above. Days + Hrs always show; Secs (last unit) appears from ~700px,
+   Mins (3rd unit) from ~480px. */
+@media (max-width: 699.98px) {
   .countdown-banner-header .countdown-unit:last-child {
     display: none;
   }
-  .countdown-banner-header .countdown-title {
-    font-size: 0.74rem;
+}
+@media (max-width: 479.98px) {
+  .countdown-banner-header .countdown-unit:nth-child(3) {
+    display: none;
   }
-  .countdown-banner-header .countdown-value {
-    font-size: 0.85rem;
+}
+
+@media (max-width: 620px) {
+  /* Force the "?" onto its own line, right-aligned, below the counter: a
+     zero-height full-width flex item (ordered between the counter and the
+     button) acts as a line break, so the button keeps its circle shape and
+     its margin-left:auto still pins it right. */
+  .app-header::after {
+    content: "";
+    flex-basis: 100%;
+    order: 1;
+    height: 0;
   }
-  .countdown-banner-header .countdown-label {
-    font-size: 0.55rem;
-  }
-  .countdown-banner-header .countdown-units {
-    gap: 8px;
+  .help-button {
+    order: 2;
   }
 }
 
@@ -2567,7 +2577,7 @@ button.side-nav-step.side-nav-step-current:hover {
   }
 
   .brand-mark {
-    height: 28px;
+    height: 24px;
   }
 
   .stage-single,
@@ -3162,7 +3172,7 @@ button.side-nav-step.side-nav-step-current:hover {
   }
 
   .brand-mark {
-    height: 30px;
+    height: 26px;
   }
 
   .help-button {

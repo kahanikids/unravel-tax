@@ -20,6 +20,7 @@ import {
   WHO_ITS_FOR_EXCLUDES
 } from "../src/lib/copy";
 import { clubbedMinorIncome, deriveProfileFlags, profileScopeCaveats, selectItrForm } from "../src/lib/profile";
+import { applySummaryFiguresToSupplemental } from "../src/lib/summaryFigures";
 import type { ProfileFlags } from "../src/state/types";
 import { saveSession } from "../src/lib/persistence";
 import {
@@ -539,6 +540,120 @@ function checkResultsStepAdvancedToggle() {
   assertIncludes(html, "Show simple view");
   assertIncludes(html, "sample.csv");
   console.log("Validated results step: advanced toggle reveals full detail and the documents ledger.");
+}
+
+/**
+ * The recognised summary figures must actually LAND in the supplemental fields
+ * (not just show a guidance message): dividendIncome -> dividends, interestIncome
+ * -> interestOtherIncome, deductibleCharges -> deductibleTransactionCharges,
+ * tdsDeducted -> advanceTaxPaid, filling only fields still at 0 so a user's own
+ * typed value is never clobbered, and reporting exactly which keys were touched.
+ * Synthetic figures only.
+ */
+function checkSummaryFiguresPopulateFields() {
+  const { next, applied } = applySummaryFiguresToSupplemental(BLANK_SUPPLEMENTAL_FIGURES, {
+    dividendIncome: 123456.78,
+    interestIncome: 4459.5,
+    deductibleCharges: 137827.48,
+    tdsDeducted: 83493.85,
+    netRealisedGainNoDetail: 99999
+  });
+  if (next.dividends !== 123456.78 || next.interestOtherIncome !== 4459.5) {
+    throw new Error(`Dividend/interest figures did not route into their fields: ${JSON.stringify(next)}`);
+  }
+  if (next.deductibleTransactionCharges !== 137827.48) {
+    throw new Error(`deductibleCharges did not route into deductibleTransactionCharges: ${next.deductibleTransactionCharges}`);
+  }
+  if (next.advanceTaxPaid !== 83493.85) {
+    throw new Error(`tdsDeducted did not route into advanceTaxPaid: ${next.advanceTaxPaid}`);
+  }
+  const expectedApplied = ["dividends", "interestOtherIncome", "deductibleTransactionCharges", "advanceTaxPaid"];
+  if (JSON.stringify([...applied].sort()) !== JSON.stringify([...expectedApplied].sort())) {
+    throw new Error(`Prefilled keys should be exactly the four mapped fields, got ${JSON.stringify(applied)}.`);
+  }
+  // netRealisedGainNoDetail is a gap, never a figure - it must not become a field.
+  if (JSON.stringify(next).includes("99999")) {
+    throw new Error("A net realised gain with no detail must not be written into any supplemental field.");
+  }
+
+  // Merge rule: a field the user already typed is never clobbered or doubled.
+  const typed = { ...BLANK_SUPPLEMENTAL_FIGURES, dividends: 5000 };
+  const merged = applySummaryFiguresToSupplemental(typed, { dividendIncome: 123456.78, interestIncome: 4459.5 });
+  if (merged.next.dividends !== 5000) {
+    throw new Error(`A user's typed dividends (5000) must not be overwritten, got ${merged.next.dividends}.`);
+  }
+  if (merged.next.interestOtherIncome !== 4459.5 || merged.applied.includes("dividends")) {
+    throw new Error("Only the still-zero fields should be filled, and only those should be reported as prefilled.");
+  }
+
+  console.log(
+    "Validated summary-figure routing: annual totals land in dividends/interest/charges/advance-tax fields, fill-only-when-0 keeps typed values, net-gain-only stays a gap, prefilled keys reported."
+  );
+}
+
+function checkResultsStepSummaryPrefill() {
+  // Synthetic figures only (never real data): a pasted PMS-style summary that
+  // auto-filled the "A few more numbers" fields and left a net-gain-only gap.
+  const baseProps = {
+    rows: SAMPLE_ROWS,
+    documents: [],
+    openIssueCount: 0,
+    caRecommendation: SAMPLE_RECOMMENDATION,
+    onChangeSupplementalFigures: noop,
+    debtMfShortTermDeemedGain: 0,
+    intradayGain: 0,
+    seniorCitizen: false,
+    regimeChoiceRule: ruleCatalog.regimeChoice,
+    advanceTaxRule: ruleCatalog.advanceTax,
+    aisFigures: BLANK_AIS_REPORTED_FIGURES,
+    onChangeAisFigures: noop,
+    tdsRows: [],
+    onChangeTdsRows: noop,
+    brokerCheck: null,
+    confidenceReport: SAMPLE_CONFIDENCE_REPORT,
+    showAdvanced: false,
+    onToggleAdvanced: noop,
+    exportMessage: "",
+    onExportCsv: noop,
+    onExportXlsx: noop,
+    onExportFullWorkbook: noop,
+    localFolderSupported: false,
+    localFolderName: null,
+    onChooseLocalFolder: noop
+  };
+
+  // The refine panel is renamed to "A few more numbers" everywhere, and the old
+  // "Add more numbers to refine" label is gone.
+  const plainHtml = renderToString(
+    <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} />
+  );
+  assertIncludes(plainHtml, "A few more numbers");
+  if (plainHtml.includes("Add more numbers to refine")) {
+    throw new Error("The refine panel should be renamed to 'A few more numbers' to match copy used elsewhere.");
+  }
+  if (plainHtml.includes("please check them")) {
+    throw new Error("The prefill banner should not show when nothing was auto-filled from a statement.");
+  }
+  if (plainHtml.includes("Still needed:")) {
+    throw new Error("The still-needed note should not show without a net-gain-only situation.");
+  }
+
+  const prefilledHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, dividends: 12000, advanceTaxPaid: 3400 }}
+      prefilledFigureKeys={["dividends", "advanceTaxPaid"]}
+      netGainMissingDetail
+    />
+  );
+  assertIncludes(prefilledHtml, "Some of these were filled in from your statement — please check them.");
+  assertIncludes(prefilledHtml, "Still needed:");
+  // Auto-fill/missing-detail forces the panel open so it isn't left undiscovered.
+  assertIncludes(prefilledHtml, 'class="refine-panel" open');
+
+  console.log(
+    "Validated results 'A few more numbers': renamed panel, prefill banner + still-needed note appear only when signalled, panel opens by default when there's something to check."
+  );
 }
 
 function checkRegimeComparisonPanel() {
@@ -1248,6 +1363,8 @@ function main() {
   checkChecklistPanel();
   checkResultsStepDefaultsToSimple();
   checkResultsStepAdvancedToggle();
+  checkSummaryFiguresPopulateFields();
+  checkResultsStepSummaryPrefill();
   checkAdvanceTaxPanel();
   checkNriHufSingleParentPartialCalculations();
   checkReconciliationPanel();

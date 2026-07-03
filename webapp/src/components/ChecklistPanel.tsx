@@ -64,7 +64,7 @@ export function ChecklistPanel({
       <div id="checklist-panel-body" className={collapsed ? "checklist-panel-body is-collapsed" : "checklist-panel-body"}>
         {profileScopeCaveats.length > 0 ? (
           <div className="checklist-group">
-            <h3>Heads up — this tool has limits</h3>
+            <h3>Heads up: this tool has limits</h3>
             {profileScopeCaveats.map((caveat) => (
               <article className="checklist-item checklist-item-flag" key={caveat.id}>
                 <strong>{caveat.label}</strong>

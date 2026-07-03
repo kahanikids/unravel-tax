@@ -197,6 +197,38 @@ async function main() {
     throw new Error("A net-realised-gain-only JSON paste with no rows should set netGainOnly.");
   }
 
+  // Indian-grouped INR amounts (lakh-style "1,23,456" grouping, ₹ sign, and
+  // decimals) must parse to their full value, not truncate at the first comma.
+  // Synthetic figures only. This is a real correctness bug guard for INR.
+  const indianGrouped = parsePastedExtraction(
+    JSON.stringify({
+      documentType: "PMS annual report",
+      capitalGainsTransactions: [],
+      annualFigures: {
+        dividendIncome: "₹1,23,456.78",
+        interestIncome: "₹4,459.5",
+        tdsDeducted: "₹83,493.85",
+        deductibleCharges: "₹1,37,827.48"
+      }
+    })
+  );
+  const grouped = indianGrouped.summaryFigures;
+  if (!grouped) {
+    throw new Error("Indian-grouped annualFigures should be recognised.");
+  }
+  if (grouped.dividendIncome !== 123456.78) {
+    throw new Error(`"₹1,23,456.78" should parse to 123456.78, got ${grouped.dividendIncome}.`);
+  }
+  if (grouped.interestIncome !== 4459.5) {
+    throw new Error(`"₹4,459.5" should parse to 4459.5, got ${grouped.interestIncome}.`);
+  }
+  if (grouped.tdsDeducted !== 83493.85) {
+    throw new Error(`"₹83,493.85" should parse to 83493.85, got ${grouped.tdsDeducted}.`);
+  }
+  if (grouped.deductibleCharges !== 137827.48) {
+    throw new Error(`"₹1,37,827.48" should parse to 137827.48 (not truncated at the first comma), got ${grouped.deductibleCharges}.`);
+  }
+
   // Invalid JSON must not dead-end silently: it comes back with a plain-language
   // parse_error telling the user to paste the whole JSON block.
   const brokenJson = parsePastedExtraction("{ not valid json");
@@ -236,7 +268,7 @@ async function main() {
   }
 
   console.log(
-    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; fuzzy/alt-date headers parse; missing columns warn + route; PDF/free-form routes to prompt; JSON extraction paste maps transactions + recognises annual figures + flags net-gain-only + errors on invalid JSON, markdown-table fallback still parses; edited rows reclassify correctly."
+    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; fuzzy/alt-date headers parse; missing columns warn + route; PDF/free-form routes to prompt; JSON extraction paste maps transactions + recognises annual figures (incl. Indian lakh-grouped ₹ amounts) + flags net-gain-only + errors on invalid JSON, markdown-table fallback still parses; edited rows reclassify correctly."
   );
 }
 

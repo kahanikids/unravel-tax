@@ -242,7 +242,7 @@ export function Dashboard({
 
       {/* ---- This year at a glance: visual command centre ---- */}
       <section className="dashboard-section" aria-labelledby="dashboard-this-year">
-        <h3 id="dashboard-this-year">{`This year — ${thisYear.assessmentYear}`}</h3>
+        <h3 id="dashboard-this-year">{`This year: ${thisYear.assessmentYear}`}</h3>
         {thisYear.hasStartedFiling ? (
           <>
             {/* ITR form badge + tax-year timeline */}
@@ -345,7 +345,7 @@ export function Dashboard({
                   caption={`${formatCompactInr(ltcgHeadroom)} of the ${formatCompactInr(
                     cg.ltcgExemptionLimit
                   )} exemption still unused`}
-                  overLabel={`Exemption used in full — ${formatCompactInr(ltcgTaxable)} of LTCG is taxable`}
+                  overLabel={`Exemption used in full: ${formatCompactInr(ltcgTaxable)} of LTCG is taxable`}
                 />
               </article>
 
@@ -403,7 +403,7 @@ export function Dashboard({
                     used={insurance.annualPremium}
                     limit={insurance.ulipCap}
                     caption={`Aggregate annual premium vs the ${formatCompactInr(insurance.ulipCap)} ULIP exemption line.`}
-                    overLabel={`Past the ${formatCompactInr(insurance.ulipCap)} ULIP line — a ULIP maturity loses its 10(10D) exemption.`}
+                    overLabel={`Past the ${formatCompactInr(insurance.ulipCap)} ULIP line. A ULIP maturity loses its 10(10D) exemption.`}
                   />
                   <p className="widget-note">{insuranceStatus}</p>
                   <p className="widget-note">
@@ -419,8 +419,8 @@ export function Dashboard({
                 <article className="dashboard-widget" aria-labelledby="widget-foreign">
                   <h4 id="widget-foreign">Foreign assets &amp; LRS remittances</h4>
                   <p className="widget-note">
-                    Every foreign asset held at any point in the calendar year goes in Schedule FA —{" "}
-                    {foreign.scheduleFaMinValueInr === 0 ? "no minimum value" : `above ${formatCompactInr(foreign.scheduleFaMinValueInr)}`}, and it
+                    Every foreign asset held at any point in the calendar year goes in Schedule FA, with{" "}
+                    {foreign.scheduleFaMinValueInr === 0 ? "no minimum value" : `a floor of ${formatCompactInr(foreign.scheduleFaMinValueInr)}`}, and it
                     needs {foreign.requiresItrForms.join(" or ")} (never ITR-1). Missing one risks a{" "}
                     {formatCompactInr(foreign.blackMoneyPenaltyInr)} Black Money Act penalty.
                   </p>
@@ -438,7 +438,7 @@ export function Dashboard({
                     used={foreign.remittance}
                     limit={foreign.threshold}
                     caption={`LRS money sent abroad vs the ${formatCompactInr(foreign.threshold)} yearly TCS-free limit.`}
-                    overLabel={`Over ${formatCompactInr(foreign.threshold)} — about ${formatCompactInr(
+                    overLabel={`Over ${formatCompactInr(foreign.threshold)}: about ${formatCompactInr(
                       foreign.estimatedTcs
                     )} TCS is collected at ${formatPercent(foreign.rate)} on the excess.`}
                   />
@@ -446,7 +446,7 @@ export function Dashboard({
                     {foreign.overThreshold
                       ? `That ${formatCompactInr(
                           foreign.estimatedTcs
-                        )} TCS is a prepaid credit shown in your AIS/26AS, recoverable in the return — not an added cost.`
+                        )} TCS is a prepaid credit shown in your AIS/26AS, recoverable in the return, not an added cost.`
                       : "TCS applies only above the threshold, and even then it's a prepaid credit, not a cost."}{" "}
                     Foreign tax paid abroad is credited via Form 67. <RuleSourceLink refs={foreign.sourceRefs} />
                   </p>
@@ -539,7 +539,7 @@ export function Dashboard({
                 <span className="dashboard-stat-label">Regime</span>
                 <strong>{insights.regimeSwitched ? "Switched" : insights.regimesUsed[0] ? REGIME_LABELS[insights.regimesUsed[0]] : "Not recorded"}</strong>
                 <span className="dashboard-stat-note">
-                  {insights.regimeSwitched ? "You've used more than one regime — worth confirming you can still switch." : "Across your recorded years."}
+                  {insights.regimeSwitched ? "You've used more than one regime. Worth confirming you can still switch." : "Across your recorded years."}
                 </span>
               </article>
             </div>
@@ -625,7 +625,7 @@ export function Dashboard({
             <p className="dashboard-reminder">
               Carry-forward capital losses stay usable for 8 assessment years, and only if each year&apos;s return was
               filed on time. Advance tax for {thisYear.assessmentYear} is due in quarterly instalments if your tax after
-              TDS will cross ₹10,000 — worth checking early.
+              TDS will cross ₹10,000. Worth checking early.
             </p>
           </>
         ) : (
@@ -691,7 +691,7 @@ function AddPastFilingForm({
       setAutoSource(null);
       setError(
         isPdf
-          ? "Couldn't read this ITR-V automatically — enter the figures by hand below."
+          ? "Couldn't read this ITR-V automatically. Enter the figures by hand below."
           : "Couldn't read that file. Enter the figures by hand instead."
       );
     }
@@ -724,7 +724,7 @@ function AddPastFilingForm({
       <div className="dashboard-add-body">
         <p className="step-lede">
           Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
-          these — or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
+          these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
         </p>
 
         <label className="secondary-button dashboard-json-button">

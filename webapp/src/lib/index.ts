@@ -13,3 +13,4 @@ export * from "./riskTriggers";
 export * from "./persistence";
 export * from "./localFolder";
 export * from "./copy";
+export * from "./summaryFigures";
