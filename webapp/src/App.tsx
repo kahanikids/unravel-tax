@@ -38,6 +38,7 @@ import {
   type ExportFile,
   type LocalFolderHandle,
   type PersistedSession,
+  type RawSheet,
   type TdsRow
 } from "./lib";
 import type { NormalizedTransaction } from "./ingest";
@@ -62,10 +63,9 @@ import { SideNav } from "./components/SideNav";
 import { HelpPanel } from "./components/HelpPanel";
 import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
 import { ToolTour } from "./components/ToolTour";
-import { DocumentSourceHint } from "./components/DocumentSourceHint";
 import { ConfirmModal } from "./components/ConfirmModal";
 
-type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[] };
+type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[]; rawSheet?: RawSheet };
 
 function App() {
   const [step, setStep] = useState<AppStep>("welcome");
@@ -381,6 +381,19 @@ function App() {
     }
   }
 
+  // A raw upload that isn't a capital-gains statement (bank interest,
+  // dividends, MF holdings). Kept with no transactions so it never affects the
+  // tax numbers, but its rows ride along as a reference sheet in the workbook.
+  function commitReferenceDocument(fileName: string, rawSheet: RawSheet) {
+    const entry: DocumentEntry = { fileName, rowCount: rawSheet.records.length, transactions: [], rawSheet };
+    if (sampleMode) {
+      clearSampleData();
+      setDocuments([entry]);
+    } else {
+      setDocuments((prev) => [...prev, entry]);
+    }
+  }
+
   function removeDocument(index: number) {
     setDocuments((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   }
@@ -412,12 +425,10 @@ function App() {
     setStep(session.step);
   }
 
+  // "Start over" always confirms before wiping a saved filing, since it's
+  // destructive and localStorage is the only copy unless a folder backup exists.
   function startFresh() {
-    if (step !== "welcome") {
-      setShowConfirmClear(true);
-      return;
-    }
-    clearAllProgress();
+    setShowConfirmClear(true);
   }
 
   function clearAllProgress() {
@@ -508,9 +519,10 @@ function App() {
     const cgRule = ruleCatalog.capitalGainsEquity;
     await deliverExport(
       await buildFullWorkbookExport({
-        documents: documents.map(({ fileName, transactions: docTxns }) => ({
+        documents: documents.map(({ fileName, transactions: docTxns, rawSheet }) => ({
           name: fileName,
-          transactions: docTxns
+          transactions: docTxns,
+          rawSheet
         })),
         caSummaryRows: rows,
         rateInputs: rateInputsFromRule(cgRule),
@@ -560,6 +572,7 @@ function App() {
             onStart={startOrientation}
             onStartComputationFirst={startComputationFirst}
             onResume={resumeSession}
+            onStartOver={startFresh}
             hasSavedSession={hasSavedSession}
             onShowCapabilities={() => setShowCapabilities(true)}
             onShowTour={() => setShowTour(true)}
@@ -574,13 +587,12 @@ function App() {
           <OrientationForm
             answers={orientation}
             onChange={setOrientation}
-            onComplete={() => setStep("checklist")}
-            onStartOver={startFresh}
+            onComplete={() => setStep("documents")}
           />
         </div>
       ) : null}
 
-      {(step === "checklist" || step === "documents" || step === "results") &&
+      {(step === "documents" || step === "results") &&
       unacknowledgedFormChangingTriggers.length > 0 ? (
         <div className="modal-backdrop">
           <div className="modal-card" role="alertdialog" aria-labelledby="form-changing-title">
@@ -603,7 +615,7 @@ function App() {
         </div>
       ) : null}
 
-      {step === "checklist" || step === "documents" || step === "results" ? (
+      {step === "documents" || step === "results" ? (
         <div className="stage-with-sidebar">
           <ChecklistPanel
             checklistItems={checklistItems}
@@ -625,43 +637,11 @@ function App() {
               </p>
             ) : null}
 
-            {step === "checklist" ? (
-              <div className="step-card">
-                <h2>Your checklist</h2>
-                <p className="step-lede">What to gather, based on your answers. Easiest first.</p>
-                <div className="checklist-list">
-                  {checklistItems.map((item) => (
-                    <article className="checklist-list-item" key={item.document}>
-                      <div>
-                        <strong>{item.document}</strong>
-                        <div className="checklist-row-detail">
-                          <p>{item.whyNeeded}</p>
-                          <DocumentSourceHint document={item.document} />
-                        </div>
-                        <details className="checklist-row-detail-mobile">
-                          <summary>Why / where</summary>
-                          <p>{item.whyNeeded}</p>
-                          <DocumentSourceHint document={item.document} />
-                        </details>
-                      </div>
-                      <span className={`pill ${item.status.toLowerCase() === "loaded" ? "pill-ready" : "pill-neutral"}`}>
-                        {item.status}
-                      </span>
-                    </article>
-                  ))}
-                </div>
-                <div className="step-actions">
-                  <button type="button" className="primary-button" onClick={() => setStep("documents")}>
-                    Continue to add documents
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
             {step === "documents" ? (
               <UploadStep
                 documents={displayDocuments}
                 onCommit={commitDocument}
+                onCommitReference={commitReferenceDocument}
                 onRemove={removeDocument}
                 onContinue={() => setStep("results")}
                 localFolderSupported={isLocalFolderSupported()}

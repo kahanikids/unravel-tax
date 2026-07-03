@@ -1,6 +1,6 @@
 # Unravel Tax — Open Source Tool: System Spec
 
-Version 0.1. Drafted from a real working session filing RKM's FY2025-26 (AY2026-27) return. Every rule referenced here was checked against current sources during that session; see citations throughout.
+Version 0.1. Drafted from a working session filing a sample taxpayer's FY2025-26 (AY2026-27) return. Every rule referenced here was checked against current sources during that session; see citations throughout.
 
 ## 1. Problem
 
@@ -30,7 +30,7 @@ An LLM should not be the thing computing 200 rows of capital gains arithmetic. I
 
 (Sources: [ChatGPT Free Tier 2026 Guide](https://pecollective.com/tools/chatgpt-free-tier-guide/), [ChatGPT Plans Compared 2026](https://intuitionlabs.ai/articles/chatgpt-plans-comparison), [OpenAI File Uploads FAQ](https://help.openai.com/en/articles/8555545-file-uploads-faq))
 
-So the architecture puts the actual computation in a spreadsheet template with real formulas (the same pattern used in this session's RKM workbook — classification, gain calculation, and tax estimates are all live formulas, not typed-in numbers). ChatGPT's job is narrower and better suited to what an LLM is actually good at:
+So the architecture puts the actual computation in a spreadsheet template with real formulas (the same pattern used in this session's sample workbook — classification, gain calculation, and tax estimates are all live formulas, not typed-in numbers). ChatGPT's job is narrower and better suited to what an LLM is actually good at:
 
 1. Ask the user plain-language questions to figure out their profile (NRI? HUF? senior citizen? none of these?).
 2. Point them to the right template and the right checklist of documents.
@@ -246,13 +246,13 @@ This is the most complex profile and deserves more than a stub. Six things that 
 
 (Sources: [TaxGuru — ITR Forms AY2026-27](https://taxguru.in/income-tax/itr-forms-ay-2026-27-form-file-key-changes.html), [ClearTax — ITR-2 Filing AY2026-27](https://cleartax.in/itr-2-filing), [Income Tax India — Schedule SPI](https://www.incometaxindia.gov.in/w/schedule_spi), [CACLubIndia — July 31 vs August 31 AY2026-27](https://www.caclubindia.com/articles/due-date-for-filing-itr-ay-202627-july-31-vs-august-31-55204.asp))
 
-Practical note carried over from this session: a senior citizen with pension and capital gains only needs ITR-2 (due 31 Jul), but the moment they also have speculative/intraday trading income (like RKM), they move to ITR-3 — which this year also means a different, later due date (31 Aug, not 31 Jul). This is a real correction worth surfacing to the user: don't assume everyone shares the same deadline, and don't assume the deadline is fixed at 31 July the way it was in past years — this "different form, different date" split is specific to AY2026-27 and should be re-checked each year, not hardcoded.
+Practical note carried over from this session: a senior citizen with pension and capital gains only needs ITR-2 (due 31 Jul), but the moment they also have speculative/intraday trading income (like the sample taxpayer), they move to ITR-3 — which this year also means a different, later due date (31 Aug, not 31 Jul). This is a real correction worth surfacing to the user: don't assume everyone shares the same deadline, and don't assume the deadline is fixed at 31 July the way it was in past years — this "different form, different date" split is specific to AY2026-27 and should be re-checked each year, not hardcoded.
 
 A belated return is still possible after the applicable due date above, up to 31 December 2026, but it comes with a late fee under Section 234F and forfeits the right to carry forward most losses — see Section 12.
 
 ## 11. Gaps this pass filled in (explicitly, so nothing gets silently dropped)
 
-Beyond what this session's actual workbook covered (equity capital gains classification, dividends, senior-citizen advice, STT/charges treatment), this spec adds, because a general-purpose tool needs them even though RKM's specific case didn't require all of them yet:
+Beyond what this session's actual workbook covered (equity capital gains classification, dividends, senior-citizen advice, STT/charges treatment), this spec adds, because a general-purpose tool needs them even though the sample taxpayer's specific case didn't require all of them yet:
 
 - NRE vs NRO as a structural distinction, not a footnote (Section 9.1)
 - NRI TDS-at-source mechanics and Form 13 (Section 9.2–9.3) — fundamentally different from how residents experience capital gains tax
@@ -264,7 +264,7 @@ Beyond what this session's actual workbook covered (equity capital gains classif
 - Schedule SPI as the specific place clubbed income gets reported — the single-parent reference material from this session established the clubbing rule but not where it goes on the actual return
 - The free-tier ChatGPT constraints that make "spreadsheet as engine" a requirement, not a preference — this wasn't discussed before but determines almost everything about how the tool has to be built for it to actually work for a non-technical, non-paying user
 - A full "what's at stake" layer (Section 12) — the entire spec up to this point was about computing correctly, with no equivalent coverage of what happens when someone doesn't: defective-return notices, AIS/26AS mismatches, HRA without a landlord PAN, EPF withdrawal TDS, late-filing penalties, and the underreporting/misreporting penalty tiers. Prompted directly by a shared news source ([NDTV — ITR filing mistakes](https://www.ndtv.com/business-news/filing-income-tax-return-mistakes-penalty-tds-hra-epf-taxpayers-loan-capital-gain-investment-11401988); NDTV itself wasn't directly fetchable, so this was corroborated against equivalent reporting — see Section 12's sources)
-- The ITR-1/ITR-2 vs ITR-3/ITR-4 due-date split for AY2026-27 (31 July vs 31 August) — the earlier draft of this spec, and this session's actual RKM workbook, both assumed a single 31 July deadline for everyone. That's wrong this year for anyone filing ITR-3, RKM included, since his speculative income puts him there. Corrected in Section 10.
+- The ITR-1/ITR-2 vs ITR-3/ITR-4 due-date split for AY2026-27 (31 July vs 31 August) — the earlier draft of this spec, and this session's actual sample workbook, both assumed a single 31 July deadline for everyone. That's wrong this year for anyone filing ITR-3, the sample taxpayer included, since the speculative income puts them there. Corrected in Section 10.
 - Three intake questions the "Getting Started" prompt was missing — job changes/multiple employers, HRA/rent claims, EPF withdrawals — added directly because of the trigger review in Section 12
 
 ## 12. Risk triggers — what's at stake
@@ -343,7 +343,7 @@ Where ChatGPT still fits: parsing a messy broker PDF is an LLM job, not a browse
 
 ### 15.3 Export spec — the two output flavours
 
-This is the actual deliverable a user walks away with, matching what was built for RKM this session:
+This is the actual deliverable a user walks away with, matching what was built for the sample taxpayer this session:
 
 - **CA Summary (.xlsx and .csv)** — figures only, category totals (Equity/MF/Dividends/Interest/Charges/Carry-forward), no rule commentary, no colour-coded warnings. Built to be handed to a professional without extra explanation needed.
 - **Full Workbook (.xlsx only, CSV doesn't preserve the structure)** — everything: raw data tabs, working tabs with classification/formula columns, Detailed Summary with tax estimate and rule flags, Carry Forward Losses register. This is the "for keeps" file — the one worth keeping in a personal archive year over year, since it's also the audit trail if a notice ever arrives asking how a number was arrived at.
@@ -375,4 +375,4 @@ unravel-tax/
 
 ## 16. Standing disclaimer
 
-This tool helps organize data and applies well-established, sourced rules mechanically. It does not replace professional judgment on ambiguous situations, does not constitute legal or tax advice, and every output should carry a visible reminder to have a qualified CA review before filing, especially for NRI, HUF, and any year involving a rate change or a genuinely ambiguous transaction (e.g., whether a specific charge is already netted into a broker's reported figures — the exact kind of open question flagged in this session's RKM workbook).
+This tool helps organize data and applies well-established, sourced rules mechanically. It does not replace professional judgment on ambiguous situations, does not constitute legal or tax advice, and every output should carry a visible reminder to have a qualified CA review before filing, especially for NRI, HUF, and any year involving a rate change or a genuinely ambiguous transaction (e.g., whether a specific charge is already netted into a broker's reported figures — the exact kind of open question flagged in this session's sample workbook).

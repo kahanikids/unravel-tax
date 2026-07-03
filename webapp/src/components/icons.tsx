@@ -82,6 +82,17 @@ export function IconSparkles({ className }: IconProps) {
   );
 }
 
+export function IconHourglass({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <path d="M7 4h10" />
+      <path d="M7 20h10" />
+      <path d="M7 4c0 4 4 5.2 5 8 1-2.8 5-4 5-8" />
+      <path d="M7 20c0-4 4-5.2 5-8 1 2.8 5 4 5 8" />
+    </svg>
+  );
+}
+
 export function IconShield({ className }: IconProps) {
   return (
     <svg {...svgProps} className={className} aria-hidden="true">

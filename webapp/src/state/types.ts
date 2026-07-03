@@ -44,14 +44,13 @@ export type ProfileFlags = {
   epfRisk: boolean;
 };
 
-export type AppStep = "welcome" | "orientation" | "checklist" | "documents" | "results";
+export type AppStep = "welcome" | "orientation" | "documents" | "results";
 
-export const STEP_ORDER: AppStep[] = ["welcome", "orientation", "checklist", "documents", "results"];
+export const STEP_ORDER: AppStep[] = ["welcome", "orientation", "documents", "results"];
 
 export const STEP_LABELS: Record<AppStep, string> = {
   welcome: "Start",
   orientation: "About you",
-  checklist: "Your checklist",
   documents: "Add documents",
   results: "Your results"
 };

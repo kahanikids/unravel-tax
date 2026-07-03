@@ -141,10 +141,12 @@ function checkWelcomeScreen() {
   // The header logo is a non-destructive way back to welcome from anywhere.
   assertIncludes(html, 'class="brand-mark-button"');
 
-  // "Start over" now lives inside OrientationForm only, so it should never
-  // appear on the welcome screen, where OrientationForm hasn't mounted yet.
+  // "Start over" lives in the welcome resume-banner now, shown only when a
+  // saved session exists. This render has none (Node has no localStorage), so
+  // it should be absent here - and it's confirmed present in the saved-session
+  // render inside checkSideNavReflectsResumedSession().
   if (html.includes("Start over")) {
-    throw new Error("'Start over' should not render on the welcome screen; it now lives inside OrientationForm.");
+    throw new Error("'Start over' should only render on the welcome screen when a saved session exists.");
   }
 
   console.log("Validated welcome screen: 3 entry-path cards (Checklist / Add documents / Get to know the tool), no dev/milestone jargon leaking into the UI.");
@@ -160,17 +162,16 @@ function checkWelcomeScreen() {
  * profile-driven bits (ITR form, risk triggers, checklist, CA
  * recommendation) fall back to a resident/no-special-circumstances default
  * until the user goes back and answers the questions. STEP_ORDER already
- * puts "documents" after "orientation" and "checklist", so App's existing
- * generic furthestStepIndex effect (bump to Math.max(prev, index of new
- * step)) makes both of those steps reachable again from the header nav
- * without any special-cased jump logic.
+ * puts "documents" after "orientation", so App's existing generic
+ * furthestStepIndex effect (bump to Math.max(prev, index of new step))
+ * makes orientation reachable again from the side nav without any
+ * special-cased jump logic.
  */
 function checkComputationFirstPathIsReachable() {
   const documentsIndex = STEP_ORDER.indexOf("documents");
   const orientationIndex = STEP_ORDER.indexOf("orientation");
-  const checklistIndex = STEP_ORDER.indexOf("checklist");
-  if (!(documentsIndex > orientationIndex && documentsIndex > checklistIndex)) {
-    throw new Error("STEP_ORDER must keep 'documents' after 'orientation' and 'checklist' for the computation-first jump to leave them reachable.");
+  if (!(documentsIndex > orientationIndex)) {
+    throw new Error("STEP_ORDER must keep 'documents' after 'orientation' for the computation-first jump to leave it reachable.");
   }
 
   // deriveProfileFlags() must treat every still-null orientation answer as a
@@ -181,7 +182,7 @@ function checkComputationFirstPathIsReachable() {
     throw new Error("Blank orientation answers must resolve to the resident/no-special-circumstances default, or the computation-first shortcut isn't safe.");
   }
 
-  console.log("Validated 'Add documents' jump: documents step stays reachable back to orientation/checklist, and blank orientation resolves to a safe default profile.");
+  console.log("Validated 'Add documents' jump: documents step stays reachable back to orientation, and blank orientation resolves to a safe default profile.");
 }
 
 /**
@@ -209,12 +210,18 @@ function checkSideNavReflectsResumedSession() {
     // Still mounts on welcome (nothing auto-jumps the user anywhere)...
     assertIncludes(html, 'class="entry-path-cards"');
 
-    // ...but orientation/checklist/documents are already clickable in the
-    // side nav, since they're all <= the saved furthestStepIndex.
+    // ...and because a saved session exists, the resume-banner offers both
+    // "Resume where you left off" and "Start over" (moved here from the
+    // orientation card, so it sits next to Resume).
+    assertIncludes(html, "Resume where you left off");
+    assertIncludes(html, "Start over");
+
+    // ...but orientation/documents are already clickable in the side nav,
+    // since they're all <= the saved furthestStepIndex.
     const reachableStepCount = html.split('<button type="button" class="side-nav-step side-nav-step-').length - 1;
-    if (reachableStepCount !== 3) {
+    if (reachableStepCount !== 2) {
       throw new Error(
-        `Expected 3 reachable side-nav steps (orientation/checklist/documents) from the saved session, found ${reachableStepCount}.`
+        `Expected 2 reachable side-nav steps (orientation/documents) from the saved session, found ${reachableStepCount}.`
       );
     }
     // "Your results" is past furthestStepIndex, so it should still be inert.
@@ -309,30 +316,39 @@ function checkCapabilitiesPanel() {
 }
 
 function checkOrientationForm() {
+  // A fresh start (blank answers) goes straight into the questions, one at a
+  // time, beginning with residency - no summary, and no "Start over" (that
+  // now lives on the welcome resume-banner, not the orientation card).
   const html = renderToString(
-    <OrientationForm answers={BLANK_ORIENTATION} onChange={noop as never} onComplete={noop} onStartOver={noop} />
+    <OrientationForm answers={BLANK_ORIENTATION} onChange={noop as never} onComplete={noop} />
   );
   assertIncludes(html, "Question 1 of");
   assertIncludes(html, "Are you living in India right now");
-  assertIncludes(html, ">Start over<");
+  if (html.includes("Start over")) {
+    throw new Error("'Start over' no longer belongs in the orientation card; it moved to the welcome resume-banner.");
+  }
   if (html.includes(">Skip<")) {
     throw new Error("Residency decides the whole checklist/rules branch and should not be skippable.");
   }
 
-  // A yes-no question with a safe null-means-No default (deriveProfileFlags)
-  // should offer Skip, visually secondary to Yes/No.
-  const hufHtml = renderToString(
+  // Returning to "About you" with answers already saved shows a scannable
+  // recap first (not question 1 again), with a way to edit them - so users
+  // don't feel like they're redoing questions they already answered.
+  const summaryHtml = renderToString(
     <OrientationForm
-      answers={{ ...BLANK_ORIENTATION, residency: "resident" }}
+      answers={{ ...BLANK_ORIENTATION, residency: "resident", seniorCitizen: false, incomeSources: ["salary_pension"] }}
       onChange={noop as never}
       onComplete={noop}
-      onStartOver={noop}
     />
   );
-  assertIncludes(hufHtml, "Is any of this income or investment held through a family");
-  assertIncludes(hufHtml, ">Skip<");
+  assertIncludes(summaryHtml, "Your answers");
+  assertIncludes(summaryHtml, "Where you live");
+  assertIncludes(summaryHtml, "I live in India");
+  assertIncludes(summaryHtml, "Salary or pension");
+  assertIncludes(summaryHtml, ">Continue<");
+  assertIncludes(summaryHtml, ">Update answers<");
 
-  console.log("Validated orientation flow: renders one question at a time, starting with residency, Start over available, Skip offered only where it's safe.");
+  console.log("Validated orientation flow: blank answers start the one-question flow at residency; saved answers show an editable recap first; Start over is no longer in the card.");
 }
 
 function checkUploadStep() {
@@ -340,6 +356,7 @@ function checkUploadStep() {
     <UploadStep
       documents={[{ fileName: "broker-statement.csv", rowCount: 5 }]}
       onCommit={noop as never}
+      onCommitReference={noop}
       onRemove={noop}
       onContinue={noop}
       localFolderSupported={false}
@@ -348,12 +365,12 @@ function checkUploadStep() {
     />
   );
   assertIncludes(html, "Add your documents");
-  assertIncludes(html, "Choose a file");
+  assertIncludes(html, "Choose files");
   assertIncludes(html, "broker-statement.csv");
   if (html.includes("Here's what we read from")) {
     throw new Error("The extraction review modal should be closed until a document is actually parsed.");
   }
-  console.log("Validated upload step: single upload action, previously added documents listed, review modal closed by default.");
+  console.log("Validated upload step: multi-file upload action, previously added documents listed, review modal closed by default.");
 }
 
 function checkChecklistPanel() {
@@ -379,7 +396,7 @@ function checkChecklistPanel() {
       ]}
     />
   );
-  assertIncludes(html, "Things to check");
+  assertIncludes(html, "Things to gather");
   assertIncludes(html, "Broker/AMC capital gains statement");
   assertIncludes(html, "Speculative/intraday trading income");
   assertIncludes(html, "checklist-item-flag");

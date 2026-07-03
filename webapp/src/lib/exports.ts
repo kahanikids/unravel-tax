@@ -7,13 +7,16 @@ import {
   buildBrokerSheet,
   buildDetailedSummarySheet,
   buildLinkedCaSummarySheet,
+  buildRawSheet,
   buildStandaloneCaSummarySheet,
   uniqueSheetNames,
+  type BrokerSheetMeta,
   type ExportDocument,
-  type RateInputs
+  type RateInputs,
+  type RawSheet
 } from "./workbookExport";
 
-export type { ExportDocument, RateInputs };
+export type { ExportDocument, RateInputs, RawSheet };
 
 export type ExportState = {
   documents: ExportDocument[];
@@ -118,11 +121,21 @@ export async function buildCaSummaryWorkbookExport(
 export async function buildFullWorkbookExport(state: ExportState): Promise<ExportFile> {
   const documents = state.documents.length > 0 ? state.documents : [{ name: "Transactions", transactions: [] }];
   const sheetNames = uniqueSheetNames(documents.map((doc) => doc.name));
-  const brokerOutputs = documents.map((doc, index) =>
-    buildBrokerSheet(doc.name, doc.transactions, state.financialYear, sheetNames[index])
-  );
 
-  const brokerMetas = brokerOutputs.map((b) => b.meta);
+  // One sheet per raw uploaded document, kept in upload order. A document that
+  // couldn't be parsed into capital-gains transactions (bank/dividend/MF
+  // statements) is emitted as a verbatim reference sheet and contributes no
+  // broker meta, so it never feeds the tax working on the summary sheets.
+  const brokerMetas: BrokerSheetMeta[] = [];
+  const docSheets = documents.map((doc, index) => {
+    if (doc.rawSheet && doc.transactions.length === 0) {
+      return buildRawSheet(doc.name, doc.rawSheet, sheetNames[index]);
+    }
+    const broker = buildBrokerSheet(doc.name, doc.transactions, state.financialYear, sheetNames[index]);
+    brokerMetas.push(broker.meta);
+    return { sheet: broker.sheet, data: broker.data, columns: broker.columns };
+  });
+
   const detailed = buildDetailedSummarySheet(
     brokerMetas,
     state.rateInputs,
@@ -130,22 +143,21 @@ export async function buildFullWorkbookExport(state: ExportState): Promise<Expor
     state.assessmentYear
   );
 
+  // Order requested by the user: (1) CA Summary, (2) Detailed Summary, then one
+  // sheet per raw uploaded file. Summary formulas reference other sheets by
+  // name, so the sheet order is purely presentational.
   const sheets = [
-    ...brokerOutputs.map((b) => ({
-      sheet: b.sheet,
-      data: b.data,
-      columns: b.columns
-    })),
+    {
+      sheet: "CA Summary",
+      data: buildLinkedCaSummarySheet(state.caSummaryRows, state.financialYear, state.assessmentYear),
+      columns: [{ width: 34 }, { width: 14 }, { width: 18 }, { width: 40 }]
+    },
     {
       sheet: "Detailed Summary",
       data: detailed.data,
       columns: detailed.columns
     },
-    {
-      sheet: "CA Summary",
-      data: buildLinkedCaSummarySheet(state.caSummaryRows, state.financialYear, state.assessmentYear),
-      columns: [{ width: 34 }, { width: 14 }, { width: 18 }, { width: 40 }]
-    }
+    ...docSheets
   ];
 
   const blob = await writeXlsxFile(sheets).toBlob();

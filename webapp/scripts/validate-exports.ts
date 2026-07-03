@@ -50,10 +50,12 @@ async function main() {
   const fullWorkbook = await buildFullWorkbookExport(exportState);
   const fullSheets = await readWorkbook(fullWorkbook.blob);
   const sheetNames = (fullSheets as Array<{ sheet: string }>).map((s) => s.sheet);
-  for (const expectedSheet of ["sample-broker-statement", "Detailed Summary", "CA Summary"]) {
-    if (!sheetNames.includes(expectedSheet)) {
-      throw new Error(`Missing workbook sheet: ${expectedSheet}. Found: ${sheetNames.join(", ")}`);
-    }
+  // Requested order: (1) CA Summary, (2) Detailed Summary, then one sheet per raw file.
+  if (sheetNames[0] !== "CA Summary" || sheetNames[1] !== "Detailed Summary") {
+    throw new Error(`Full workbook must start with CA Summary then Detailed Summary. Found: ${sheetNames.join(", ")}`);
+  }
+  if (sheetNames[2] !== "sample-broker-statement") {
+    throw new Error(`Raw file sheet should follow the two summaries. Found: ${sheetNames.join(", ")}`);
   }
 
   const brokerRows = sheetData(fullSheets, "sample-broker-statement");
@@ -113,7 +115,69 @@ async function main() {
     }
   }
 
-  console.log("Validated webapp exports: CA Summary CSV/XLSX and RKM-style full workbook structure.");
+  // Multiple raw files: two capital-gains statements plus a bank-interest
+  // statement kept as a reference sheet. Each should get its own sheet, in
+  // upload order, after CA Summary + Detailed Summary, with short/unique/legal
+  // names (Excel caps sheet names at 31 chars and forbids : \ / ? * [ ]).
+  const multiFileState: ExportState = {
+    ...exportState,
+    documents: [
+      { name: "sample-broker-statement.csv", transactions: fixtureTransactions },
+      { name: "another-really-long-broker-statement-name-2025.xlsx", transactions: fixtureTransactions },
+      {
+        name: "hdfc-bank-interest.csv",
+        transactions: [],
+        rawSheet: {
+          headers: ["Date", "Description", "Interest Credited"],
+          records: [
+            { Date: "30-Jun-2025", Description: "Savings interest", "Interest Credited": 1234.5 },
+            { Date: "30-Sep-2025", Description: "Savings interest", "Interest Credited": 1310 }
+          ]
+        }
+      }
+    ]
+  };
+  const multiWorkbook = await buildFullWorkbookExport(multiFileState);
+  const multiSheets = await readWorkbook(multiWorkbook.blob);
+  const multiNames = (multiSheets as Array<{ sheet: string }>).map((s) => s.sheet);
+
+  if (multiNames.length !== 5) {
+    throw new Error(`Expected 5 sheets (2 summaries + 3 raw files), found ${multiNames.length}: ${multiNames.join(", ")}`);
+  }
+  if (multiNames[0] !== "CA Summary" || multiNames[1] !== "Detailed Summary") {
+    throw new Error(`Multi-file workbook must start with CA Summary then Detailed Summary. Found: ${multiNames.join(", ")}`);
+  }
+  const rawFileNames = multiNames.slice(2);
+  if (rawFileNames.length !== 3) {
+    throw new Error(`Expected one sheet per raw file after the two summaries. Found: ${rawFileNames.join(", ")}`);
+  }
+  const illegal = /[:\\/?*[\]]/;
+  for (const name of rawFileNames) {
+    if (name.length === 0 || name.length > 31) {
+      throw new Error(`Raw file sheet name must be 1-31 chars: "${name}" (${name.length}).`);
+    }
+    if (illegal.test(name)) {
+      throw new Error(`Raw file sheet name has an illegal character: "${name}".`);
+    }
+  }
+  if (new Set(multiNames.map((n) => n.toLowerCase())).size !== multiNames.length) {
+    throw new Error(`Sheet names must be unique (case-insensitive). Found: ${multiNames.join(", ")}`);
+  }
+
+  // The reference sheet should preserve the raw rows verbatim (its header row
+  // plus both data rows), and never feed the tax working.
+  const referenceSheet = sheetData(multiSheets, rawFileNames[2]);
+  const referenceHeaderRow = referenceSheet.find((row) => String(row[0]) === "Date");
+  if (!referenceHeaderRow || !referenceHeaderRow.some((cell) => String(cell) === "Interest Credited")) {
+    throw new Error("Reference sheet should preserve the raw upload's header row (Date … Interest Credited).");
+  }
+  if (!referenceSheet.some((row) => Number(row[2]) === 1234.5)) {
+    throw new Error("Reference sheet should preserve the raw upload's data rows verbatim.");
+  }
+
+  console.log(
+    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), and multi-file sheet naming + raw reference passthrough."
+  );
 }
 
 async function readM1Reference() {

@@ -6,6 +6,19 @@ import { parseFixtureDate } from "../ingest/normalize";
 export type ExportDocument = {
   name: string;
   transactions: NormalizedTransaction[];
+  /**
+   * Rows preserved verbatim from a raw upload that isn't a capital-gains
+   * statement (bank interest, dividends, MF holdings). When present and there
+   * are no transactions, the workbook emits a reference-only sheet for it
+   * instead of the formula-driven broker sheet.
+   */
+  rawSheet?: RawSheet;
+};
+
+/** A raw upload kept as-is for reference: header names plus already-normalized primitive cell values. */
+export type RawSheet = {
+  headers: string[];
+  records: Record<string, string | number>[];
 };
 
 export type RateInputs = {
@@ -396,6 +409,46 @@ export function buildBrokerSheet(
       brokerTaxableCol,
       brokerSpeculativeCol
     }
+  };
+}
+
+/**
+ * A verbatim reference sheet for a raw upload the tax engine doesn't parse
+ * (bank interest, dividend, or MF-holding statements). Rows are preserved as
+ * uploaded and no tax working is applied — the sheet exists so the full
+ * workbook holds a copy of every document the user gave us.
+ */
+export function buildRawSheet(
+  documentName: string,
+  raw: RawSheet,
+  sheetNameOverride?: string
+): { sheet: string; data: SheetData; columns: { width: number }[] } {
+  const sheetName = sheetNameOverride ?? sanitizeSheetName(documentName);
+  const headers =
+    raw.headers.length > 0
+      ? raw.headers
+      : Array.from(new Set(raw.records.flatMap((record) => Object.keys(record))));
+  const totalCols = Math.max(headers.length, 1);
+
+  const data: SheetData = [];
+  data.push(mergeTitle(emptyRow(totalCols), `${documentName} — Reference Copy (not tax-calculated)`, totalCols));
+  data.push(
+    mergeTitle(
+      emptyRow(totalCols),
+      `Source: ${documentName} | Rows preserved exactly as uploaded. This is a reference only — no tax working is applied to it.`,
+      totalCols
+    )
+  );
+  data.push(emptyRow(totalCols));
+  data.push(headers.map((header) => txt(header, C.th)));
+  for (const record of raw.records) {
+    data.push(headers.map((header) => brokerCellValue(record[header])));
+  }
+
+  return {
+    sheet: sheetName,
+    data,
+    columns: headers.map(() => ({ width: 18 }))
   };
 }
 

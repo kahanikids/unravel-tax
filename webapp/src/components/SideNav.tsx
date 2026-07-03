@@ -1,7 +1,6 @@
 import { STEP_LABELS, STEP_ORDER, type AppStep } from "../state/types";
 import {
   IconChart,
-  IconChecklist,
   IconCompass,
   IconHelp,
   IconPerson,
@@ -14,14 +13,12 @@ const RAIL_STEPS = STEP_ORDER.filter((step): step is Exclude<AppStep, "welcome">
 
 const STEP_ICONS: Record<Exclude<AppStep, "welcome">, typeof IconPerson> = {
   orientation: IconPerson,
-  checklist: IconChecklist,
   documents: IconUpload,
   results: IconChart
 };
 
 const MOBILE_STEP_LABELS: Record<Exclude<AppStep, "welcome">, string> = {
   orientation: "About",
-  checklist: "List",
   documents: "Docs",
   results: "Files"
 };

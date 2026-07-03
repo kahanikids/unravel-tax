@@ -39,7 +39,7 @@ Slices:
     exactly one next action at each stage.
 
 - **M1B - Template workbook** - done 2026-07-02
-  - Generalize the RKM workbook structure into a synthetic-data template.
+  - Generalize the reference workbook structure into a synthetic-data template.
   - Include common tabs and profile-specific tabs described in
     `SYSTEM_SPEC.md`.
   - Use formulas for derived values; no real personal data.

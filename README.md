@@ -1,14 +1,14 @@
 # Unravel Tax
 
-![Unravel Tax logo](assets/unravel-tax-logo.svg)
+![Unravel Tax logo](webapp/public/unravel-tax-logo.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg)](CONTRIBUTING.md)
 
-**Untangle your tax filings.** Turn PDFs, Excel files, CSVs, and saved
-webpages into two clean files: one to send your CA, one to keep. Open source,
-no signup — everything runs in your browser; nothing you enter leaves your
-device.
+**Turn a pile of tax documents into a filing you understand.** Unravel Tax
+turns PDFs, Excel files, CSVs, and saved webpages into two clean files: one to
+send your CA, one to keep. Open source, no signup — everything runs in your
+browser; nothing you enter leaves your device.
 
 **Not tax advice. Not affiliated with the Income Tax Department, CBDT, or
 Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See

@@ -164,22 +164,57 @@ function isUnanswered(question: Question, answers: OrientationAnswers): boolean 
   return question.value(answers) === null;
 }
 
+/** Short, plain-language labels for the saved-answers summary card, so a
+ * returning user sees a scannable recap rather than the full question text. */
+const SUMMARY_LABELS: Record<string, string> = {
+  residency: "Where you live",
+  huf: "Income held through a family (HUF)",
+  seniorCitizen: "60 or older",
+  singleParent: "Single parent with minor children",
+  incomeSources: "Kinds of income",
+  multipleEmployers: "More than one employer this year",
+  hraClaimed: "Claim rent against salary (HRA)",
+  hraAboveThreshold: "Annual rent over ~₹1 lakh",
+  hasLandlordPan: "Have landlord's PAN",
+  epfWithdrawal: "Took money out of provident fund",
+  epfBeforeFiveYears: "Withdrawal before 5 years of service"
+};
+
+function formatAnswer(question: Question, answers: OrientationAnswers): string {
+  if (question.kind === "choice") {
+    const value = question.value(answers);
+    return question.options.find((option) => option.value === value)?.label ?? "Not answered";
+  }
+  if (question.kind === "multi") {
+    const values = question.value(answers);
+    if (values.length === 0) {
+      return "None selected";
+    }
+    return question.options
+      .filter((option) => values.includes(option.value))
+      .map((option) => option.label)
+      .join(", ");
+  }
+  const value = question.value(answers);
+  return value === null ? "Skipped" : value ? "Yes" : "No";
+}
+
 export function OrientationForm({
   answers,
   onChange,
-  onComplete,
-  onStartOver
+  onComplete
 }: {
   answers: OrientationAnswers;
   onChange: (answers: OrientationAnswers) => void;
   onComplete: () => void;
-  onStartOver: () => void;
 }) {
   const visible = QUESTIONS.filter((question) => question.visible(answers));
-  // If this mounts with answers already filled in (e.g. navigated back to
-  // via the header step nav, not a fresh start), resume at the first
-  // unanswered question instead of making the user click back through
-  // everything they already answered.
+  const hasAnswers = QUESTIONS.some((question) => !isUnanswered(question, answers));
+  // Coming back to "About you" with answers already saved shows a recap first
+  // (not question 1 again), so the flow doesn't feel like starting over. A
+  // fresh start (blank answers) goes straight into the questions.
+  const [enteredWithAnswers] = useState(hasAnswers);
+  const [mode, setMode] = useState<"summary" | "questions">(hasAnswers ? "summary" : "questions");
   const [index, setIndex] = useState(() => {
     const firstUnanswered = visible.findIndex((question) => isUnanswered(question, answers));
     return firstUnanswered === -1 ? Math.max(0, visible.length - 1) : firstUnanswered;
@@ -188,11 +223,43 @@ export function OrientationForm({
   const progressPercent = ((index + 1) / visible.length) * 100;
 
   useEffect(() => {
-    if (!current) {
+    if (mode === "questions" && !current) {
       onComplete();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current]);
+  }, [current, mode]);
+
+  if (mode === "summary") {
+    return (
+      <div className="orientation-card">
+        <h2 className="orientation-prompt">Your answers</h2>
+        <p className="orientation-note">Here's what you told us. These shape your checklist and recommendations.</p>
+        <dl className="orientation-summary">
+          {visible.map((question) => (
+            <div key={question.id} className="orientation-summary-row">
+              <dt>{SUMMARY_LABELS[question.id] ?? question.prompt}</dt>
+              <dd>{formatAnswer(question, answers)}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="orientation-summary-actions">
+          <button type="button" className="primary-button" onClick={onComplete}>
+            Continue
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setIndex(0);
+              setMode("questions");
+            }}
+          >
+            Update answers
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!current) {
     return null;
@@ -260,12 +327,13 @@ export function OrientationForm({
       ) : null}
 
       <div className="orientation-nav">
-        <button type="button" className="danger-button orientation-start-over" onClick={onStartOver}>
-          Start over
-        </button>
         {index > 0 ? (
           <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
             ← Back
+          </button>
+        ) : enteredWithAnswers ? (
+          <button type="button" className="text-button" onClick={() => setMode("summary")}>
+            ← Back to my answers
           </button>
         ) : (
           <span />

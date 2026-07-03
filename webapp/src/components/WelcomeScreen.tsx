@@ -1,10 +1,12 @@
 import { IconChecklist, IconCompass, IconUpload } from "./icons";
+import { CountdownBanner } from "./CountdownBanner";
 import { LEGAL_INTRO, LEGAL_SECTIONS, REPORT_ISSUE_URL, REPO_URL } from "../lib/copy";
 
 export function WelcomeScreen({
   onStart,
   onStartComputationFirst,
   onResume,
+  onStartOver,
   hasSavedSession,
   onShowCapabilities,
   onShowTour,
@@ -14,6 +16,7 @@ export function WelcomeScreen({
   onStart: () => void;
   onStartComputationFirst: () => void;
   onResume: () => void;
+  onStartOver: () => void;
   hasSavedSession: boolean;
   onShowCapabilities: () => void;
   onShowTour: () => void;
@@ -46,12 +49,20 @@ export function WelcomeScreen({
       </div>
       <p className="welcome-time-estimate">Takes about 15-20 minutes.</p>
 
+      <CountdownBanner />
+
       {hasSavedSession ? (
         <div className="resume-banner">
           <p>You have a filing in progress, saved in this browser.</p>
-          <button type="button" className="primary-button" onClick={onResume}>
-            Resume where you left off
-          </button>
+          <div className="resume-banner-actions">
+            <button type="button" className="primary-button" onClick={onResume}>
+              <span className="welcome-resume-desktop">Resume where you left off</span>
+              <span className="welcome-resume-mobile">Resume</span>
+            </button>
+            <button type="button" className="secondary-button" onClick={onStartOver}>
+              Start over
+            </button>
+          </div>
         </div>
       ) : null}
 

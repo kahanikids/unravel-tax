@@ -1,6 +1,7 @@
 import type { NormalizedTransaction } from "../ingest";
 import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
 import type { TdsRow } from "./reconciliation";
+import type { RawSheet } from "./workbookExport";
 
 /**
  * BUILD_PLAN.md Section 9: browser localStorage only, used solely as a
@@ -12,6 +13,8 @@ export type PersistedDocument = {
   fileName: string;
   rowCount: number;
   transactions: NormalizedTransaction[];
+  /** Present for raw reference uploads (bank/dividend/MF statements) kept as-is. */
+  rawSheet?: RawSheet;
 };
 
 export type PersistedSession = {
@@ -56,6 +59,13 @@ export function parseSession(raw: string | null): PersistedSession | null {
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.version !== 1 || parsed.step === "welcome") {
       return null;
+    }
+    // The standalone "checklist" step was folded into the persistent
+    // "Things to gather" panel, so a session saved on it resumes on the
+    // documents step (its old immediate next step) instead of a step that
+    // no longer renders.
+    if (parsed.step === "checklist") {
+      parsed.step = "documents";
     }
     return parsed as PersistedSession;
   } catch {

@@ -7,9 +7,11 @@ import { DocumentSourceHint } from "./DocumentSourceHint";
 const MOBILE_TABLET_BREAKPOINT = 860;
 
 /**
- * The persistent "things to check" panel (BUILD_PLAN.md Section 4). This
- * runs on every render, not on request, and is meant to be visible from the
- * Checklist step onward - not a screen the user has to remember to visit.
+ * The persistent "things to gather" panel (BUILD_PLAN.md Section 4). This
+ * runs on every render, not on request, and is the single home for the
+ * document checklist - folded in here (rather than a separate nav step) so
+ * it's always visible from the documents step onward, not a screen the user
+ * has to remember to visit.
  *
  * On mobile/tablet this panel stacks above the main content (see the
  * max-width: 860px rules in styles.css), so a long list of items can push
@@ -37,7 +39,7 @@ export function ChecklistPanel({
   return (
     <aside className="checklist-panel" aria-labelledby="checklist-title">
       <div className="checklist-panel-heading">
-        <h2 id="checklist-title">Things to check</h2>
+        <h2 id="checklist-title">Things to gather</h2>
         <span className={openCount === 0 ? "pill pill-ready" : "pill pill-open"}>
           {openCount === 0 ? "All clear" : `${openCount} open`}
         </span>

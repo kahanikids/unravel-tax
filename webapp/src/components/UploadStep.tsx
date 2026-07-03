@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   deriveComputedFields,
+  formatFixtureDate,
   parseFile,
   parsePastedExtraction,
   reparseWithColumnMap,
@@ -10,6 +11,21 @@ import {
 } from "../ingest";
 import { EXPECTED_TRANSACTION_COLUMNS } from "../ingest/types";
 import type { CanonicalTransactionColumn } from "../ingest/headerMatching";
+import type { RawSheet } from "../lib";
+
+/** Dates from Excel/HTML arrive as Date objects; flatten to a stable string so the reference sheet and saved session hold plain primitives. */
+function toRawSheet(headers: string[], records: Record<string, string | number | Date>[]): RawSheet {
+  return {
+    headers,
+    records: records.map((record) => {
+      const flat: Record<string, string | number> = {};
+      for (const [key, value] of Object.entries(record)) {
+        flat[key] = value instanceof Date ? formatFixtureDate(value) : value;
+      }
+      return flat;
+    })
+  };
+}
 
 export type UploadedDocument = {
   fileName: string;
@@ -27,6 +43,7 @@ type PendingReview = {
 export function UploadStep({
   documents,
   onCommit,
+  onCommitReference,
   onRemove,
   onContinue,
   localFolderSupported,
@@ -35,6 +52,7 @@ export function UploadStep({
 }: {
   documents: UploadedDocument[];
   onCommit: (transactions: NormalizedTransaction[], fileName: string) => void;
+  onCommitReference: (fileName: string, rawSheet: RawSheet) => void;
   onRemove: (index: number) => void;
   onContinue: () => void;
   localFolderSupported: boolean;
@@ -48,6 +66,9 @@ export function UploadStep({
   const [error, setError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  // Files chosen together are reviewed one at a time; the rest wait here and
+  // advance automatically as each is added, discarded, or skipped.
+  const [queue, setQueue] = useState<File[]>([]);
 
   useEffect(() => {
     if (!awaitingPaste || extractionPrompt) {
@@ -59,7 +80,10 @@ export function UploadStep({
       .catch(() => setExtractionPrompt("Could not load extraction prompt. See prompts/01-extract-statement.md in the repo."));
   }, [awaitingPaste, extractionPrompt]);
 
-  function openReview(fileName: string, result: IngestResult) {
+  /** Opens the right review UI for a file. Returns true when it needs the user
+   * (a review modal or the paste panel), false when nothing interactive opened
+   * (a hard error) so a queued batch can move on to the next file. */
+  function openReview(fileName: string, result: IngestResult): boolean {
     const missingCols = EXPECTED_TRANSACTION_COLUMNS.filter(
       (col) => !Object.values(result.headerMap).includes(col)
     );
@@ -72,7 +96,7 @@ export function UploadStep({
         warnings: result.warnings,
         columnAssignments: {}
       });
-      return;
+      return true;
     }
 
     if (result.sourceHeaders.length > 0 && missingCols.length > 0) {
@@ -83,32 +107,57 @@ export function UploadStep({
         warnings: result.warnings,
         columnAssignments: {}
       });
-      return;
+      return true;
     }
 
     if (result.promptRoute) {
       setAwaitingPaste({ fileName, reason: result.promptRoute.reason });
-      return;
+      return true;
     }
 
-    setError(result.warnings[0]?.message ?? "Could not read any transaction rows from that file.");
+    setError(`Could not read any rows from ${fileName}. ${result.warnings[0]?.message ?? ""}`.trim());
+    return false;
   }
 
-  async function handleFile(fileList: FileList | null) {
-    const file = fileList?.[0];
-    if (!file) {
-      return;
-    }
-    setError(null);
+  async function processFile(file: File) {
     setParsing(true);
+    let opened = false;
     try {
-      openReview(file.name, await parseFile(file));
+      opened = openReview(file.name, await parseFile(file));
     } catch {
-      setError("Could not read that file.");
+      setError(`Could not read ${file.name}.`);
     } finally {
       setParsing(false);
       setIsDragOver(false);
     }
+    // A file that opened nothing interactive shouldn't stall the rest of a batch.
+    if (!opened) {
+      advanceQueue();
+    }
+  }
+
+  // Pull the next queued file into review. Called at each terminal point of the
+  // current file's review (added, discarded, skipped, or paste cancelled).
+  function advanceQueue() {
+    setQueue((prev) => {
+      if (prev.length === 0) {
+        return prev;
+      }
+      const [next, ...rest] = prev;
+      void processFile(next);
+      return rest;
+    });
+  }
+
+  async function handleFiles(fileList: FileList | null) {
+    const files = fileList ? Array.from(fileList) : [];
+    if (files.length === 0) {
+      return;
+    }
+    setError(null);
+    const [first, ...rest] = files;
+    setQueue(rest);
+    await processFile(first);
   }
 
   function handlePasteSubmit() {
@@ -160,6 +209,24 @@ export function UploadStep({
     }
     onCommit(pending.transactions, pending.fileName);
     setPending(null);
+    advanceQueue();
+  }
+
+  // For a raw upload that isn't a capital-gains statement (bank interest,
+  // dividends, MF holdings): keep its rows verbatim as a reference sheet in the
+  // workbook rather than dropping the file. It contributes no tax figures.
+  function addAsReference() {
+    if (!pending) {
+      return;
+    }
+    onCommitReference(pending.fileName, toRawSheet(pending.ingest.sourceHeaders, pending.ingest.sourceRecords));
+    setPending(null);
+    advanceQueue();
+  }
+
+  function discardPending() {
+    setPending(null);
+    advanceQueue();
   }
 
   function updatePendingRow(index: number, patch: Partial<NormalizedTransaction>) {
@@ -191,14 +258,15 @@ export function UploadStep({
       <h2>Add your documents</h2>
       <p className="step-lede">
         <span className="upload-lede-desktop">
-          One at a time: add a document, confirm what we read, then the next. CSV, Excel, and saved webpages are read
-          in your browser. PDFs and pasted text go through the guided extraction prompt.
+          Add all your statements at once, or a few at a time — we'll walk through them one by one and show what we read
+          before using anything. CSV, Excel, and saved webpages are read in your browser. PDFs and pasted text go through
+          the guided extraction prompt.
         </span>
-        <span className="upload-lede-mobile">Add one statement at a time. We'll show what we read before using it.</span>
+        <span className="upload-lede-mobile">Add your statements — pick several at once if you like. We'll show what we read before using each.</span>
       </p>
 
       {parsing ? (
-        <p className="upload-parsing-hint">Reading file...</p>
+        <p className="upload-parsing-hint">Reading file{queue.length > 0 ? ` (${queue.length} more queued)` : ""}...</p>
       ) : (
         <div
           className={isDragOver ? "upload-dropzone upload-dropzone-active" : "upload-dropzone"}
@@ -210,19 +278,20 @@ export function UploadStep({
           onDragLeave={() => setIsDragOver(false)}
           onDrop={(event) => {
             event.preventDefault();
-            handleFile(event.dataTransfer.files);
+            handleFiles(event.dataTransfer.files);
           }}
         >
           <label className="primary-button upload-button">
-            Choose a file
+            Choose files
             <input
               type="file"
               accept=".csv,.xlsx,.xls,.html,.htm,.tsv,.txt,.pdf"
-              onChange={(event) => handleFile(event.target.files)}
+              multiple
+              onChange={(event) => handleFiles(event.target.files)}
               hidden
             />
           </label>
-          <p className="upload-hint">Drop a file here, or click to choose. Broker/AMC capital gains statements are the main thing this step is for.</p>
+          <p className="upload-hint">Drop files here, or click to choose — you can pick several at once. Broker/AMC capital gains statements are the main thing this step is for; bank interest, dividend, and MF statements can be added too.</p>
         </div>
       )}
 
@@ -271,7 +340,14 @@ export function UploadStep({
             <button type="button" className="primary-button" onClick={handlePasteSubmit} disabled={!pasteText.trim()}>
               Read this table
             </button>
-            <button type="button" className="text-button" onClick={() => setAwaitingPaste(null)}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                setAwaitingPaste(null);
+                advanceQueue();
+              }}
+            >
               Cancel
             </button>
           </div>
@@ -453,6 +529,15 @@ export function UploadStep({
                 </table>
               </div>
             )}
+            {pending.transactions.length === 0 && pending.ingest.sourceRecords.length > 0 ? (
+              <p className="column-mapper-alt">
+                Not a capital-gains statement (e.g. bank interest, dividends, or an MF holdings list)?{" "}
+                <button type="button" className="text-button" onClick={addAsReference}>
+                  Keep it as a reference sheet
+                </button>{" "}
+                — its rows go into your workbook as-is, without being tax-calculated.
+              </p>
+            ) : null}
             <div className="modal-actions">
               <button
                 type="button"
@@ -462,7 +547,7 @@ export function UploadStep({
               >
                 Looks right, add to my filing
               </button>
-              <button type="button" className="text-button" onClick={() => setPending(null)}>
+              <button type="button" className="text-button" onClick={discardPending}>
                 Discard this document
               </button>
             </div>
