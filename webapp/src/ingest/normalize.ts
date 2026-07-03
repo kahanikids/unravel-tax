@@ -124,6 +124,12 @@ export function parseNumber(value: string | number | Date): number {
   if (!cleaned || cleaned === "-" || cleaned.toLowerCase() === "n/a") {
     return NaN;
   }
+  // Broker statements often write losses in accounting style: (1,234.56).
+  const parenMatch = /^\((.+)\)$/.exec(cleaned);
+  if (parenMatch) {
+    const inner = Number(parenMatch[1]);
+    return Number.isNaN(inner) ? NaN : -inner;
+  }
   return Number(cleaned);
 }
 
