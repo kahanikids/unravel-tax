@@ -13,6 +13,7 @@ import {
   deriveProfileFlags,
   downloadExport,
   evaluateRiskTriggers,
+  figureMismatches,
   FOOTER_NOTE,
   ITR_FORM_REASONS,
   isLocalFolderSupported,
@@ -23,17 +24,21 @@ import {
   saveSession,
   selectItrForm,
   summarizeWithRules,
+  tdsMismatches,
   transactionsCsv,
   type ChecklistItem,
   type ExportFile,
-  type LocalFolderHandle
+  type LocalFolderHandle,
+  type TdsRow
 } from "./lib";
 import type { NormalizedTransaction } from "./ingest";
 import { ruleCatalog } from "./rules";
 import {
+  BLANK_AIS_REPORTED_FIGURES,
   BLANK_ORIENTATION,
   BLANK_SUPPLEMENTAL_FIGURES,
   STEP_ORDER,
+  type AisReportedFigures,
   type AppStep,
   type OrientationAnswers,
   type SupplementalFigures
@@ -56,6 +61,8 @@ function App() {
   const [orientation, setOrientation] = useState<OrientationAnswers>(BLANK_ORIENTATION);
   const [documents, setDocuments] = useState<DocumentEntry[]>([]);
   const [supplementalFigures, setSupplementalFigures] = useState<SupplementalFigures>(BLANK_SUPPLEMENTAL_FIGURES);
+  const [aisFigures, setAisFigures] = useState<AisReportedFigures>(BLANK_AIS_REPORTED_FIGURES);
+  const [tdsRows, setTdsRows] = useState<TdsRow[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
@@ -88,8 +95,27 @@ function App() {
     if (step === "welcome" || sampleMode) {
       return;
     }
-    saveSession({ step, furthestStepIndex, orientation, documents, supplementalFigures, acknowledgedTriggerIds });
-  }, [step, furthestStepIndex, orientation, documents, supplementalFigures, acknowledgedTriggerIds, sampleMode]);
+    saveSession({
+      step,
+      furthestStepIndex,
+      orientation,
+      documents,
+      supplementalFigures,
+      acknowledgedTriggerIds,
+      aisFigures,
+      tdsRows
+    });
+  }, [
+    step,
+    furthestStepIndex,
+    orientation,
+    documents,
+    supplementalFigures,
+    acknowledgedTriggerIds,
+    aisFigures,
+    tdsRows,
+    sampleMode
+  ]);
 
   const transactions = documents.flatMap((document) => document.transactions);
   const flags = deriveProfileFlags(orientation);
@@ -132,7 +158,26 @@ function App() {
   };
 
   const displayDocuments: UploadedDocument[] = documents.map(({ fileName, rowCount }) => ({ fileName, rowCount }));
-  const openIssueCount = checklistGaps(checklistItems).length + riskTriggers.length;
+
+  // BUILD_PLAN.md Section 4: reconciliation runs on every dashboard view, not
+  // only on request, so any AIS/26AS/Form 16 figure the user has typed in
+  // feeds straight into the same open-issue count as missing documents and
+  // risk triggers.
+  const aisExpectedFigures: Record<string, number> = {};
+  const aisReportedFiguresPresent: Record<string, number> = {};
+  if (aisFigures.dividends !== null) {
+    aisExpectedFigures.Dividends = supplementalFigures.dividends;
+    aisReportedFiguresPresent.Dividends = aisFigures.dividends;
+  }
+  if (aisFigures.interestOtherIncome !== null) {
+    aisExpectedFigures["Interest & other income"] = supplementalFigures.interestOtherIncome;
+    aisReportedFiguresPresent["Interest & other income"] = aisFigures.interestOtherIncome;
+  }
+  const reconciliationMismatchCount =
+    figureMismatches(aisExpectedFigures, aisReportedFiguresPresent, "AIS/Form 26AS").length +
+    tdsMismatches(tdsRows).length;
+
+  const openIssueCount = checklistGaps(checklistItems).length + riskTriggers.length + reconciliationMismatchCount;
 
   function startOrientation() {
     setSampleMode(false);
@@ -184,6 +229,8 @@ function App() {
     setDocuments(session.documents);
     setSupplementalFigures(session.supplementalFigures);
     setAcknowledgedTriggerIds(session.acknowledgedTriggerIds);
+    setAisFigures(session.aisFigures ?? BLANK_AIS_REPORTED_FIGURES);
+    setTdsRows(session.tdsRows ?? []);
     setSampleMode(false);
     setFurthestStepIndex(session.furthestStepIndex ?? STEP_ORDER.indexOf(session.step));
     setStep(session.step);
@@ -198,6 +245,8 @@ function App() {
     setDocuments([]);
     setSupplementalFigures(BLANK_SUPPLEMENTAL_FIGURES);
     setAcknowledgedTriggerIds([]);
+    setAisFigures(BLANK_AIS_REPORTED_FIGURES);
+    setTdsRows([]);
     setSampleMode(false);
     setFurthestStepIndex(0);
     setStep("welcome");
@@ -250,7 +299,7 @@ function App() {
         transactions,
         calculationSummary,
         checklistItems,
-        tdsRows: [],
+        tdsRows,
         openIssueCount
       })
     );
@@ -376,6 +425,10 @@ function App() {
                 caRecommendation={caRecommendation}
                 supplementalFigures={supplementalFigures}
                 onChangeSupplementalFigures={setSupplementalFigures}
+                aisFigures={aisFigures}
+                onChangeAisFigures={setAisFigures}
+                tdsRows={tdsRows}
+                onChangeTdsRows={setTdsRows}
                 showAdvanced={showAdvanced}
                 onToggleAdvanced={() => setShowAdvanced((value) => !value)}
                 exportMessage={exportMessage}

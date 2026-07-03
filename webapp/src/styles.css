@@ -1049,6 +1049,75 @@ button.progress-step.progress-step-current:hover {
   font-size: 0.95rem;
 }
 
+.reconciliation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reconciliation-panel h3 {
+  font-size: 1.05rem;
+}
+
+.reconciliation-panel h4 {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.tds-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tds-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.tds-row input {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .tds-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reconciliation-status {
+  padding-top: 4px;
+}
+
+.reconciliation-clean {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.mismatch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mismatch-list li {
+  border-left: 3px solid var(--flag);
+  padding-left: 12px;
+}
+
+.mismatch-list p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-top: 2px;
+}
+
 .result-summary {
   display: flex;
   flex-direction: column;

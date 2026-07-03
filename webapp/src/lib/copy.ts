@@ -117,9 +117,14 @@ export const CAPABILITIES: Capability[] = [
     detail: "Open the webapp link and start. Running it locally is still available for contributors who prefer that."
   },
   {
+    label: "Plain-language \"why this number?\" drilldown",
+    status: "available",
+    detail: "Every results row, plus the ITR form and CA/self-file call, has a short explanation of the rule or profile detail behind it."
+  },
+  {
     label: "AIS / Form 26AS / Form 16 reconciliation",
-    status: "planned",
-    detail: "Comparing your document totals against what the tax department already has on record isn't built yet."
+    status: "available",
+    detail: "Type in what those documents show for dividends, interest, and TDS per source, and any mismatch against your calculated figures is flagged right away."
   },
   {
     label: "A final pre-export confidence check",

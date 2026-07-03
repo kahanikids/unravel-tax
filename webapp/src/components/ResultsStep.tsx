@@ -1,6 +1,8 @@
 import type { CaSummaryRow } from "../lib/calculations";
 import type { CaRecommendation } from "../lib/riskTriggers";
-import type { SupplementalFigures } from "../state/types";
+import type { TdsRow } from "../lib/reconciliation";
+import type { AisReportedFigures, SupplementalFigures } from "../state/types";
+import { ReconciliationPanel } from "./ReconciliationPanel";
 import type { UploadedDocument } from "./UploadStep";
 
 function formatAmount(value: number) {
@@ -22,6 +24,10 @@ export function ResultsStep({
   caRecommendation,
   supplementalFigures,
   onChangeSupplementalFigures,
+  aisFigures,
+  onChangeAisFigures,
+  tdsRows,
+  onChangeTdsRows,
   showAdvanced,
   onToggleAdvanced,
   exportMessage,
@@ -38,6 +44,10 @@ export function ResultsStep({
   caRecommendation: CaRecommendation;
   supplementalFigures: SupplementalFigures;
   onChangeSupplementalFigures: (figures: SupplementalFigures) => void;
+  aisFigures: AisReportedFigures;
+  onChangeAisFigures: (figures: AisReportedFigures) => void;
+  tdsRows: TdsRow[];
+  onChangeTdsRows: (rows: TdsRow[]) => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
   exportMessage: string;
@@ -79,6 +89,15 @@ export function ResultsStep({
           ))}
         </div>
       </section>
+
+      <ReconciliationPanel
+        calculatedDividends={supplementalFigures.dividends}
+        calculatedInterestOtherIncome={supplementalFigures.interestOtherIncome}
+        aisFigures={aisFigures}
+        onChangeAisFigures={onChangeAisFigures}
+        tdsRows={tdsRows}
+        onChangeTdsRows={onChangeTdsRows}
+      />
 
       <section className="result-summary">
         <div className="panel-heading">

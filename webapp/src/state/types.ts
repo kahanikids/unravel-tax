@@ -71,3 +71,19 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   deductibleTransactionCharges: 0,
   carryForwardLossesAvailable: 0
 };
+
+/**
+ * What your AIS, Form 26AS, or Form 16 says, for a manual side-by-side check
+ * against the calculated figures above. `null` means "not entered yet", kept
+ * distinct from 0 (AIS reports a real zero) so an empty field never shows as
+ * a false mismatch.
+ */
+export type AisReportedFigures = {
+  dividends: number | null;
+  interestOtherIncome: number | null;
+};
+
+export const BLANK_AIS_REPORTED_FIGURES: AisReportedFigures = {
+  dividends: null,
+  interestOtherIncome: null
+};

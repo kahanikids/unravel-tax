@@ -6,6 +6,18 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added a manual AIS / Form 26AS / Form 16 reconciliation panel to the
+  results screen (`ReconciliationPanel`): enter what those documents show
+  for dividends, interest, and TDS per source, and any mismatch against
+  the calculated figures is flagged immediately, no button to press, per
+  BUILD_PLAN.md Section 4's "runs on every dashboard view" requirement.
+  Entirely optional and never blocks an export; mismatches now also count
+  toward the open-issues total shown before exporting. Wired the existing
+  `tdsRows` plumbing (previously hardcoded empty) into the full workbook's
+  TDS Reconciliation sheet, and persisted the new figures in the
+  browser-only session so a resumed filing keeps them. Updated the
+  capabilities panel to mark this and the "why this number" drilldown as
+  available.
 - Added a plain-language "Why this number?" drilldown to every results row:
   each `CaSummaryRow` now carries a specific, rule-grounded explanation
   (holding-period thresholds and rates for STCG/LTCG, why intraday income

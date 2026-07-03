@@ -1,5 +1,6 @@
 import type { NormalizedTransaction } from "../ingest";
-import type { AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type { TdsRow } from "./reconciliation";
 
 /**
  * BUILD_PLAN.md Section 9: browser localStorage only, used solely as a
@@ -26,6 +27,10 @@ export type PersistedSession = {
   documents: PersistedDocument[];
   supplementalFigures: SupplementalFigures;
   acknowledgedTriggerIds: string[];
+  /** Optional for compatibility with sessions saved before AIS/26AS/Form 16
+   * reconciliation existed. */
+  aisFigures?: AisReportedFigures;
+  tdsRows?: TdsRow[];
 };
 
 const STORAGE_KEY = "unravel-tax-session";

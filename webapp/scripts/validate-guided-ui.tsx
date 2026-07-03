@@ -5,7 +5,7 @@ import { OrientationForm } from "../src/components/OrientationForm";
 import { ResultsStep } from "../src/components/ResultsStep";
 import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
-import { BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
+import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
 import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { CaRecommendation } from "../src/lib/riskTriggers";
@@ -178,6 +178,10 @@ function checkResultsStepDefaultsToSimple() {
       caRecommendation={SAMPLE_RECOMMENDATION}
       supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
       onChangeSupplementalFigures={noop}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
       exportMessage="Exports are generated in this browser."
@@ -211,6 +215,10 @@ function checkResultsStepAdvancedToggle() {
       caRecommendation={SAMPLE_RECOMMENDATION}
       supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
       onChangeSupplementalFigures={noop}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
       showAdvanced
       onToggleAdvanced={noop}
       exportMessage=""
@@ -227,6 +235,66 @@ function checkResultsStepAdvancedToggle() {
   console.log("Validated results step: advanced toggle reveals full detail and the documents ledger.");
 }
 
+function resultsStepWithReconciliation(props: {
+  aisFigures: { dividends: number | null; interestOtherIncome: number | null };
+  tdsRows: { source: string; tdsPerDocument: number; tdsPerAis: number }[];
+  supplementalFigures?: typeof BLANK_SUPPLEMENTAL_FIGURES;
+}) {
+  return renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={props.supplementalFigures ?? BLANK_SUPPLEMENTAL_FIGURES}
+      onChangeSupplementalFigures={noop}
+      aisFigures={props.aisFigures}
+      onChangeAisFigures={noop}
+      tdsRows={props.tdsRows}
+      onChangeTdsRows={noop}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+}
+
+function checkReconciliationPanel() {
+  const emptyHtml = resultsStepWithReconciliation({
+    aisFigures: { dividends: null, interestOtherIncome: null },
+    tdsRows: []
+  });
+  assertIncludes(emptyHtml, "Check against your AIS, Form 26AS, or Form 16");
+  assertIncludes(emptyHtml, "Add a figure or a TDS row above to check for mismatches.");
+  if (emptyHtml.includes("No mismatches found")) {
+    throw new Error("Reconciliation panel should not claim a clean match before anything is entered.");
+  }
+
+  const matchedHtml = resultsStepWithReconciliation({
+    aisFigures: { dividends: 0, interestOtherIncome: 0 },
+    tdsRows: []
+  });
+  assertIncludes(matchedHtml, "No mismatches found.");
+
+  const mismatchedHtml = resultsStepWithReconciliation({
+    aisFigures: { dividends: 5000, interestOtherIncome: null },
+    tdsRows: [{ source: "Sample Bank", tdsPerDocument: 1000, tdsPerAis: 800 }]
+  });
+  assertIncludes(mismatchedHtml, "Dividends");
+  assertIncludes(mismatchedHtml, "Sample Bank");
+  if (mismatchedHtml.includes("Everything you've entered matches")) {
+    throw new Error("Reconciliation panel should surface a planted mismatch, not report a clean match.");
+  }
+
+  console.log("Validated reconciliation panel: blank/matched/mismatched AIS and TDS states all render correctly.");
+}
+
 function assertIncludes(value: string, expected: string) {
   if (!value.includes(expected)) {
     throw new Error(`Rendered output is missing: ${expected}`);
@@ -241,6 +309,7 @@ function main() {
   checkChecklistPanel();
   checkResultsStepDefaultsToSimple();
   checkResultsStepAdvancedToggle();
+  checkReconciliationPanel();
 }
 
 main();
