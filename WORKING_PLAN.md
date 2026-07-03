@@ -157,9 +157,22 @@ section for the honest gap list. In priority order, what's actually left:
    https://kahanikids.github.io/unravel-tax/ via GitHub Pages, deployed by
    `.github/workflows/deploy-pages.yml` on every push to `main` under
    `webapp/`. README.md's "Start here" now points there first.
-2. **Wire NRI/HUF/single-parent calculations**, not just their orientation
+2. ~~Confidence, recovery, and coverage pass~~ - done 2026-07-03. Capabilities
+   panel, why-this-number drilldown, AIS/Form 26AS/Form 16 reconciliation,
+   pre-export confidence report, editable extraction review, old vs new
+   regime comparison, and the welcome screen/side-nav redesign - see
+   CHANGELOG.md for the full list.
+3. **Wire NRI/HUF/single-parent calculations**, not just their orientation
    questions and checklists (SYSTEM_SPEC.md Section 14 Phase 2/3): NRE/NRO
    separation, TDS-withheld-vs-owed reconciliation, HUF partition/clubbing
    amounts, minor's-income clubbing amounts.
-3. Real first-time-user dry run against the hosted webapp (not just the
+4. **Add a year-rollover / import-last-year workflow**, so a returning
+   filer isn't starting from a blank slate every financial year. Needs a
+   decision on what actually carries over (documents shouldn't; some
+   profile answers like residency/HUF status probably should) and how
+   FY-specific `rules/*.json` gets versioned once a second year exists.
+5. **Add an advance tax / Section 234B-234C interest estimator**, reading
+   due-date data from `rules/*.json` like every other calculation. Blocked
+   on adding a verified advance-tax-instalment rules file first.
+6. Real first-time-user dry run against the hosted webapp (not just the
    validation scripts), the same bar Milestone 1 used.

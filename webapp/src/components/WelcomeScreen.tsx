@@ -1,3 +1,5 @@
+import { IconChecklist, IconCompass, IconUpload } from "./icons";
+
 export function WelcomeScreen({
   onStart,
   onStartComputationFirst,
@@ -15,7 +17,12 @@ export function WelcomeScreen({
 }) {
   return (
     <div className="welcome-card">
-      <p className="eyebrow">Unravel Tax</p>
+      <div className="welcome-card-header">
+        <p className="eyebrow">Unravel Tax</p>
+        <button type="button" className="text-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
+          What can this do?
+        </button>
+      </div>
       <h1 className="welcome-title">Turn a pile of tax documents into a filing you understand.</h1>
 
       <div className="welcome-badges">
@@ -39,19 +46,25 @@ export function WelcomeScreen({
 
       <div className="entry-path-cards">
         <button type="button" className="entry-path-card" onClick={onStart}>
-          <h3>Checklist</h3>
-          <p>Answer a few quick questions. We build your personal document checklist as you go.</p>
-          <span className="entry-path-cta">Start the checklist →</span>
+          <IconChecklist className="entry-path-icon" />
+          <span className="entry-path-text">
+            <h3>Checklist</h3>
+            <p>A few quick questions, tailored to you.</p>
+          </span>
         </button>
         <button type="button" className="entry-path-card" onClick={onStartComputationFirst}>
-          <h3>Start with Computation</h3>
-          <p>Skip the questions. Drop in your documents and see your numbers right away.</p>
-          <span className="entry-path-cta">Jump to my documents →</span>
+          <IconUpload className="entry-path-icon" />
+          <span className="entry-path-text">
+            <h3>Start with Computation</h3>
+            <p>Skip ahead. See your numbers first.</p>
+          </span>
         </button>
         <button type="button" className="entry-path-card" onClick={onShowCapabilities}>
-          <h3>Get to know the tool</h3>
-          <p>Not ready to commit? Take the tour and see what this can and can't do.</p>
-          <span className="entry-path-cta">Show me around →</span>
+          <IconCompass className="entry-path-icon" />
+          <span className="entry-path-text">
+            <h3>Get to know the tool</h3>
+            <p>See what this can and can't do.</p>
+          </span>
         </button>
       </div>
 

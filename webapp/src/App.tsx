@@ -31,6 +31,7 @@ import {
   type ChecklistItem,
   type ExportFile,
   type LocalFolderHandle,
+  type PersistedSession,
   type TdsRow
 } from "./lib";
 import type { NormalizedTransaction } from "./ingest";
@@ -51,7 +52,7 @@ import { OrientationForm } from "./components/OrientationForm";
 import { ChecklistPanel } from "./components/ChecklistPanel";
 import { UploadStep, type UploadedDocument } from "./components/UploadStep";
 import { ResultsStep } from "./components/ResultsStep";
-import { ProgressSteps } from "./components/ProgressSteps";
+import { SideNav } from "./components/SideNav";
 import { HelpPanel } from "./components/HelpPanel";
 import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
 import { DocumentSourceHint } from "./components/DocumentSourceHint";
@@ -75,10 +76,15 @@ function App() {
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
   const [showCapabilities, setShowCapabilities] = useState(false);
   // Every step the user has already reached this filing stays reachable from
-  // the header nav - lets them jump back to the checklist/documents/results
+  // the side nav - lets them jump back to the checklist/documents/results
   // without restarting, without ever offering to skip ahead to a step they
-  // haven't gotten to yet.
-  const [furthestStepIndex, setFurthestStepIndex] = useState(0);
+  // haven't gotten to yet. Seeded from any saved session on mount, not just
+  // 0, so the side nav shows real progress on the welcome screen even
+  // before "Resume" is clicked (e.g. after a reload/crash lands back there).
+  const [furthestStepIndex, setFurthestStepIndex] = useState(() => {
+    const session = loadSession();
+    return session ? session.furthestStepIndex ?? STEP_ORDER.indexOf(session.step) : 0;
+  });
 
   useEffect(() => {
     if (typeof localStorage !== "undefined") {
@@ -245,11 +251,11 @@ function App() {
     setDocuments((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   }
 
-  function resumeSession() {
-    const session = loadSession();
-    if (!session) {
-      return;
-    }
+  // Shared by the "Resume" button and by clicking a side-nav step while
+  // still on welcome (a saved session's real data, not just its step
+  // pointer): loads everything except step/furthestStepIndex, which each
+  // caller sets to wherever it's actually navigating.
+  function hydrateSession(session: PersistedSession) {
     setOrientation(session.orientation);
     setDocuments(session.documents);
     // Merge over defaults: sessions saved before salaryIncome/oldRegimeDeductions
@@ -260,6 +266,14 @@ function App() {
     setAisFigures(session.aisFigures ?? BLANK_AIS_REPORTED_FIGURES);
     setTdsRows(session.tdsRows ?? []);
     setSampleMode(false);
+  }
+
+  function resumeSession() {
+    const session = loadSession();
+    if (!session) {
+      return;
+    }
+    hydrateSession(session);
     setFurthestStepIndex(session.furthestStepIndex ?? STEP_ORDER.indexOf(session.step));
     setStep(session.step);
   }
@@ -282,9 +296,20 @@ function App() {
 
   /** Only ever jumps to a step the user has already reached - never a way to skip ahead. */
   function goToStep(target: AppStep) {
-    if (STEP_ORDER.indexOf(target) <= furthestStepIndex) {
-      setStep(target);
+    if (STEP_ORDER.indexOf(target) > furthestStepIndex) {
+      return;
     }
+    // furthestStepIndex on welcome only comes from a saved session (see its
+    // initializer above) - React state hasn't loaded that session's actual
+    // orientation/documents/etc yet unless "Resume" was clicked, so clicking
+    // a side-nav step directly from welcome needs to hydrate that data now.
+    if (step === "welcome" && target !== "welcome") {
+      const session = loadSession();
+      if (session) {
+        hydrateSession(session);
+      }
+    }
+    setStep(target);
   }
 
   async function handleChooseFolder() {
@@ -334,14 +359,15 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
+    <div className="app-frame">
+      <SideNav current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
+      <main className="app-shell">
       <header className="app-header">
         <img
           src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
           alt="Unravel Tax"
           className="brand-mark"
         />
-        <ProgressSteps current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
         <HelpPanel />
       </header>
 
@@ -490,7 +516,8 @@ function App() {
         <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
         <p>{FOOTER_NOTE}</p>
       </footer>
-    </main>
+      </main>
+    </div>
   );
 }
 

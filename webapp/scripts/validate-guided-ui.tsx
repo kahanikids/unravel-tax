@@ -9,10 +9,33 @@ import { UploadStep } from "../src/components/UploadStep";
 import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES, STEP_ORDER } from "../src/state/types";
 import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
 import { deriveProfileFlags } from "../src/lib/profile";
+import { saveSession } from "../src/lib/persistence";
 import { ruleCatalog } from "../src/rules";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { ConfidenceReport } from "../src/lib/confidence";
 import type { CaRecommendation } from "../src/lib/riskTriggers";
+
+/** Minimal in-memory localStorage stand-in - Node has no global localStorage. */
+function withMockLocalStorage(seed: Record<string, string>, run: () => void) {
+  const store = new Map<string, string>(Object.entries(seed));
+  (globalThis as unknown as { localStorage: Storage }).localStorage = {
+    length: 0,
+    key: () => null,
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => store.clear()
+  };
+  try {
+    run();
+  } finally {
+    delete (globalThis as { localStorage?: Storage }).localStorage;
+  }
+}
 
 const SAMPLE_ROWS: CaSummaryRow[] = [
   { head: "Short-Term Capital Gains", ruleSection: "111A", amount: -500, notes: "" },
@@ -72,21 +95,27 @@ function checkWelcomeScreen() {
     throw new Error("Help panel content should be closed by default, not present in the initial render.");
   }
 
-  // The "Get to know the tool" card is now the only capabilities-preview
-  // trigger. It reuses the same panel/state as before, just relabeled onto
-  // one of the 3 entry-path cards instead of a standalone corner link.
-  if (html.includes("What can this do?")) {
-    throw new Error("The old standalone 'What can this do?' trigger should be gone, folded into the 'Get to know the tool' card.");
-  }
+  // "What can this do?" is back as a small corner trigger on the welcome
+  // card itself, in addition to the "Get to know the tool" card - both open
+  // the same capabilities panel/state, just two doors into it.
+  assertIncludes(html, "What can this do?");
+  assertIncludes(html, 'class="welcome-card-header"');
   if (html.includes("Available now") || html.includes(CAPABILITIES[0].detail.slice(0, 20))) {
     throw new Error("Capabilities panel content should be closed by default, not present in the initial render.");
   }
 
-  // The step nav shows on every screen, including welcome - as an inert
+  // The entry-path cards are icon-led now, not paragraph-heavy: one short
+  // supporting line each, no separate "arrow" call-to-action line.
+  if (html.includes('class="entry-path-cta"')) {
+    throw new Error("Entry-path cards should no longer have a separate CTA line; the icon+heading+one-line format replaced it.");
+  }
+  assertIncludes(html, 'class="entry-path-icon"');
+
+  // The side nav shows on every screen, including welcome - as an inert
   // preview there (nothing's been reached yet), never a way to skip ahead.
-  assertIncludes(html, 'class="progress-steps"');
+  assertIncludes(html, 'class="side-nav"');
   assertIncludes(html, "About you");
-  if (html.includes('<button type="button" class="progress-step')) {
+  if (html.includes('<button type="button" class="side-nav-step')) {
     throw new Error("No step should be a clickable button before the user has reached any of them.");
   }
 
@@ -131,6 +160,48 @@ function checkComputationFirstPathIsReachable() {
   }
 
   console.log("Validated 'Start with Computation' jump: documents step stays reachable back to orientation/checklist, and blank orientation resolves to a safe default profile.");
+}
+
+/**
+ * If a saved session exists, its furthestStepIndex should already be
+ * reflected in the side nav on the very first render, on the welcome
+ * screen, before the user clicks "Resume" - otherwise a reload/crash that
+ * lands back on welcome would look like a reset to step 1 even though
+ * progress is safely cached in localStorage.
+ */
+function checkSideNavReflectsResumedSession() {
+  withMockLocalStorage({}, () => {
+    saveSession({
+      step: "documents",
+      furthestStepIndex: STEP_ORDER.indexOf("documents"),
+      orientation: BLANK_ORIENTATION,
+      documents: [],
+      supplementalFigures: BLANK_SUPPLEMENTAL_FIGURES,
+      acknowledgedTriggerIds: [],
+      aisFigures: BLANK_AIS_REPORTED_FIGURES,
+      tdsRows: []
+    });
+
+    const html = renderToString(<App />);
+
+    // Still mounts on welcome (nothing auto-jumps the user anywhere)...
+    assertIncludes(html, 'class="entry-path-cards"');
+
+    // ...but orientation/checklist/documents are already clickable in the
+    // side nav, since they're all <= the saved furthestStepIndex.
+    const reachableStepCount = html.split('<button type="button" class="side-nav-step').length - 1;
+    if (reachableStepCount !== 3) {
+      throw new Error(
+        `Expected 3 reachable side-nav steps (orientation/checklist/documents) from the saved session, found ${reachableStepCount}.`
+      );
+    }
+    // "Your results" is past furthestStepIndex, so it should still be inert.
+    assertIncludes(html, 'aria-disabled="true" title="Your results"');
+  });
+
+  console.log(
+    "Validated side nav: reflects a saved session's furthestStepIndex on the welcome screen itself, without requiring an explicit Resume click first."
+  );
 }
 
 function checkHelpPanel() {
@@ -546,6 +617,7 @@ function assertIncludes(value: string, expected: string) {
 function main() {
   checkWelcomeScreen();
   checkComputationFirstPathIsReachable();
+  checkSideNavReflectsResumedSession();
   checkHelpPanel();
   checkCapabilitiesPanel();
   checkOrientationForm();

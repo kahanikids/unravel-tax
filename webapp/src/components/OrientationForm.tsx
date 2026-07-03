@@ -245,17 +245,17 @@ export function OrientationForm({
       ) : null}
 
       <div className="orientation-nav">
-        <div className="orientation-nav-left">
-          {index > 0 ? (
-            <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
-              ← Back
-            </button>
-          ) : null}
-          <button type="button" className="primary-button orientation-start-over" onClick={onStartOver}>
-            Start over
+        {index > 0 ? (
+          <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
+            ← Back
           </button>
-        </div>
+        ) : (
+          <span />
+        )}
         <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p>
+        <button type="button" className="primary-button orientation-start-over" onClick={onStartOver}>
+          Start over
+        </button>
       </div>
     </div>
   );

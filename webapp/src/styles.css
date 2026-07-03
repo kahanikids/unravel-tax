@@ -29,10 +29,10 @@ html,
 body {
   margin: 0;
   min-height: 100vh;
-  /* Safety net: a flex child that won't shrink (like the progress-steps
-     overflow this fixed) should wrap or get cut off locally, never push a
-     horizontal scrollbar onto the whole page and silently take content
-     off-screen. Fixed-position elements (modals) are unaffected by this. */
+  /* Safety net: a flex child that won't shrink (like the app header's
+     content) should wrap or get cut off locally, never push a horizontal
+     scrollbar onto the whole page and silently take content off-screen.
+     Fixed-position elements (modals) are unaffected by this. */
   overflow-x: hidden;
 }
 
@@ -63,10 +63,99 @@ ol {
   margin: 0;
 }
 
+.app-frame {
+  display: flex;
+  min-height: 100vh;
+}
+
 .app-shell {
+  flex: 1;
+  min-width: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* ---------- Side nav ---------- */
+
+.side-nav {
+  flex: none;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 20px 8px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.side-nav-step {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  text-align: center;
+}
+
+.side-nav-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.side-nav-label {
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+button.side-nav-step {
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+button.side-nav-step:hover,
+button.side-nav-step:focus-visible {
+  background: var(--surface-soft);
+  color: var(--ink);
+  outline: none;
+}
+
+.side-nav-step-done {
+  color: var(--good);
+}
+
+.side-nav-step-current {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+button.side-nav-step.side-nav-step-current:hover {
+  background: var(--accent-soft);
+}
+
+@media (max-width: 640px) {
+  .side-nav {
+    width: 56px;
+    padding: 16px 4px;
+  }
+
+  .side-nav-label {
+    display: none;
+  }
 }
 
 /* ---------- Header ---------- */
@@ -151,92 +240,6 @@ ol {
   line-height: 1.4;
 }
 
-/* ---------- Progress steps ---------- */
-
-.progress-steps {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  row-gap: 6px;
-  gap: 6px;
-  /* Without this, a flex item defaults to min-width: auto and won't shrink
-     below its own content width - so instead of wrapping onto a second
-     line when the header is tight, it overflows past the viewport edge
-     and becomes invisible unless the user scrolls right. */
-  min-width: 0;
-}
-
-.progress-step {
-  appearance: none;
-  border: none;
-  background: none;
-  font: inherit;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  color: var(--muted);
-}
-
-/* Only <button> steps (already-visited ones) are interactive - <span> steps
-   (not yet reached) render with the same layout but no affordance. */
-button.progress-step {
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-button.progress-step:hover,
-button.progress-step:focus-visible {
-  background: var(--surface-soft);
-  color: var(--ink);
-  outline: none;
-}
-
-button.progress-step.progress-step-current:hover {
-  background: var(--accent-soft);
-}
-
-.progress-step-index {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.progress-step-label {
-  font-size: 0.85rem;
-  display: none;
-}
-
-@media (min-width: 760px) {
-  .progress-step-label {
-    display: inline;
-  }
-}
-
-.progress-step-done .progress-step-index {
-  background: var(--good-soft);
-  border-color: var(--good);
-  color: var(--good);
-}
-
-.progress-step-current {
-  background: var(--accent-soft);
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.progress-step-current .progress-step-index {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-}
-
 /* ---------- Generic layout ---------- */
 
 .stage-single {
@@ -309,11 +312,24 @@ button.progress-step.progress-step-current:hover {
 /* ---------- Welcome ---------- */
 
 .welcome-card {
-  max-width: 620px;
+  max-width: 680px;
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.welcome-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.welcome-capabilities-trigger {
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .welcome-title {
@@ -388,30 +404,39 @@ button.progress-step.progress-step-current:hover {
   border: 1.5px solid var(--line);
   background: var(--surface);
   border-radius: var(--radius-md);
-  padding: 18px;
+  padding: 20px;
+  aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
+.entry-path-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.entry-path-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .entry-path-card h3 {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
 .entry-path-card p {
   color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.4;
-  flex-grow: 1;
-}
-
-.entry-path-cta {
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
 }
 
 .entry-path-card:hover,
@@ -422,9 +447,33 @@ button.progress-step.progress-step-current:hover {
   transform: translateY(-1px);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 860px) {
+  .entry-path-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .entry-path-card:last-child {
+    grid-column: 1 / -1;
+    aspect-ratio: auto;
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (max-width: 540px) {
+  .welcome-title {
+    font-size: 1.6rem;
+  }
+
   .entry-path-cards {
     grid-template-columns: 1fr;
+  }
+
+  .entry-path-card {
+    aspect-ratio: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px;
   }
 }
 
@@ -586,12 +635,6 @@ button.progress-step.progress-step-current:hover {
   flex-wrap: wrap;
 }
 
-.orientation-nav-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
 .orientation-start-over {
   padding: 9px 18px;
   font-size: 0.88rem;
@@ -600,7 +643,8 @@ button.progress-step.progress-step-current:hover {
 .orientation-note {
   color: var(--muted);
   font-size: 0.82rem;
-  text-align: right;
+  text-align: center;
+  flex: 1;
 }
 
 /* ---------- Checklist panel (sidebar) ---------- */
@@ -1550,26 +1594,9 @@ button.progress-step.progress-step-current:hover {
     height: 30px;
   }
 
-  .progress-steps {
-    gap: 4px;
-  }
-
-  .progress-step {
-    padding: 4px 6px;
-  }
-
-  .progress-step-index {
-    width: 20px;
-    height: 20px;
-  }
-
   .help-button {
     width: 26px;
     height: 26px;
     font-size: 0.85rem;
-  }
-
-  .welcome-title {
-    font-size: 1.7rem;
   }
 }

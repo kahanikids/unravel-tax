@@ -43,7 +43,23 @@ to improvise from, not to follow exactly.
   reveals steps the user has *already reached*, never a way to skip ahead.
 - The color palette needed no change - Quixotic's green-on-white already
   matches `--accent`/`--surface` in `styles.css`.
-- Not carried over: the icon-rail, top tab bar, card/table visual style,
-  avatar badges - those belong to a different kind of app (multi-section
+- Not carried over: the top tab bar, card/table visual style, avatar
+  badges - those belong to a different kind of app (multi-section
   dashboard) and would work against BUILD_PLAN.md's single-path guided
   flow if copied literally.
+
+**Update (same day): the icon-rail came back after all, for a concrete
+reason the header-stepper version didn't cover.** `ProgressSteps` only
+showed real progress once you were past the welcome screen - on a fresh
+mount landing back on welcome (reload, crash, closing the tab), the
+header stepper had no saved-session state to draw on until "Resume" was
+actually clicked, so a filing in progress still looked like step zero
+until then. The fix wasn't a new nav pattern, just hydrating
+`furthestStepIndex` from `loadSession()` at mount time instead of only
+after an explicit resume - so `SideNav` (replacing `ProgressSteps`
+outright, same current-step/furthest-step state, same "never a way to
+skip ahead" rule) can show and link to real progress on welcome too.
+Kept as a persistent vertical rail rather than reverting to the
+horizontal header version because it reads better next to the header once
+it's carrying that responsibility on every screen, not just once a
+filing is under way.

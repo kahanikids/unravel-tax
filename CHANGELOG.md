@@ -6,6 +6,33 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Replaced the header's horizontal step indicator with a persistent
+  vertical icon rail (`SideNav`) down the left edge of the whole app,
+  visible on every screen including welcome. Same underlying step model as
+  before (current step, furthest step reached, never a way to skip ahead),
+  just a different view of it, and it now works before you've clicked
+  "Resume": `furthestStepIndex` is seeded from any saved session on first
+  render, so a reload or crash that lands back on welcome still shows and
+  links to real progress instead of looking like step one. See
+  `webapp/DESIGN_NOTES.md` for why this replaced the header stepper.
+- Redesigned the welcome screen's 3 entry-path cards to be icon-led
+  instead of paragraph-heavy: a small hand-rolled SVG icon, a short
+  heading, and one supporting line each, no separate call-to-action line.
+  Restored the "What can this do?" corner trigger on the welcome card
+  (it opens the same capabilities panel as the "Get to know the tool"
+  card; the two are just separate doors into it).
+- Reworked the welcome screen's responsive layout across laptop, tablet,
+  and mobile widths: a new 540px breakpoint alongside the existing 860px
+  one, so the 3 entry cards go from a row (laptop) to 2-up with the third
+  spanning full width (tablet) to a single stacked column (mobile), with
+  matching adjustments to card padding and the headline's font size.
+- Fixed `OrientationForm`'s nav row so "Back" and "Start over" sit on
+  opposite ends of the same row (left/right) with the privacy note
+  centered between them, instead of both buttons sharing the left side.
+- Added the pending advance tax estimator and year-rollover items to
+  `WORKING_PLAN.md`'s "Current Next Slice" list alongside the NRI/HUF
+  wiring that was already tracked there, so they're visible as tracked
+  work rather than only mentioned in chat.
 - Welcome screen redesign, "show value first": replaced the single
   "Get started" call to action with 3 entry-path cards so a new user picks
   how they want to begin instead of being funneled straight into
