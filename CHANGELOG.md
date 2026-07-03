@@ -6,6 +6,13 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added "Where do I get this?" guidance to checklist documents (new
+  `DOCUMENT_SOURCE_GUIDE` in `src/lib/copy.ts`, rendered via a new
+  `DocumentSourceHint` component on both the main checklist step and the
+  persistent sidebar). Covers the broker/AMC capital gains statement,
+  Form 26AS/AIS, dividend statements, bank interest certificates, and
+  Form 16, since a first-time filer often doesn't know which website or
+  menu to look under. Static reference copy, not a live integration.
 - Copy pass across all user-visible webapp text and README.md: removed
   dashes used as sentence punctuation (" - " standing in for a comma,
   period, or parenthesis), rewriting as separate sentences or comma/colon

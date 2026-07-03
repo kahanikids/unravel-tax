@@ -2,6 +2,7 @@ import { useState } from "react";
 import { checklistGaps, type ChecklistItem } from "../lib/reconciliation";
 import type { RiskTrigger } from "../lib/riskTriggers";
 import type { ProfileScopeCaveat } from "../lib/profile";
+import { DocumentSourceHint } from "./DocumentSourceHint";
 
 const MOBILE_TABLET_BREAKPOINT = 860;
 
@@ -87,6 +88,7 @@ export function ChecklistPanel({
               <article className="checklist-item" key={gap.document}>
                 <strong>{gap.document}</strong>
                 <p>{gap.whyNeeded}</p>
+                <DocumentSourceHint document={gap.document} />
               </article>
             ))
           )}

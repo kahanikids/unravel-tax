@@ -613,6 +613,36 @@ button.progress-step.progress-step-current:hover {
   border-left-color: var(--flag);
 }
 
+.source-hint {
+  margin-top: 4px;
+}
+
+.source-hint-toggle {
+  font-size: 0.82rem;
+  padding: 0;
+}
+
+.source-hint-body {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--panel-alt, rgba(0, 0, 0, 0.03));
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.source-hint-body p {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+
+.source-hint-body ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .checklist-empty {
   color: var(--muted);
   font-size: 0.9rem;
