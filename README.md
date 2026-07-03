@@ -2,11 +2,15 @@
 
 ![Unravel Tax logo](assets/unravel-tax-logo-generated.png)
 
-Untangle your tax documents, one step at a time.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg)](CONTRIBUTING.md)
+
+Untangle your tax filings.
 
 Turn PDFs, Excel files, CSVs, saved webpages, and whatever else you have
-into two clean files: one to send your CA, one to keep. Free. No signup.
-No installs.
+into two clean files: one to send your CA, one to keep. Open source, no
+signup, and nothing you enter ever leaves your device — there's no server
+for it to go to.
 
 ## Start here
 
@@ -76,8 +80,8 @@ still the gap:
 
 - **No hosted link.** Running it today means cloning the repo and using a
   terminal — not yet the "no installs" experience the project is meant to
-  be. Getting this hosted somewhere free (GitHub Pages or equivalent) is
-  the top priority.
+  be. Getting this hosted at no ongoing cost (GitHub Pages or equivalent)
+  is the top priority.
 - **Resident + senior-citizen calculations are real.** Equity capital
   gains, Section 50AA debt/specified mutual funds, dividends, and interest
   are computed from `rules/*.json`, not guessed.
@@ -92,3 +96,9 @@ still the gap:
 
 See `BUILD_PLAN.md` Section 12 for the milestone sequence and
 `WORKING_PLAN.md` for the day-to-day loop.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Use it, fork it, adapt it for a different
+country's tax rules if that's useful to you; just keep the copyright
+notice intact.
