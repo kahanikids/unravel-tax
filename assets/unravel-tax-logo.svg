@@ -1,9 +1,0 @@
-<svg width="720" height="180" viewBox="0 0 720 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Unravel Tax logo</title>
-  <desc id="desc">A tangled line resolving into a check mark beside the Unravel Tax wordmark.</desc>
-  <rect width="720" height="180" rx="28" fill="#FAFAF7"/>
-  <path d="M58 98C80 66 118 64 128 91C140 125 91 131 88 96C85 61 141 45 168 70C197 96 175 132 144 126C116 121 117 85 145 79C178 71 211 96 231 119" stroke="#1F7A66" stroke-width="10" stroke-linecap="round"/>
-  <path d="M231 119L257 145L314 78" stroke="#25324A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="354" y="92" fill="#25324A" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="40" font-weight="700">Unravel Tax</text>
-  <text x="356" y="126" fill="#52606D" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18">Untangle your tax documents, one step at a time.</text>
-</svg>

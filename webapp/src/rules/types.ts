@@ -142,7 +142,15 @@ export type AdvanceTaxValues = {
   section_234c_reason: string;
 };
 
+export type DeductionLimitsValues = {
+  regime_applicability: string;
+  section_80c: { limit_inr: number; covers: string };
+  section_80d: { self_family_below_60_inr: number; self_family_senior_citizen_inr: number; covers: string };
+  section_80ccd_1b_nps: { limit_inr: number; covers: string };
+};
+
 export type CapitalGainsEquityRule = RuleDocument<CapitalGainsEquityValues>;
+export type DeductionLimitsRule = RuleDocument<DeductionLimitsValues>;
 export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
 export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;
 export type RegimeChoiceRule = RuleDocument<RegimeChoiceValues>;

@@ -41,5 +41,5 @@ not shift that responsibility to the maintainers or contributors.
 ## Software warranty
 
 The code is provided under the [MIT License](LICENSE), "as is", without
-warranty. See also the standing disclaimer in [SYSTEM_SPEC.md](SYSTEM_SPEC.md)
+warranty. See also the standing disclaimer in [docs/SYSTEM_SPEC.md](docs/SYSTEM_SPEC.md)
 Section 16.

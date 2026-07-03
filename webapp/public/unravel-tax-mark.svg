@@ -1,7 +1,0 @@
-<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Unravel Tax mark</title>
-  <desc id="desc">A tangled line resolving into a check mark.</desc>
-  <rect x="0.5" y="0.5" width="159" height="159" fill="#FFFFFF" stroke="#111111"/>
-  <path d="M25 86C39 58 71 61 72 86C73 114 33 111 38 78C44 39 103 42 102 83C101 122 53 123 61 88C68 56 116 63 126 104" stroke="#E4002B" stroke-width="8" stroke-linecap="round"/>
-  <path d="M126 104L140 119L154 82" stroke="#111111" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>

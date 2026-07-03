@@ -1,0 +1,37 @@
+{
+  "topic": "deduction-limits",
+  "applies_to": [
+    "resident",
+    "senior-citizen",
+    "huf"
+  ],
+  "effective_date": "2025-04-01",
+  "financial_year": "2025-26",
+  "assessment_year": "2026-27",
+  "verification": {
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-03",
+    "note": "The Section 80C Rs 1,50,000 ceiling, the Section 80D health-insurance limits (Rs 25,000 when everyone insured is below 60, Rs 50,000 when a senior citizen is covered), and the extra Section 80CCD(1B) NPS Rs 50,000 are long-standing, well-known limits carried unchanged into FY 2025-26. They apply only under the OLD regime; the new regime allows none of them. Cross-checked against multiple current filing guides. Confirm against the official instructions on incometax.gov.in before relying on this as filing advice.",
+    "source_type": "secondary"
+  },
+  "source_refs": [
+    "Income Tax Act, 1961, Sections 80C, 80D, 80CCD(1B)",
+    "https://cleartax.in/s/80c-80-deductions"
+  ],
+  "values": {
+    "regime_applicability": "old_regime_only",
+    "section_80c": {
+      "limit_inr": 150000,
+      "covers": "EPF/PPF, ELSS, life-insurance premiums, home-loan principal, tax-saving fixed deposits, children's tuition fees, and similar."
+    },
+    "section_80d": {
+      "self_family_below_60_inr": 25000,
+      "self_family_senior_citizen_inr": 50000,
+      "covers": "Health-insurance premiums (plus limited preventive check-up costs) for you and your family."
+    },
+    "section_80ccd_1b_nps": {
+      "limit_inr": 50000,
+      "covers": "An extra deduction for your own National Pension System (NPS) contribution, over and above the Section 80C limit."
+    }
+  }
+}

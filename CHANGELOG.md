@@ -4,6 +4,24 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-03 (repo cleanup)
+
+- Repository hygiene pass for open source readiness. Stopped tracking
+  editor/agent and scratch artifacts that `.gitignore` already excludes
+  (`.claude/`, `.cursor/plans/`, `**/NOTES.md`, `**/DESIGN_NOTES.md`,
+  `WORKING_PLAN.md`, `*.tmp.*`); they stay on disk locally. Deleted the
+  unused `assets/` folder (the logo the README shows lives in
+  `webapp/public/`).
+- Moved the internal specs `BUILD_PLAN.md` and `SYSTEM_SPEC.md` into `docs/`
+  and updated links in `README.md`, `CONTRIBUTING.md`, `DISCLAIMER.md`,
+  `LICENSE`, and `CLAUDE.md`.
+- Added standard tooling: root `.editorconfig` and `.nvmrc` (Node 20),
+  root `requirements.txt` (openpyxl for the notebook/template path; the rest
+  is standard library), and Prettier + ESLint (flat config) in `webapp/`
+  with `lint`/`format`/`format:check` scripts. Lint runs in CI
+  (`.github/workflows/validate.yml`); it currently reports only warnings for
+  pre-existing unused variables.
+
 ## 2026-07-03 (ITR form selection)
 
 - ITR form selection rules recorded and verified: `rules/itr-form-selection.json`

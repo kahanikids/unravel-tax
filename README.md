@@ -47,7 +47,7 @@ That's the whole journey. The sections below are background.
 - **Simple by default.** Full detail is one click away, never the starting view.
 - **Your file is the record.** No account, no server. Export the workbook and keep it.
 
-More detail: [BUILD_PLAN.md](BUILD_PLAN.md) (maintainers).
+More detail: [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md) (maintainers).
 
 ---
 
@@ -90,8 +90,6 @@ calculated yet. Highlights:
 - Partial NRI/single-parent numbers; HUF regime comparison explicitly skipped
 - Fuzzy header matching, PDF text extraction path, session cache, local-folder save (Chromium)
 
-Day-to-day build loop: [WORKING_PLAN.md](WORKING_PLAN.md).
-
 ---
 
 ## Other docs
@@ -104,7 +102,8 @@ Day-to-day build loop: [WORKING_PLAN.md](WORKING_PLAN.md).
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [ROADMAP.md](ROADMAP.md) | Planned features |
-| [BUILD_PLAN.md](BUILD_PLAN.md) | Full product and architecture spec (maintainers) |
+| [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md) | Full product and architecture spec (maintainers) |
+| [docs/SYSTEM_SPEC.md](docs/SYSTEM_SPEC.md) | Problem statement, data model, rules library (maintainers) |
 
 ## License
 

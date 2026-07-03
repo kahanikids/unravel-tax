@@ -4,6 +4,7 @@ export * from "./advanceTax";
 export * from "./regimeComparison";
 export * from "./exports";
 export * from "./reconciliation";
+export * from "./pastFilings";
 export * from "./profile";
 export * from "./riskTriggers";
 export * from "./persistence";

@@ -1,5 +1,6 @@
 import type { NormalizedTransaction } from "../ingest";
 import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type { PastFiling } from "./pastFilings";
 import type { TdsRow } from "./reconciliation";
 import type { RawSheet } from "./workbookExport";
 
@@ -17,8 +18,13 @@ export type PersistedDocument = {
   rawSheet?: RawSheet;
 };
 
+/** Bumped 1 → 2 when the dashboard's past-filing history was added. Version 1
+ * sessions (saved before it existed) are still accepted and migrated forward
+ * by treating their absent `pastFilings` as an empty list - see parseSession. */
+export type SessionVersion = 1 | 2;
+
 export type PersistedSession = {
-  version: 1;
+  version: SessionVersion;
   savedAt: string;
   step: AppStep;
   /** Highest step index reached this filing - lets the step nav re-offer
@@ -34,6 +40,9 @@ export type PersistedSession = {
    * reconciliation existed. */
   aisFigures?: AisReportedFigures;
   tdsRows?: TdsRow[];
+  /** Year-over-year filing history shown on the dashboard. Added in version 2;
+   * optional so version-1 sessions load cleanly with no history. */
+  pastFilings?: PastFiling[];
 };
 
 const STORAGE_KEY = "unravel-tax-session";
@@ -46,7 +55,7 @@ export const SESSION_BACKUP_FILENAME = "unravel-tax-session.json";
 export type SessionInput = Omit<PersistedSession, "version" | "savedAt">;
 
 export function serializeSession(session: SessionInput): string {
-  const payload: PersistedSession = { version: 1, savedAt: new Date().toISOString(), ...session };
+  const payload: PersistedSession = { version: 2, savedAt: new Date().toISOString(), ...session };
   return JSON.stringify(payload);
 }
 
@@ -57,7 +66,14 @@ export function parseSession(raw: string | null): PersistedSession | null {
   }
   try {
     const parsed = JSON.parse(raw);
-    if (!parsed || parsed.version !== 1 || parsed.step === "welcome") {
+    if (!parsed || (parsed.version !== 1 && parsed.version !== 2)) {
+      return null;
+    }
+    // Normally a pristine welcome screen isn't worth resuming - but a session
+    // that carries dashboard history (past filings) is, so that year-over-year
+    // history survives a reload even before this year's filing is started.
+    const hasPastFilings = Array.isArray(parsed.pastFilings) && parsed.pastFilings.length > 0;
+    if (parsed.step === "welcome" && !hasPastFilings) {
       return null;
     }
     // The standalone "checklist" step was folded into the persistent

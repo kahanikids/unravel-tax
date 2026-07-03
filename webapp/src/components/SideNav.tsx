@@ -2,6 +2,7 @@ import { STEP_LABELS, STEP_ORDER, type AppStep } from "../state/types";
 import {
   IconChart,
   IconCompass,
+  IconDashboard,
   IconHelp,
   IconPerson,
   IconShield,
@@ -47,6 +48,8 @@ export function SideNav({
   current,
   furthestIndex,
   onNavigate,
+  onShowDashboard,
+  dashboardActive,
   onShowHelp,
   onShowCapabilities,
   onShowTour,
@@ -55,6 +58,8 @@ export function SideNav({
   current: AppStep;
   furthestIndex: number;
   onNavigate: (step: AppStep) => void;
+  onShowDashboard: () => void;
+  dashboardActive: boolean;
   onShowHelp: () => void;
   onShowCapabilities: () => void;
   onShowTour: () => void;
@@ -108,7 +113,24 @@ export function SideNav({
       })}
       </div>
 
-      <div className="side-nav-utility" aria-label="Help and information">
+      <div className="side-nav-utility" aria-label="Destinations, help and information">
+        {/* Dashboard is a standalone destination, not a filing step - it sits
+            outside STEP_ORDER so the guided flow keeps its single next action,
+            but it's a real navigable view (with an active state), unlike the
+            info panels below it. */}
+        <button
+          type="button"
+          className={
+            dashboardActive ? "side-nav-step side-nav-util side-nav-step-current" : "side-nav-step side-nav-util"
+          }
+          onClick={onShowDashboard}
+          aria-current={dashboardActive ? "page" : undefined}
+          title="Dashboard"
+        >
+          <IconDashboard className="side-nav-icon" />
+          <span className="side-nav-label side-nav-label-full">Dashboard</span>
+          <span className="side-nav-label side-nav-label-mobile">Home</span>
+        </button>
         {UTILITY_ITEMS.map(({ key, label, mobileLabel, Icon }) => (
           <button
             type="button"

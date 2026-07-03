@@ -78,5 +78,5 @@ starting a large feature so scope matches maintainer expectations.
 - Never commit real personal or financial data — PAN numbers, account
   details, actual filing figures. Use `fixtures/` for synthetic test data only.
 - No backend, no database, no accounts — hard constraint. See `CLAUDE.md` and
-  `BUILD_PLAN.md` Section 9.
+  `docs/BUILD_PLAN.md` Section 9.
 - Be kind. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

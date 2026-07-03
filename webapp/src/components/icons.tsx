@@ -44,6 +44,17 @@ export function IconUpload({ className }: IconProps) {
   );
 }
 
+export function IconDashboard({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <rect x="4" y="4" width="7" height="7" rx="1.6" />
+      <rect x="13" y="4" width="7" height="4.5" rx="1.6" />
+      <rect x="13" y="10.5" width="7" height="9.5" rx="1.6" />
+      <rect x="4" y="13" width="7" height="7" rx="1.6" />
+    </svg>
+  );
+}
+
 export function IconChart({ className }: IconProps) {
   return (
     <svg {...svgProps} className={className} aria-hidden="true">

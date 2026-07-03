@@ -1,6 +1,7 @@
 import advanceTax from "./data/advance-tax.json";
 import capitalGainsEquity from "./data/capital-gains-equity.json";
 import capitalGainsMutualFunds from "./data/capital-gains-mutual-funds.json";
+import deductionLimits from "./data/deduction-limits.json";
 import dividends from "./data/dividends.json";
 import filingMistakesAndPenalties from "./data/filing-mistakes-and-penalties.json";
 import hufBasics from "./data/huf-basics.json";
@@ -21,6 +22,7 @@ import singleParentClubbing from "./data/single-parent-clubbing.json";
 import type {
   AdvanceTaxRule,
   CapitalGainsEquityRule,
+  DeductionLimitsRule,
   FilingMistakesRule,
   HufBasicsRule,
   ItrFormSelectionRule,
@@ -42,6 +44,7 @@ export const ruleCatalog = {
   advanceTax: advanceTax as AdvanceTaxRule,
   capitalGainsEquity: capitalGainsEquity as CapitalGainsEquityRule,
   capitalGainsMutualFunds: capitalGainsMutualFunds as RuleDocument,
+  deductionLimits: deductionLimits as DeductionLimitsRule,
   dividends: dividends as RuleDocument,
   filingMistakesAndPenalties: filingMistakesAndPenalties as FilingMistakesRule,
   hufBasics: hufBasics as HufBasicsRule,

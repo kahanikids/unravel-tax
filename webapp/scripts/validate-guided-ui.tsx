@@ -3,6 +3,7 @@ import App from "../src/App";
 import { ChecklistPanel } from "../src/components/ChecklistPanel";
 import { OrientationForm } from "../src/components/OrientationForm";
 import { ResultsStep } from "../src/components/ResultsStep";
+import { Dashboard, type ThisYearSnapshot } from "../src/components/Dashboard";
 import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { ToolTour } from "../src/components/ToolTour";
@@ -21,6 +22,12 @@ import {
 import { clubbedMinorIncome, deriveProfileFlags, selectItrForm } from "../src/lib/profile";
 import type { ProfileFlags } from "../src/state/types";
 import { saveSession } from "../src/lib/persistence";
+import {
+  deriveHistoryInsights,
+  normalizeAssessmentYear,
+  parseItrJson,
+  type PastFiling
+} from "../src/lib/pastFilings";
 import { ruleCatalog } from "../src/rules";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { ConfidenceReport } from "../src/lib/confidence";
@@ -92,12 +99,12 @@ function checkWelcomeScreen() {
     throw new Error("The standalone 'See with Sample Data' link should be removed; sample data is reachable via the tour instead.");
   }
   assertIncludes(html, "Unravel Tax");
-  // The merged FY-scope-and-CA-disclaimer line lives once, in the footer,
-  // shown on every screen including welcome - not duplicated on the card.
-  // (Checked as a substring before the apostrophe: React's SSR renderer
-  // escapes "doesn't" to "doesn&#x27;t" in the rendered HTML.)
-  assertIncludes(html, "Built for FY 2025-26 (AY 2026-27) filings only.");
-  assertIncludes(html, "Not affiliated with the Income Tax Department");
+  // The crisp FY-scope-and-CA line lives once, in the footer, shown on every
+  // screen including welcome - not duplicated on the card. Non-affiliation and
+  // the rest of the legal detail live only in the linked full disclaimer
+  // (LEGAL_SECTIONS), also rendered on the welcome screen, not in this line.
+  assertIncludes(html, "For FY 2025-26 (AY 2026-27) filings.");
+  assertIncludes(html, "not affiliated with, endorsed by, or connected to the Income Tax Department");
   assertIncludes(html, 'class="app-footer"');
 
   for (const jargon of ["Milestone readiness", "Static Constraints", "Next Slices", "M4E", "Working plan"]) {
@@ -131,6 +138,10 @@ function checkWelcomeScreen() {
   // preview there (nothing's been reached yet), never a way to skip ahead.
   assertIncludes(html, 'class="side-nav"');
   assertIncludes(html, "About you");
+  // The Dashboard is a standalone destination in the side nav's utility group,
+  // reachable from every screen (including welcome), never a way to skip ahead
+  // in the filing flow.
+  assertIncludes(html, ">Dashboard<");
   // Match step buttons specifically (they carry a side-nav-step-<state> class);
   // the always-available utility buttons (Help/Features/Tour/Legal) also reuse
   // side-nav-step for layout but are not steps and are fine to be clickable.
@@ -861,6 +872,170 @@ function checkItrFormSelection() {
   );
 }
 
+// Synthetic (clearly fictional) past filings - never real data, per CLAUDE.md.
+const SAMPLE_PAST_FILINGS: PastFiling[] = [
+  {
+    id: "pf-a",
+    assessmentYear: "2023-24",
+    itrForm: "ITR-2",
+    regime: "old",
+    grossTotalIncome: 1_000_000,
+    totalTaxPaid: 90_000,
+    refundOrPayable: 3_000,
+    source: "manual"
+  },
+  {
+    id: "pf-b",
+    assessmentYear: "2024-25",
+    itrForm: "ITR-2",
+    regime: "new",
+    grossTotalIncome: 1_200_000,
+    totalTaxPaid: 90_000,
+    refundOrPayable: -5_000,
+    source: "itr-json"
+  }
+];
+
+const SAMPLE_THIS_YEAR: ThisYearSnapshot = {
+  hasStartedFiling: true,
+  assessmentYear: "AY 2026-27",
+  itrForm: "ITR-3",
+  regimeNote: "New regime by default — compare old vs new in Results.",
+  estimatedCapitalGainsTax: 1100,
+  grossGains: 5000,
+  openIssueCount: 2
+};
+
+function checkDashboardDestination() {
+  // Defaults to the simple view: full detail (e.g. the effective-rate column)
+  // is behind the explicit toggle, per CLAUDE.md.
+  const simpleHtml = renderToString(
+    <Dashboard
+      thisYear={SAMPLE_THIS_YEAR}
+      pastFilings={SAMPLE_PAST_FILINGS}
+      onAddPastFiling={noop}
+      onRemovePastFiling={noop}
+      onGoToFiling={noop}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+    />
+  );
+  assertIncludes(simpleHtml, "Your tax dashboard");
+  assertIncludes(simpleHtml, "This year — AY 2026-27");
+  assertIncludes(simpleHtml, "Recommended ITR form");
+  assertIncludes(simpleHtml, "Your filing history");
+  // Year-over-year history table renders both synthetic years and their heads.
+  assertIncludes(simpleHtml, "Assessment year");
+  assertIncludes(simpleHtml, "Gross total income");
+  assertIncludes(simpleHtml, "2023-24");
+  assertIncludes(simpleHtml, "2024-25");
+  assertIncludes(simpleHtml, "From JSON");
+  assertIncludes(simpleHtml, "Entered");
+  // Income-growth insight is derived, not fabricated: 1.0M -> 1.2M = +20%.
+  assertIncludes(simpleHtml, "+20%");
+  assertIncludes(simpleHtml, "Show full detail");
+  if (simpleHtml.includes("Show simple view")) {
+    throw new Error("Dashboard should default to the simple view; advanced detail must require the explicit toggle.");
+  }
+  if (simpleHtml.includes(">Effective rate<")) {
+    throw new Error("The per-year effective-rate column is advanced detail and should be hidden in the simple view.");
+  }
+
+  const advancedHtml = renderToString(
+    <Dashboard
+      thisYear={SAMPLE_THIS_YEAR}
+      pastFilings={SAMPLE_PAST_FILINGS}
+      onAddPastFiling={noop}
+      onRemovePastFiling={noop}
+      onGoToFiling={noop}
+      showAdvanced
+      onToggleAdvanced={noop}
+    />
+  );
+  assertIncludes(advancedHtml, ">Effective rate<");
+  assertIncludes(advancedHtml, "Effective tax rate over time");
+
+  // Empty state: one obvious next action (the add form is open).
+  const emptyHtml = renderToString(
+    <Dashboard
+      thisYear={{ ...SAMPLE_THIS_YEAR, hasStartedFiling: false }}
+      pastFilings={[]}
+      onAddPastFiling={noop}
+      onRemovePastFiling={noop}
+      onGoToFiling={noop}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+    />
+  );
+  assertIncludes(emptyHtml, "No past years yet");
+  assertIncludes(emptyHtml, "Add a past year");
+  assertIncludes(emptyHtml, "Prefill from ITR JSON");
+  assertIncludes(emptyHtml, "Start this year");
+
+  console.log(
+    "Validated dashboard destination: this-year panel, year-over-year history table + derived growth, JSON/manual add form, simple-by-default with advanced toggle."
+  );
+}
+
+function checkItrJsonParsing() {
+  // Synthetic ITR JSON in the income-tax portal's nested shape - not real data.
+  const sampleItrJson = JSON.stringify({
+    ITR: {
+      ITR2: {
+        Form_ITR2: { FormName: "ITR2", AssessmentYear: "2024" },
+        "PartB-TI": { GrossTotalIncome: 1_200_000, TotalIncome: 1_150_000 },
+        PartB_TTI: {
+          TaxPaid: { TaxesPaid: { TotalTaxesPaid: 90_000 } },
+          Refund: { RefundDue: 5_000 }
+        },
+        FilingStatus: { OptOutNewTaxRegime: "Y" }
+      }
+    }
+  });
+  const parsed = parseItrJson(sampleItrJson);
+  if (!parsed.ok) {
+    throw new Error(`Expected the synthetic ITR JSON to parse, got: ${parsed.message}`);
+  }
+  if (parsed.fields.assessmentYear !== "2024-25") {
+    throw new Error(`Expected AY 2024-25 from "2024", got ${parsed.fields.assessmentYear}.`);
+  }
+  if (parsed.fields.itrForm !== "ITR-2") {
+    throw new Error(`Expected ITR-2 form, got ${parsed.fields.itrForm}.`);
+  }
+  if (parsed.fields.grossTotalIncome !== 1_200_000) {
+    throw new Error(`Expected gross total income 1,200,000, got ${parsed.fields.grossTotalIncome}.`);
+  }
+  if (parsed.fields.totalTaxPaid !== 90_000) {
+    throw new Error(`Expected total tax paid 90,000, got ${parsed.fields.totalTaxPaid}.`);
+  }
+  if (parsed.fields.refundOrPayable !== 5_000) {
+    throw new Error(`Expected a 5,000 refund, got ${parsed.fields.refundOrPayable}.`);
+  }
+  if (parsed.fields.regime !== "old") {
+    throw new Error(`OptOutNewTaxRegime "Y" should read as the old regime, got ${parsed.fields.regime}.`);
+  }
+  // Tolerant fallback: unreadable input never throws, routes to manual entry.
+  const garbage = parseItrJson("not json at all {");
+  if (garbage.ok || garbage.readFields.length !== 0) {
+    throw new Error("Unreadable input should come back ok:false with no auto-read fields, for manual entry.");
+  }
+  if (normalizeAssessmentYear("AY2025-2026") !== "2025-26") {
+    throw new Error("normalizeAssessmentYear should tidy 'AY2025-2026' to '2025-26'.");
+  }
+
+  const insights = deriveHistoryInsights(SAMPLE_PAST_FILINGS);
+  if (insights.incomeGrowthPct === null || Math.round(insights.incomeGrowthPct) !== 20) {
+    throw new Error(`Expected +20% income growth across the sample years, got ${insights.incomeGrowthPct}.`);
+  }
+  if (!insights.regimeSwitched) {
+    throw new Error("Sample filings switch old -> new regime; regimeSwitched should be true.");
+  }
+
+  console.log(
+    "Validated ITR-JSON parsing + history metrics: tolerant field extraction, manual-entry fallback, deterministic growth/effective-rate/regime-switch derivation. No PDF parser."
+  );
+}
+
 function assertIncludes(value: string, expected: string) {
   if (!value.includes(expected)) {
     throw new Error(`Rendered output is missing: ${expected}`);
@@ -885,6 +1060,8 @@ function main() {
   checkNriHufSingleParentPartialCalculations();
   checkReconciliationPanel();
   checkConfidenceReportPanel();
+  checkDashboardDestination();
+  checkItrJsonParsing();
 }
 
 main();

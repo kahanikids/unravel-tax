@@ -5,8 +5,8 @@ organize Indian income tax filing data — from whatever document formats
 they have — and produce two output files: a concise summary for a CA,
 and a full detailed workbook to keep.
 
-Full context lives in `BUILD_PLAN.md` (journey, design principles, repo
-scaffold, milestones) and `SYSTEM_SPEC.md` (problem statement, workbook
+Full context lives in `docs/BUILD_PLAN.md` (journey, design principles, repo
+scaffold, milestones) and `docs/SYSTEM_SPEC.md` (problem statement, workbook
 data model, rules library, drafted from a real filing session). Read
 both before making any structural decision — this file is the
 condensed, always-apply subset of that context.
@@ -16,7 +16,7 @@ condensed, always-apply subset of that context.
   task seems to need a server, stop and flag it rather than adding one.
 - All tax calculation logic must be deterministic (spreadsheet formulas
   or plain functions), never delegated to an LLM at runtime.
-- Format parsing follows Section 3 of BUILD_PLAN.md exactly: CSV, Excel,
+- Format parsing follows Section 3 of docs/BUILD_PLAN.md exactly: CSV, Excel,
   HTML, and structured text are parsed directly, client-side, no AI
   involved. Only PDF and free-form text route through the AI extraction
   prompt. Do not build a bespoke PDF table parser — that's a deliberate
@@ -29,7 +29,7 @@ condensed, always-apply subset of that context.
   JSON; never hardcode a rate in application logic.
 - Every user-facing flow must have exactly one obvious next action at
   each step. Before adding any choice/setting/option the user sees,
-  check Sections 1 and 2 of BUILD_PLAN.md — if it's not resolvable by
+  check Sections 1 and 2 of docs/BUILD_PLAN.md — if it's not resolvable by
   inference from what's already known, it shouldn't be a user-facing
   choice.
 - The reconciliation engine (Section 4) runs on every dashboard view, not
@@ -50,18 +50,18 @@ condensed, always-apply subset of that context.
 1. Correctness of the calculation logic (test against fixtures/ before
    anything else).
 2. The guided flow actually being guiding — re-read Section 1 of
-   BUILD_PLAN.md before building any user-facing step.
+   docs/BUILD_PLAN.md before building any user-facing step.
 3. Everything else.
 
 ## Build order
 Milestones are sequential and each is a checkpoint against the user
-journey, not just a feature list (BUILD_PLAN.md Section 12). Do not
+journey, not just a feature list (docs/BUILD_PLAN.md Section 12). Do not
 start Milestone 4 (the web app) before Milestones 1–3 are done and
 validated:
 1. Template workbook + guided chat prompt pack (manual loop, all profiles)
 2. Colab notebook (zero-install alternative, lightweight formats only)
 3. Reconciliation engine + rules-as-data (rules/*.json)
-4. Web app (webapp/ — do not scaffold early, see BUILD_PLAN.md Section 13)
+4. Web app (webapp/ — do not scaffold early, see docs/BUILD_PLAN.md Section 13)
 
 ## When rules change (after a Budget or Finance Act amendment)
 Update the relevant rules/*.json and rules/*.md together, bump the

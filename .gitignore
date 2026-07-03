@@ -28,5 +28,10 @@ Thumbs.db
 *.tmp
 *.tmp.*
 
+# Internal dev docs (not needed by users, the app, or CI)
+WORKING_PLAN.md
+**/NOTES.md
+**/DESIGN_NOTES.md
+
 # Broken local git copies
 .git-broken*/

@@ -18,9 +18,12 @@ import {
   evaluateRiskTriggers,
   figureMismatches,
   ITR_FORM_REASONS,
+  REPO_URL,
+  REPORT_ISSUE_URL,
   SCOPE_AND_DISCLAIMER_NOTE,
   isLocalFolderSupported,
   loadSession,
+  newFilingId,
   parseSession,
   profileScopeCaveats as deriveProfileScopeCaveats,
   readTextFromFolder,
@@ -36,7 +39,10 @@ import {
   transactionsCsv,
   type ChecklistItem,
   type ExportFile,
+  type FilingSource,
   type LocalFolderHandle,
+  type PastFiling,
+  type PastFilingFields,
   type PersistedSession,
   type RawSheet,
   type TdsRow
@@ -60,6 +66,7 @@ import { ChecklistPanel } from "./components/ChecklistPanel";
 import { UploadStep, type UploadedDocument } from "./components/UploadStep";
 import { ResultsStep } from "./components/ResultsStep";
 import { SideNav } from "./components/SideNav";
+import { Dashboard, type ThisYearSnapshot } from "./components/Dashboard";
 import { HelpPanel } from "./components/HelpPanel";
 import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
 import { ToolTour } from "./components/ToolTour";
@@ -84,6 +91,13 @@ function App() {
   // out of localStorage twice on first render.
   const [initialSession] = useState(() => loadSession());
   const [hasSavedSession] = useState(() => initialSession !== null);
+  // Year-over-year filing history for the dashboard. Seeded from any saved
+  // session on mount so history survives a reload without a Resume click.
+  const [pastFilings, setPastFilings] = useState<PastFiling[]>(() => initialSession?.pastFilings ?? []);
+  // The dashboard is a standalone destination outside STEP_ORDER (see
+  // SideNav): a separate toggle rather than an AppStep, so opening it never
+  // disturbs the linear guided flow's step pointer or its single next action.
+  const [showDashboard, setShowDashboard] = useState(false);
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
   const [showCapabilities, setShowCapabilities] = useState(false);
   const [showTour, setShowTour] = useState(false);
@@ -113,7 +127,10 @@ function App() {
   // the system of record - skip it on the welcome screen and for sample data
   // so a demo run never overwrites someone's real in-progress filing.
   useEffect(() => {
-    if (step === "welcome" || sampleMode) {
+    // A pristine welcome screen isn't worth saving, unless the user has added
+    // dashboard history (past filings) - that should persist on its own even
+    // before this year's filing is started.
+    if (sampleMode || (step === "welcome" && pastFilings.length === 0)) {
       return;
     }
     const timer = window.setTimeout(() => {
@@ -125,7 +142,8 @@ function App() {
         supplementalFigures,
         acknowledgedTriggerIds,
         aisFigures,
-        tdsRows
+        tdsRows,
+        pastFilings
       };
       saveSession(input);
       // The folder is a disk-durable backup: write the same session there so
@@ -150,6 +168,7 @@ function App() {
     acknowledgedTriggerIds,
     aisFigures,
     tdsRows,
+    pastFilings,
     sampleMode,
     folderHandle
   ]);
@@ -296,6 +315,21 @@ function App() {
 
   const openIssueCount = gaps.length + riskTriggers.length + reconciliationMismatches.length;
 
+  // Everything the dashboard's "this year at a glance" shows, computed
+  // deterministically from the same figures the results view uses. The
+  // dashboard only displays it - no separate calculation lives there.
+  const thisYear: ThisYearSnapshot = {
+    hasStartedFiling: documents.length > 0 || orientation.residency !== null,
+    assessmentYear: `AY ${ruleCatalog.itrFormSelection.assessment_year}`,
+    itrForm: itrForm.form,
+    regimeNote: ruleCatalog.regimeChoice.values.new_regime_default
+      ? "New regime by default — compare old vs new in Results."
+      : "Old regime by default — compare in Results.",
+    estimatedCapitalGainsTax: rulesSummary.estimatedStcgTax + rulesSummary.estimatedLtcgTax,
+    grossGains: rulesSummary.stcg + rulesSummary.ltcg,
+    openIssueCount
+  };
+
   // A single pre-export confidence check: the same signals shown throughout
   // the flow (checklist, risk triggers, reconciliation, scope caveats),
   // regrouped by how urgently each one matters before you export.
@@ -412,6 +446,7 @@ function App() {
     setAcknowledgedTriggerIds(session.acknowledgedTriggerIds);
     setAisFigures(session.aisFigures ?? BLANK_AIS_REPORTED_FIGURES);
     setTdsRows(session.tdsRows ?? []);
+    setPastFilings(session.pastFilings ?? []);
     setSampleMode(false);
   }
 
@@ -439,10 +474,32 @@ function App() {
     setAcknowledgedTriggerIds([]);
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
+    setPastFilings([]);
     setSampleMode(false);
+    setShowDashboard(false);
     setFurthestStepIndex(0);
     setShowConfirmClear(false);
     setStep("welcome");
+  }
+
+  // From the dashboard's "this year" panel back into the linear flow: resume
+  // the furthest step already reached, or start orientation if nothing has
+  // been started yet. goToStep handles hydration + closing the dashboard.
+  function goToFilingFromDashboard() {
+    if (furthestStepIndex <= 0) {
+      setShowDashboard(false);
+      startOrientation();
+      return;
+    }
+    goToStep(STEP_ORDER[furthestStepIndex]);
+  }
+
+  function addPastFiling(fields: PastFilingFields, source: FilingSource) {
+    setPastFilings((prev) => [...prev, { ...fields, id: newFilingId(), source }]);
+  }
+
+  function removePastFiling(id: string) {
+    setPastFilings((prev) => prev.filter((filing) => filing.id !== id));
   }
 
   /** Only ever jumps to a step the user has already reached - never a way to skip ahead. */
@@ -450,6 +507,8 @@ function App() {
     if (STEP_ORDER.indexOf(target) > furthestStepIndex) {
       return;
     }
+    // Navigating into the linear flow always leaves the standalone dashboard.
+    setShowDashboard(false);
     // furthestStepIndex on welcome only comes from a saved session (see its
     // initializer above) - React state hasn't loaded that session's actual
     // orientation/documents/etc yet unless "Resume" was clicked, so clicking
@@ -538,6 +597,8 @@ function App() {
         current={step}
         furthestIndex={furthestStepIndex}
         onNavigate={goToStep}
+        onShowDashboard={() => setShowDashboard(true)}
+        dashboardActive={showDashboard}
         onShowHelp={() => setShowHelp(true)}
         onShowCapabilities={() => setShowCapabilities(true)}
         onShowTour={() => setShowTour(true)}
@@ -545,7 +606,15 @@ function App() {
       />
       <main className="app-shell">
       <header className="app-header">
-        <button type="button" className="brand-mark-button" onClick={() => setStep("welcome")} aria-label="Back to home">
+        <button
+          type="button"
+          className="brand-mark-button"
+          onClick={() => {
+            setShowDashboard(false);
+            setStep("welcome");
+          }}
+          aria-label="Back to home"
+        >
           <img
             src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
             alt="Unravel Tax"
@@ -566,7 +635,21 @@ function App() {
         />
       ) : null}
 
-      {step === "welcome" ? (
+      {showDashboard ? (
+        <div className="stage-single">
+          <Dashboard
+            thisYear={thisYear}
+            pastFilings={pastFilings}
+            onAddPastFiling={addPastFiling}
+            onRemovePastFiling={removePastFiling}
+            onGoToFiling={goToFilingFromDashboard}
+            showAdvanced={showAdvanced}
+            onToggleAdvanced={() => setShowAdvanced((value) => !value)}
+          />
+        </div>
+      ) : null}
+
+      {!showDashboard && step === "welcome" ? (
         <div className="stage-single">
           <WelcomeScreen
             onStart={startOrientation}
@@ -582,7 +665,7 @@ function App() {
         </div>
       ) : null}
 
-      {step === "orientation" ? (
+      {!showDashboard && step === "orientation" ? (
         <div className="stage-single">
           <OrientationForm
             answers={orientation}
@@ -592,7 +675,8 @@ function App() {
         </div>
       ) : null}
 
-      {(step === "documents" || step === "results") &&
+      {!showDashboard &&
+      (step === "documents" || step === "results") &&
       unacknowledgedFormChangingTriggers.length > 0 ? (
         <div className="modal-backdrop">
           <div className="modal-card" role="alertdialog" aria-labelledby="form-changing-title">
@@ -615,7 +699,7 @@ function App() {
         </div>
       ) : null}
 
-      {step === "documents" || step === "results" ? (
+      {!showDashboard && (step === "documents" || step === "results") ? (
         <div className="stage-with-sidebar">
           <ChecklistPanel
             checklistItems={checklistItems}
@@ -688,13 +772,24 @@ function App() {
       ) : null}
 
       <footer className="app-footer">
-        <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
-        <p className="footer-legal-line">
-          Runs locally in your browser; nothing is uploaded.{" "}
-          <button type="button" className="text-button" onClick={() => goToStep("welcome")}>
-            Full disclaimer, AI use &amp; privacy
-          </button>
-        </p>
+        <div className="footer-inner">
+          <div className="footer-meta">
+            <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
+            <p className="footer-privacy">Runs locally in your browser; nothing is uploaded.</p>
+          </div>
+          <nav className="footer-links" aria-label="Project and legal links">
+            <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
+              Full disclaimer, AI use &amp; privacy
+            </button>
+            <a className="footer-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
+              Source on GitHub
+            </a>
+            <a className="footer-link" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+              Report an issue
+            </a>
+          </nav>
+        </div>
+        <p className="footer-baseline">Free and open source, MIT licensed.</p>
       </footer>
       </main>
     </div>

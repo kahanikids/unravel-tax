@@ -14,7 +14,10 @@
     "validate:exports": "tsx scripts/validate-exports.ts",
     "sync-rules": "node ../scripts/sync-rules.mjs",
     "validate:rules-sync": "node ../scripts/validate-rules-sync.mjs",
-    "validate:all": "npm run validate:rules-sync && npm run validate:ingest && npm run validate:calculations && npm run validate:reconciliation && npm run validate:guided-ui && npm run validate:exports"
+    "validate:all": "npm run validate:rules-sync && npm run validate:ingest && npm run validate:calculations && npm run validate:reconciliation && npm run validate:guided-ui && npm run validate:exports",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
@@ -28,10 +31,17 @@
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.17.0",
     "@types/node": "^26.1.0",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
-    "tsx": "^4.22.4"
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.22.4",
+    "typescript-eslint": "^8.19.0"
   }
 }

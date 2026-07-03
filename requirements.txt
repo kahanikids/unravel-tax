@@ -1,0 +1,8 @@
+# Python dependencies for the notebook / template workflow
+# (scripts/notebook_engine.py, scripts/validate-notebook.py,
+# scripts/run-manual-flow-dry-run.py, notebooks/build-workbook.ipynb).
+#
+# Everything else is standard library only. In particular, the rule-pair
+# validation run in CI (scripts/validate-rule-pairs.py) needs no third-party
+# packages. Requires Python 3.10+.
+openpyxl>=3.1

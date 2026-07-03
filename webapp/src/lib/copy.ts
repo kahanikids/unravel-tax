@@ -5,11 +5,13 @@
  * short year-scope-plus-CA line in the footer on every screen; DISCLAIMER_FULL
  * is the "?" help panel's mid-length version; LEGAL_SECTIONS (below) is the
  * full, structured legal text shown in the welcome screen's collapsible
- * disclaimer. Each is a deliberate step up in detail, not a duplicate.
+ * disclaimer. Each is a deliberate step up in detail, not a duplicate - so the
+ * footer line stays crisp and defers non-affiliation, "as is", privacy, and
+ * the rest to the linked full disclaimer rather than repeating them.
  */
 
 export const SCOPE_AND_DISCLAIMER_NOTE =
-  "Built for FY 2025-26 (AY 2026-27) filings only. Not affiliated with the Income Tax Department or CBDT. It organizes your numbers. It doesn't replace a CA.";
+  "For FY 2025-26 (AY 2026-27) filings. Not tax advice, and not a substitute for a CA.";
 
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";
@@ -254,6 +256,11 @@ export const CAPABILITIES: Capability[] = [
     label: "Old vs new tax regime comparison",
     status: "available",
     detail: "Enter your salary and old-regime deductions to see an estimate of which regime costs less, on the slab-taxed part of your income. Doesn't include surcharge or the 80+ super senior slab yet."
+  },
+  {
+    label: "Year-over-year tax dashboard",
+    status: "available",
+    detail: "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in — then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
   },
   {
     label: "Advance tax interest estimator (234B/234C)",
