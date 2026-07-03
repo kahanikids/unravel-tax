@@ -199,15 +199,30 @@ function parseDelimitedText(text: string, delimiter: string, kind: "csv" | "stru
     skipEmptyLines: true
   });
 
-  if (parsed.errors.length > 0) {
-    return emptyResult(kind, routePdfOrFreeform("Could not read delimited text."), [
-      { code: "parse_error", message: parsed.errors.map((e) => e.message).join("; ") }
-    ]);
+  // PapaParse errors are mostly row-level (a trailing disclaimer line, a
+  // stray comma) and the rest of the file is fine. Surface them as warnings
+  // in the review modal instead of rejecting the whole file - only a file
+  // with no readable rows at all routes to the extraction prompt.
+  const rowIssueWarnings: IngestWarning[] = parsed.errors.slice(0, 5).map((e) => ({
+    code: "parse_error",
+    message: typeof e.row === "number" ? `Line ${e.row + 2}: ${e.message}` : e.message,
+    rowIndex: typeof e.row === "number" ? e.row : undefined
+  }));
+  if (parsed.errors.length > 5) {
+    rowIssueWarnings.push({
+      code: "parse_error",
+      message: `...and ${parsed.errors.length - 5} more line(s) with the same kind of issue.`
+    });
+  }
+
+  if (parsed.data.length === 0) {
+    return emptyResult(kind, routePdfOrFreeform("Could not read delimited text."), rowIssueWarnings);
   }
 
   const sourceHeaders = parsed.meta.fields ?? [];
   const resolution = resolveTransactionHeaders(sourceHeaders);
-  return buildIngestResult(kind, sourceHeaders, parsed.data, resolution);
+  const result = buildIngestResult(kind, sourceHeaders, parsed.data, resolution);
+  return { ...result, warnings: [...rowIssueWarnings, ...result.warnings] };
 }
 
 export function parseCsvText(text: string): IngestResult {
