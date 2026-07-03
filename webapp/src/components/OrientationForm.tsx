@@ -6,6 +6,11 @@ type QuestionBase = {
   prompt: string;
   helper?: string;
   visible: (answers: OrientationAnswers) => boolean;
+  /** Safe to leave unanswered: deriveProfileFlags() treats a skipped
+   * (null) answer the same as "No", a conservative default that never
+   * breaks a calculation. Residency and income sources aren't skippable:
+   * they decide which checklist/rules branch applies at all. */
+  skippable?: boolean;
 };
 
 type YesNoQuestion = QuestionBase & {
@@ -58,6 +63,7 @@ const QUESTIONS: Question[] = [
     prompt: "Is any of this income or investment held through a family (HUF) rather than just you personally?",
     helper: "Skip this if that term is unfamiliar. It almost certainly doesn't apply to you.",
     visible: () => true,
+    skippable: true,
     value: (a) => a.huf,
     set: (a, value) => ({ ...a, huf: value })
   },
@@ -66,6 +72,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Are you 60 or older?",
     visible: () => true,
+    skippable: true,
     value: (a) => a.seniorCitizen,
     set: (a, value) => ({ ...a, seniorCitizen: value })
   },
@@ -74,6 +81,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Are you the only parent or guardian handling this, for yourself and any children?",
     visible: () => true,
+    skippable: true,
     value: (a) => a.singleParent,
     set: (a, value) => ({ ...a, singleParent: value })
   },
@@ -92,6 +100,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Did you change jobs this year, or have income from more than one employer?",
     visible: () => true,
+    skippable: true,
     value: (a) => a.multipleEmployers,
     set: (a, value) => ({ ...a, multipleEmployers: value })
   },
@@ -100,6 +109,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Do you pay rent and claim it against your salary (HRA)?",
     visible: () => true,
+    skippable: true,
     value: (a) => a.hraClaimed,
     set: (a, value) => ({ ...a, hraClaimed: value, hraAboveThreshold: value ? a.hraAboveThreshold : null, hasLandlordPan: value ? a.hasLandlordPan : null })
   },
@@ -108,6 +118,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Is your annual rent over roughly ₹1 lakh (about ₹8,300/month)?",
     visible: (a) => a.hraClaimed === true,
+    skippable: true,
     value: (a) => a.hraAboveThreshold,
     set: (a, value) => ({ ...a, hraAboveThreshold: value, hasLandlordPan: value ? a.hasLandlordPan : null })
   },
@@ -117,6 +128,7 @@ const QUESTIONS: Question[] = [
     prompt: "Do you have your landlord's PAN?",
     helper: "Above that rent threshold, the HRA claim needs it on file.",
     visible: (a) => a.hraClaimed === true && a.hraAboveThreshold === true,
+    skippable: true,
     value: (a) => a.hasLandlordPan,
     set: (a, value) => ({ ...a, hasLandlordPan: value })
   },
@@ -125,6 +137,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Did you take money out of your provident fund this year?",
     visible: () => true,
+    skippable: true,
     value: (a) => a.epfWithdrawal,
     set: (a, value) => ({ ...a, epfWithdrawal: value, epfBeforeFiveYears: value ? a.epfBeforeFiveYears : null })
   },
@@ -133,6 +146,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Was that before completing 5 years of continuous service?",
     visible: (a) => a.epfWithdrawal === true,
+    skippable: true,
     value: (a) => a.epfBeforeFiveYears,
     set: (a, value) => ({ ...a, epfBeforeFiveYears: value })
   }
@@ -181,6 +195,11 @@ export function OrientationForm({
     setIndex((value) => value + 1);
   };
 
+  // Leaves the answer as-is (null) and moves on. deriveProfileFlags()
+  // treats that the same as "No" everywhere it's read, so this is always a
+  // safe default, never a broken one.
+  const skip = () => setIndex((value) => value + 1);
+
   return (
     <div className="orientation-card">
       <p className="orientation-progress">{`Question ${index + 1} of ${visible.length}`}</p>
@@ -215,6 +234,12 @@ export function OrientationForm({
 
       {current.kind === "multi" ? (
         <MultiSelectQuestion question={current} answers={answers} onChange={onChange} onContinue={() => setIndex((value) => value + 1)} />
+      ) : null}
+
+      {current.skippable ? (
+        <button type="button" className="text-button orientation-skip" onClick={skip}>
+          Skip this question
+        </button>
       ) : null}
 
       <div className="orientation-nav">

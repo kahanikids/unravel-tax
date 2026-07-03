@@ -326,15 +326,12 @@ function App() {
           className="brand-mark"
         />
         <ProgressSteps current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
-        <button type="button" className="text-button capabilities-button" onClick={() => setShowCapabilities(true)}>
-          What can this do?
-        </button>
-        <HelpPanel />
         {step !== "welcome" ? (
           <button type="button" className="text-button header-reset" onClick={startFresh}>
             Start over
           </button>
         ) : null}
+        <HelpPanel />
       </header>
 
       <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />

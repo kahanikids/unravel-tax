@@ -1,4 +1,4 @@
-import { DISCLAIMER_SHORT } from "../lib/copy";
+import { DISCLAIMER_SHORT, SCOPE_YEAR_NOTE } from "../lib/copy";
 
 export function WelcomeScreen({
   onStart,
@@ -14,40 +14,43 @@ export function WelcomeScreen({
   onShowCapabilities: () => void;
 }) {
   return (
-    <div className="welcome-card">
-      <div className="welcome-card-header">
-        <p className="eyebrow">Unravel Tax</p>
-        <button type="button" className="text-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
-          What can this do?
-        </button>
-      </div>
-      <h1 className="welcome-title">Turn a pile of tax documents into a filing you understand.</h1>
-
-      <div className="welcome-badges">
-        <span className="welcome-badge">No signup</span>
-        <span className="welcome-badge">Most File Formats</span>
-        <span className="welcome-badge">Stays in your browser</span>
-      </div>
-
-      {hasSavedSession ? (
-        <div className="resume-banner">
-          <p>You have a filing in progress, saved in this browser.</p>
-          <button type="button" className="primary-button" onClick={onResume}>
-            Resume where you left off
+    <>
+      <p className="scope-year-note">{SCOPE_YEAR_NOTE}</p>
+      <div className="welcome-card">
+        <div className="welcome-card-header">
+          <p className="eyebrow">Unravel Tax</p>
+          <button type="button" className="text-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
+            What can this do?
           </button>
         </div>
-      ) : null}
+        <h1 className="welcome-title">Turn a pile of tax documents into a filing you understand.</h1>
 
-      <div className="welcome-actions">
-        <button type="button" className={hasSavedSession ? "text-button" : "primary-button"} onClick={onStart}>
-          {hasSavedSession ? "Start a new filing instead" : "Get started"}
-        </button>
-        <button type="button" className="text-button" onClick={onTrySample}>
-          See it with sample data first
-        </button>
+        <div className="welcome-badges">
+          <span className="welcome-badge">No signup</span>
+          <span className="welcome-badge">Most File Formats</span>
+          <span className="welcome-badge">Stays in your browser</span>
+        </div>
+
+        {hasSavedSession ? (
+          <div className="resume-banner">
+            <p>You have a filing in progress, saved in this browser.</p>
+            <button type="button" className="primary-button" onClick={onResume}>
+              Resume where you left off
+            </button>
+          </div>
+        ) : null}
+
+        <div className="welcome-actions">
+          <button type="button" className={hasSavedSession ? "text-button" : "primary-button"} onClick={onStart}>
+            {hasSavedSession ? "Start a new filing instead" : "Get started"}
+          </button>
+          <button type="button" className="text-button" onClick={onTrySample}>
+            See with Sample Data
+          </button>
+        </div>
+
+        <p className="disclaimer-banner">{DISCLAIMER_SHORT}</p>
       </div>
-
-      <p className="disclaimer-banner">{DISCLAIMER_SHORT}</p>
-    </div>
+    </>
   );
 }

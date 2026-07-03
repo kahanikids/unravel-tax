@@ -90,6 +90,7 @@ ol {
 .header-reset {
   font-size: 0.85rem;
   white-space: nowrap;
+  margin-left: auto;
 }
 
 .help-button {
@@ -113,11 +114,6 @@ ol {
   background: var(--accent-soft);
   color: var(--accent-dark);
   outline: none;
-}
-
-.capabilities-button {
-  font-size: 0.85rem;
-  white-space: nowrap;
 }
 
 .capabilities-group-title {
@@ -317,6 +313,14 @@ button.progress-step.progress-step-current:hover {
 }
 
 /* ---------- Welcome ---------- */
+
+.scope-year-note {
+  max-width: 620px;
+  width: 100%;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
 
 .welcome-card {
   max-width: 620px;
@@ -540,6 +544,13 @@ button.progress-step.progress-step-current:hover {
   width: 16px;
   height: 16px;
   accent-color: var(--accent);
+}
+
+.orientation-skip {
+  display: block;
+  margin: 4px auto 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .orientation-nav {

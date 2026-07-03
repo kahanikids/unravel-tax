@@ -6,6 +6,23 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Follow-up polish on the welcome screen and orientation flow:
+  - Renamed the sample-data link to "See with Sample Data".
+  - The "What can this do?" capabilities preview now has exactly one entry
+    point (the welcome card's corner button); removed the duplicate
+    header trigger.
+  - Moved "Start over" out of the header's own corner and onto the same
+    row as the step navigation (the app's closest equivalent to a "Back"
+    control), right-aligned. It still only shows once there's a filing in
+    progress to reset.
+  - Added a centered, visually secondary "Skip this question" option to
+    every orientation question that's genuinely optional (HUF, senior
+    citizen, single parent, multiple employers, HRA and EPF follow-ups).
+    Residency and income sources stay required since they decide which
+    checklist and rules branch applies at all.
+  - Added a short note above the welcome card: "Built for FY 2025-26
+    (AY 2026-27) filings only," since that's the only year the rules
+    data is populated and verified for.
 - Added a pre-export confidence report (`ConfidenceReportPanel`) to the
   results screen: one glanceable "still missing / may change your numbers
   / flagged but safe to export as-is" summary right above the export

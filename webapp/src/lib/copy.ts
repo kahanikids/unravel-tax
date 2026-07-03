@@ -9,6 +9,8 @@
 
 export const DISCLAIMER_SHORT = "This organizes your numbers. It doesn't replace a CA.";
 
+export const SCOPE_YEAR_NOTE = "Built for FY 2025-26 (AY 2026-27) filings only.";
+
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";
 

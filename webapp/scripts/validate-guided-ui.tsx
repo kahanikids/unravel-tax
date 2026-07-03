@@ -6,7 +6,7 @@ import { ResultsStep } from "../src/components/ResultsStep";
 import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
-import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
+import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, SCOPE_YEAR_NOTE, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { ConfidenceReport } from "../src/lib/confidence";
 import type { CaRecommendation } from "../src/lib/riskTriggers";
@@ -39,9 +39,10 @@ function checkWelcomeScreen() {
   const html = renderToString(<App />);
 
   assertIncludes(html, "Get started");
-  assertIncludes(html, "See it with sample data first");
+  assertIncludes(html, "See with Sample Data");
   assertIncludes(html, "This organizes your numbers");
   assertIncludes(html, "Unravel Tax");
+  assertIncludes(html, SCOPE_YEAR_NOTE);
 
   for (const jargon of ["Milestone readiness", "Static Constraints", "Next Slices", "M4E", "Working plan"]) {
     if (html.includes(jargon)) {
@@ -56,14 +57,16 @@ function checkWelcomeScreen() {
 
   // The capabilities preview must be reachable from welcome, since that's
   // exactly when a skeptical first-time user wants to check scope before
-  // entering anything - both the header button (every step) and a
-  // dedicated corner trigger on the welcome card itself, sharing one
-  // modal - but closed by default, same as HelpPanel.
+  // entering anything. One trigger only, in the welcome card's corner, not
+  // duplicated in the persistent header - closed by default, same as HelpPanel.
   assertIncludes(html, "What can this do?");
   assertIncludes(html, 'class="welcome-card-header"');
   assertIncludes(html, 'class="text-button welcome-capabilities-trigger"');
   if (html.includes("Available now") || html.includes(CAPABILITIES[0].detail.slice(0, 20))) {
     throw new Error("Capabilities panel content should be closed by default, not present in the initial render.");
+  }
+  if (html.includes('class="text-button capabilities-button"')) {
+    throw new Error("The header should no longer have its own 'What can this do?' trigger; the welcome card owns it.");
   }
 
   // The step nav shows on every screen, including welcome - as an inert
@@ -72,6 +75,13 @@ function checkWelcomeScreen() {
   assertIncludes(html, "About you");
   if (html.includes('<button type="button" class="progress-step')) {
     throw new Error("No step should be a clickable button before the user has reached any of them.");
+  }
+
+  // "Start over" only makes sense once there's something to reset; it sits
+  // right next to the step nav (the app's closest equivalent to a "back"
+  // control) and stays hidden on the welcome screen itself.
+  if (html.includes("Start over")) {
+    throw new Error("'Start over' should not render on the welcome screen, where there's nothing to reset yet.");
   }
 
   console.log("Validated welcome screen: single clear next action, no dev/milestone jargon leaking into the UI.");
@@ -140,7 +150,23 @@ function checkOrientationForm() {
   );
   assertIncludes(html, "Question 1 of");
   assertIncludes(html, "Are you living in India right now");
-  console.log("Validated orientation flow: renders one question at a time, starting with residency.");
+  if (html.includes("Skip this question")) {
+    throw new Error("Residency decides the whole checklist/rules branch and should not be skippable.");
+  }
+
+  // A yes-no question with a safe null-means-No default (deriveProfileFlags)
+  // should offer Skip, visually secondary to Yes/No.
+  const hufHtml = renderToString(
+    <OrientationForm
+      answers={{ ...BLANK_ORIENTATION, residency: "resident" }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(hufHtml, "Is any of this income or investment held through a family");
+  assertIncludes(hufHtml, "Skip this question");
+
+  console.log("Validated orientation flow: renders one question at a time, starting with residency, with Skip offered only where it's safe.");
 }
 
 function checkChecklistPanel() {
