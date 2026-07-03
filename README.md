@@ -14,23 +14,20 @@ for it to go to.
 
 ## Start here
 
-There's no hosted link yet, so the webapp has to be run locally. This is
-the highest-priority gap before this tool is usable by a first-time,
-non-technical user (see Status below).
+**[Open the webapp](https://kahanikids.github.io/unravel-tax/)**. No install,
+no signup, nothing to run. Everything happens in your browser, and nothing
+you enter ever leaves your device.
 
-1. Get the code (`git clone` this repo, or download it as a zip and unzip
-   it) and open a terminal in the `webapp/` folder.
-2. Run `npm install`, then `npm run dev`.
-3. Open the local address it prints (usually `http://127.0.0.1:5173`) in
-   your browser. Everything runs in your browser from there: no account,
-   nothing uploaded anywhere.
-
-Prefer not to touch a terminal at all? Use the manual path instead:
+Prefer not to use a browser app at all? Use the manual path instead:
 [open the guided chat prompt](prompts/00-master-guide.md). Copy the whole
 file into ChatGPT or another AI chat and follow along, pairing it with the
 [template workbook](templates/master-template.gsheet-link.md) (a Google
 Sheets copy link isn't published yet, so for now open the `.xlsx` in
 `templates/excel-export/` directly).
+
+Prefer to run it yourself instead of using the hosted version? Clone this
+repo, open a terminal in the `webapp/` folder, run `npm install` then
+`npm run dev`, and open the local address it prints.
 
 That's it. Everything else on this page is background, come back to it
 if you want to understand how it works.
@@ -75,13 +72,12 @@ tax rates and thresholds change more often than the code does.
 
 All four `WORKING_PLAN.md` milestone slices are built and validated
 (`npm run validate:*` in `webapp/`), but "built" means the code exists and
-passes its checks, not "ready for a first-time non-technical user". That's
+passes its checks, not "ready for a first-time non-technical user". What's
 still the gap:
 
-- **No hosted link.** Running it today means cloning the repo and using a
-  terminal, not yet the "no installs" experience the project is meant to
-  be. Getting this hosted at no ongoing cost (GitHub Pages or equivalent)
-  is the top priority.
+- **Hosted at [kahanikids.github.io/unravel-tax](https://kahanikids.github.io/unravel-tax/),
+  free, via GitHub Pages.** Rebuilds and redeploys automatically on every
+  push to `main` that touches `webapp/` (`.github/workflows/deploy-pages.yml`).
 - **Resident + senior-citizen calculations are real.** Equity capital
   gains, Section 50AA debt/specified mutual funds, dividends, and interest
   are computed from `rules/*.json`, not guessed.

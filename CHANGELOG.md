@@ -6,6 +6,17 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- **Hosted the webapp on GitHub Pages** at
+  https://kahanikids.github.io/unravel-tax/ - the top-priority gap called
+  out in README.md/WORKING_PLAN.md, since a first-time non-technical user
+  was never going to `git clone` and run `npm install`. Added
+  `.github/workflows/deploy-pages.yml` (builds and deploys on every push
+  to `main` touching `webapp/`), a `GITHUB_PAGES`-gated base path in
+  `vite.config.ts` (local `npm run dev`/`npm run build` are unaffected),
+  and made the header logo path base-aware so it resolves under the
+  `/unravel-tax/` project-site prefix. Updated README.md's "Start here"
+  and Status sections to lead with the live link, local `npm run dev` is
+  now the fallback for contributors, not the primary path.
 - Added "Where do I get this?" guidance to checklist documents (new
   `DOCUMENT_SOURCE_GUIDE` in `src/lib/copy.ts`, rendered via a new
   `DocumentSourceHint` component on both the main checklist step and the

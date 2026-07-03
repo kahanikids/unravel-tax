@@ -45,6 +45,7 @@ import { UploadStep, type UploadedDocument } from "./components/UploadStep";
 import { ResultsStep } from "./components/ResultsStep";
 import { ProgressSteps } from "./components/ProgressSteps";
 import { HelpPanel } from "./components/HelpPanel";
+import { DocumentSourceHint } from "./components/DocumentSourceHint";
 
 type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[] };
 
@@ -57,7 +58,7 @@ function App() {
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
   );
-  const [exportMessage, setExportMessage] = useState("Exports are generated in this browser - nothing is uploaded anywhere.");
+  const [exportMessage, setExportMessage] = useState("Exports are generated in this browser. Nothing is uploaded anywhere.");
   const [acknowledgedTriggerIds, setAcknowledgedTriggerIds] = useState<string[]>([]);
   const [hasSavedSession] = useState(() => loadSession() !== null);
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
@@ -158,7 +159,7 @@ function App() {
     setDocuments((prev) => [...prev, { fileName, rowCount: newTransactions.length, transactions: newTransactions }]);
     if (folderHandle) {
       saveDocumentCopyToFolder(folderHandle, fileName, transactionsCsv(newTransactions)).catch(() => {
-        setExportMessage(`Could not save a copy of ${fileName} to your chosen folder - it's still added to your filing.`);
+        setExportMessage(`Could not save a copy of ${fileName} to your chosen folder. It's still added to your filing.`);
       });
     }
   }
@@ -251,7 +252,11 @@ function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <img src="/unravel-tax-logo.png" alt="Unravel Tax" className="brand-mark" />
+        <img
+          src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
+          alt="Unravel Tax"
+          className="brand-mark"
+        />
         <ProgressSteps current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
         <HelpPanel />
         {step !== "welcome" ? (
@@ -283,7 +288,7 @@ function App() {
         <div className="modal-backdrop">
           <div className="modal-card" role="alertdialog" aria-labelledby="form-changing-title">
             <h3 id="form-changing-title">This changes what you need to file</h3>
-            <p>Worth stopping for - these change your ITR form or your self-file/CA recommendation, not just a routine note:</p>
+            <p>Worth stopping for. These change your ITR form or your self-file/CA recommendation, not just a routine note:</p>
             <ul className="trigger-list">
               {unacknowledgedFormChangingTriggers.map((trigger) => (
                 <li key={trigger.id}>
@@ -294,7 +299,7 @@ function App() {
             </ul>
             <div className="modal-actions">
               <button type="button" className="primary-button" onClick={acknowledgeFormChangingTriggers}>
-                I understand - continue
+                I understand, continue
               </button>
             </div>
           </div>
@@ -310,18 +315,19 @@ function App() {
           />
 
           <div className="stage-main">
-            {sampleMode ? <p className="sample-banner">You're viewing sample data - nothing here is real.</p> : null}
+            {sampleMode ? <p className="sample-banner">You're viewing sample data. Nothing here is real.</p> : null}
 
             {step === "checklist" ? (
               <div className="step-card">
                 <h2>Your checklist</h2>
-                <p className="step-lede">What to gather, based on your answers - easiest first.</p>
+                <p className="step-lede">What to gather, based on your answers. Easiest first.</p>
                 <div className="checklist-list">
                   {checklistItems.map((item) => (
                     <article className="checklist-list-item" key={item.document}>
                       <div>
                         <strong>{item.document}</strong>
                         <p>{item.whyNeeded}</p>
+                        <DocumentSourceHint document={item.document} />
                       </div>
                       <span className={`pill ${item.status.toLowerCase() === "loaded" ? "pill-ready" : "pill-neutral"}`}>
                         {item.status}
