@@ -1,0 +1,6 @@
+Security Name,Qty,Purchse Date,SALE DATE,purchase value,Sale Amount,BUY  RATE,sell rate,Asset Type
+Acme Industries,100,01-Apr-2025,15-Apr-2025,50000,51000,500,510,equity
+Acme Industries,50,10-Jan-2024,20-May-2025,25000,27500,500,550,equity
+Sample Metals Ltd,200,05-Jun-2025,05-Jun-2025,40000,40800,200,204,equity
+Sample Metals Ltd,75,12-Feb-2023,18-Jun-2025,30000,33000,400,440,equity
+Test Pharma Co,150,01-Aug-2025,30-Aug-2025,45000,43500,300,290,equity

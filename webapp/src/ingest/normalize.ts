@@ -1,5 +1,4 @@
 import {
-  EXPECTED_TRANSACTION_COLUMNS,
   OPTIONAL_INSTRUMENT_TYPE_COLUMN,
   type InstrumentType,
   type NormalizedTransaction,
@@ -7,6 +6,7 @@ import {
   type TaxClass,
   type TransactionSummary
 } from "./types";
+import { missingColumnsMessage, resolveTransactionHeaders } from "./headerMatching";
 
 const MONTHS: Record<string, number> = {
   Jan: 0,
@@ -23,10 +23,15 @@ const MONTHS: Record<string, number> = {
   Dec: 11
 };
 
+/**
+ * Kept for backward compatibility with anything checking for exact headers.
+ * Parsers in parsers.ts call resolveTransactionHeaders() directly instead,
+ * since they also need the header map to remap fuzzy-matched columns.
+ */
 export function assertTransactionColumns(headers: string[]): void {
-  const missing = EXPECTED_TRANSACTION_COLUMNS.filter((column) => !headers.includes(column));
+  const { missing } = resolveTransactionHeaders(headers);
   if (missing.length > 0) {
-    throw new Error(`Missing transaction column(s): ${missing.join(", ")}`);
+    throw new Error(missingColumnsMessage(missing));
   }
 }
 

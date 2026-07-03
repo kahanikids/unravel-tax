@@ -7,7 +7,8 @@ import {
   type PromptRoute,
   type RawTransactionRow
 } from "./types";
-import { assertTransactionColumns, normalizeRows, summarizeTransactions } from "./normalize";
+import { normalizeRows, summarizeTransactions } from "./normalize";
+import { missingColumnsMessage, remapRecordKeys, resolveTransactionHeaders } from "./headerMatching";
 
 type Table = string[][];
 type ExcelCell = string | number | Date | boolean | null;
@@ -54,7 +55,7 @@ export function parseTextSource(fileName: string, text: string, mimeType = ""): 
 }
 
 export function parseCsvText(text: string): ParsedTransactionSource {
-  const parsed = Papa.parse<RawTransactionRow>(text, {
+  const parsed = Papa.parse<Record<string, string | number | Date>>(text, {
     header: true,
     skipEmptyLines: true
   });
@@ -63,13 +64,18 @@ export function parseCsvText(text: string): ParsedTransactionSource {
     throw new Error(parsed.errors.map((error) => error.message).join("; "));
   }
 
-  assertTransactionColumns(parsed.meta.fields ?? []);
-  const transactions = normalizeRows(parsed.data);
+  const { headerMap, missing } = resolveTransactionHeaders(parsed.meta.fields ?? []);
+  if (missing.length > 0) {
+    throw new Error(missingColumnsMessage(missing));
+  }
+
+  const records = parsed.data.map((row) => remapRecordKeys(row, headerMap)) as RawTransactionRow[];
+  const transactions = normalizeRows(records);
   return { kind: "csv", transactions, summary: summarizeTransactions(transactions) };
 }
 
 export function parseStructuredText(text: string): ParsedTransactionSource {
-  const parsed = Papa.parse<RawTransactionRow>(text, {
+  const parsed = Papa.parse<Record<string, string | number | Date>>(text, {
     delimiter: "\t",
     header: true,
     skipEmptyLines: true
@@ -79,18 +85,29 @@ export function parseStructuredText(text: string): ParsedTransactionSource {
     throw new Error(parsed.errors.map((error) => error.message).join("; "));
   }
 
-  assertTransactionColumns(parsed.meta.fields ?? []);
-  const transactions = normalizeRows(parsed.data);
+  const { headerMap, missing } = resolveTransactionHeaders(parsed.meta.fields ?? []);
+  if (missing.length > 0) {
+    throw new Error(missingColumnsMessage(missing));
+  }
+
+  const records = parsed.data.map((row) => remapRecordKeys(row, headerMap)) as RawTransactionRow[];
+  const transactions = normalizeRows(records);
   return { kind: "structured_text", transactions, summary: summarizeTransactions(transactions) };
 }
 
 export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<ParsedTransactionSource> {
   const rows = (await readSheet(new Blob([buffer]))) as ExcelCell[][];
   const headers = rows[0]?.map((cell: ExcelCell) => String(cell ?? "").trim()) ?? [];
-  assertTransactionColumns(headers);
+  const { headerMap, missing } = resolveTransactionHeaders(headers);
+  if (missing.length > 0) {
+    throw new Error(missingColumnsMessage(missing));
+  }
 
   const records = rows.slice(1).map((row: ExcelCell[]) =>
-    Object.fromEntries(headers.map((header: string, index: number) => [header, row[index] ?? ""]))
+    remapRecordKeys(
+      Object.fromEntries(headers.map((header: string, index: number) => [header, row[index] ?? ""])),
+      headerMap
+    )
   ) as RawTransactionRow[];
 
   const transactions = normalizeRows(records.filter((row) => Object.values(row).some((value) => value !== "")));
@@ -99,19 +116,21 @@ export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<ParsedTrans
 
 export function parseHtmlText(text: string): ParsedTransactionSource {
   const tables = extractTables(text);
-  const transactionTable = tables.find((table) => {
-    const headers = table[0] ?? [];
-    return EXPECTED_TRANSACTION_COLUMNS.every((column) => headers.includes(column));
-  });
+  const candidates = tables.map((table) => ({ table, resolution: resolveTransactionHeaders(table[0] ?? []) }));
+  const best = candidates.find((candidate) => candidate.resolution.missing.length === 0);
 
-  if (!transactionTable) {
-    throw new Error("Could not find a transaction table with the expected headers.");
+  if (!best) {
+    // Report the fewest-missing-fields table's gaps, since that's the one the user most likely meant.
+    const closest = candidates.sort((a, b) => a.resolution.missing.length - b.resolution.missing.length)[0];
+    throw new Error(missingColumnsMessage(closest?.resolution.missing ?? EXPECTED_TRANSACTION_COLUMNS.slice()));
   }
 
-  const headers = transactionTable[0];
-  assertTransactionColumns(headers);
-  const records = transactionTable.slice(1).map((row) =>
-    Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""]))
+  const headers = best.table[0];
+  const records = best.table.slice(1).map((row) =>
+    remapRecordKeys(
+      Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""])),
+      best.resolution.headerMap
+    )
   ) as RawTransactionRow[];
 
   const transactions = normalizeRows(records);
@@ -155,10 +174,13 @@ function parseMarkdownTable(text: string): ParsedTransactionSource {
   if (!headers) {
     throw new Error("Could not find a table in the pasted text.");
   }
-  assertTransactionColumns(headers);
+  const { headerMap, missing } = resolveTransactionHeaders(headers);
+  if (missing.length > 0) {
+    throw new Error(missingColumnsMessage(missing));
+  }
 
   const records = dataRows.map((row) =>
-    Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""]))
+    remapRecordKeys(Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""])), headerMap)
   ) as RawTransactionRow[];
 
   const transactions = normalizeRows(records);
@@ -225,5 +247,5 @@ function hasExpectedHeader(text: string, delimiter: "," | "\t"): boolean {
   }
 
   const headers = firstLine.split(delimiter).map((header) => header.trim());
-  return EXPECTED_TRANSACTION_COLUMNS.every((column) => headers.includes(column));
+  return resolveTransactionHeaders(headers).missing.length === 0;
 }

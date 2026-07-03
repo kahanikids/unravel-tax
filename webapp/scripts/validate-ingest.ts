@@ -51,6 +51,34 @@ async function main() {
     }
   }
 
+  // Fuzzy header matching: real broker exports rename, reorder, and sometimes
+  // misspell these columns. This fixture uses synonyms ("Security Name" for
+  // "Scrip Name", "Qty" for "Units"), reordered columns, extra whitespace
+  // ("BUY  RATE"), and one deliberate typo ("Purchse Date"), and must still
+  // resolve to the exact same transactions as the exact-header baseline.
+  const fuzzyHeaders = parseCsvText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement-fuzzy-headers.csv"), "utf8")
+  );
+  if (JSON.stringify(comparableRows(fuzzyHeaders)) !== JSON.stringify(baseline)) {
+    throw new Error("Fuzzy-header CSV fixture did not resolve to the same transactions as the exact-header baseline.");
+  }
+
+  // A document genuinely missing a required column (here, no Sell Price/Sale
+  // Rate equivalent at all) must fail gracefully and name the missing field,
+  // not just report a generic "expected headers" error.
+  const missingColumnText = await readFile(resolve(fixturesDir, "sample-broker-statement-missing-column.csv"), "utf8");
+  let missingColumnError: string | undefined;
+  try {
+    parseCsvText(missingColumnText);
+  } catch (error) {
+    missingColumnError = error instanceof Error ? error.message : String(error);
+  }
+  if (!missingColumnError || !missingColumnError.includes("Sell Price")) {
+    throw new Error(
+      `Expected a missing-column error naming "Sell Price", got: ${missingColumnError ?? "no error thrown"}`
+    );
+  }
+
   const pdfRoute = parseTextSource(
     "sample-pdf-extracted-text.txt",
     await readFile(resolve(fixturesDir, "sample-pdf-extracted-text.txt"), "utf8"),

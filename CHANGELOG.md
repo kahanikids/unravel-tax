@@ -6,6 +6,38 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Fixed a hard blocker where uploading a CSV/Excel/HTML statement with
+  differently worded column headers failed with a generic "Could not find
+  a transaction table with the expected headers" error and refused to add
+  the document. Added fuzzy header matching (`webapp/src/ingest/headerMatching.ts`):
+  normalizes header casing/spacing/punctuation, matches against a synonym
+  list per column (e.g. "Security Name"/"Symbol" for Scrip Name, "Qty" for
+  Units, "Purchase Amount" for Buy Value), then falls back to small
+  edit-distance typo tolerance for near-misses like "Purchse Date". Column
+  order no longer matters. If a required column genuinely can't be found,
+  the error now names exactly which one(s) are missing instead of a
+  generic message. Deliberately did not add a value-shape fallback
+  (guessing date/numeric columns by content) since the synonym and typo
+  passes cover the reported failure; documented as a follow-up if it's
+  ever needed. Added `fixtures/sample-broker-statement-fuzzy-headers.csv`
+  (relabeled, reordered, one typo) and
+  `fixtures/sample-broker-statement-missing-column.csv` to
+  `validate-ingest.ts`, alongside the existing exact-header fixtures.
+- Completed the design-audit pass over the webapp flow: renamed the
+  jargon-heavy "Start with Computation" path to "Add documents", added a
+  time estimate and clearer file-format caveat on welcome, moved the
+  orientation privacy reassurance beside the question instead of the nav
+  controls, and made "Start over" a separated danger action with an
+  in-app confirmation modal instead of a native browser dialog. The upload
+  step now gives parsing feedback, blocks zero-document results, supports
+  real drag-and-drop, and shows the PDF/free-form extraction prompt inline
+  instead of pointing users to a repo path. Results now lead with the
+  summary before optional refinement inputs, put export guidance before
+  the file buttons, give the XLSX CA Summary the primary action, keep the
+  full workbook as the secondary record file, and show a green success
+  message after export. Mobile polish keeps side-nav labels visible,
+  adds a chevron to the checklist toggle, and hides secondary numeric
+  preview-table columns on phone widths.
 - Added a Section 234B advance-tax interest estimator (`AdvanceTaxPanel`,
   `lib/advanceTax.ts`, new `rules/advance-tax.json`/`.md`): enter total tax
   liability, what's already paid via TDS/instalments, and a date, and it

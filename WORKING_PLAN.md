@@ -160,19 +160,36 @@ section for the honest gap list. In priority order, what's actually left:
 2. ~~Confidence, recovery, and coverage pass~~ - done 2026-07-03. Capabilities
    panel, why-this-number drilldown, AIS/Form 26AS/Form 16 reconciliation,
    pre-export confidence report, editable extraction review, old vs new
-   regime comparison, and the welcome screen/side-nav redesign - see
-   CHANGELOG.md for the full list.
-3. **Wire NRI/HUF/single-parent calculations**, not just their orientation
-   questions and checklists (SYSTEM_SPEC.md Section 14 Phase 2/3): NRE/NRO
-   separation, TDS-withheld-vs-owed reconciliation, HUF partition/clubbing
-   amounts, minor's-income clubbing amounts.
-4. **Add a year-rollover / import-last-year workflow**, so a returning
-   filer isn't starting from a blank slate every financial year. Needs a
-   decision on what actually carries over (documents shouldn't; some
-   profile answers like residency/HUF status probably should) and how
-   FY-specific `rules/*.json` gets versioned once a second year exists.
-5. **Add an advance tax / Section 234B-234C interest estimator**, reading
-   due-date data from `rules/*.json` like every other calculation. Blocked
-   on adding a verified advance-tax-instalment rules file first.
+   regime comparison, the welcome screen/side-nav redesign, and the
+   follow-up design-audit fixes for upload, results, exports, mobile nav,
+   and safer reset handling - see CHANGELOG.md for the full list.
+3. ~~Wire NRI/HUF/single-parent calculations~~ - partly done 2026-07-03.
+   NRE interest is its own exempt line (Section 10(4)(ii)); minor's-income
+   clubbing computes the amount after the Section 10(32) per-child
+   exemption; the regime comparison tool now explicitly tells HUF filers
+   to skip it instead of quietly giving them wrong numbers. TDS-vs-owed
+   reconciliation was already covered generically by the reconciliation
+   panel (item 2) for any profile, including NRI. Still open, deliberately
+   deferred: DTAA/repatriation and NRO TDS-rate precision for NRI, HUF
+   partition and Section 64(2) transfer-without-consideration clubbing
+   (needs an asset-level transfer log this tool doesn't have), and the
+   clubbing exceptions (manual work/skill income, Section 80U disability)
+   for single parents.
+4. ~~Add an advance tax / Section 234B interest estimator~~ - done
+   2026-07-03 (`AdvanceTaxPanel`, `rules/advance-tax.json`). Section 234C
+   (the per-quarter-instalment interest) is deliberately not estimated: it
+   needs income dated by quarter to avoid overstating it for gains/
+   dividends that arrive later in the year, and this tool doesn't capture
+   income by quarter yet. See `rules/advance-tax.md`.
+5. **Add a year-rollover / import-last-year workflow.** Re-assessed
+   2026-07-03: this is genuinely blocked, not just unbuilt. The tool has
+   only existed for one financial year (FY 2025-26), so there is no prior
+   year's export this tool itself ever produced to import from, and
+   `rules/*.json` only has one FY populated, so there's no second year's
+   rules to roll forward into yet either. Building an import parser now
+   would be speculative against a file format that's never actually been
+   used, and untestable end-to-end until a second FY genuinely exists.
+   Revisit once FY 2026-27 rules are added and at least one real filer has
+   gone through a full year with this tool.
 6. Real first-time-user dry run against the hosted webapp (not just the
    validation scripts), the same bar Milestone 1 used.
