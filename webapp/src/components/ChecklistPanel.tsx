@@ -32,6 +32,7 @@ export function ChecklistPanel({
   );
   const gaps = checklistGaps(checklistItems);
   const openCount = gaps.length + riskTriggers.length;
+  const urgentLabel = riskTriggers[0]?.label ?? gaps[0]?.document ?? "Nothing outstanding";
 
   return (
     <aside className="checklist-panel" aria-labelledby="checklist-title">
@@ -40,6 +41,7 @@ export function ChecklistPanel({
         <span className={openCount === 0 ? "pill pill-ready" : "pill pill-open"}>
           {openCount === 0 ? "All clear" : `${openCount} open`}
         </span>
+        <p className="checklist-mobile-urgent">{urgentLabel}</p>
         <button
           type="button"
           className="checklist-toggle"

@@ -5,10 +5,10 @@ function ConfidenceGroup({ title, items, tone }: { title: string; items: Confide
     return null;
   }
   return (
-    <div className={`confidence-group confidence-${tone}`}>
-      <h4>
+    <details className={`confidence-group confidence-${tone}`}>
+      <summary>
         {title} ({items.length})
-      </h4>
+      </summary>
       <ul>
         {items.map((item) => (
           <li key={item.label}>
@@ -17,7 +17,7 @@ function ConfidenceGroup({ title, items, tone }: { title: string; items: Confide
           </li>
         ))}
       </ul>
-    </div>
+    </details>
   );
 }
 

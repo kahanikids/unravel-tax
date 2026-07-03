@@ -501,8 +501,15 @@ function App() {
                     <article className="checklist-list-item" key={item.document}>
                       <div>
                         <strong>{item.document}</strong>
-                        <p>{item.whyNeeded}</p>
-                        <DocumentSourceHint document={item.document} />
+                        <div className="checklist-row-detail">
+                          <p>{item.whyNeeded}</p>
+                          <DocumentSourceHint document={item.document} />
+                        </div>
+                        <details className="checklist-row-detail-mobile">
+                          <summary>Why / where</summary>
+                          <p>{item.whyNeeded}</p>
+                          <DocumentSourceHint document={item.document} />
+                        </details>
                       </div>
                       <span className={`pill ${item.status.toLowerCase() === "loaded" ? "pill-ready" : "pill-neutral"}`}>
                         {item.status}

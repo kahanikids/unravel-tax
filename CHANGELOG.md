@@ -6,6 +6,15 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Mobile UI compression pass: dedicated phone density layer in
+  `webapp/src/styles.css` (620px/420px breakpoints), bottom step bar with
+  short labels (`About` / `List` / `Docs` / `Files`), and screen-by-screen
+  copy/layout tightening on welcome, orientation, checklist, upload,
+  results, and modals. Welcome and upload use mobile-only shorter ledes;
+  orientation gets a progress bar; checklist rows and capabilities/confidence
+  groups collapse behind disclosures; upload preview becomes labeled row
+  cards on narrow widths; results refinement splits into accordions with CSV
+  under "Other format"; modals behave as bottom sheets on phone.
 - Fixed a hard blocker where uploading a CSV/Excel/HTML statement with
   differently worded column headers failed with a generic "Could not find
   a transaction table with the expected headers" error and refused to add

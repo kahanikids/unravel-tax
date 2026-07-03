@@ -145,10 +145,11 @@ export function ResultsStep({
         ) : null}
       </section>
 
-      <details className="refine-panel" open>
+      <details className="refine-panel">
         <summary>Add more numbers to refine (optional)</summary>
-        <section className="supplemental-form">
-          <h3>A few more numbers</h3>
+        <details className="refine-section" open>
+          <summary>Income you type in</summary>
+          <section className="supplemental-form">
           <p className="step-lede">
             These don't come from an uploaded document. Enter them yourself, or leave at zero to skip.
           </p>
@@ -175,44 +176,53 @@ export function ResultsStep({
               </label>
             ))}
           </div>
-        </section>
+          </section>
+        </details>
 
-        {huf ? (
-          <section className="regime-panel">
-            <h3>Old vs new regime: which costs less?</h3>
+        <details className="refine-section">
+          <summary>Old vs new regime</summary>
+          {huf ? (
+            <section className="regime-panel">
             <p className="step-lede">
               This comparison assumes salary income and a standard deduction, neither of which apply to an HUF return,
               and it doesn't allow for the missing Section 87A rebate either. Skip it here and get slab-tax figures
               from a CA instead.
             </p>
-          </section>
-        ) : (
-          <RegimeComparisonPanel
+            </section>
+          ) : (
+            <RegimeComparisonPanel
+              supplementalFigures={supplementalFigures}
+              onChangeSupplementalFigures={onChangeSupplementalFigures}
+              debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
+              intradayGain={intradayGain}
+              seniorCitizen={seniorCitizen}
+              rule={regimeChoiceRule}
+            />
+          )}
+        </details>
+
+        <details className="refine-section">
+          <summary>Advance tax</summary>
+          <AdvanceTaxPanel
             supplementalFigures={supplementalFigures}
             onChangeSupplementalFigures={onChangeSupplementalFigures}
-            debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
-            intradayGain={intradayGain}
             seniorCitizen={seniorCitizen}
-            rule={regimeChoiceRule}
+            hasBusinessOrSpeculativeIncome={intradayGain > 0}
+            rule={advanceTaxRule}
           />
-        )}
+        </details>
 
-        <AdvanceTaxPanel
-          supplementalFigures={supplementalFigures}
-          onChangeSupplementalFigures={onChangeSupplementalFigures}
-          seniorCitizen={seniorCitizen}
-          hasBusinessOrSpeculativeIncome={intradayGain > 0}
-          rule={advanceTaxRule}
-        />
-
-        <ReconciliationPanel
-          calculatedDividends={supplementalFigures.dividends}
-          calculatedInterestOtherIncome={supplementalFigures.interestOtherIncome}
-          aisFigures={aisFigures}
-          onChangeAisFigures={onChangeAisFigures}
-          tdsRows={tdsRows}
-          onChangeTdsRows={onChangeTdsRows}
-        />
+        <details className="refine-section">
+          <summary>AIS/TDS check</summary>
+          <ReconciliationPanel
+            calculatedDividends={supplementalFigures.dividends}
+            calculatedInterestOtherIncome={supplementalFigures.interestOtherIncome}
+            aisFigures={aisFigures}
+            onChangeAisFigures={onChangeAisFigures}
+            tdsRows={tdsRows}
+            onChangeTdsRows={onChangeTdsRows}
+          />
+        </details>
       </details>
 
       <ConfidenceReportPanel report={confidenceReport} />
@@ -237,9 +247,12 @@ export function ResultsStep({
           <button type="button" className="secondary-button" onClick={onExportFullWorkbook}>
             {localFolderName ? "Save full workbook" : "Download full workbook"}
           </button>
-          <button type="button" className="text-button" onClick={onExportCsv}>
-            {localFolderName ? "Save CA Summary CSV" : "Download CA Summary CSV"}
-          </button>
+          <details className="other-format">
+            <summary>Other format</summary>
+            <button type="button" className="text-button" onClick={onExportCsv}>
+              {localFolderName ? "Save CA Summary CSV" : "Download CA Summary CSV"}
+            </button>
+          </details>
         </div>
         {localFolderSupported ? (
           <p className="folder-status">

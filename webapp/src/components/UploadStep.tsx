@@ -124,8 +124,11 @@ export function UploadStep({
     <div className="step-card">
       <h2>Add your documents</h2>
       <p className="step-lede">
-        One at a time: add a document, confirm what we read, then the next. CSV, Excel, and saved webpages are read
-        in your browser. PDFs and pasted text go through the guided extraction prompt.
+        <span className="upload-lede-desktop">
+          One at a time: add a document, confirm what we read, then the next. CSV, Excel, and saved webpages are read
+          in your browser. PDFs and pasted text go through the guided extraction prompt.
+        </span>
+        <span className="upload-lede-mobile">Add one statement at a time. We'll show what we read before using it.</span>
       </p>
 
       {parsing ? (
@@ -160,14 +163,14 @@ export function UploadStep({
       {localFolderSupported ? (
         <div className="folder-panel">
           {localFolderName ? (
-            <p>
+            <p className="folder-panel-selected">
               Saving a copy of each document to <strong>{localFolderName}</strong> on your computer as you go.
             </p>
           ) : (
             <>
-              <p>Want a copy of each document saved to a folder on your computer as you add it?</p>
+              <p className="folder-panel-copy">Want a copy of each document saved to a folder on your computer as you add it?</p>
               <button type="button" className="text-button" onClick={onChooseLocalFolder}>
-                Choose a folder
+                Save to a folder instead
               </button>
             </>
           )}
@@ -235,7 +238,7 @@ export function UploadStep({
                   <tbody>
                     {pending.transactions.map((row, index) => (
                       <tr key={index}>
-                        <td>
+                        <td data-label="Scrip">
                           <input
                             type="text"
                             value={row.scripName}
@@ -243,7 +246,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { scripName: event.target.value })}
                           />
                         </td>
-                        <td>
+                        <td data-label="Purchase">
                           <input
                             type="text"
                             value={row.purchaseDate}
@@ -252,7 +255,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { purchaseDate: event.target.value })}
                           />
                         </td>
-                        <td>
+                        <td data-label="Sell">
                           <input
                             type="text"
                             value={row.sellDate}
@@ -261,7 +264,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { sellDate: event.target.value })}
                           />
                         </td>
-                        <td className="col-units">
+                        <td className="col-units" data-label="Units">
                           <input
                             type="number"
                             value={row.units}
@@ -269,7 +272,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { units: Number(event.target.value) || 0 })}
                           />
                         </td>
-                        <td className="col-buy">
+                        <td className="col-buy" data-label="Buy value">
                           <input
                             type="number"
                             value={row.buyValue}
@@ -277,7 +280,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { buyValue: Number(event.target.value) || 0 })}
                           />
                         </td>
-                        <td className="col-sell">
+                        <td className="col-sell" data-label="Sell value">
                           <input
                             type="number"
                             value={row.sellValue}
@@ -285,9 +288,9 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { sellValue: Number(event.target.value) || 0 })}
                           />
                         </td>
-                        <td>{row.gainLoss}</td>
-                        <td>{row.taxClass}</td>
-                        <td>
+                        <td data-label="Gain">{row.gainLoss}</td>
+                        <td data-label="Class">{row.taxClass}</td>
+                        <td data-label="Action">
                           <button type="button" className="text-button" onClick={() => removePendingRow(index)}>
                             Remove
                           </button>

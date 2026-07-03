@@ -10,6 +10,13 @@ const STEP_ICONS: Record<Exclude<AppStep, "welcome">, typeof IconPerson> = {
   results: IconChart
 };
 
+const MOBILE_STEP_LABELS: Record<Exclude<AppStep, "welcome">, string> = {
+  orientation: "About",
+  checklist: "List",
+  documents: "Docs",
+  results: "Files"
+};
+
 /**
  * Vertical, always-visible rail of the same step model ProgressSteps used to
  * show horizontally in the header (see DESIGN_NOTES.md for why this
@@ -39,7 +46,8 @@ export function SideNav({
         const content = (
           <>
             <Icon className="side-nav-icon" />
-            <span className="side-nav-label">{STEP_LABELS[step]}</span>
+            <span className="side-nav-label side-nav-label-full">{STEP_LABELS[step]}</span>
+            <span className="side-nav-label side-nav-label-mobile">{MOBILE_STEP_LABELS[step]}</span>
           </>
         );
 

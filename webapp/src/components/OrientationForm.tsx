@@ -5,6 +5,7 @@ type QuestionBase = {
   id: string;
   prompt: string;
   helper?: string;
+  mobileHelper?: string;
   visible: (answers: OrientationAnswers) => boolean;
   /** Safe to leave unanswered: deriveProfileFlags() treats a skipped
    * (null) answer the same as "No", a conservative default that never
@@ -62,6 +63,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Is any of this income or investment held through a family (HUF) rather than just you personally?",
     helper: "Skip this if that term is unfamiliar. It almost certainly doesn't apply to you.",
+    mobileHelper: "Not sure? Skip it.",
     visible: () => true,
     skippable: true,
     value: (a) => a.huf,
@@ -180,6 +182,7 @@ export function OrientationForm({
     return firstUnanswered === -1 ? Math.max(0, visible.length - 1) : firstUnanswered;
   });
   const current = visible[index];
+  const progressPercent = ((index + 1) / visible.length) * 100;
 
   useEffect(() => {
     if (!current) {
@@ -205,9 +208,17 @@ export function OrientationForm({
   return (
     <div className="orientation-card">
       <p className="orientation-progress">{`Question ${index + 1} of ${visible.length}`}</p>
-      <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p>
+      <div className="orientation-progress-bar" aria-hidden="true">
+        <span style={{ width: `${progressPercent}%` }} />
+      </div>
+      {index === 0 ? <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p> : null}
       <h2 className="orientation-prompt">{current.prompt}</h2>
-      {current.helper ? <p className="orientation-helper">{current.helper}</p> : null}
+      {current.helper ? (
+        <p className="orientation-helper">
+          <span className="orientation-helper-desktop">{current.helper}</span>
+          <span className="orientation-helper-mobile">{current.mobileHelper ?? current.helper}</span>
+        </p>
+      ) : null}
 
       {current.kind === "yes-no" ? (
         <div className="orientation-options">

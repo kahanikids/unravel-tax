@@ -23,12 +23,21 @@ export function WelcomeScreen({
           What can this do?
         </button>
       </div>
-      <h1 className="welcome-title">Turn a pile of tax documents into a filing you understand.</h1>
+      <h1 className="welcome-title">
+        <span className="welcome-title-desktop">Turn a pile of tax documents into a filing you understand.</span>
+        <span className="welcome-title-mobile">Tax documents, sorted.</span>
+      </h1>
 
       <div className="welcome-badges">
         <span className="welcome-badge">No signup</span>
-        <span className="welcome-badge">CSV, Excel, HTML — PDF needs one extra step</span>
-        <span className="welcome-badge">Stays in your browser</span>
+        <span className="welcome-badge welcome-badge-formats">
+          <span className="welcome-badge-desktop">CSV, Excel, HTML — PDF needs one extra step</span>
+          <span className="welcome-badge-mobile">CSV/Excel/PDF</span>
+        </span>
+        <span className="welcome-badge">
+          <span className="welcome-badge-desktop">Stays in your browser</span>
+          <span className="welcome-badge-mobile">Browser-only</span>
+        </span>
       </div>
       <p className="welcome-time-estimate">Most people finish in 15–20 minutes.</p>
 

@@ -52,11 +52,13 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
         <ul className="capabilities-list">
           {available.map((capability) => (
             <li key={capability.label}>
-              <div className="capabilities-item-heading">
+              <details className="capabilities-item">
+                <summary className="capabilities-item-heading">
                 <strong>{capability.label}</strong>
                 <span className="pill pill-ready">Available</span>
-              </div>
-              <p>{capability.detail}</p>
+                </summary>
+                <p>{capability.detail}</p>
+              </details>
             </li>
           ))}
         </ul>
@@ -65,11 +67,13 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
         <ul className="capabilities-list">
           {planned.map((capability) => (
             <li key={capability.label}>
-              <div className="capabilities-item-heading">
+              <details className="capabilities-item">
+                <summary className="capabilities-item-heading">
                 <strong>{capability.label}</strong>
                 <span className="pill pill-neutral">Coming soon</span>
-              </div>
-              <p>{capability.detail}</p>
+                </summary>
+                <p>{capability.detail}</p>
+              </details>
             </li>
           ))}
         </ul>
