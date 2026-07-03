@@ -133,7 +133,10 @@ export const WHO_ITS_FOR_EXCLUDES =
  * rule file; selectItrForm() in lib/profile.ts is what actually chooses one.
  */
 export const ITR_FORM_REASONS: Record<string, string> = {
-  resident_simple: "Salary, interest, or dividends only, with no capital gains or business income detected.",
+  resident_simple:
+    "Salary, interest, or dividends only, with no capital gains or business income detected, so ITR-1 (Sahaj) fits. This assumes none of the ITR-1 disqualifiers this tool can't see from your documents apply: total income above ₹50 lakh, more than one house property, any foreign income or assets, unlisted shares, being a company director, or a loss carried forward from an earlier year. If any of those apply, file ITR-2 instead.",
+  resident_above_itr1_limit:
+    "Your total income is above the ₹50 lakh ceiling for ITR-1 (Sahaj), so ITR-2 applies even though your income is only salary, interest, or dividends.",
   resident_capital_gains_or_clubbing:
     "Capital gains from your documents, or minor's-income clubbing from your profile, need this form.",
   nri_no_business: "Your NRI status routes filing through this form, even without business income.",

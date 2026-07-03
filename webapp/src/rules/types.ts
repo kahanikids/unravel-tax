@@ -42,8 +42,21 @@ export type CapitalGainsEquityValues = {
 
 export type ItrFormSelectionValues = {
   forms: Record<string, { form: string; due_date: string }>;
+  itr1_conditions: {
+    resident_only: boolean;
+    total_income_max_inr: number;
+    agricultural_income_max_inr: number;
+    house_properties_max: number;
+    ltcg_112a_allowed_max_inr: number;
+    ltcg_112a_requires_no_carry_forward_loss: boolean;
+    allows: string[];
+  };
+  itr1_disqualifiers: string[];
   never_itr_1_if: string[];
   business_income_triggers_itr_3: boolean;
+  speculative_intraday_is_business_income?: boolean;
+  presumptive_scheme_uses_itr_4?: boolean;
+  non_individual_huf_entities_out_of_scope?: string[];
 };
 
 export type RiskTriggerDefinition = {

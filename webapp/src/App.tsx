@@ -160,9 +160,25 @@ function App() {
     () => transactions.some((transaction) => transaction.taxClass === "Intraday"),
     [transactions]
   );
+  const rulesSummary = useMemo(
+    () => summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
+    [transactions]
+  );
+  // Total income for the ITR-1 Rs 50 lakh ceiling: the figures the app
+  // actually knows (salary, interest, dividends the user typed, plus the
+  // positive capital-gain buckets from documents). When nothing is entered
+  // this stays low and the ceiling never trips - the safe direction.
+  const totalIncomeForItr = useMemo(() => {
+    const gains =
+      Math.max(0, rulesSummary.stcg) +
+      Math.max(0, rulesSummary.ltcg) +
+      Math.max(0, rulesSummary.intradayGain) +
+      Math.max(0, rulesSummary.debtMfShortTermDeemedGain);
+    return supplementalFigures.salaryIncome + supplementalFigures.dividends + supplementalFigures.interestOtherIncome + gains;
+  }, [rulesSummary, supplementalFigures]);
   const itrForm = useMemo(
-    () => selectItrForm(flags, hasBusinessIncome, ruleCatalog.itrFormSelection),
-    [flags, hasBusinessIncome]
+    () => selectItrForm(flags, hasBusinessIncome, ruleCatalog.itrFormSelection, totalIncomeForItr),
+    [flags, hasBusinessIncome, totalIncomeForItr]
   );
   const riskTriggers = useMemo(
     () => evaluateRiskTriggers(flags, hasBusinessIncome, itrForm, new Date()),
@@ -178,10 +194,6 @@ function App() {
   );
   const scopeCaveats = useMemo(() => deriveProfileScopeCaveats(flags), [flags]);
   const gaps = useMemo(() => checklistGaps(checklistItems), [checklistItems]);
-  const rulesSummary = useMemo(
-    () => summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
-    [transactions]
-  );
 
   // BUILD_PLAN.md Section 1.4: form-changing/recommendation-changing triggers get a
   // hard-block popup, not just inline sidebar text. Show one the first time each

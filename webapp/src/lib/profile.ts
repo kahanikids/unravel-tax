@@ -208,11 +208,24 @@ export type ItrFormChoice = {
   key: string;
 };
 
+/**
+ * Picks the ITR form from the profile flags, detected business/speculative
+ * income, and (where known) total income. The Rs 50 lakh ITR-1 ceiling is
+ * read from rules/itr-form-selection.json, never hardcoded: a resident with
+ * only salary/interest/dividends but total income above that cap files ITR-2,
+ * not ITR-1. Pass 0 for totalIncome when it isn't known yet - the ceiling
+ * then simply never trips, which is the safe direction. Disqualifiers this
+ * tool can't observe (foreign assets, unlisted shares, directorship, a second
+ * house property, carried-forward losses) are surfaced as a caveat on the
+ * ITR-1 recommendation rather than silently ignored - see ITR_FORM_REASONS.
+ */
 export function selectItrForm(
   flags: ProfileFlags,
   hasBusinessIncome: boolean,
-  itrFormRule: ItrFormSelectionRule
+  itrFormRule: ItrFormSelectionRule,
+  totalIncome = 0
 ): ItrFormChoice {
+  const aboveItr1IncomeCap = totalIncome > itrFormRule.values.itr1_conditions.total_income_max_inr;
   const key = hasBusinessIncome
     ? flags.nri
       ? "nri_with_business"
@@ -225,7 +238,9 @@ export function selectItrForm(
         ? "huf_no_business"
         : flags.hasCapitalGains || flags.singleParent
           ? "resident_capital_gains_or_clubbing"
-          : "resident_simple";
+          : aboveItr1IncomeCap
+            ? "resident_above_itr1_limit"
+            : "resident_simple";
 
   const entry = itrFormRule.values.forms[key] ?? itrFormRule.values.forms.resident_capital_gains_or_clubbing;
   return { form: entry.form, dueDate: entry.due_date, key };

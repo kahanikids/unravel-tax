@@ -12,12 +12,14 @@ import {
   CAPABILITIES,
   DISCLAIMER_FULL,
   HOW_IT_WORKS,
+  ITR_FORM_REASONS,
   REPORT_ISSUE_URL,
   TOOL_TOUR_USE_CASES,
   WHO_ITS_FOR,
   WHO_ITS_FOR_EXCLUDES
 } from "../src/lib/copy";
-import { clubbedMinorIncome, deriveProfileFlags } from "../src/lib/profile";
+import { clubbedMinorIncome, deriveProfileFlags, selectItrForm } from "../src/lib/profile";
+import type { ProfileFlags } from "../src/state/types";
 import { saveSession } from "../src/lib/persistence";
 import { ruleCatalog } from "../src/rules";
 import type { CaSummaryRow } from "../src/lib/calculations";
@@ -783,6 +785,65 @@ function checkConfidenceReportPanel() {
   console.log("Validated confidence report panel: clean and flagged states both render the right groups.");
 }
 
+const BLANK_FLAGS: ProfileFlags = {
+  nri: false,
+  huf: false,
+  seniorCitizen: false,
+  singleParent: false,
+  hasCapitalGains: false,
+  hasDividends: false,
+  hasBankInterest: false,
+  hasRent: false,
+  multipleEmployers: false,
+  hraRisk: false,
+  epfRisk: false
+};
+
+function checkItrFormSelection() {
+  const rule = ruleCatalog.itrFormSelection;
+  const cap = rule.values.itr1_conditions.total_income_max_inr;
+
+  const expect = (
+    label: string,
+    flags: ProfileFlags,
+    hasBusinessIncome: boolean,
+    totalIncome: number,
+    expectedForm: string,
+    expectedKey: string
+  ) => {
+    const choice = selectItrForm(flags, hasBusinessIncome, rule, totalIncome);
+    if (choice.form !== expectedForm || choice.key !== expectedKey) {
+      throw new Error(
+        `ITR selection for ${label}: expected ${expectedForm} (${expectedKey}), got ${choice.form} (${choice.key}).`
+      );
+    }
+  };
+
+  expect("resident, only salary/interest, under the cap", BLANK_FLAGS, false, cap - 1, "ITR-1", "resident_simple");
+  // The Rs 50 lakh ceiling: the same simple profile above the cap must move to ITR-2, not stay on ITR-1.
+  expect("resident, only salary/interest, above the cap", BLANK_FLAGS, false, cap + 1, "ITR-2", "resident_above_itr1_limit");
+  expect("resident with capital gains", { ...BLANK_FLAGS, hasCapitalGains: true }, false, 100000, "ITR-2", "resident_capital_gains_or_clubbing");
+  expect("single parent (clubbing)", { ...BLANK_FLAGS, singleParent: true }, false, 100000, "ITR-2", "resident_capital_gains_or_clubbing");
+  // Intraday is speculative business income - it must win even above the income cap.
+  expect("resident with intraday/business income", BLANK_FLAGS, true, cap + 1, "ITR-3", "business_or_speculative_non_audit");
+  expect("NRI without business", { ...BLANK_FLAGS, nri: true }, false, 100000, "ITR-2", "nri_no_business");
+  expect("HUF without business", { ...BLANK_FLAGS, huf: true }, false, 100000, "ITR-2", "huf_no_business");
+  // Unknown income (0) must never trip the ceiling - the safe direction.
+  expect("resident, income not yet known", BLANK_FLAGS, false, 0, "ITR-1", "resident_simple");
+
+  // The ITR-1 recommendation must be honest about disqualifiers this tool can't see.
+  const itr1Reason = ITR_FORM_REASONS.resident_simple;
+  for (const phrase of ["50 lakh", "foreign", "director"]) {
+    if (!itr1Reason.toLowerCase().includes(phrase)) {
+      throw new Error(`ITR-1 recommendation note should caveat "${phrase}" but doesn't: ${itr1Reason}`);
+    }
+  }
+
+  console.log(
+    "Validated ITR form selection: Rs 50 lakh ITR-1 ceiling, capital-gains/clubbing/NRI/HUF/intraday routing, and the honest ITR-1 disqualifier caveat."
+  );
+}
+
 function assertIncludes(value: string, expected: string) {
   if (!value.includes(expected)) {
     throw new Error(`Rendered output is missing: ${expected}`);
@@ -797,6 +858,7 @@ function main() {
   checkHelpPanel();
   checkCapabilitiesPanel();
   checkOrientationForm();
+  checkItrFormSelection();
   checkUploadStep();
   checkRegimeComparisonPanel();
   checkChecklistPanel();

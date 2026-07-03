@@ -4,6 +4,35 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-03 (ITR form selection)
+
+- ITR form selection rules recorded and verified: `rules/itr-form-selection.json`
+  and `rules/itr-form-selection.md` were stubs; they now carry the full
+  AY 2026-27 form applicability (ITR-1/2/3/4 who-can/who-cannot, the ITR-1
+  Rs 50 lakh income ceiling, the Section 112A LTCG ≤ Rs 1.25 lakh carve-out,
+  agri ≤ Rs 5,000, one-house-property rule, and the complete ITR-1
+  disqualifier list). Cross-checked against ClearTax "Which ITR to File in
+  FY 2025-26 (AY 2026-27)" and the CBDT ITR-form notifications; source URL
+  added to `source_refs`, verification status moved off `pending_current_source`.
+  Due dates were left as-is and flagged as a separate pending check.
+- Questionnaire honesty fixes (no misrepresentation of the ITR form):
+  - `selectItrForm` now applies the Rs 50 lakh ITR-1 ceiling (read from the
+    rule file, not hardcoded): a resident with only salary/interest/dividends
+    but total income above Rs 50 lakh is routed to ITR-2, not ITR-1. Total
+    income is derived from the figures the app actually knows; when unknown it
+    stays low and the ceiling never trips (the safe direction).
+  - The ITR-1 recommendation note now states the disqualifiers the tool
+    can't observe (income above Rs 50 lakh, more than one house property,
+    foreign income/assets, unlisted shares, company directorship, carried-
+    forward losses) as an explicit "ITR-1 fits if none of these apply"
+    caveat, instead of asserting ITR-1 unconditionally.
+  - Confirmed already-correct routing left unchanged: intraday = speculative
+    business income to ITR-3, NRI/HUF to ITR-2, and the conservative
+    capital-gains to ITR-2 (safe even though small 112A LTCG can now use ITR-1).
+  - Validation case added (`validate:guided-ui`) covering the ceiling, the
+    capital-gains/clubbing/NRI/HUF/intraday routing, the unknown-income safe
+    default, and the presence of the ITR-1 disqualifier caveat.
+
 ## 2026-07-03 (quality pass)
 
 - Section 87A marginal relief (new regime): added
