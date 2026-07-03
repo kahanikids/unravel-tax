@@ -44,7 +44,7 @@ export function WelcomeScreen({
           <span className="welcome-badge-mobile">Browser-only</span>
         </span>
       </div>
-      <p className="welcome-time-estimate">Just takes about 15-20 mins.</p>
+      <p className="welcome-time-estimate">Takes about 15-20 minutes.</p>
 
       {hasSavedSession ? (
         <div className="resume-banner">

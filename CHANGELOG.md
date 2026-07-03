@@ -19,6 +19,19 @@ change (Budget, Finance Act, CBDT circular).
 - Sample-mode fix: leaving sample data via a welcome-screen card, or adding
   a real document while viewing sample data, now clears the demo data
   instead of letting the next autosave overwrite a real saved filing.
+- Ingestion robustness: multi-sheet Excel workbooks are scanned for the
+  sheet whose headers match the transaction columns best (new fixture +
+  validation case); a malformed CSV line downgrades to a row warning
+  instead of rejecting the whole file; accounting-style `(1,234.56)`
+  negatives parse; exact canonical headers win over synonym columns like
+  ISIN; the row-edit long-term threshold reads from
+  `rules/capital-gains-equity.json` instead of a hardcoded 365.
+- Full workbook export: duplicate/reserved Excel sheet names are deduped
+  with a numeric suffix so the export always opens.
+- Journey fixes: filers with no broker documents can skip the documents
+  step and reach results (income typed in on the results screen); the
+  single-parent orientation question now asks specifically about minor
+  children so solo filers without kids don't get clubbing guidance.
 
 ## 2026-07-03
 

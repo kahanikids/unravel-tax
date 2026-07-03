@@ -203,3 +203,18 @@ section for the honest gap list. In priority order, what's actually left:
    gone through a full year with this tool.
 8. Real first-time-user dry run against the hosted webapp (not just the
    validation scripts), the same bar Milestone 1 used.
+9. ~~Bug/journey quality pass~~ - done 2026-07-03. Fixed: sample data
+   leaking over a real saved filing; old-regime standard deduction
+   applying against non-salary income; missing Section 87A marginal
+   relief (false tax cliff just above Rs 12L); hardcoded 365-day
+   threshold in row editing; duplicate Excel sheet names corrupting the
+   full workbook; whole-file CSV rejection on one bad line; ISIN
+   stealing the Scrip Name column; unparsed accounting-style negatives;
+   no path to results without a broker document; single-parent question
+   catching childless solo filers; multi-sheet Excel workbooks only
+   reading sheet 1. All validated by scripts plus a scripted browser
+   walkthrough of welcome → orientation → checklist → documents (skip
+   and upload) → results → export. Still open, found but deliberately
+   not built in that pass: removing a document doesn't delete its
+   "submitted - *.csv" folder copy; Section 234C; DTAA/NRO precision
+   (already tracked in item 3).
