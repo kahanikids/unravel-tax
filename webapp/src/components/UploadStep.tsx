@@ -11,6 +11,19 @@ type Pending = {
   transactions: NormalizedTransaction[];
 };
 
+const EXTRACTION_PROMPT = `I'm sharing one document — it could be a PDF, an Excel file, a CSV, a saved webpage, or pasted text. Read it and output ONLY a table with these exact columns, one row per transaction:
+
+Scrip/Fund Name | Purchase Date | Sell Date | Units | Buy Value | Sell Value | Buy Price | Sell Price
+
+Rules:
+- If the source has more than one table, use the one that actually contains transaction rows, not a summary or disclaimer table — tell me which one you used.
+- If the file has subtotal or summary rows mixed in with transaction rows, drop the subtotal rows — I only want individual transaction lines.
+- Use DD-MMM-YYYY date format.
+- Do not classify long-term/short-term yourself, and do not calculate gains yourself.
+- If any transaction is missing a purchase date or sell date, flag it in a separate line after the table instead of guessing.
+- Output the table in a format I can copy straight into a spreadsheet (tab-separated or markdown table, your choice, just tell me which).
+- End with one line summarizing what you read and how confident you are.`;
+
 export function UploadStep({
   documents,
   onCommit,
@@ -32,6 +45,8 @@ export function UploadStep({
   const [awaitingPaste, setAwaitingPaste] = useState<string | null>(null);
   const [pasteText, setPasteText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [parsing, setParsing] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   async function handleFile(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -39,6 +54,7 @@ export function UploadStep({
       return;
     }
     setError(null);
+    setParsing(true);
     try {
       const result = await parseFile(file);
       if (result.kind === "pdf_or_freeform") {
@@ -48,6 +64,9 @@ export function UploadStep({
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not read that file.");
+    } finally {
+      setParsing(false);
+      setIsDragOver(false);
     }
   }
 
@@ -109,18 +128,34 @@ export function UploadStep({
         in your browser. PDFs and pasted text go through the guided extraction prompt.
       </p>
 
-      <div className="upload-dropzone">
-        <label className="primary-button upload-button">
-          Choose a file
-          <input
-            type="file"
-            accept=".csv,.xlsx,.xls,.html,.htm,.tsv,.txt,.pdf"
-            onChange={(event) => handleFile(event.target.files)}
-            hidden
-          />
-        </label>
-        <p className="upload-hint">Broker/AMC capital gains statements are the main thing this step is for.</p>
-      </div>
+      {parsing ? (
+        <p className="upload-parsing-hint">Reading file...</p>
+      ) : (
+        <div
+          className={isDragOver ? "upload-dropzone upload-dropzone-active" : "upload-dropzone"}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            handleFile(event.dataTransfer.files);
+          }}
+        >
+          <label className="primary-button upload-button">
+            Choose a file
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls,.html,.htm,.tsv,.txt,.pdf"
+              onChange={(event) => handleFile(event.target.files)}
+              hidden
+            />
+          </label>
+          <p className="upload-hint">Drop a file here, or click to choose. Broker/AMC capital gains statements are the main thing this step is for.</p>
+        </div>
+      )}
 
       {localFolderSupported ? (
         <div className="folder-panel">
@@ -148,10 +183,14 @@ export function UploadStep({
             text itself.
           </p>
           <ol className="paste-steps">
-            <li>Copy the prompt from <code>prompts/01-extract-statement.md</code>.</li>
+            <li>Copy the prompt below.</li>
             <li>Paste it into your AI chat of choice, along with the document.</li>
             <li>Paste the table it gives you back here.</li>
           </ol>
+          <details className="extraction-prompt">
+            <summary>Show the extraction prompt</summary>
+            <pre>{EXTRACTION_PROMPT}</pre>
+          </details>
           <textarea
             className="paste-textarea"
             value={pasteText}
@@ -185,9 +224,9 @@ export function UploadStep({
                       <th>Scrip</th>
                       <th>Purchase</th>
                       <th>Sell</th>
-                      <th>Units</th>
-                      <th>Buy value</th>
-                      <th>Sell value</th>
+                      <th className="col-units">Units</th>
+                      <th className="col-buy">Buy value</th>
+                      <th className="col-sell">Sell value</th>
                       <th>Gain/(Loss)</th>
                       <th>Class</th>
                       <th aria-label="Remove row" />
@@ -222,7 +261,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { sellDate: event.target.value })}
                           />
                         </td>
-                        <td>
+                        <td className="col-units">
                           <input
                             type="number"
                             value={row.units}
@@ -230,7 +269,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { units: Number(event.target.value) || 0 })}
                           />
                         </td>
-                        <td>
+                        <td className="col-buy">
                           <input
                             type="number"
                             value={row.buyValue}
@@ -238,7 +277,7 @@ export function UploadStep({
                             onChange={(event) => updatePendingRow(index, { buyValue: Number(event.target.value) || 0 })}
                           />
                         </td>
-                        <td>
+                        <td className="col-sell">
                           <input
                             type="number"
                             value={row.sellValue}
@@ -292,10 +331,11 @@ export function UploadStep({
       ) : null}
 
       <div className="step-actions">
-        <button type="button" className="primary-button" onClick={onContinue}>
+        <button type="button" className="primary-button" onClick={onContinue} disabled={documents.length === 0}>
           Continue to your results
         </button>
       </div>
+      {documents.length === 0 ? <p className="upload-empty-hint">Add at least one document to continue.</p> : null}
     </div>
   );
 }

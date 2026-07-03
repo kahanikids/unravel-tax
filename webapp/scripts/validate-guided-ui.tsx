@@ -16,7 +16,7 @@ import {
   WHO_ITS_FOR,
   WHO_ITS_FOR_EXCLUDES
 } from "../src/lib/copy";
-import { deriveProfileFlags } from "../src/lib/profile";
+import { clubbedMinorIncome, deriveProfileFlags } from "../src/lib/profile";
 import { saveSession } from "../src/lib/persistence";
 import { ruleCatalog } from "../src/rules";
 import type { CaSummaryRow } from "../src/lib/calculations";
@@ -75,7 +75,7 @@ function checkWelcomeScreen() {
   // "Show value first" redesign: welcome no longer funnels straight into
   // orientation. It offers 3 equally-weighted entry paths as cards.
   assertIncludes(html, "Checklist");
-  assertIncludes(html, "Start with Computation");
+  assertIncludes(html, "Add documents");
   assertIncludes(html, "Get to know the tool");
   assertIncludes(html, 'class="entry-path-cards"');
   const entryPathCardCount = html.split('class="entry-path-card"').length - 1;
@@ -140,11 +140,11 @@ function checkWelcomeScreen() {
     throw new Error("'Start over' should not render on the welcome screen; it now lives inside OrientationForm.");
   }
 
-  console.log("Validated welcome screen: 3 entry-path cards (Checklist / Start with Computation / Get to know the tool), no dev/milestone jargon leaking into the UI.");
+  console.log("Validated welcome screen: 3 entry-path cards (Checklist / Add documents / Get to know the tool), no dev/milestone jargon leaking into the UI.");
 }
 
 /**
- * "Start with Computation" is the least-friction path that still produces a
+ * "Add documents" is the least-friction path that still produces a
  * correct number: it jumps straight to the documents step and leaves
  * orientation answers at their null/blank defaults. deriveProfileFlags()
  * treats every null answer as "No" (see lib/profile.ts), and caSummaryRows()
@@ -174,7 +174,7 @@ function checkComputationFirstPathIsReachable() {
     throw new Error("Blank orientation answers must resolve to the resident/no-special-circumstances default, or the computation-first shortcut isn't safe.");
   }
 
-  console.log("Validated 'Start with Computation' jump: documents step stays reachable back to orientation/checklist, and blank orientation resolves to a safe default profile.");
+  console.log("Validated 'Add documents' jump: documents step stays reachable back to orientation/checklist, and blank orientation resolves to a safe default profile.");
 }
 
 /**
@@ -372,7 +372,7 @@ function checkChecklistPanel() {
   assertIncludes(html, "Broker/AMC capital gains statement");
   assertIncludes(html, "Speculative/intraday trading income");
   assertIncludes(html, "checklist-item-flag");
-  assertIncludes(html, "Known limits for your profile");
+  assertIncludes(html, "Heads up — this tool has limits");
   assertIncludes(html, "NRI-specific numbers");
   console.log(
     "Validated checklist panel: missing documents, form-changing risk triggers, and profile-scope caveats all render, flagged visually."
@@ -392,6 +392,7 @@ function checkResultsStepDefaultsToSimple() {
       intradayGain={0}
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -434,6 +435,7 @@ function checkResultsStepAdvancedToggle() {
       intradayGain={0}
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -468,6 +470,7 @@ function checkRegimeComparisonPanel() {
       intradayGain={0}
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -500,6 +503,7 @@ function checkRegimeComparisonPanel() {
       intradayGain={0}
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -542,6 +546,7 @@ function resultsStepWithReconciliation(props: {
       intradayGain={0}
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
       aisFigures={props.aisFigures}
       onChangeAisFigures={noop}
       tdsRows={props.tdsRows}
@@ -603,6 +608,7 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       intradayGain={0}
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -618,6 +624,122 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       localFolderName={null}
       onChooseLocalFolder={noop}
     />
+  );
+}
+
+function checkAdvanceTaxPanel() {
+  const html = renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+  assertIncludes(html, "Section 234B interest");
+  assertIncludes(html, "Total tax liability for the year");
+  assertIncludes(html, "Enter your total tax liability above to see an estimate.");
+
+  console.log("Validated advance tax panel: Section 234B estimator renders with its inputs and skip-friendly default.");
+}
+
+function checkNriHufSingleParentPartialCalculations() {
+  const baseProps = {
+    rows: SAMPLE_ROWS,
+    documents: [],
+    openIssueCount: 0,
+    caRecommendation: SAMPLE_RECOMMENDATION,
+    onChangeSupplementalFigures: noop,
+    debtMfShortTermDeemedGain: 0,
+    intradayGain: 0,
+    seniorCitizen: false,
+    regimeChoiceRule: ruleCatalog.regimeChoice,
+    advanceTaxRule: ruleCatalog.advanceTax,
+    aisFigures: BLANK_AIS_REPORTED_FIGURES,
+    onChangeAisFigures: noop,
+    tdsRows: [],
+    onChangeTdsRows: noop,
+    confidenceReport: SAMPLE_CONFIDENCE_REPORT,
+    showAdvanced: false,
+    onToggleAdvanced: noop,
+    exportMessage: "",
+    onExportCsv: noop,
+    onExportXlsx: noop,
+    onExportFullWorkbook: noop,
+    localFolderSupported: false,
+    localFolderName: null,
+    onChooseLocalFolder: noop
+  };
+
+  const defaultHtml = renderToString(
+    <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} />
+  );
+  if (defaultHtml.includes("NRE interest")) {
+    throw new Error("NRE interest field should only render for the NRI profile.");
+  }
+  if (defaultHtml.includes("Minor's income to club")) {
+    throw new Error("Minor's income field should only render for the single-parent profile.");
+  }
+
+  const nriHtml = renderToString(
+    <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} nri />
+  );
+  assertIncludes(nriHtml, "NRE interest");
+
+  const hufHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, salaryIncome: 1_200_000 }}
+      huf
+    />
+  );
+  assertIncludes(hufHtml, "Skip it here and get slab-tax figures");
+  if (hufHtml.includes("Old regime deductions")) {
+    throw new Error("HUF profile should not see the regime comparison inputs, which don't fit HUF's numbers.");
+  }
+
+  const singleParentHtml = renderToString(
+    <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} singleParent />
+  );
+  assertIncludes(singleParentHtml, "income to club");
+  assertIncludes(singleParentHtml, "Number of minor children");
+
+  const clubbed = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing);
+  if (clubbed !== 7000) {
+    throw new Error(`Expected clubbedMinorIncome(10000, 2, rule) to be 7000 (10000 - 2x1500), got ${clubbed}.`);
+  }
+  const clubbedCapped = clubbedMinorIncome(10000, 5, ruleCatalog.singleParentClubbing);
+  if (clubbedCapped !== clubbed) {
+    throw new Error(`Expected clubbedMinorIncome to cap the exemption at max_children_for_exemption, got ${clubbedCapped}.`);
+  }
+  const clubbedFloor = clubbedMinorIncome(1000, 1, ruleCatalog.singleParentClubbing);
+  if (clubbedFloor !== 0) {
+    throw new Error(`Expected clubbedMinorIncome to floor at zero when income is below the exemption, got ${clubbedFloor}.`);
+  }
+
+  console.log(
+    "Validated NRI/HUF/single-parent partial calculations: NRE exempt line, HUF regime-comparison skip, minor's-income clubbing math."
   );
 }
 
@@ -663,6 +785,8 @@ function main() {
   checkChecklistPanel();
   checkResultsStepDefaultsToSimple();
   checkResultsStepAdvancedToggle();
+  checkAdvanceTaxPanel();
+  checkNriHufSingleParentPartialCalculations();
   checkReconciliationPanel();
   checkConfidenceReportPanel();
 }

@@ -7,11 +7,13 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified",
+    "last_verified": "2026-07-03",
+    "note": "HUF's slab/rebate/deduction treatment relative to an individual is a long-standing, unchanged structural rule. Checked against the Income Tax Department's own HUF tax rates page and multiple current filing guides; re-check only if a Budget/Finance Act amendment is reported."
   },
   "source_refs": [
+    "https://incometaxindia.gov.in/Documents/Left%20Menu/TAX%20RATES_HUF.htm",
+    "Income Tax Act, 1961, Section 87A (rebate limited to a resident individual, not an HUF)",
     "SYSTEM_SPEC.md Sections 6.2, 8",
     "BUILD_PLAN.md Section 15.6"
   ],
@@ -20,6 +22,9 @@
     "requires_separate_pan": true,
     "no_itr_1_or_itr_4": true,
     "no_87a_rebate": true,
+    "no_standard_deduction": true,
+    "cannot_have_salary_income": true,
+    "same_slab_rates_as_individual": true,
     "itr_without_business": "ITR-2",
     "itr_with_business": "ITR-3"
   }

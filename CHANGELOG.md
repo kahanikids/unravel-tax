@@ -6,6 +6,35 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added a Section 234B advance-tax interest estimator (`AdvanceTaxPanel`,
+  `lib/advanceTax.ts`, new `rules/advance-tax.json`/`.md`): enter total tax
+  liability, what's already paid via TDS/instalments, and a date, and it
+  estimates 1%-per-month interest on the shortfall from 1 April of the
+  assessment year, correctly exempting resident senior citizens without
+  business income (Section 207(2)) and cases under the Rs 10,000 Section
+  208 threshold or already 90%+ paid. Deliberately does not estimate
+  Section 234C (the per-quarter-instalment interest), since that needs
+  income dated by quarter to avoid overstating it for anyone whose gains
+  or dividends arrived later in the year; this tool doesn't capture income
+  by quarter yet, and `rules/advance-tax.md` explains the gap plainly.
+- Wired partial NRI/HUF/single-parent calculations that were previously
+  checklist-only caveats (WORKING_PLAN.md item 3): NRE interest can now be
+  entered as its own exempt line (Section 10(4)(ii), kept out of the
+  taxable interest total); minor's-income clubbing computes the clubbed
+  amount after the Section 10(32) per-child exemption (capped at 2
+  children); and the old-vs-new regime comparison tool now explicitly
+  tells HUF filers to skip it, since that tool's salary/standard-deduction
+  assumptions don't fit an HUF's numbers at all (HUF can't have salary
+  income, gets no standard deduction, and gets no Section 87A rebate).
+  Upgraded `rules/nri-nre-nro.json`, `rules/huf-basics.json`, and
+  `rules/single-parent-clubbing.json` from `pending_current_source` to
+  `verified` after checking each against the Income Tax Department's own
+  pages and current filing guides; still deferred and left as caveats:
+  DTAA/repatriation and NRO TDS-rate precision for NRI, HUF partition and
+  Section 64(2) transfer-without-consideration clubbing (needs an
+  asset-level transfer log this tool doesn't have), and clubbing
+  exceptions (a minor's own manual work/skill income, Section 80U
+  disability) for single parents.
 - Redesigned "Get to know the tool" into a 3-step tour (`ToolTour`): plain
   use cases ("turns your statements into numbers a CA can check", not a
   feature list), a walk-through of the real flow including "rules-based,

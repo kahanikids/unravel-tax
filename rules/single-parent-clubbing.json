@@ -8,18 +8,27 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified",
+    "last_verified": "2026-07-03",
+    "note": "Section 64(1A)/10(32) and the Rs 1,500 per-child cap are long-standing, unchanged provisions. Checked against Income Tax Department case law text and multiple current filing guides; re-check only if a Budget/Finance Act amendment is reported."
   },
   "source_refs": [
+    "Income Tax Act, 1961, Section 64(1A) (clubbing of minor's income)",
+    "Income Tax Act, 1961, Section 10(32) (per-child exemption on the clubbed amount)",
     "SYSTEM_SPEC.md Sections 6.2, 8, 11"
   ],
   "values": {
     "section": "64(1A)",
+    "exemption_section": "10(32)",
     "minor_child_income_clubbed": true,
     "reported_in_schedule": "SPI",
     "custodial_parent_relevance": true,
-    "per_child_exemption_inr": 1500
+    "per_child_exemption_inr": 1500,
+    "max_children_for_exemption": 2,
+    "excluded_from_clubbing": [
+      "income from the minor's own manual work",
+      "income from the minor's own skill, talent, or specialized knowledge",
+      "income of a minor with a Section 80U disability"
+    ]
   }
 }

@@ -205,6 +205,7 @@ export function OrientationForm({
   return (
     <div className="orientation-card">
       <p className="orientation-progress">{`Question ${index + 1} of ${visible.length}`}</p>
+      <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p>
       <h2 className="orientation-prompt">{current.prompt}</h2>
       {current.helper ? <p className="orientation-helper">{current.helper}</p> : null}
 
@@ -245,6 +246,9 @@ export function OrientationForm({
       ) : null}
 
       <div className="orientation-nav">
+        <button type="button" className="danger-button orientation-start-over" onClick={onStartOver}>
+          Start over
+        </button>
         {index > 0 ? (
           <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
             ← Back
@@ -252,10 +256,6 @@ export function OrientationForm({
         ) : (
           <span />
         )}
-        <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p>
-        <button type="button" className="primary-button orientation-start-over" onClick={onStartOver}>
-          Start over
-        </button>
       </div>
     </div>
   );

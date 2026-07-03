@@ -1,7 +1,8 @@
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import Papa from "papaparse";
-import { caSummaryAmountMap, caSummaryRows, compareRegimes, summarizeWithRules } from "../src/lib";
+import { caSummaryAmountMap, caSummaryRows, compareRegimes, estimateAdvanceTaxInterest, summarizeWithRules } from "../src/lib";
+import { clubbedMinorIncome } from "../src/lib/profile";
 import { parseCsvText } from "../src/ingest";
 import { ruleCatalog } from "../src/rules";
 
@@ -118,8 +119,60 @@ async function main() {
     throw new Error("New regime should be cheaper for a plain Rs 12L salary with no other income or deductions.");
   }
 
+  // Section 234B advance-tax interest: below the Section 208 threshold, no
+  // advance tax was required at all.
+  const belowThreshold = estimateAdvanceTaxInterest(
+    { totalTaxLiability: 5000, taxAlreadyPaid: 0, asOfDate: "2026-07-03", seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (belowThreshold.required || belowThreshold.interestApplies) {
+    throw new Error("Tax due under the Rs 10,000 Section 208 threshold should not require advance tax.");
+  }
+
+  // Senior citizens without business income are exempt regardless of amount.
+  const seniorExempt = estimateAdvanceTaxInterest(
+    { totalTaxLiability: 50000, taxAlreadyPaid: 0, asOfDate: "2026-07-03", seniorCitizenExempt: true },
+    ruleCatalog.advanceTax
+  );
+  if (seniorExempt.required || seniorExempt.interestApplies) {
+    throw new Error("Senior citizens without business income should be exempt from advance tax (Section 207(2)).");
+  }
+
+  // Paying at least 90% of assessed tax avoids 234B interest entirely.
+  const wellPaid = estimateAdvanceTaxInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 95000, asOfDate: "2026-07-03", seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (wellPaid.interestApplies) {
+    throw new Error("Paying at least 90% of assessed tax should avoid Section 234B interest.");
+  }
+
+  // A full shortfall from 1 April 2026 (AY start) to 3 July 2026 spans 4
+  // months (April, May, June, and a part of July rounding up), at 1% each.
+  const shortfallCase = estimateAdvanceTaxInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 0, asOfDate: "2026-07-03", seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (shortfallCase.monthsElapsed !== 4) {
+    throw new Error(`Expected 4 months elapsed from 2026-04-01 to 2026-07-03, got ${shortfallCase.monthsElapsed}.`);
+  }
+  if (shortfallCase.estimatedInterest !== 4000) {
+    throw new Error(`Expected Rs 4,000 estimated 234B interest (Rs 100,000 x 1% x 4 months), got ${shortfallCase.estimatedInterest}.`);
+  }
+
+  // Minor's-income clubbing: two children each get the Rs 1,500 exemption,
+  // capped at two children even if more are entered.
+  const clubbedTwoChildren = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing);
+  if (clubbedTwoChildren !== 7000) {
+    throw new Error(`Expected Rs 7,000 clubbed after two Rs 1,500 exemptions on Rs 10,000, got ${clubbedTwoChildren}.`);
+  }
+  const clubbedCappedAtTwo = clubbedMinorIncome(10000, 4, ruleCatalog.singleParentClubbing);
+  if (clubbedCappedAtTwo !== clubbedTwoChildren) {
+    throw new Error("Minor's-income exemption should cap at max_children_for_exemption even with more children entered.");
+  }
+
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, and regime comparison matches the known Rs 12L salary case."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case, Section 234B advance-tax interest matches the known shortfall case, and minor's-income clubbing matches the known two-child case."
   );
 }
 

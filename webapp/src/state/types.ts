@@ -66,6 +66,16 @@ export type SupplementalFigures = {
   salaryIncome: number;
   /** Lump sum of 80C, 80D, HRA, home loan interest, and similar. Old regime only, only used for the optional regime comparison. */
   oldRegimeDeductions: number;
+  /** NRI only. Interest on an NRE account, exempt under Section 10(4)(ii), kept out of interestOtherIncome above. */
+  nreExemptInterest: number;
+  /** Single parent/guardian only. Minor's income before the Section 10(32) per-child exemption. */
+  minorIncomeToClub: number;
+  /** Single parent/guardian only. Number of minor children with income to club (exemption caps out at 2). */
+  numberOfMinors: number;
+  /** Only used for the optional Section 234B advance-tax interest estimate. */
+  advanceTaxLiability: number;
+  /** Only used for the optional Section 234B advance-tax interest estimate: TDS + instalments already paid. */
+  advanceTaxPaid: number;
 };
 
 export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
@@ -75,7 +85,12 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   deductibleTransactionCharges: 0,
   carryForwardLossesAvailable: 0,
   salaryIncome: 0,
-  oldRegimeDeductions: 0
+  oldRegimeDeductions: 0,
+  nreExemptInterest: 0,
+  minorIncomeToClub: 0,
+  numberOfMinors: 0,
+  advanceTaxLiability: 0,
+  advanceTaxPaid: 0
 };
 
 /**

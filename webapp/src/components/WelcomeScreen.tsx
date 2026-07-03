@@ -19,7 +19,7 @@ export function WelcomeScreen({
     <div className="welcome-card">
       <div className="welcome-card-header">
         <p className="eyebrow">Unravel Tax</p>
-        <button type="button" className="text-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
+        <button type="button" className="secondary-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
           What can this do?
         </button>
       </div>
@@ -27,9 +27,10 @@ export function WelcomeScreen({
 
       <div className="welcome-badges">
         <span className="welcome-badge">No signup</span>
-        <span className="welcome-badge">Most File Formats</span>
+        <span className="welcome-badge">CSV, Excel, HTML — PDF needs one extra step</span>
         <span className="welcome-badge">Stays in your browser</span>
       </div>
+      <p className="welcome-time-estimate">Most people finish in 15–20 minutes.</p>
 
       {hasSavedSession ? (
         <div className="resume-banner">
@@ -55,8 +56,8 @@ export function WelcomeScreen({
         <button type="button" className="entry-path-card" onClick={onStartComputationFirst}>
           <IconUpload className="entry-path-icon" />
           <span className="entry-path-text">
-            <h3>Start with Computation</h3>
-            <p>Skip ahead. See your numbers first.</p>
+            <h3>Add documents</h3>
+            <p>Skip the questions. Upload and see your numbers.</p>
           </span>
         </button>
         <button type="button" className="entry-path-card" onClick={onShowTour}>

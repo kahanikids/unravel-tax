@@ -48,13 +48,16 @@ export function ChecklistPanel({
           onClick={() => setCollapsed((value) => !value)}
         >
           {collapsed ? "Show" : "Hide"}
+          <svg className="checklist-toggle-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <path d={collapsed ? "M4 6l4 4 4-4" : "M4 10l4-4 4 4"} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </div>
 
       <div id="checklist-panel-body" className={collapsed ? "checklist-panel-body is-collapsed" : "checklist-panel-body"}>
         {profileScopeCaveats.length > 0 ? (
           <div className="checklist-group">
-            <h3>Known limits for your profile</h3>
+            <h3>Heads up — this tool has limits</h3>
             {profileScopeCaveats.map((caveat) => (
               <article className="checklist-item checklist-item-flag" key={caveat.id}>
                 <strong>{caveat.label}</strong>
@@ -66,7 +69,7 @@ export function ChecklistPanel({
 
         {riskTriggers.length > 0 ? (
           <div className="checklist-group">
-            <h3>Worth a closer look</h3>
+            <h3>Check these before filing</h3>
             {riskTriggers.map((trigger) => (
               <article
                 key={trigger.id}
@@ -80,7 +83,7 @@ export function ChecklistPanel({
         ) : null}
 
         <div className="checklist-group">
-          <h3>Still missing</h3>
+          <h3>Still needed</h3>
           {gaps.length === 0 ? (
             <p className="checklist-empty">Nothing outstanding on your document checklist.</p>
           ) : (

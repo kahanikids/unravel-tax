@@ -11,6 +11,7 @@ import {
   classifyTransactionWithRules,
   buildConfidenceReport,
   clearSession,
+  clubbedMinorIncome,
   deriveProfileFlags,
   downloadExport,
   evaluateRiskTriggers,
@@ -57,6 +58,7 @@ import { HelpPanel } from "./components/HelpPanel";
 import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
 import { ToolTour } from "./components/ToolTour";
 import { DocumentSourceHint } from "./components/DocumentSourceHint";
+import { ConfirmModal } from "./components/ConfirmModal";
 
 type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[] };
 
@@ -80,6 +82,7 @@ function App() {
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
   const [showCapabilities, setShowCapabilities] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
   // Every step the user has already reached this filing stays reachable from
   // the side nav - lets them jump back to the checklist/documents/results
   // without restarting, without ever offering to skip ahead to a step they
@@ -163,6 +166,32 @@ function App() {
     return row;
   });
 
+  // Profile-specific partial calculations (WORKING_PLAN.md Current Next
+  // Slice item 3): shown as their own rows rather than folded into the
+  // generic ones above, since each only applies to one profile.
+  if (flags.nri) {
+    rows.push({
+      head: "NRE interest (exempt)",
+      ruleSection: "10(4)(ii)",
+      amount: supplementalFigures.nreExemptInterest,
+      notes:
+        "Entered by you under \"A few more numbers\" below. NRE account interest is exempt from Indian income tax entirely, so it's kept separate here rather than folded into the taxable \"Interest & other income\" row above."
+    });
+  }
+  if (flags.singleParent) {
+    const perChild = ruleCatalog.singleParentClubbing.values.per_child_exemption_inr;
+    rows.push({
+      head: "Minor's income clubbed",
+      ruleSection: "64(1A)",
+      amount: clubbedMinorIncome(
+        supplementalFigures.minorIncomeToClub,
+        supplementalFigures.numberOfMinors,
+        ruleCatalog.singleParentClubbing
+      ),
+      notes: `Entered by you under "A few more numbers" below. The minor's income minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
+    });
+  }
+
   const calculationSummary = {
     ...summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
     recommendedItrForm: itrForm.form,
@@ -207,7 +236,7 @@ function App() {
     setStep("orientation");
   }
 
-  // "Start with Computation": the least-friction path that still produces
+  // "Add documents": the least-friction path that still produces
   // correct numbers. caSummaryRows() only reads transactions and rules, never
   // orientation answers, so capital gains/dividends/interest figures are
   // right immediately. What DOES depend on orientation (ITR form, risk
@@ -283,9 +312,14 @@ function App() {
   }
 
   function startFresh() {
-    if (step !== "welcome" && !window.confirm("Clear everything you've entered in this browser and start over?")) {
+    if (step !== "welcome") {
+      setShowConfirmClear(true);
       return;
     }
+    clearAllProgress();
+  }
+
+  function clearAllProgress() {
     clearSession();
     setOrientation(BLANK_ORIENTATION);
     setDocuments([]);
@@ -295,6 +329,7 @@ function App() {
     setTdsRows([]);
     setSampleMode(false);
     setFurthestStepIndex(0);
+    setShowConfirmClear(false);
     setStep("welcome");
   }
 
@@ -327,11 +362,11 @@ function App() {
   async function deliverExport(file: ExportFile) {
     if (folderHandle) {
       await saveExportToFolder(folderHandle, file);
-      setExportMessage(`${file.filename} saved to "${folderHandle.name}" on your computer.`);
+      setExportMessage(`✓ ${file.filename} saved to "${folderHandle.name}" on your computer.`);
       return;
     }
     downloadExport(file);
-    setExportMessage(`${file.filename} generated in this browser.`);
+    setExportMessage(`✓ ${file.filename} generated in this browser.`);
   }
 
   function acknowledgeFormChangingTriggers() {
@@ -379,6 +414,14 @@ function App() {
 
       <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />
       <ToolTour open={showTour} onClose={() => setShowTour(false)} onTrySample={trySampleData} />
+      {showConfirmClear ? (
+        <ConfirmModal
+          message="Clear everything you've entered in this browser and start over?"
+          confirmLabel="Clear and start over"
+          onConfirm={clearAllProgress}
+          onCancel={() => setShowConfirmClear(false)}
+        />
+      ) : null}
 
       {step === "welcome" ? (
         <div className="stage-single">
@@ -498,7 +541,11 @@ function App() {
                 debtMfShortTermDeemedGain={calculationSummary.debtMfShortTermDeemedGain}
                 intradayGain={calculationSummary.intradayGain}
                 seniorCitizen={flags.seniorCitizen}
+                nri={flags.nri}
+                huf={flags.huf}
+                singleParent={flags.singleParent}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
+                advanceTaxRule={ruleCatalog.advanceTax}
                 aisFigures={aisFigures}
                 onChangeAisFigures={setAisFigures}
                 tdsRows={tdsRows}

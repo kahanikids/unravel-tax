@@ -1,6 +1,6 @@
 import type { OrientationAnswers, ProfileFlags } from "../state/types";
 import type { ChecklistItem } from "./reconciliation";
-import type { ItrFormSelectionRule } from "../rules";
+import type { ItrFormSelectionRule, SingleParentClubbingRule } from "../rules";
 
 export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
   const hraAboveThreshold = Boolean(answers.hraClaimed && answers.hraAboveThreshold);
@@ -159,9 +159,9 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   if (flags.nri) {
     caveats.push({
       id: "nri_scope",
-      label: "NRI-specific numbers aren't calculated here yet",
+      label: "Most NRI-specific numbers aren't calculated here yet",
       note:
-        "This tool doesn't separate NRE/NRO, reconcile TDS withheld at source against what's actually owed, or track DTAA/repatriation. Bring your broker/AMC TDS certificates, Form 26AS, and account statements to a CA."
+        "NRE interest can now be entered as its own exempt line under \"A few more numbers\", so it's kept out of your taxable total. This tool still doesn't apply DTAA relief to NRO TDS or track repatriation limits. TDS withheld can be checked against AIS/26AS in the reconciliation panel above. Bring your NRO TDS certificates and DTAA paperwork to a CA."
     });
   }
 
@@ -170,20 +170,36 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
       id: "huf_scope",
       label: "HUF-specific numbers aren't calculated here yet",
       note:
-        "Coparcener details, transfers-without-consideration clubbing, and partition tracking aren't computed by this tool. The figures below only cover capital gains, dividends, and interest. A CA needs to handle the HUF-entity side."
+        "Coparcener details, transfers-without-consideration clubbing (Section 64(2)), and partition tracking aren't computed by this tool. The figures below only cover capital gains, dividends, and interest, which apply to an HUF the same flat way they do to an individual. The old-vs-new regime comparison tool doesn't fit an HUF's numbers at all (no salary income, no standard deduction, no Section 87A rebate), so it's hidden for this profile. A CA needs to handle the rest of the HUF-entity side."
     });
   }
 
   if (flags.singleParent) {
     caveats.push({
       id: "single_parent_scope",
-      label: "Minor's-income clubbing amounts aren't calculated here yet",
+      label: "Minor's-income clubbing is only partly calculated here",
       note:
-        "This tool flags that clubbing may apply but doesn't compute the clubbed amount or place it in Schedule SPI. Bring details of any investments/accounts in a minor's name to a CA."
+        "Enter the minor's income and child count under \"A few more numbers\" and this tool computes the clubbed amount after the Section 10(32) per-child exemption. It doesn't check whether an exception applies (the minor's own manual work, skill/talent income, or a Section 80U disability), and it doesn't place the figure in Schedule SPI itself. Confirm those with a CA."
     });
   }
 
   return caveats;
+}
+
+/**
+ * Section 64(1A)/10(32): a minor child's income is clubbed into the higher-
+ * earning parent's return, minus an exemption of up to per_child_exemption_inr
+ * per child (capped at max_children_for_exemption children), or the actual
+ * clubbed income if that's less. See rules/single-parent-clubbing.md.
+ */
+export function clubbedMinorIncome(
+  minorIncomeToClub: number,
+  numberOfMinors: number,
+  rule: SingleParentClubbingRule
+): number {
+  const eligibleChildren = Math.min(Math.max(0, numberOfMinors), rule.values.max_children_for_exemption);
+  const exemption = eligibleChildren * rule.values.per_child_exemption_inr;
+  return Math.max(0, minorIncomeToClub - exemption);
 }
 
 export type ItrFormChoice = {

@@ -1,3 +1,4 @@
+import advanceTax from "./data/advance-tax.json";
 import capitalGainsEquity from "./data/capital-gains-equity.json";
 import capitalGainsMutualFunds from "./data/capital-gains-mutual-funds.json";
 import dividends from "./data/dividends.json";
@@ -18,31 +19,37 @@ import singleParentAlimony from "./data/single-parent-alimony.json";
 import singleParentClubbing from "./data/single-parent-clubbing.json";
 
 import type {
+  AdvanceTaxRule,
   CapitalGainsEquityRule,
   FilingMistakesRule,
+  HufBasicsRule,
   ItrFormSelectionRule,
+  NriNreNroRule,
   RegimeChoiceRule,
-  RuleDocument
+  RuleDocument,
+  SingleParentClubbingRule
 } from "./types";
 
 // Every rules/*.json topic, mirrored 1:1 from the top-level rules/ directory.
-// capitalGainsEquity, itrFormSelection, filingMistakesAndPenalties, and
-// regimeChoice are typed for programmatic use (calculations, ITR selection,
-// risk triggers, regime comparison). The rest are typed generically
-// (RuleDocument) - they're surfaced as reference/explanatory content today,
-// not yet consumed by calculation logic. See CLAUDE.md: never hardcode a
-// rate that belongs in one of these.
+// capitalGainsEquity, itrFormSelection, filingMistakesAndPenalties,
+// regimeChoice, nriNreNro, hufBasics, singleParentClubbing, and advanceTax
+// are typed for programmatic use (calculations, ITR selection, risk
+// triggers, regime comparison, NRI/HUF/single-parent partial calculations).
+// The rest are typed generically (RuleDocument) - they're surfaced as
+// reference/explanatory content today, not yet consumed by calculation
+// logic. See CLAUDE.md: never hardcode a rate that belongs in one of these.
 export const ruleCatalog = {
+  advanceTax: advanceTax as AdvanceTaxRule,
   capitalGainsEquity: capitalGainsEquity as CapitalGainsEquityRule,
   capitalGainsMutualFunds: capitalGainsMutualFunds as RuleDocument,
   dividends: dividends as RuleDocument,
   filingMistakesAndPenalties: filingMistakesAndPenalties as FilingMistakesRule,
-  hufBasics: hufBasics as RuleDocument,
+  hufBasics: hufBasics as HufBasicsRule,
   hufClubbing: hufClubbing as RuleDocument,
   itrFormSelection: itrFormSelection as ItrFormSelectionRule,
   newActTransition: newActTransition as RuleDocument,
   nriDtaa: nriDtaa as RuleDocument,
-  nriNreNro: nriNreNro as RuleDocument,
+  nriNreNro: nriNreNro as NriNreNroRule,
   nriRepatriation: nriRepatriation as RuleDocument,
   nriResidentialStatus: nriResidentialStatus as RuleDocument,
   nriTdsAndRefunds: nriTdsAndRefunds as RuleDocument,
@@ -50,7 +57,7 @@ export const ruleCatalog = {
   seniorCitizenAdvanceTaxAndRegime: seniorCitizenAdvanceTaxAndRegime as RuleDocument,
   seniorCitizenBasics: seniorCitizenBasics as RuleDocument,
   singleParentAlimony: singleParentAlimony as RuleDocument,
-  singleParentClubbing: singleParentClubbing as RuleDocument
+  singleParentClubbing: singleParentClubbing as SingleParentClubbingRule
 };
 
 export function ruleVerificationSummary(rules: RuleDocument[]) {

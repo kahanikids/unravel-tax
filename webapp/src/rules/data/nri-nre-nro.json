@@ -7,23 +7,28 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified",
+    "last_verified": "2026-07-03",
+    "note": "The NRE exemption (Section 10(4)(ii)) and NRO taxability/TDS treatment are long-standing, unchanged provisions. Checked against the Income Tax Department's own exempt-income page and multiple current NRI filing guides; re-check only if a Budget/Finance Act amendment is reported."
   },
   "source_refs": [
+    "https://www.incometaxindia.gov.in/non-resident",
+    "Income Tax Act, 1961, Section 10(4)(ii) (NRE interest exemption)",
+    "Income Tax Act, 1961, Section 195 (TDS on payments to a non-resident)",
     "SYSTEM_SPEC.md Sections 9.1, 6.2"
   ],
   "values": {
     "nre": {
       "holds": "foreign_sourced_money",
       "interest_taxable_in_india": false,
+      "exemption_section": "10(4)(ii)",
       "withholding": false
     },
     "nro": {
       "holds": "india_sourced_income",
       "interest_taxable_in_india": true,
-      "withholding": true
+      "withholding": true,
+      "withholding_section": "195"
     },
     "common_error": "treating_nro_interest_as_exempt"
   }
