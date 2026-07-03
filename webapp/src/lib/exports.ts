@@ -8,6 +8,7 @@ import {
   buildDetailedSummarySheet,
   buildLinkedCaSummarySheet,
   buildStandaloneCaSummarySheet,
+  uniqueSheetNames,
   type ExportDocument,
   type RateInputs
 } from "./workbookExport";
@@ -115,10 +116,11 @@ export async function buildCaSummaryWorkbookExport(
 }
 
 export async function buildFullWorkbookExport(state: ExportState): Promise<ExportFile> {
-  const brokerOutputs =
-    state.documents.length > 0
-      ? state.documents.map((doc) => buildBrokerSheet(doc.name, doc.transactions, state.financialYear))
-      : [buildBrokerSheet("Transactions", [], state.financialYear)];
+  const documents = state.documents.length > 0 ? state.documents : [{ name: "Transactions", transactions: [] }];
+  const sheetNames = uniqueSheetNames(documents.map((doc) => doc.name));
+  const brokerOutputs = documents.map((doc, index) =>
+    buildBrokerSheet(doc.name, doc.transactions, state.financialYear, sheetNames[index])
+  );
 
   const brokerMetas = brokerOutputs.map((b) => b.meta);
   const detailed = buildDetailedSummarySheet(

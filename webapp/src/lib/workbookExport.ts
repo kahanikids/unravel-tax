@@ -193,6 +193,30 @@ function sanitizeSheetName(fileName: string): string {
   return (base || "Broker").slice(0, 31);
 }
 
+const RESERVED_SHEET_NAMES = new Set([DETAILED_SHEET.toLowerCase(), "ca summary"]);
+
+/**
+ * Excel rejects a workbook with two identically named sheets, and Excel
+ * sheet-name comparison is case-insensitive. Two uploads of "statement.csv"
+ * and "statement.xlsx" (or a file literally named "CA Summary") must not
+ * produce a corrupt export, so suffix duplicates with (2), (3), ...
+ */
+export function uniqueSheetNames(fileNames: string[]): string[] {
+  const used = new Set<string>(RESERVED_SHEET_NAMES);
+  return fileNames.map((fileName) => {
+    const base = sanitizeSheetName(fileName);
+    let candidate = base;
+    let counter = 2;
+    while (used.has(candidate.toLowerCase())) {
+      const suffix = ` (${counter})`;
+      candidate = base.slice(0, 31 - suffix.length) + suffix;
+      counter += 1;
+    }
+    used.add(candidate.toLowerCase());
+    return candidate;
+  });
+}
+
 function brokerColumnKeys(transactions: NormalizedTransaction[]): string[] {
   const keys: string[] = [];
   const seen = new Set<string>();
@@ -256,9 +280,10 @@ function brokerCellValue(value: string | number | undefined): Cell {
 export function buildBrokerSheet(
   documentName: string,
   transactions: NormalizedTransaction[],
-  financialYear: string
+  financialYear: string,
+  sheetNameOverride?: string
 ): { sheet: string; data: SheetData; meta: BrokerSheetMeta; columns: { width: number }[] } {
-  const sheetName = sanitizeSheetName(documentName);
+  const sheetName = sheetNameOverride ?? sanitizeSheetName(documentName);
   const brokerKeys = brokerColumnKeys(transactions);
   const brokerTaxableKey = findBrokerTaxableColumn(brokerKeys);
   const nBroker = brokerKeys.length;
