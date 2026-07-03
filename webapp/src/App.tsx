@@ -14,6 +14,7 @@ import {
   downloadExport,
   evaluateRiskTriggers,
   FOOTER_NOTE,
+  ITR_FORM_REASONS,
   isLocalFolderSupported,
   loadSession,
   profileScopeCaveats as deriveProfileScopeCaveats,
@@ -112,7 +113,11 @@ function App() {
   const baseRows = caSummaryRows(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection, supplementalFigures);
   const rows = baseRows.map((row) => {
     if (row.head === "Recommended ITR form") {
-      return { ...row, amount: itrForm.form, notes: "Personalized to your NRI/HUF/business-income profile." };
+      return {
+        ...row,
+        amount: itrForm.form,
+        notes: ITR_FORM_REASONS[itrForm.key] ?? "Personalized to your NRI/HUF/business-income profile."
+      };
     }
     if (row.head === "CA review recommendation") {
       return { ...row, amount: caRecommendation.headline, notes: caRecommendation.reason };

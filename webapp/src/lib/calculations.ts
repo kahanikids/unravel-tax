@@ -115,24 +115,31 @@ export function caSummaryRows(
   supplementalInputs: SupplementalInputs = SYNTHETIC_SUPPLEMENTAL_INPUTS
 ): CaSummaryRow[] {
   const summary = summarizeWithRules(transactions, capitalGainsRule, itrFormRule);
+  const listedEquity = capitalGainsRule.values.listed_equity;
+  const holdingThresholdDays = listedEquity.long_term_holding_period_days_gt;
+  const stcgRatePercent = formatRatePercent(listedEquity.stcg_rate);
+  const ltcgRatePercent = formatRatePercent(listedEquity.ltcg_rate);
+  const exemptionInr = listedEquity.ltcg_exemption_inr;
+
   return [
     {
       head: "Speculative / Intraday income",
       ruleSection: "Business income",
       amount: summary.intradayGain,
-      notes: "Rule-backed webapp calculation"
+      notes:
+        "Bought and sold the same trading day (intraday), so it's speculative business income, not a capital gain. Taxed at your slab rate, and it's what moves your ITR form to ITR-3."
     },
     {
       head: "Short-Term Capital Gains",
       ruleSection: "111A",
       amount: summary.stcg,
-      notes: "Rule-backed webapp calculation"
+      notes: `Equity positions held ${holdingThresholdDays} days or fewer between purchase and sale. Taxed at ${stcgRatePercent}% under Section 111A, regardless of your income slab.`
     },
     {
       head: "Long-Term Capital Gains",
       ruleSection: "112A",
       amount: summary.ltcg,
-      notes: "Rule-backed webapp calculation"
+      notes: `Equity positions held more than ${holdingThresholdDays} days between purchase and sale. Taxed at ${ltcgRatePercent}% under Section 112A, only on the amount above ₹${exemptionInr.toLocaleString("en-IN")} of gains each financial year. This row shows the gain before that exemption; see the full workbook's Detailed Summary for the taxable amount after it.`
     },
     {
       head: "Debt/specified mutual fund gains",
@@ -145,45 +152,53 @@ export function caSummaryRows(
       head: "Dividends",
       ruleSection: "Schedule OS",
       amount: supplementalInputs.dividends,
-      notes: "Synthetic fixture supplemental input"
+      notes: "Entered by you under \"A few more numbers\" below, not read from an uploaded document. Taxed at your slab rate under Schedule OS."
     },
     {
       head: "Interest & other income",
       ruleSection: "Schedule OS",
       amount: supplementalInputs.interestOtherIncome,
-      notes: "Synthetic fixture supplemental input"
+      notes: "Entered by you under \"A few more numbers\" below. Bank/FD interest and similar income, taxed at your slab rate under Schedule OS."
     },
     {
       head: "Eligible interest deduction",
       ruleSection: "80TTA/80TTB",
       amount: supplementalInputs.eligibleInterestDeduction,
-      notes: "Synthetic fixture supplemental input"
+      notes: "Entered by you. Reduces the interest income above, up to the 80TTA (under 60) or 80TTB (senior citizen) limit."
     },
     {
       head: "Deductible transaction charges",
       ruleSection: "Expense split",
       amount: supplementalInputs.deductibleTransactionCharges,
-      notes: "Synthetic fixture supplemental input"
+      notes: "Entered by you. Non-STT broker charges (brokerage, stamp duty) that can be netted against gains; STT itself isn't deductible against capital gains."
     },
     {
       head: "Carry-forward losses available",
       ruleSection: "CFL",
       amount: supplementalInputs.carryForwardLossesAvailable,
-      notes: "Synthetic fixture supplemental input"
+      notes: "Entered by you. Losses from an earlier year, offsettable against this year's capital gains if filed on time in that earlier year."
     },
     {
       head: "Recommended ITR form",
       ruleSection: "",
       amount: summary.recommendedItrForm,
-      notes: "ITR form selected from rule JSON"
+      notes: summary.intradayGain > 0
+        ? "ITR-3 because your documents show speculative/intraday income, which counts as business income, not just capital gains."
+        : "Based on your profile and documents: capital gains, dividends, and interest without business income fit this simpler form."
     },
     {
       head: "CA review recommendation",
       ruleSection: "",
       amount: summary.caReviewRecommendation,
-      notes: "Review recommendation derived from selected form"
+      notes: summary.recommendedItrForm === "ITR-3"
+        ? "ITR-3 filings involve business-income rules a CA should check before you file."
+        : "No business income or other complexity detected in what you've entered so far. Still worth a final sanity check on the numbers."
     }
   ];
+}
+
+function formatRatePercent(rate: number): string {
+  return (rate * 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
 export function caSummaryAmountMap(rows: CaSummaryRow[]): Record<string, number | string> {

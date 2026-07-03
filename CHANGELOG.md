@@ -6,6 +6,15 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added a plain-language "Why this number?" drilldown to every results row:
+  each `CaSummaryRow` now carries a specific, rule-grounded explanation
+  (holding-period thresholds and rates for STCG/LTCG, why intraday income
+  moves the ITR form, which of your profile flags or risk triggers drove
+  the CA-vs-self-file call, and which fields were entered by you rather
+  than read from a document) instead of a generic "rule-backed
+  calculation" placeholder. Shown as a collapsed `<details>` under each
+  row on the results screen, off by default so it doesn't clutter the
+  summary view.
 - Added a "What can this do?" capabilities preview (new `CapabilitiesPanel`,
   backed by a `CAPABILITIES` list in `src/lib/copy.ts`) for skeptical
   first-time users who want the full scope before entering any personal

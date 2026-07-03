@@ -91,8 +91,16 @@ export function ResultsStep({
         <div className="summary-rows">
           {(showAdvanced ? rows : rows.slice(0, 5)).map((row) => (
             <article className="summary-row" key={row.head}>
-              <span>{row.head}</span>
-              <strong>{typeof row.amount === "number" ? formatAmount(row.amount) : row.amount}</strong>
+              <div className="summary-row-main">
+                <span>{row.head}</span>
+                <strong>{typeof row.amount === "number" ? formatAmount(row.amount) : row.amount}</strong>
+              </div>
+              {row.notes ? (
+                <details className="summary-row-why">
+                  <summary>Why this number?</summary>
+                  <p>{row.notes}</p>
+                </details>
+              ) : null}
             </article>
           ))}
         </div>

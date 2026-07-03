@@ -1089,12 +1089,15 @@ button.progress-step.progress-step-current:hover {
 }
 
 .summary-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.summary-row-main {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line);
 }
 
 .summary-row span {
@@ -1107,6 +1110,25 @@ button.progress-step.progress-step-current:hover {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.summary-row-why {
+  margin-top: 6px;
+}
+
+.summary-row-why summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.summary-row-why p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 6px;
+  max-width: 65ch;
 }
 
 .advanced-grid {

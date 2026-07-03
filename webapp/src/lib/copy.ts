@@ -27,6 +27,24 @@ export const WHO_ITS_FOR: string[] = [
 export const WHO_ITS_FOR_EXCLUDES =
   "Not built for business or professional income that needs full bookkeeping. That's a different job for a different tool.";
 
+/**
+ * Plain-language reason for each ITR form selection.values.forms key in
+ * rules/itr-form-selection.json, so the results screen can say why a form
+ * was picked instead of just naming it. Keys must stay in sync with that
+ * rule file; selectItrForm() in lib/profile.ts is what actually chooses one.
+ */
+export const ITR_FORM_REASONS: Record<string, string> = {
+  resident_simple: "Salary, interest, or dividends only, with no capital gains or business income detected.",
+  resident_capital_gains_or_clubbing:
+    "Capital gains from your documents, or minor's-income clubbing from your profile, need this form.",
+  nri_no_business: "Your NRI status routes filing through this form, even without business income.",
+  nri_with_business: "Your NRI status plus business or speculative income from your documents need this form.",
+  huf_no_business: "Filing as a HUF routes through this form, even without business income.",
+  huf_with_business: "Filing as a HUF plus business or speculative income from your documents need this form.",
+  business_or_speculative_non_audit:
+    "Your documents show speculative or intraday income, which counts as business income under this form."
+};
+
 export type HowToStep = { title: string; detail: string };
 
 export const HOW_IT_WORKS: HowToStep[] = [

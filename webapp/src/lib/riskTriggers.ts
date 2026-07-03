@@ -87,15 +87,38 @@ export function caOrSelfFileRecommendation(
   triggers: RiskTrigger[],
   hasBusinessIncome: boolean
 ): CaRecommendation {
-  const formChanging = triggers.some((trigger) => trigger.severity === "form-changing");
-  const recommendCa = flags.nri || flags.huf || flags.singleParent || hasBusinessIncome || formChanging;
+  const formChangingTriggers = triggers.filter((trigger) => trigger.severity === "form-changing");
+  const recommendCa = flags.nri || flags.huf || flags.singleParent || hasBusinessIncome || formChangingTriggers.length > 0;
+
+  if (!recommendCa) {
+    return {
+      recommendCa: false,
+      headline: "Self-filing may be reasonable here",
+      reason: "Nothing in your profile or documents points to added complexity, but it's still worth a final sanity check on the numbers before filing."
+    };
+  }
+
+  const matchedReasons: string[] = [];
+  if (flags.nri) {
+    matchedReasons.push("your NRI status (NRE/NRO treatment, DTAA)");
+  }
+  if (flags.huf) {
+    matchedReasons.push("filing as a HUF");
+  }
+  if (flags.singleParent) {
+    matchedReasons.push("possible minor's-income clubbing");
+  }
+  if (hasBusinessIncome) {
+    matchedReasons.push("speculative/intraday income counted as business income");
+  }
+  for (const trigger of formChangingTriggers) {
+    matchedReasons.push(trigger.label.charAt(0).toLowerCase() + trigger.label.slice(1));
+  }
 
   return {
-    recommendCa,
-    headline: recommendCa ? "Get a CA to review this before filing" : "Self-filing may be reasonable here",
-    reason: recommendCa
-      ? "Your profile includes NRI, HUF, single-parent clubbing, business/speculative income, or a form-changing risk trigger. Each of those is worth a professional's eyes before you file."
-      : "Nothing in your profile or documents points to added complexity, but it's still worth a final sanity check on the numbers before filing."
+    recommendCa: true,
+    headline: "Get a CA to review this before filing",
+    reason: `Flagged because of ${matchedReasons.join("; ")}. Each of those is worth a professional's eyes before you file.`
   };
 }
 
