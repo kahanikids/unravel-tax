@@ -4,16 +4,23 @@ export function WelcomeScreen({
   onStart,
   onTrySample,
   onResume,
-  hasSavedSession
+  hasSavedSession,
+  onShowCapabilities
 }: {
   onStart: () => void;
   onTrySample: () => void;
   onResume: () => void;
   hasSavedSession: boolean;
+  onShowCapabilities: () => void;
 }) {
   return (
     <div className="welcome-card">
-      <p className="eyebrow">Unravel Tax</p>
+      <div className="welcome-card-header">
+        <p className="eyebrow">Unravel Tax</p>
+        <button type="button" className="text-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
+          What can this do?
+        </button>
+      </div>
       <h1 className="welcome-title">Turn a pile of tax documents into a filing you understand.</h1>
 
       <div className="welcome-badges">

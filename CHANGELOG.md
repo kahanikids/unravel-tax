@@ -6,6 +6,21 @@ change (Budget, Finance Act, CBDT circular).
 
 ## 2026-07-03
 
+- Added a "What can this do?" capabilities preview (new `CapabilitiesPanel`,
+  backed by a `CAPABILITIES` list in `src/lib/copy.ts`) for skeptical
+  first-time users who want the full scope before entering any personal
+  data: an "Available now" group (profiling, checklist, ingestion, guided
+  AI extraction, capital gains/dividends/interest calculations, risk
+  triggers, ITR/CA recommendation, exports, local-only storage, free
+  hosting) and a "Planned, not yet available" group (AIS/26AS/Form 16
+  reconciliation, a pre-export confidence check, editable extraction
+  review, regime comparison, advance tax estimator, year rollover, and
+  NRI/HUF/single-parent number calculations), so it never overstates
+  today's coverage. Reachable from two shared-state triggers: the header
+  (every step, same pattern as `HelpPanel`) and a dedicated corner button
+  on the welcome card itself, both opening the same modal instance rather
+  than duplicating it. Purely informational, dismissible, never blocks or
+  reorders the guided flow.
 - **Hosted the webapp on GitHub Pages** at
   https://kahanikids.github.io/unravel-tax/ - the top-priority gap called
   out in README.md/WORKING_PLAN.md, since a first-time non-technical user

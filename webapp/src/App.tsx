@@ -45,6 +45,7 @@ import { UploadStep, type UploadedDocument } from "./components/UploadStep";
 import { ResultsStep } from "./components/ResultsStep";
 import { ProgressSteps } from "./components/ProgressSteps";
 import { HelpPanel } from "./components/HelpPanel";
+import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
 import { DocumentSourceHint } from "./components/DocumentSourceHint";
 
 type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[] };
@@ -62,6 +63,7 @@ function App() {
   const [acknowledgedTriggerIds, setAcknowledgedTriggerIds] = useState<string[]>([]);
   const [hasSavedSession] = useState(() => loadSession() !== null);
   const [folderHandle, setFolderHandle] = useState<LocalFolderHandle | null>(null);
+  const [showCapabilities, setShowCapabilities] = useState(false);
   // Every step the user has already reached this filing stays reachable from
   // the header nav - lets them jump back to the checklist/documents/results
   // without restarting, without ever offering to skip ahead to a step they
@@ -258,6 +260,9 @@ function App() {
           className="brand-mark"
         />
         <ProgressSteps current={step} furthestIndex={furthestStepIndex} onNavigate={goToStep} />
+        <button type="button" className="text-button capabilities-button" onClick={() => setShowCapabilities(true)}>
+          What can this do?
+        </button>
         <HelpPanel />
         {step !== "welcome" ? (
           <button type="button" className="text-button header-reset" onClick={startFresh}>
@@ -266,6 +271,8 @@ function App() {
         ) : null}
       </header>
 
+      <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />
+
       {step === "welcome" ? (
         <div className="stage-single">
           <WelcomeScreen
@@ -273,6 +280,7 @@ function App() {
             onTrySample={trySampleData}
             onResume={resumeSession}
             hasSavedSession={hasSavedSession}
+            onShowCapabilities={() => setShowCapabilities(true)}
           />
         </div>
       ) : null}

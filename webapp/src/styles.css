@@ -115,6 +115,52 @@ ol {
   outline: none;
 }
 
+.capabilities-button {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.capabilities-group-title {
+  margin: 18px 0 4px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.capabilities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capabilities-list li {
+  border-left: 3px solid var(--line);
+  padding: 4px 0 4px 12px;
+}
+
+.capabilities-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.capabilities-item-heading strong {
+  font-size: 0.94rem;
+}
+
+.capabilities-list p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
 /* ---------- Progress steps ---------- */
 
 .progress-steps {
@@ -278,6 +324,19 @@ button.progress-step.progress-step-current:hover {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.welcome-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.welcome-capabilities-trigger {
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .welcome-title {

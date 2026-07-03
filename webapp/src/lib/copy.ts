@@ -36,6 +36,105 @@ export const HOW_IT_WORKS: HowToStep[] = [
   { title: "Your results", detail: "What you owe, what's missing, and whether to self-file or get a CA." }
 ];
 
+export type Capability = { label: string; status: "available" | "planned"; detail: string };
+
+/**
+ * Full scope list for the "What can this do?" panel: a pre-commitment
+ * transparency check for a skeptical first-time user, not a feature they
+ * have to act on. Keep this grounded in what's actually shipped vs. what's
+ * only planned (see WORKING_PLAN.md's Current Next Slice and
+ * SYSTEM_SPEC.md Section 14), the same honesty-about-scope standard as the
+ * NRI/HUF scope caveats in lib/profile.ts. Update this list whenever a
+ * planned item ships.
+ */
+export const CAPABILITIES: Capability[] = [
+  {
+    label: "Plain-language profile questions",
+    status: "available",
+    detail: "A few questions about residency, HUF, senior citizen, and single-parent status work out what applies to you, no tax category picking required."
+  },
+  {
+    label: "Personalized document checklist",
+    status: "available",
+    detail: "Exactly what to gather for your profile, with guidance on where to get the trickier ones (broker statements, Form 26AS/AIS, and more)."
+  },
+  {
+    label: "CSV, Excel, and saved-webpage ingestion",
+    status: "available",
+    detail: "Broker/AMC statements in these formats are read directly in your browser. Nothing is uploaded anywhere."
+  },
+  {
+    label: "Guided AI extraction for PDFs and free-form text",
+    status: "available",
+    detail: "A copy-paste prompt for your own AI chat turns a messy PDF into a table you paste back in. The AI only reads documents; it never does the tax maths."
+  },
+  {
+    label: "Capital gains, dividends, and interest calculations",
+    status: "available",
+    detail: "STCG/LTCG/intraday classification and Section 50AA debt mutual fund handling, computed from versioned rule files, not guessed."
+  },
+  {
+    label: "Risk-trigger flags",
+    status: "available",
+    detail: "Multiple employers, HRA without a landlord PAN, early EPF withdrawal, late filing, and more, flagged with their real consequence before you see any totals."
+  },
+  {
+    label: "ITR form and CA-vs-self-file recommendation",
+    status: "available",
+    detail: "Worked out from your profile, documents, and risk flags, not left for you to guess."
+  },
+  {
+    label: "CA Summary and full workbook exports",
+    status: "available",
+    detail: "One file to hand your CA, one detailed workbook to keep for your own records and next year's carry-forward figures."
+  },
+  {
+    label: "Everything stays on your device",
+    status: "available",
+    detail: "No account, no server. Your in-progress answers autosave in this browser only, and Chromium browsers can save straight to a folder you choose."
+  },
+  {
+    label: "Free, hosted, no install",
+    status: "available",
+    detail: "Open the webapp link and start. Running it locally is still available for contributors who prefer that."
+  },
+  {
+    label: "AIS / Form 26AS / Form 16 reconciliation",
+    status: "planned",
+    detail: "Comparing your document totals against what the tax department already has on record isn't built yet."
+  },
+  {
+    label: "A final pre-export confidence check",
+    status: "planned",
+    detail: "A single \"here's what's missing, what might change your numbers, and what's safe to ignore\" summary before you export isn't built yet."
+  },
+  {
+    label: "Editable extraction review",
+    status: "planned",
+    detail: "Fixing a single wrong row from an upload currently means discarding and re-adding the whole document. Inline editing isn't built yet."
+  },
+  {
+    label: "Old vs new tax regime comparison",
+    status: "planned",
+    detail: "Working out which regime is cheaper for you isn't built yet."
+  },
+  {
+    label: "Advance tax interest estimator (234B/234C)",
+    status: "planned",
+    detail: "Estimating interest owed for paying tax later than the law expects isn't built yet."
+  },
+  {
+    label: "Carrying forward last year's filing",
+    status: "planned",
+    detail: "Importing a previous year's exported workbook to reuse your profile and carry-forward losses isn't built yet."
+  },
+  {
+    label: "NRI, HUF, and single-parent number calculations",
+    status: "planned",
+    detail: "These profiles get the right checklist and orientation, but NRE/NRO separation, TDS-vs-owed reconciliation, HUF clubbing, and minor's-income clubbing amounts aren't calculated yet. The webapp says so plainly and points you to a CA for that part."
+  }
+];
+
 export type DocumentSource = { name: string; steps: string };
 
 export type DocumentSourceGuide = { summary: string; sources: DocumentSource[] };

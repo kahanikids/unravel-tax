@@ -4,8 +4,9 @@ import { ChecklistPanel } from "../src/components/ChecklistPanel";
 import { OrientationForm } from "../src/components/OrientationForm";
 import { ResultsStep } from "../src/components/ResultsStep";
 import { HelpPanel } from "../src/components/HelpPanel";
+import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
-import { DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
+import { CAPABILITIES, DISCLAIMER_FULL, HOW_IT_WORKS, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES } from "../src/lib/copy";
 import type { CaSummaryRow } from "../src/lib/calculations";
 import type { CaRecommendation } from "../src/lib/riskTriggers";
 
@@ -45,6 +46,18 @@ function checkWelcomeScreen() {
     throw new Error("Help panel content should be closed by default, not present in the initial render.");
   }
 
+  // The capabilities preview must be reachable from welcome, since that's
+  // exactly when a skeptical first-time user wants to check scope before
+  // entering anything - both the header button (every step) and a
+  // dedicated corner trigger on the welcome card itself, sharing one
+  // modal - but closed by default, same as HelpPanel.
+  assertIncludes(html, "What can this do?");
+  assertIncludes(html, 'class="welcome-card-header"');
+  assertIncludes(html, 'class="text-button welcome-capabilities-trigger"');
+  if (html.includes("Available now") || html.includes(CAPABILITIES[0].detail.slice(0, 20))) {
+    throw new Error("Capabilities panel content should be closed by default, not present in the initial render.");
+  }
+
   // The step nav shows on every screen, including welcome - as an inert
   // preview there (nothing's been reached yet), never a way to skip ahead.
   assertIncludes(html, 'class="progress-steps"');
@@ -78,6 +91,39 @@ function checkHelpPanel() {
   }
 
   console.log("Validated help panel: closed by default, How It Works/Who It's For/disclaimer copy all present.");
+}
+
+function checkCapabilitiesPanel() {
+  const closedHtml = renderToString(<CapabilitiesPanel open={false} onClose={noop} />);
+  if (closedHtml.trim().length > 0) {
+    throw new Error("Capabilities panel should render nothing when closed.");
+  }
+
+  const html = renderToString(<CapabilitiesPanel open onClose={noop} />);
+  assertIncludes(html, "What this tool can do");
+  assertIncludes(html, "Available now");
+  assertIncludes(html, "Planned, not yet available");
+
+  if (CAPABILITIES.length === 0) {
+    throw new Error("Capabilities list should not be empty.");
+  }
+  for (const capability of CAPABILITIES) {
+    if (!capability.label.trim() || !capability.detail.trim()) {
+      throw new Error("Every capability needs a non-empty label and detail.");
+    }
+  }
+  if (!CAPABILITIES.some((capability) => capability.status === "available")) {
+    throw new Error("Capabilities list should include at least one shipped ('available') entry.");
+  }
+  if (!CAPABILITIES.some((capability) => capability.status === "planned")) {
+    throw new Error(
+      "Capabilities list should include at least one 'planned' entry - this panel exists to show honest scope, not just what's shipped."
+    );
+  }
+
+  console.log(
+    `Validated capabilities panel: reachable via button, ${CAPABILITIES.length} entries, both available and planned statuses present.`
+  );
 }
 
 function checkOrientationForm() {
@@ -190,6 +236,7 @@ function assertIncludes(value: string, expected: string) {
 function main() {
   checkWelcomeScreen();
   checkHelpPanel();
+  checkCapabilitiesPanel();
   checkOrientationForm();
   checkChecklistPanel();
   checkResultsStepDefaultsToSimple();
