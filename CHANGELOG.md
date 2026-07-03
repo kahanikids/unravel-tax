@@ -4,6 +4,116 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-04 (standardised JSON extraction contract + missing-detail guidance)
+
+- Rewrote the extraction prompt (`prompts/01-extract-statement.md` and its
+  in-sync copy `webapp/public/extraction-prompt.txt`, kept byte-identical) so
+  the AI reads **whatever** statement it's given (P&L, broker/AMC transactions,
+  PMS annual report, bank/dividend/interest/insurance/loan statement, AIS,
+  consolidated account statement) and returns **one standardised JSON object**,
+  filling the fields it can find and omitting/nulling the rest. We can't map
+  every bespoke report format, so we standardise our own side. The prompt still
+  explains that per-transaction detail matters because the tool classifies
+  STCG/LTCG and computes gains deterministically from the dates — the AI must
+  not self-classify or self-calculate. JSON shape: `documentType`,
+  `capitalGainsTransactions[]` (per-trade `scripName`/dates/`units`/values/
+  prices/optional `instrumentType`), `annualFigures` (`dividendIncome`,
+  `interestIncome`, `tdsDeducted`, `deductibleCharges`),
+  `netRealisedCapitalGainNoDetail`, `confidence`, `notes`. The AI must never
+  invent transaction rows (a net/aggregate gain goes in
+  `netRealisedCapitalGainNoDetail`), and holdings-only lists are noted in
+  `notes`, never placed in the transactions array.
+- Deterministic JSON ingestion (no LLM at runtime): `parseExtractionJson` in
+  `ingest/parsers.ts` now runs first when a paste starts with `{`. It
+  `JSON.parse`s defensively (ignores unknown fields, treats missing/null as
+  absent, tolerates ₹/commas in numeric strings) and maps
+  `capitalGainsTransactions` onto the existing canonical `RawTransactionRow`
+  shape, running them through the same `normalizeRowsSoft`/`deriveComputedFields`
+  path as every other format — so classification and the row-shape are
+  identical. `annualFigures` + `netRealisedCapitalGainNoDetail` surface as
+  `IngestResult.summaryFigures` (guidance only, never calculated) with a
+  `netGainOnly` flag, plus `documentType`/`confidence`/`notes` (all optional,
+  backward-compatible additions to the type).
+- The **markdown-table / TSV path is preserved as a graceful fallback** for a
+  paste that isn't JSON, so older prompts and hand-pasted tables still work.
+  CSV/Excel/HTML/structured-text native parsing is untouched.
+- Invalid JSON no longer dead-ends: it returns a plain-language `parse_error`
+  telling the user to paste the whole JSON block (one obvious next action).
+- `UploadStep.tsx` guidance for a readable-but-non-transaction paste (summary/
+  annual-total, net-gain-only, or holdings-only): lists the recognised annual
+  figures for the user to **type into** the results screen's "A few more
+  numbers" (not auto-populated, per the declined full-ingest option), loudly
+  flags a net-gain-only figure as unusable for ST/LT split and not fed into any
+  calculation, and shows the AI's `documentType`/`notes` (e.g. holdings-only
+  warning). Kept local to the upload flow (deliberate /ponytail shortcut — not
+  wired into global reconciliation, since the figures are user-typed and the
+  net-gain gap is document-local, not a profile-driven checklist item).
+- Added synthetic JSON fixture assertions to `scripts/validate-ingest.ts`
+  (JSON with transactions maps + classifies; summary-only JSON recognises
+  figures + flags net-gain-only; invalid JSON errors; markdown-table fallback
+  still parses). No `rules/*.json` change (no rate/threshold touched).
+
+## 2026-07-03 (insurance + foreign investments on the dashboard)
+
+- Surfaced both topics on the **tax dashboard** as two new widgets, reusing
+  the dependency-free `Meter` primitive (no new libraries):
+  - **Insurance payout still tax-free? (10(10D))** — a premium input metered
+    against the ULIP ₹2.5 lakh exemption line, with status copy covering the
+    ₹5 lakh traditional line. Both caps read from `rules/insurance.json`
+    (`payouts_section_10_10d.ulip` / `.traditional_non_ulip`
+    `aggregate_annual_premium_exemption_cap_inr`), plus the 194DA rate/threshold.
+    It runs only the threshold check the rule tells the user to run; it does
+    **not** compute the taxable payout amount (needs issue date + sum-assured
+    history the tool doesn't hold), and says so.
+  - **Foreign assets & LRS remittances** — a Schedule FA disclosure reminder
+    (no minimum value, ITR-2/ITR-3 only, ₹10 lakh Black Money Act penalty, all
+    read from `rules/foreign-investments.json`) plus an LRS remittance input
+    metered against the ₹10 lakh Section 206C(1G) TCS threshold, showing the
+    estimated 20% TCS as a recoverable prepaid credit.
+- Both widgets only render for someone they apply to (the `hasInsurancePayout`
+  / `hasForeignAssets` orientation flags, or once a figure is entered), each
+  carries a `RuleSourceLink`, and neither figure is folded into the taxable
+  totals (planning figures only, matching the rules' stated intent).
+- `rules/insurance.json` and `rules/foreign-investments.json` are now typed
+  (`InsuranceRule` / `ForeignInvestmentsRule`) and read via two new pure
+  helpers (`computeInsurancePayoutCheck`, `computeForeignRemittanceTcs`) that
+  mirror `loanDeductions.ts`. Added `SupplementalFigures.insuranceAnnualPremium`
+  and `.foreignRemittanceLrs` (defaulted, so saved sessions still load).
+  `tsc --noEmit`, `validate:guided-ui`, `validate:calculations`, and lint pass.
+
+## 2026-07-03 (insurance + foreign investments for residents)
+
+- Added `rules/insurance.json` / `.md`: **Section 10(10D)** payout
+  taxability, covering the Finance Act 2021/2023 carve-outs — ULIPs issued
+  on/after 1-Feb-2021 with aggregate premium over ₹2.5 lakh (taxed as
+  capital gains) and traditional policies issued on/after 1-Apr-2023 with
+  aggregate premium over ₹5 lakh (taxed as income from other sources), the
+  10%-of-sum-assured rule, always-exempt death benefits, and 194DA TDS.
+  Premium deductions (80C/80D) cross-reference `deduction-limits.json`
+  rather than restating the rupee caps.
+- Added `rules/foreign-investments.json` / `.md` for **Resident and
+  Ordinarily Resident** filers: mandatory **Schedule FA** disclosure of all
+  foreign assets (RSUs, ESPP, foreign shares/accounts/property) for the
+  calendar year with no minimum value and no ITR-1/4; slab-rate foreign
+  dividends/interest; foreign shares as unlisted-share gains; foreign tax
+  credit via Form 67/Schedule FSI/TR; **Finance Act 2025** LRS TCS change
+  (threshold ₹7L → ₹10L from 1-Apr-2025, 20% on investment remittances,
+  education-loan remittances exempt); and **Black Money Act** Section 43
+  ₹10 lakh penalty with the 1-Oct-2024 ₹20 lakh movable-asset carve-out.
+  Both synced to `webapp/src/rules/data/` and registered in the rule
+  catalog (generic `RuleDocument` — reference/awareness content, no new
+  calculation).
+- Wired both into the guided flow the same way as loans: two new
+  orientation questions (`insurancePayout`, `foreignAssets` — the latter
+  resident-only), profile flags `hasInsurancePayout` / `hasForeignAssets`,
+  tailored checklist items (payout + premium history; foreign statements +
+  Form 67 proof), and `profileScopeCaveats()` entries stating plainly what
+  the tool does *not* compute (10(10D) taxability, Schedule FA table).
+  Foreign assets now force **ITR-2/ITR-3** in `selectItrForm`, raise a
+  form-changing risk trigger (Schedule FA / ₹10 lakh penalty) that flips
+  the "get a CA to review" recommendation on; an insurance payout raises a
+  routine risk trigger. `tsc --noEmit` and `validate:all` pass.
+
 ## 2026-07-03 (NRI orientation + DTAA mutual fund map)
 
 - Reworked the **NRI track** in `OrientationForm`: after picking "I live

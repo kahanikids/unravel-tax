@@ -1,5 +1,4 @@
 import { IconChecklist, IconCompass, IconUpload } from "./icons";
-import { CountdownBanner } from "./CountdownBanner";
 import { LEGAL_INTRO, LEGAL_SECTIONS, REPORT_ISSUE_URL, REPO_URL } from "../lib/copy";
 
 export function WelcomeScreen({
@@ -48,8 +47,6 @@ export function WelcomeScreen({
         </span>
       </div>
       <p className="welcome-time-estimate">Takes about 15-20 minutes.</p>
-
-      <CountdownBanner />
 
       {hasSavedSession ? (
         <div className="resume-banner">
@@ -104,10 +101,7 @@ export function WelcomeScreen({
       ) : null}
 
       <details className="welcome-legal">
-        <summary>
-          <span className="welcome-legal-summary-text">Disclaimer, AI use, privacy &amp; terms</span>
-          <span className="welcome-legal-summary-hint">Please read before you rely on this</span>
-        </summary>
+        <summary>Legal, AI use &amp; privacy</summary>
         <div className="welcome-legal-body">
           {LEGAL_INTRO.map((part) => (
             <p className="welcome-legal-intro" key={part.label}>

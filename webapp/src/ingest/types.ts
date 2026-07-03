@@ -82,6 +82,23 @@ export type PromptRoute = {
   reason: string;
 };
 
+/**
+ * Annual-total figures the extraction prompt returns in the "annualFigures"
+ * object of its JSON contract, for summary-style documents (PMS annual reports,
+ * AIS, capital-gains summaries) that carry no per-transaction rows. These are
+ * recognised only to GUIDE the user - they are never fed into the deterministic
+ * tax engine. netRealisedGainNoDetail is a net/aggregate gain with no buy/sell
+ * dates, so it cannot be split short-term vs long-term and is treated as a gap,
+ * not a figure.
+ */
+export type ExtractionSummaryFigures = {
+  dividendIncome?: number;
+  interestIncome?: number;
+  tdsDeducted?: number;
+  deductibleCharges?: number;
+  netRealisedGainNoDetail?: number;
+};
+
 /** Unified ingest outcome: rows + warnings when parseable; promptRoute when not. */
 export type IngestResult = {
   kind: IngestionKind;
@@ -93,6 +110,16 @@ export type IngestResult = {
   sourceHeaders: string[];
   sourceRecords: Record<string, string | number | Date>[];
   promptRoute?: PromptRoute;
+  /** Recognised annual totals from a pasted extraction JSON, if any. For guidance only, never calculated. */
+  summaryFigures?: ExtractionSummaryFigures;
+  /** True when a net realised gain (no per-transaction detail) is the only capital-gains figure found - flagged as a gap. */
+  netGainOnly?: boolean;
+  /** From the extraction JSON: what the AI thinks the document is (e.g. "PMS annual report"). */
+  documentType?: string;
+  /** From the extraction JSON: the AI's self-reported confidence ("high" | "medium" | "low"). */
+  confidence?: string;
+  /** From the extraction JSON: free-text notes (holdings-only warning, missing detail, etc.). */
+  notes?: string;
 };
 
 /** @deprecated Use IngestResult — kept for scripts that only need transactions. */

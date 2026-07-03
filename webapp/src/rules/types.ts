@@ -239,8 +239,54 @@ export type LoanTreatmentValues = {
   new_act_2025_renumbering: Record<string, string>;
 };
 
+/**
+ * Only the fields the webapp actually reads are typed here; the JSON carries
+ * more (sum-assured ratio rule, renumbering, notes) that stays untyped on the
+ * generic index. Rupee caps for premiums live in deduction-limits.json and are
+ * cross-referenced, not duplicated - see rules/insurance.md.
+ */
+export type InsuranceValues = {
+  payouts_section_10_10d: {
+    death_benefit_always_exempt: boolean;
+    ulip: {
+      issued_on_or_after: string;
+      aggregate_annual_premium_exemption_cap_inr: number;
+      taxed_as_if_breached: string;
+    };
+    traditional_non_ulip: {
+      issued_on_or_after: string;
+      aggregate_annual_premium_exemption_cap_inr: number;
+      taxed_as_if_breached: string;
+    };
+    tds_section_194da: {
+      rate: number;
+      applies_when_income_portion_at_least_inr: number;
+    };
+  };
+};
+
+/** Only the fields the webapp reads - see rules/foreign-investments.md for the rest. */
+export type ForeignInvestmentsValues = {
+  schedule_fa_disclosure: {
+    minimum_value_threshold_inr: number;
+    requires_itr_form: string[];
+    cannot_use_forms: string[];
+  };
+  tcs_on_lrs_remittances: {
+    section: string;
+    threshold_inr: number;
+    rate_investment_gift_other: number;
+  };
+  black_money_act_penalties: {
+    non_disclosure_penalty_inr: number;
+    non_disclosure_penalty_section: string;
+  };
+};
+
 export type CapitalGainsEquityRule = RuleDocument<CapitalGainsEquityValues>;
 export type DeductionLimitsRule = RuleDocument<DeductionLimitsValues>;
+export type InsuranceRule = RuleDocument<InsuranceValues>;
+export type ForeignInvestmentsRule = RuleDocument<ForeignInvestmentsValues>;
 export type LoanTreatmentRule = RuleDocument<LoanTreatmentValues>;
 export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
 export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;

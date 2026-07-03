@@ -121,7 +121,9 @@ export function SideNav({
         <button
           type="button"
           className={
-            dashboardActive ? "side-nav-step side-nav-util side-nav-step-current" : "side-nav-step side-nav-util"
+            dashboardActive
+              ? "side-nav-step side-nav-util side-nav-dashboard side-nav-step-current"
+              : "side-nav-step side-nav-util side-nav-dashboard"
           }
           onClick={onShowDashboard}
           aria-current={dashboardActive ? "page" : undefined}

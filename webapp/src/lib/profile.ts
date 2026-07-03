@@ -18,7 +18,10 @@ export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
     multipleEmployers: Boolean(answers.multipleEmployers),
     hraRisk: hraAboveThreshold && answers.hasLandlordPan === false,
     epfRisk: Boolean(answers.epfWithdrawal && answers.epfBeforeFiveYears),
-    hasLoans: Boolean(answers.loansRepaid)
+    hasLoans: Boolean(answers.loansRepaid),
+    hasInsurancePayout: Boolean(answers.insurancePayout),
+    // Only a resident (ROR) has a Schedule FA obligation; an NRI/RNOR is out of scope.
+    hasForeignAssets: answers.residency !== "nri" && Boolean(answers.foreignAssets)
   };
 }
 
@@ -135,6 +138,27 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
     add(
       "Loan interest certificate(s)",
       "Your lender's yearly interest certificate (home, education, or electric-vehicle loan). It shows the interest paid, which is what you can deduct, mostly under the old regime.",
+      "Needed"
+    );
+  }
+
+  if (flags.hasInsurancePayout) {
+    add(
+      "Life-insurance payout statement and premium history",
+      "A maturity payout is usually tax-free, but not if the policy's premium crossed ₹2.5 lakh (ULIP) or ₹5 lakh (traditional) a year. The premium history decides whether it's taxable.",
+      "Needed"
+    );
+  }
+
+  if (flags.hasForeignAssets) {
+    add(
+      "Foreign asset and account statements (calendar year Jan–Dec)",
+      "Every foreign holding — shares, RSUs, ESPP, bank/brokerage accounts — must go in Schedule FA for the calendar year, with no minimum value. Missing one risks a ₹10 lakh Black Money Act penalty.",
+      "Needed"
+    );
+    add(
+      "Foreign tax paid proof (for Form 67 / foreign tax credit)",
+      "If tax was withheld abroad on foreign dividends or gains, you claim credit under the DTAA by filing Form 67 before your return.",
       "Needed"
     );
   }
@@ -256,6 +280,24 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     });
   }
 
+  if (flags.hasInsurancePayout) {
+    caveats.push({
+      id: "insurance_payout_scope",
+      label: "Whether your insurance payout is taxable isn't computed here",
+      note:
+        "A life-insurance maturity is tax-free under Section 10(10D) unless the premium crossed ₹2.5 lakh a year (ULIP issued on/after 1-Feb-2021) or ₹5 lakh a year (traditional policy issued on/after 1-Apr-2023), or exceeded 10% of the sum assured. Whether yours breaches those depends on your policy's issue date and premium history, which this tool doesn't hold, so it isn't added to the figures below. If it does breach, a ULIP gain is taxed as capital gains and a traditional payout as income from other sources — check the exact figure with a CA. Death benefits stay fully exempt."
+    });
+  }
+
+  if (flags.hasForeignAssets) {
+    caveats.push({
+      id: "foreign_assets_scope",
+      label: "Foreign assets: disclosure and foreign income aren't computed here",
+      note:
+        "As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. Foreign dividends and interest are taxable at slab rate, gains on foreign shares are unlisted-share gains (long-term after 24 months at 12.5%), and foreign tax paid is credited via Form 67. This tool doesn't build the Schedule FA table or those figures. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA."
+    });
+  }
+
   return caveats;
 }
 
@@ -309,7 +351,7 @@ export function selectItrForm(
       ? "nri_no_business"
       : flags.huf
         ? "huf_no_business"
-        : flags.hasCapitalGains || flags.singleParent
+        : flags.hasCapitalGains || flags.singleParent || flags.hasForeignAssets
           ? "resident_capital_gains_or_clubbing"
           : aboveItr1IncomeCap
             ? "resident_above_itr1_limit"

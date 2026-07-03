@@ -4,8 +4,10 @@ import capitalGainsMutualFunds from "./data/capital-gains-mutual-funds.json";
 import deductionLimits from "./data/deduction-limits.json";
 import dividends from "./data/dividends.json";
 import filingMistakesAndPenalties from "./data/filing-mistakes-and-penalties.json";
+import foreignInvestments from "./data/foreign-investments.json";
 import hufBasics from "./data/huf-basics.json";
 import hufClubbing from "./data/huf-clubbing.json";
+import insurance from "./data/insurance.json";
 import itrFormSelection from "./data/itr-form-selection.json";
 import loanTreatment from "./data/loan-treatment.json";
 import newActTransition from "./data/new-act-2025-transition.json";
@@ -25,7 +27,9 @@ import type {
   CapitalGainsEquityRule,
   DeductionLimitsRule,
   FilingMistakesRule,
+  ForeignInvestmentsRule,
   HufBasicsRule,
+  InsuranceRule,
   ItrFormSelectionRule,
   LoanTreatmentRule,
   NriNreNroRule,
@@ -37,9 +41,11 @@ import type {
 
 // Every rules/*.json topic, mirrored 1:1 from the top-level rules/ directory.
 // capitalGainsEquity, itrFormSelection, filingMistakesAndPenalties,
-// regimeChoice, nriNreNro, hufBasics, singleParentClubbing, and advanceTax
-// are typed for programmatic use (calculations, ITR selection, risk
-// triggers, regime comparison, NRI/HUF/single-parent partial calculations).
+// regimeChoice, nriNreNro, hufBasics, singleParentClubbing, advanceTax,
+// insurance, and foreignInvestments are typed for programmatic use
+// (calculations, ITR selection, risk triggers, regime comparison,
+// NRI/HUF/single-parent partial calculations, and the dashboard's
+// 10(10D) premium-cap and LRS-TCS threshold checks).
 // The rest are typed generically (RuleDocument) - they're surfaced as
 // reference/explanatory content today, not yet consumed by calculation
 // logic. See CLAUDE.md: never hardcode a rate that belongs in one of these.
@@ -50,8 +56,10 @@ export const ruleCatalog = {
   deductionLimits: deductionLimits as DeductionLimitsRule,
   dividends: dividends as RuleDocument,
   filingMistakesAndPenalties: filingMistakesAndPenalties as FilingMistakesRule,
+  foreignInvestments: foreignInvestments as ForeignInvestmentsRule,
   hufBasics: hufBasics as HufBasicsRule,
   hufClubbing: hufClubbing as RuleDocument,
+  insurance: insurance as InsuranceRule,
   itrFormSelection: itrFormSelection as ItrFormSelectionRule,
   loanTreatment: loanTreatment as LoanTreatmentRule,
   newActTransition: newActTransition as RuleDocument,

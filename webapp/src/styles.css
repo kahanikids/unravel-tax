@@ -200,7 +200,6 @@ button.side-nav-step.side-nav-step-current:hover {
   border: none;
   background: none;
   padding: 0;
-  margin-right: auto;
   cursor: pointer;
   display: inline-flex;
   line-height: 0;
@@ -214,6 +213,7 @@ button.side-nav-step.side-nav-step-current:hover {
 
 .help-button {
   appearance: none;
+  margin-left: auto;
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--muted);
@@ -289,10 +289,25 @@ button.side-nav-step.side-nav-step-current:hover {
 .stage-with-sidebar {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: var(--panel-width, 300px) 6px minmax(0, 1fr);
+  gap: 11px;
   padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 56px);
   align-items: start;
+}
+
+.stage-resizer {
+  align-self: stretch;
+  min-height: 120px;
+  border-radius: 999px;
+  background: var(--line);
+  cursor: col-resize;
+  touch-action: none;
+  transition: background 0.15s ease;
+}
+
+.stage-resizer:hover,
+.stage-resizer:active {
+  background: var(--accent, #4f46e5);
 }
 
 .stage-main {
@@ -305,6 +320,16 @@ button.side-nav-step.side-nav-step-current:hover {
 @media (max-width: 860px) {
   .stage-with-sidebar {
     grid-template-columns: 1fr;
+  }
+
+  .stage-resizer {
+    display: none;
+  }
+
+  .checklist-panel {
+    width: auto;
+    min-width: 0;
+    max-width: none;
   }
 }
 
@@ -415,16 +440,35 @@ button.side-nav-step.side-nav-step-current:hover {
 /* ---------- Deadline countdown ---------- */
 
 .countdown-banner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px 28px;
-  padding: 18px clamp(18px, 3vw, 28px);
+  padding: 20px clamp(18px, 3vw, 30px);
   border-radius: var(--radius-md);
-  background: radial-gradient(120% 140% at 0% 0%, #23262d 0%, var(--ink) 60%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: var(--shadow-card);
+  background:
+    radial-gradient(130% 160% at 0% 0%, rgba(232, 131, 58, 0.14) 0%, rgba(35, 38, 45, 0.55) 42%, rgba(22, 24, 28, 0.72) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Soft top-edge sheen that reads as glass catching light. */
+.countdown-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%);
+  pointer-events: none;
 }
 
 .countdown-lede {
@@ -441,7 +485,7 @@ button.side-nav-step.side-nav-step-current:hover {
 }
 
 .countdown-title {
-  color: var(--flag);
+  color: #e8833a;
   font-weight: 800;
   font-size: clamp(1rem, 2vw, 1.2rem);
   letter-spacing: -0.01em;
@@ -455,11 +499,21 @@ button.side-nav-step.side-nav-step-current:hover {
 
 .countdown-unit {
   display: flex;
-  align-items: baseline;
-  gap: 7px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 .countdown-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4ch;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 14px rgba(0, 0, 0, 0.28);
   color: #ffffff;
   font-weight: 800;
   font-size: clamp(1.4rem, 3.4vw, 2rem);
@@ -479,6 +533,107 @@ button.side-nav-step.side-nav-step-current:hover {
 .countdown-closed {
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.92rem;
+}
+
+/* Compact bordered variant used in the app header on the welcome screen:
+   title stacked over the timer, centered between the logo and the help button. */
+.countdown-banner-header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-left: auto;
+  padding: 8px 18px;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(232, 131, 58, 0.1) 0%, rgba(255, 255, 255, 0.55) 55%, rgba(255, 255, 255, 0.35) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 8px 24px rgba(20, 20, 20, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+}
+
+/* Desktop: let the counter's own margin-left:auto pull the counter+? pair to
+   the right edge, and sit the ? right beside it with a clear gap (instead of
+   both having margin-left:auto and splitting the slack into a mid-header gap). */
+@media (min-width: 861px) {
+  .countdown-banner-header + .help-button {
+    margin-left: 22px;
+  }
+}
+
+.countdown-banner-header .countdown-unit {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.countdown-banner-header .countdown-value {
+  padding: 2px 7px;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.4) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(20, 20, 20, 0.08);
+}
+
+.countdown-banner-header .countdown-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.countdown-banner-header .countdown-lede {
+  gap: 7px;
+}
+
+.countdown-banner-header .countdown-title {
+  font-size: 0.92rem;
+}
+
+.countdown-banner-header .countdown-units {
+  gap: 12px;
+}
+
+.countdown-banner-header .countdown-value {
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.countdown-banner-header .countdown-label {
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.countdown-banner-header .countdown-closed {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 620px) {
+  .countdown-banner-header {
+    flex-basis: 100%;
+    margin-left: 0;
+    gap: 3px;
+    padding: 6px 12px;
+  }
+  .countdown-banner-header .countdown-unit:last-child {
+    display: none;
+  }
+  .countdown-banner-header .countdown-title {
+    font-size: 0.74rem;
+  }
+  .countdown-banner-header .countdown-value {
+    font-size: 0.85rem;
+  }
+  .countdown-banner-header .countdown-label {
+    font-size: 0.55rem;
+  }
+  .countdown-banner-header .countdown-units {
+    gap: 8px;
+  }
 }
 
 .resume-banner {
@@ -678,6 +833,8 @@ button.side-nav-step.side-nav-step-current:hover {
 
 .upload-button {
   display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -890,6 +1047,8 @@ button.side-nav-step.side-nav-step-current:hover {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  width: auto;
+  min-width: 0;
 }
 
 .checklist-panel-heading {
@@ -998,6 +1157,11 @@ button.side-nav-step.side-nav-step-current:hover {
   line-height: 1.4;
 }
 
+.checklist-text-toggle {
+  font-size: inherit;
+  vertical-align: baseline;
+}
+
 .checklist-item-flag {
   border-left-color: var(--flag);
 }
@@ -1090,6 +1254,7 @@ button.side-nav-step.side-nav-step-current:hover {
 /* ---------- Upload step ---------- */
 
 .upload-dropzone {
+  position: relative;
   border: 1.5px dashed var(--line);
   border-radius: var(--radius-md);
   padding: 24px;
@@ -1115,6 +1280,77 @@ button.side-nav-step.side-nav-step-current:hover {
 .upload-hint {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+/* ---------- Info tip (hover/focus "i" icon) ---------- */
+
+.info-tip {
+  position: relative;
+  display: inline-flex;
+}
+
+.info-tip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.info-tip-trigger:hover,
+.info-tip-trigger:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.info-tip-bubble {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 5;
+  width: max-content;
+  max-width: 280px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  font-style: normal;
+  font-weight: 400;
+  text-align: left;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+}
+
+.info-tip:hover .info-tip-bubble,
+.info-tip:focus-within .info-tip-bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.upload-info-tip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
 .upload-parsing-hint {
@@ -1733,7 +1969,7 @@ button.side-nav-step.side-nav-step-current:hover {
 }
 
 .confidence-may-change summary {
-  color: var(--accent-ink, var(--ink));
+  color: var(--muted);
 }
 
 .confidence-may-change li {
@@ -1944,6 +2180,10 @@ button.side-nav-step.side-nav-step-current:hover {
 
 .export-actions button {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px solid var(--accent);
   background: var(--surface);
   color: var(--accent-dark);
@@ -2068,6 +2308,13 @@ button.side-nav-step.side-nav-step-current:hover {
   gap: 8px;
 }
 
+.footer-disclaimer-hint {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  margin-top: 2px;
+}
+
 .footer-link {
   appearance: none;
   border: none;
@@ -2095,6 +2342,29 @@ button.side-nav-step.side-nav-step-current:hover {
   border-top: 1px solid var(--line);
   font-size: 0.76rem;
   color: var(--muted);
+}
+
+/* Hidden on desktop, where the footer disclaimer is always fully expanded -
+   shown only at the mobile/tablet breakpoint below (mirrors .checklist-toggle). */
+.footer-disclaimer-toggle {
+  display: none;
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  border-radius: var(--radius-pill);
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-disclaimer-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
 }
 
 /* ---------- Welcome legal / disclaimer ---------- */
@@ -2131,12 +2401,6 @@ button.side-nav-step.side-nav-step-current:hover {
 
 .welcome-legal[open] > summary::before {
   content: "\2212";
-}
-
-.welcome-legal-summary-hint {
-  color: var(--muted);
-  font-weight: 500;
-  font-size: 0.84rem;
 }
 
 .welcome-legal-body {
@@ -2204,6 +2468,17 @@ button.side-nav-step.side-nav-step-current:hover {
   .checklist-panel-body.is-collapsed {
     display: none;
   }
+
+  /* Same collapse pattern for the footer disclaimer: the full block otherwise
+     eats a lot of vertical space at the bottom of every step on mobile. The
+     toggle and the is-collapsed rule are scoped here so desktop is unaffected. */
+  .footer-disclaimer-toggle {
+    display: inline-flex;
+  }
+
+  .footer-collapsible.is-collapsed {
+    display: none;
+  }
 }
 
 @media (max-width: 620px) {
@@ -2252,14 +2527,16 @@ button.side-nav-step.side-nav-step-current:hover {
     overflow: visible;
   }
 
-  /* Flatten the desktop step group into the bottom bar's flex row, and drop the
-     utility/info actions here - they'd overcrowd the bar and are already
-     reachable from the header "?" and the welcome screen on small screens. */
-  .side-nav-steps {
+  /* Flatten both groups into the bottom bar's flex row. The info actions
+     (help/features/tour/legal) still drop out here - they'd overcrowd the bar
+     and are reachable from the header "?" - but Dashboard stays, as a real
+     navigable destination worth one tap on mobile. */
+  .side-nav-steps,
+  .side-nav-utility {
     display: contents;
   }
 
-  .side-nav-utility {
+  .side-nav-util:not(.side-nav-dashboard) {
     display: none;
   }
 

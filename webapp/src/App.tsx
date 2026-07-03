@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
@@ -15,6 +16,8 @@ import {
   buildConfidenceReport,
   clearSession,
   clubbedMinorIncome,
+  computeForeignRemittanceTcs,
+  computeInsurancePayoutCheck,
   computeLoanDeductions,
   deriveProfileFlags,
   downloadExport,
@@ -64,6 +67,7 @@ import {
 } from "./state/types";
 import { fixtureTransactions } from "./demo/sampleState";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { CountdownBanner } from "./components/CountdownBanner";
 import { OrientationForm } from "./components/OrientationForm";
 import { ChecklistPanel } from "./components/ChecklistPanel";
 import { UploadStep, type UploadedDocument } from "./components/UploadStep";
@@ -88,12 +92,19 @@ function App() {
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
   );
+  // Footer disclaimer collapses on mobile only (see styles.css); mirrors the
+  // ChecklistPanel pattern - starts collapsed at the mobile/tablet breakpoint,
+  // and the toggle + is-collapsed rule are scoped inside @media so desktop is
+  // always fully expanded regardless of this state.
+  const [footerCollapsed, setFooterCollapsed] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 860
+  );
   const [exportMessage, setExportMessage] = useState("Exports are generated in this browser. Nothing is uploaded anywhere.");
   const [acknowledgedTriggerIds, setAcknowledgedTriggerIds] = useState<string[]>([]);
   // Read once on mount and shared below, so a saved session isn't parsed
   // out of localStorage twice on first render.
   const [initialSession] = useState(() => loadSession());
-  const [hasSavedSession] = useState(() => initialSession !== null);
+  const [hasSavedSession, setHasSavedSession] = useState(() => initialSession !== null);
   // Year-over-year filing history for the dashboard. Seeded from any saved
   // session on mount so history survives a reload without a Resume click.
   const [pastFilings, setPastFilings] = useState<PastFiling[]>(() => initialSession?.pastFilings ?? []);
@@ -106,6 +117,30 @@ function App() {
   const [showTour, setShowTour] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
+  // Width (px) of the left checklist column on the documents/results stage.
+  // Driven by dragging the vertical handle between the two cards; clamped in
+  // startPanelResize. A CSS var carries it so the mobile media query can
+  // cleanly override it with a single-column layout.
+  const [panelWidth, setPanelWidth] = useState(300);
+
+  const startPanelResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const handle = event.currentTarget;
+    const startX = event.clientX;
+    const startWidth = panelWidth;
+    handle.setPointerCapture(event.pointerId);
+    const onMove = (moveEvent: PointerEvent) => {
+      const max = Math.min(520, window.innerWidth * 0.5);
+      const next = startWidth + (moveEvent.clientX - startX);
+      setPanelWidth(Math.max(260, Math.min(max, next)));
+    };
+    const onUp = () => {
+      handle.removeEventListener("pointermove", onMove);
+      handle.removeEventListener("pointerup", onUp);
+    };
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+  };
   // Every step the user has already reached this filing stays reachable from
   // the side nav - lets them jump back to the checklist/documents/results
   // without restarting, without ever offering to skip ahead to a step they
@@ -350,6 +385,13 @@ function App() {
   // here (CLAUDE.md). The 80D limit steps up when a senior citizen is covered.
   const deductionLimits = ruleCatalog.deductionLimits.values;
 
+  // Insurance-payout (10(10D)) premium-cap check and foreign LRS-TCS check,
+  // both computed off the same figures the dashboard owns, with every rupee
+  // limit read from the rule JSON (rules/insurance.json, rules/foreign-investments.json).
+  const insurancePayoutCheck = computeInsurancePayoutCheck(supplementalFigures, ruleCatalog.insurance);
+  const foreignRemittanceTcs = computeForeignRemittanceTcs(supplementalFigures, ruleCatalog.foreignInvestments);
+  const foreignScheduleFa = ruleCatalog.foreignInvestments.values.schedule_fa_disclosure;
+
   // Everything the dashboard's "this year at a glance" shows, computed
   // deterministically from the same figures the results view uses. The
   // dashboard only displays it - no separate calculation lives there.
@@ -405,6 +447,19 @@ function App() {
         limit: deductionLimits.section_80ccd_1b_nps.limit_inr
       }
     ],
+    insurance: {
+      ...insurancePayoutCheck,
+      applies: flags.hasInsurancePayout,
+      sourceRefs: ruleCatalog.insurance.source_refs
+    },
+    foreignInvestments: {
+      ...foreignRemittanceTcs,
+      applies: flags.hasForeignAssets,
+      scheduleFaMinValueInr: foreignScheduleFa.minimum_value_threshold_inr,
+      requiresItrForms: foreignScheduleFa.requires_itr_form,
+      blackMoneyPenaltyInr: ruleCatalog.foreignInvestments.values.black_money_act_penalties.non_disclosure_penalty_inr,
+      sourceRefs: ruleCatalog.foreignInvestments.source_refs
+    },
     variance: {
       checkCount: varianceCheckCount,
       mismatchCount: reconciliationMismatches.length,
@@ -561,6 +616,7 @@ function App() {
     setShowDashboard(false);
     setFurthestStepIndex(0);
     setShowConfirmClear(false);
+    setHasSavedSession(false);
     setStep("welcome");
   }
 
@@ -588,6 +644,12 @@ function App() {
   // to the shared session state (it owns this planning input the same way it
   // owns past-filing entry), so it persists and stays a single source of truth.
   function changeDeduction(key: "deduction80C" | "deduction80D" | "deductionNps80ccd1b", value: number) {
+    setSupplementalFigures((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // Same single-source-of-truth path as changeDeduction, for the insurance
+  // premium-cap and foreign LRS-TCS planning figures the dashboard now owns.
+  function changeFigure(key: "insuranceAnnualPremium" | "foreignRemittanceLrs", value: number) {
     setSupplementalFigures((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -710,6 +772,7 @@ function App() {
             className="brand-mark"
           />
         </button>
+        {!showDashboard && step === "welcome" ? <CountdownBanner variant="header" /> : null}
         <HelpPanel open={showHelp} onOpenChange={setShowHelp} />
       </header>
 
@@ -733,6 +796,7 @@ function App() {
             onRemovePastFiling={removePastFiling}
             onGoToFiling={goToFilingFromDashboard}
             onChangeDeduction={changeDeduction}
+            onChangeFigure={changeFigure}
             showAdvanced={showAdvanced}
             onToggleAdvanced={() => setShowAdvanced((value) => !value)}
           />
@@ -790,11 +854,21 @@ function App() {
       ) : null}
 
       {!showDashboard && (step === "documents" || step === "results") ? (
-        <div className="stage-with-sidebar">
+        <div
+          className="stage-with-sidebar"
+          style={{ "--panel-width": `${panelWidth}px` } as CSSProperties}
+        >
           <ChecklistPanel
             checklistItems={checklistItems}
             riskTriggers={riskTriggers}
             profileScopeCaveats={scopeCaveats}
+          />
+
+          <div
+            className="stage-resizer"
+            role="separator"
+            aria-orientation="vertical"
+            onPointerDown={startPanelResize}
           />
 
           <div className="stage-main">
@@ -864,24 +938,44 @@ function App() {
       ) : null}
 
       <footer className="app-footer">
-        <div className="footer-inner">
-          <div className="footer-meta">
-            <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
-            <p className="footer-privacy">Runs locally in your browser; nothing is uploaded.</p>
+        <button
+          type="button"
+          className="footer-disclaimer-toggle"
+          aria-expanded={!footerCollapsed}
+          aria-controls="footer-disclaimer-body"
+          onClick={() => setFooterCollapsed((value) => !value)}
+        >
+          Disclaimer
+          <svg className="checklist-toggle-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <path d={footerCollapsed ? "M4 6l4 4 4-4" : "M4 10l4-4 4 4"} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <div
+          id="footer-disclaimer-body"
+          className={footerCollapsed ? "footer-collapsible is-collapsed" : "footer-collapsible"}
+        >
+          <div className="footer-inner">
+            <div className="footer-meta">
+              <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
+              <p className="footer-privacy">Runs locally in your browser; nothing is uploaded.</p>
+            </div>
+            <nav className="footer-links" aria-label="Project and legal links">
+              <div className="footer-disclaimer-link">
+                <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
+                  Full disclaimer, AI use &amp; privacy
+                </button>
+                <span className="footer-disclaimer-hint">Please read before you blindly rely on this tool</span>
+              </div>
+              <a className="footer-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
+                Source on GitHub
+              </a>
+              <a className="footer-link" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+                Report an issue
+              </a>
+            </nav>
           </div>
-          <nav className="footer-links" aria-label="Project and legal links">
-            <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
-              Full disclaimer, AI use &amp; privacy
-            </button>
-            <a className="footer-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
-              Source on GitHub
-            </a>
-            <a className="footer-link" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
-              Report an issue
-            </a>
-          </nav>
+          <p className="footer-baseline">Free and open source, MIT licensed.</p>
         </div>
-        <p className="footer-baseline">Free and open source, MIT licensed.</p>
       </footer>
       </main>
     </div>

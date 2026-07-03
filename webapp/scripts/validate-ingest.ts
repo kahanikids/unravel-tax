@@ -7,6 +7,7 @@ import {
   parseCsvText,
   parseExcelBuffer,
   parseHtmlText,
+  parsePastedExtraction,
   parseTextSource,
   parseStructuredText,
   type IngestResult,
@@ -125,6 +126,95 @@ async function main() {
     throw new Error(`Expected Excel header row at index 0 for the baseline fixture, got ${headerIndex}.`);
   }
 
+  // The extraction prompt now returns one standardised JSON object. A JSON paste
+  // with transaction rows must map onto the same NormalizedTransaction shape as
+  // every other format (dates classified, gain/loss computed). Synthetic values
+  // only (111/222 style), tolerant of ₹/commas in numeric strings - never real data.
+  const jsonWithTransactions = parsePastedExtraction(
+    JSON.stringify({
+      documentType: "broker capital gains statement",
+      capitalGainsTransactions: [
+        {
+          scripName: "Dummy Equity Ltd",
+          purchaseDate: "01-Apr-2024",
+          sellDate: "01-Aug-2024",
+          units: 10,
+          buyValue: "₹1,110",
+          sellValue: 2220,
+          buyPrice: 111,
+          sellPrice: 222
+        }
+      ],
+      confidence: "high",
+      notes: "One synthetic transaction."
+    })
+  );
+  if (jsonWithTransactions.transactions.length !== 1) {
+    throw new Error("JSON paste with one transaction should map to exactly one NormalizedTransaction.");
+  }
+  const jsonTx = jsonWithTransactions.transactions[0];
+  if (jsonTx.scripName !== "Dummy Equity Ltd" || jsonTx.gainLoss !== 1110 || jsonTx.taxClass !== "ST") {
+    throw new Error(`JSON transaction did not normalize as expected: ${JSON.stringify(jsonTx)}`);
+  }
+  if (jsonWithTransactions.documentType !== "broker capital gains statement") {
+    throw new Error("JSON paste should surface documentType.");
+  }
+  if (jsonWithTransactions.netGainOnly) {
+    throw new Error("A JSON paste with real transaction rows should not be flagged net-gain-only.");
+  }
+
+  // A summary-only / net-gain-only JSON paste (PMS annual report shape): empty
+  // transactions plus annualFigures and a net realised gain with no per-trade detail.
+  const jsonSummaryOnly = parsePastedExtraction(
+    JSON.stringify({
+      documentType: "PMS annual report",
+      capitalGainsTransactions: [],
+      annualFigures: {
+        dividendIncome: "₹1,111",
+        interestIncome: null,
+        tdsDeducted: 222,
+        deductibleCharges: 333
+      },
+      netRealisedCapitalGainNoDetail: "4,444",
+      confidence: "medium",
+      notes: "Only a net realised gain is stated; detailed per-transaction statement needed."
+    })
+  );
+  if (jsonSummaryOnly.transactions.length !== 0) {
+    throw new Error("Summary-only JSON paste should not produce any transaction rows.");
+  }
+  const sf = jsonSummaryOnly.summaryFigures;
+  if (!sf) {
+    throw new Error("Summary-only JSON paste should recognise annualFigures.");
+  }
+  if (sf.dividendIncome !== 1111 || sf.tdsDeducted !== 222 || sf.deductibleCharges !== 333 || sf.netRealisedGainNoDetail !== 4444) {
+    throw new Error(`Unexpected recognised summary figures: ${JSON.stringify(sf)}`);
+  }
+  if (sf.interestIncome !== undefined) {
+    throw new Error("A null annual figure should be left unrecognised, not parsed as a figure.");
+  }
+  if (jsonSummaryOnly.netGainOnly !== true) {
+    throw new Error("A net-realised-gain-only JSON paste with no rows should set netGainOnly.");
+  }
+
+  // Invalid JSON must not dead-end silently: it comes back with a plain-language
+  // parse_error telling the user to paste the whole JSON block.
+  const brokenJson = parsePastedExtraction("{ not valid json");
+  if (brokenJson.transactions.length !== 0 || !brokenJson.warnings.some((w) => w.code === "parse_error")) {
+    throw new Error("Invalid JSON paste should surface a parse_error, not transactions.");
+  }
+
+  // The markdown-table fallback must still work for a hand-pasted table.
+  const tableFallback = parsePastedExtraction(
+    [
+      "Scrip Name | Purchase Date | Sell Date | Units | Buy Value | Sell Value | Buy Price | Sell Price",
+      "Dummy Equity Ltd | 01-Apr-2024 | 01-Aug-2024 | 10 | 1110 | 2220 | 111 | 222"
+    ].join("\n")
+  );
+  if (tableFallback.transactions.length !== 1 || tableFallback.transactions[0].gainLoss !== 1110) {
+    throw new Error("Markdown-table fallback should still parse a pasted table into one transaction.");
+  }
+
   const promptTxt = await readFile(resolve(import.meta.dirname, "..", "public", "extraction-prompt.txt"), "utf8");
   const canonicalPrompt = await readFile(resolve(repoRoot, "prompts", "01-extract-statement.md"), "utf8");
   if (promptTxt.trim() !== canonicalPrompt.trim()) {
@@ -146,7 +236,7 @@ async function main() {
   }
 
   console.log(
-    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; fuzzy/alt-date headers parse; missing columns warn + route; PDF/free-form routes to prompt; edited rows reclassify correctly."
+    "Validated webapp ingestion: CSV, Excel, HTML, structured text match; fuzzy/alt-date headers parse; missing columns warn + route; PDF/free-form routes to prompt; JSON extraction paste maps transactions + recognises annual figures + flags net-gain-only + errors on invalid JSON, markdown-table fallback still parses; edited rows reclassify correctly."
   );
 }
 

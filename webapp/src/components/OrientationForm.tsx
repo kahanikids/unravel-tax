@@ -256,6 +256,30 @@ const QUESTIONS: Question[] = [
     skippable: true,
     value: (a) => a.loansRepaid,
     set: (a, value) => ({ ...a, loansRepaid: value })
+  },
+  {
+    id: "insurancePayout",
+    kind: "yes-no",
+    prompt: "Did you receive a life-insurance maturity or survival payout this year?",
+    helper:
+      "Not a death benefit (always tax-free) — a policy that matured or paid out to you. Usually tax-free, but high-premium policies aren't, so we'll flag it. Answer No if you only paid premiums.",
+    mobileHelper: "Policy matured and paid you? Say Yes.",
+    visible: () => true,
+    skippable: true,
+    value: (a) => a.insurancePayout,
+    set: (a, value) => ({ ...a, insurancePayout: value })
+  },
+  {
+    id: "foreignAssets",
+    kind: "yes-no",
+    prompt: "Do you hold any assets outside India (foreign shares, US RSUs/ESPP, overseas accounts or property)?",
+    helper:
+      "Residents must report every foreign holding in Schedule FA, even a dormant account, with no minimum value. Getting this wrong risks a ₹10 lakh penalty, so it changes which form you file.",
+    mobileHelper: "Foreign shares, RSUs, or accounts? Say Yes.",
+    visible: isResident,
+    skippable: true,
+    value: (a) => a.foreignAssets,
+    set: (a, value) => ({ ...a, foreignAssets: value })
   }
 ];
 
@@ -282,7 +306,9 @@ const SUMMARY_LABELS: Record<string, string> = {
   hasLandlordPan: "Have landlord's PAN",
   epfWithdrawal: "Took money out of provident fund",
   epfBeforeFiveYears: "Withdrawal before 5 years of service",
-  loansRepaid: "Repaying a home, education, or EV loan"
+  loansRepaid: "Repaying a home, education, or EV loan",
+  insurancePayout: "Received a life-insurance payout",
+  foreignAssets: "Holds assets outside India"
 };
 
 function formatAnswer(question: Question, answers: OrientationAnswers): string {

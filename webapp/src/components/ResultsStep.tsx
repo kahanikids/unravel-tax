@@ -17,6 +17,14 @@ function formatAmount(value: number) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value);
 }
 
+const DownloadIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
 /** Rows whose "why this number?" explanation is grounded in a rule with a
  * linkable source. Keeps the source link on genuine claims (ITR-form choice,
  * capital-gains treatment) rather than every summary row. */
@@ -317,16 +325,31 @@ export function ResultsStep({
           any losses next year.
         </p>
         <div className="export-actions">
-          <button type="button" className="primary-button" onClick={onExportXlsx}>
-            {localFolderName ? "Save CA Summary XLSX" : "Download CA Summary XLSX"}
+          <button
+            type="button"
+            className="primary-button"
+            onClick={onExportXlsx}
+            aria-label={localFolderName ? undefined : "Download CA Summary XLSX"}
+          >
+            {localFolderName ? "Save CA Summary XLSX" : <><DownloadIcon /> CA Summary XLSX</>}
           </button>
-          <button type="button" className="secondary-button" onClick={onExportFullWorkbook}>
-            {localFolderName ? "Save full workbook" : "Download full workbook"}
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onExportFullWorkbook}
+            aria-label={localFolderName ? undefined : "Download full workbook"}
+          >
+            {localFolderName ? "Save full workbook" : <><DownloadIcon /> full workbook</>}
           </button>
           <details className="other-format">
             <summary>Other format</summary>
-            <button type="button" className="text-button" onClick={onExportCsv}>
-              {localFolderName ? "Save CA Summary CSV" : "Download CA Summary CSV"}
+            <button
+              type="button"
+              className="text-button"
+              onClick={onExportCsv}
+              aria-label={localFolderName ? undefined : "Download CA Summary CSV"}
+            >
+              {localFolderName ? "Save CA Summary CSV" : <><DownloadIcon /> CA Summary CSV</>}
             </button>
           </details>
         </div>
@@ -336,7 +359,7 @@ export function ResultsStep({
               <>Saving to <strong>{localFolderName}</strong> on your computer instead of your Downloads folder.</>
             ) : (
               <button type="button" className="text-button" onClick={onChooseLocalFolder}>
-                Save these to a folder on your computer instead of downloading each one
+                Alternate Option: Save to Local Folder
               </button>
             )}
           </p>

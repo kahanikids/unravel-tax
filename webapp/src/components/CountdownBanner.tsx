@@ -18,7 +18,7 @@ function parts(msLeft: number) {
   ];
 }
 
-export function CountdownBanner() {
+export function CountdownBanner({ variant }: { variant?: "header" } = {}) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -29,7 +29,7 @@ export function CountdownBanner() {
   const dueLabel = new Date(DEADLINE).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="countdown-banner" role="timer" aria-live="off">
+    <div className={variant === "header" ? "countdown-banner countdown-banner-header" : "countdown-banner"} role="timer" aria-live="off">
       <div className="countdown-lede">
         <IconHourglass className="countdown-icon" />
         <span className="countdown-title">ITR Filing Deadline</span>

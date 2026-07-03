@@ -4,6 +4,7 @@ import type { RiskTrigger } from "../lib/riskTriggers";
 import type { ProfileScopeCaveat } from "../lib/profile";
 import { ruleCatalog } from "../rules";
 import { DocumentSourceHint } from "./DocumentSourceHint";
+import { ChecklistParagraph } from "./ChecklistParagraph";
 import { RuleSourceLink } from "./RuleSourceLink";
 
 const MOBILE_TABLET_BREAKPOINT = 860;
@@ -67,7 +68,7 @@ export function ChecklistPanel({
             {profileScopeCaveats.map((caveat) => (
               <article className="checklist-item checklist-item-flag" key={caveat.id}>
                 <strong>{caveat.label}</strong>
-                <p>{caveat.note}</p>
+                <ChecklistParagraph text={caveat.note} />
               </article>
             ))}
           </div>
@@ -82,7 +83,7 @@ export function ChecklistPanel({
                 className={trigger.severity === "form-changing" ? "checklist-item checklist-item-flag" : "checklist-item"}
               >
                 <strong>{trigger.label}</strong>
-                <p>{trigger.consequence}</p>
+                <ChecklistParagraph text={trigger.consequence} />
                 <RuleSourceLink refs={ruleCatalog.filingMistakesAndPenalties.source_refs} />
               </article>
             ))}
@@ -97,7 +98,7 @@ export function ChecklistPanel({
             gaps.map((gap) => (
               <article className="checklist-item" key={gap.document}>
                 <strong>{gap.document}</strong>
-                <p>{gap.whyNeeded}</p>
+                <ChecklistParagraph text={gap.whyNeeded} />
                 <DocumentSourceHint document={gap.document} />
               </article>
             ))

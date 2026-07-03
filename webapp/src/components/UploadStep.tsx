@@ -5,6 +5,7 @@ import {
   parseFile,
   parsePastedExtraction,
   reparseWithColumnMap,
+  type ExtractionSummaryFigures,
   type IngestResult,
   type IngestWarning,
   type NormalizedTransaction
@@ -61,6 +62,15 @@ export function UploadStep({
 }) {
   const [pending, setPending] = useState<PendingReview | null>(null);
   const [awaitingPaste, setAwaitingPaste] = useState<{ fileName: string; reason?: string } | null>(null);
+  // A paste that yielded only annual totals / a net-gain-only marker (no usable
+  // transaction rows) lands here instead of dead-ending as a generic error.
+  const [summaryGuidance, setSummaryGuidance] = useState<{
+    fileName: string;
+    figures?: ExtractionSummaryFigures;
+    netGainOnly: boolean;
+    documentType?: string;
+    notes?: string;
+  } | null>(null);
   const [pasteText, setPasteText] = useState("");
   const [extractionPrompt, setExtractionPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -166,19 +176,40 @@ export function UploadStep({
     }
     setError(null);
     const result = parsePastedExtraction(pasteText);
-    if (result.transactions.length === 0) {
-      setError(result.warnings[0]?.message ?? "Could not read that table.");
+    if (result.transactions.length > 0) {
+      setPending({
+        fileName: awaitingPaste.fileName,
+        ingest: result,
+        transactions: result.transactions,
+        warnings: result.warnings,
+        columnAssignments: {}
+      });
+      setAwaitingPaste(null);
+      setPasteText("");
       return;
     }
-    setPending({
-      fileName: awaitingPaste.fileName,
-      ingest: result,
-      transactions: result.transactions,
-      warnings: result.warnings,
-      columnAssignments: {}
-    });
-    setAwaitingPaste(null);
-    setPasteText("");
+    // No per-transaction rows, but the JSON was readable (a summary/annual-total
+    // like a PMS annual report or AIS, or a holdings-only statement): guide the
+    // user instead of dead-ending. Anything with figures, a net-gain marker, or
+    // at least the AI's own documentType/notes counts as readable.
+    if (result.summaryFigures || result.netGainOnly || result.documentType || result.notes) {
+      setSummaryGuidance({
+        fileName: awaitingPaste.fileName,
+        figures: result.summaryFigures,
+        netGainOnly: Boolean(result.netGainOnly),
+        documentType: result.documentType,
+        notes: result.notes
+      });
+      setAwaitingPaste(null);
+      setPasteText("");
+      return;
+    }
+    setError(result.warnings[0]?.message ?? "Could not read that. Paste the whole JSON block the AI gave you.");
+  }
+
+  function dismissSummaryGuidance() {
+    setSummaryGuidance(null);
+    advanceQueue();
   }
 
   function applyColumnMap() {
@@ -281,7 +312,21 @@ export function UploadStep({
             handleFiles(event.dataTransfer.files);
           }}
         >
+          <span className="info-tip upload-info-tip">
+            <button type="button" className="info-tip-trigger" aria-label="About adding documents">
+              i
+            </button>
+            <span className="info-tip-bubble" role="tooltip">
+              Drop files here, or click to choose — you can pick several at once. Broker/AMC capital gains statements
+              are the main thing this step is for; bank interest, dividend, and MF statements can be added too.
+            </span>
+          </span>
           <label className="primary-button upload-button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
             Choose files
             <input
               type="file"
@@ -291,7 +336,6 @@ export function UploadStep({
               hidden
             />
           </label>
-          <p className="upload-hint">Drop files here, or click to choose — you can pick several at once. Broker/AMC capital gains statements are the main thing this step is for; bank interest, dividend, and MF statements can be added too.</p>
         </div>
       )}
 
@@ -302,13 +346,10 @@ export function UploadStep({
               Saving a copy of each document to <strong>{localFolderName}</strong> on your computer as you go.
             </p>
           ) : (
-            <p className="folder-panel-copy">Want a copy of each document saved to a folder on your computer as you add it?</p>
-          )}
-          {!localFolderName ? (
             <button type="button" className="text-button" onClick={onChooseLocalFolder}>
-              Save to a folder instead
+              Save to a local folder
             </button>
-          ) : null}
+          )}
         </div>
       ) : null}
 
@@ -318,12 +359,12 @@ export function UploadStep({
         <div className="paste-panel">
           <p>
             <strong>{awaitingPaste.fileName}</strong> needs the AI extraction step.
-            {awaitingPaste.reason ? ` ${awaitingPaste.reason}` : " This app couldn't find a transaction table on its own."}
+            {awaitingPaste.reason ? ` ${awaitingPaste.reason}` : " This app couldn't read it on its own."}
           </p>
           <ol className="paste-steps">
             <li>Copy the prompt below.</li>
             <li>Paste it into your AI chat of choice, along with the document.</li>
-            <li>Paste the table it gives you back here.</li>
+            <li>Paste the JSON it gives you back here.</li>
           </ol>
           <details className="extraction-prompt">
             <summary>Show the extraction prompt</summary>
@@ -333,12 +374,12 @@ export function UploadStep({
             className="paste-textarea"
             value={pasteText}
             onChange={(event) => setPasteText(event.target.value)}
-            placeholder="Paste the extracted table here (markdown or tab-separated)."
+            placeholder="Paste the JSON here (a table still works if that's what you got back)."
             rows={6}
           />
           <div className="paste-actions">
             <button type="button" className="primary-button" onClick={handlePasteSubmit} disabled={!pasteText.trim()}>
-              Read this table
+              Read this
             </button>
             <button
               type="button"
@@ -349,6 +390,60 @@ export function UploadStep({
               }}
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {summaryGuidance ? (
+        <div className="paste-panel">
+          <p>
+            <strong>{summaryGuidance.fileName}</strong>
+            {summaryGuidance.documentType ? ` looks like a ${summaryGuidance.documentType}` : " looks like a summary statement"}
+            . It has no per-transaction buy/sell rows, so there's nothing to tax-calculate from it directly.
+          </p>
+          {(() => {
+            const figures = summaryGuidance.figures;
+            const annualRows: [string, number][] = figures
+              ? (
+                  [
+                    ["Dividend income", figures.dividendIncome],
+                    ["Interest income", figures.interestIncome],
+                    ["TDS already deducted", figures.tdsDeducted],
+                    ["Deductible charges (brokerage/PMS/STT/custodian)", figures.deductibleCharges]
+                  ] as [string, number | undefined][]
+                ).filter((row): row is [string, number] => typeof row[1] === "number")
+              : [];
+            return annualRows.length > 0 ? (
+              <div>
+                <p>
+                  We recognised these annual figures. They aren't added automatically — type them into the results
+                  screen under <strong>"A few more numbers"</strong> when you get there:
+                </p>
+                <ul className="paste-steps">
+                  {annualRows.map(([label, value]) => (
+                    <li key={label}>
+                      {label}: <strong>₹{value.toLocaleString("en-IN")}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null;
+          })()}
+          {summaryGuidance.netGainOnly ? (
+            <p className="inline-error">
+              This statement only gives a <strong>net realised capital gain</strong>, with no per-transaction buy/sell
+              dates. This tool can't split short-term vs long-term from a net figure, so it is <strong>not being used
+              in any calculation</strong>. Get the detailed per-transaction capital-gains statement from your
+              broker/AMC/PMS (or enter the short-term/long-term split yourself), then add that here.
+            </p>
+          ) : null}
+          {summaryGuidance.notes ? (
+            <p className="paste-steps">What the AI noted: {summaryGuidance.notes}</p>
+          ) : null}
+          <div className="paste-actions">
+            <button type="button" className="primary-button" onClick={dismissSummaryGuidance}>
+              Got it — continue
             </button>
           </div>
         </div>

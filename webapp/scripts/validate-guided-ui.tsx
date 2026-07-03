@@ -873,7 +873,9 @@ const BLANK_FLAGS: ProfileFlags = {
   multipleEmployers: false,
   hraRisk: false,
   epfRisk: false,
-  hasLoans: false
+  hasLoans: false,
+  hasInsurancePayout: false,
+  hasForeignAssets: false
 };
 
 function checkItrFormSelection() {
@@ -977,6 +979,29 @@ const SAMPLE_THIS_YEAR: ThisYearSnapshot = {
     { key: "deduction80D", section: "80D", label: "Section 80D health cover", used: 12000, limit: 25000 },
     { key: "deductionNps80ccd1b", section: "80CCD(1B)", label: "NPS extra deduction", used: 50000, limit: 50000 }
   ],
+  insurance: {
+    applies: false,
+    annualPremium: 0,
+    ulipCap: 250000,
+    traditionalCap: 500000,
+    tdsRate: 0.02,
+    tdsThresholdInr: 100000,
+    overUlipCap: false,
+    overTraditionalCap: false,
+    sourceRefs: ruleCatalog.insurance.source_refs
+  },
+  foreignInvestments: {
+    applies: false,
+    remittance: 0,
+    threshold: 1000000,
+    rate: 0.2,
+    estimatedTcs: 0,
+    overThreshold: false,
+    scheduleFaMinValueInr: 0,
+    requiresItrForms: ["ITR-2", "ITR-3"],
+    blackMoneyPenaltyInr: 1000000,
+    sourceRefs: ruleCatalog.foreignInvestments.source_refs
+  },
   variance: { checkCount: 3, mismatchCount: 1, totalAbsVariance: 4200 }
 };
 
@@ -991,6 +1016,7 @@ function checkDashboardDestination() {
       onRemovePastFiling={noop}
       onGoToFiling={noop}
       onChangeDeduction={noop}
+      onChangeFigure={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
     />
@@ -1044,6 +1070,7 @@ function checkDashboardDestination() {
       onRemovePastFiling={noop}
       onGoToFiling={noop}
       onChangeDeduction={noop}
+      onChangeFigure={noop}
       showAdvanced
       onToggleAdvanced={noop}
     />
@@ -1060,6 +1087,7 @@ function checkDashboardDestination() {
       onRemovePastFiling={noop}
       onGoToFiling={noop}
       onChangeDeduction={noop}
+      onChangeFigure={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
     />

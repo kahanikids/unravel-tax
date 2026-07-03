@@ -328,5 +328,33 @@ export const DOCUMENT_SOURCE_GUIDE: Record<string, DocumentSourceGuide> = {
       { name: "Salaried", steps: "Ask your employer's HR/payroll system (many companies have a self-service portal that generates it directly). It's normally issued by mid-June for the prior financial year." },
       { name: "Pensioners", steps: "Your pension-disbursing bank or authority issues an annual pension/TDS statement in a similar role. Ask their customer service if it isn't automatically emailed." }
     ]
+  },
+  "Tax Residency Certificate (TRC) and Form 10F": {
+    summary: "These are two separate documents from two different places — you need both.",
+    sources: [
+      { name: "TRC", steps: "Get this from the tax authority of the country you live in, proving you're a tax resident there. UAE residents apply through the UAE Federal Tax Authority (tax.gov.ae); other countries have their own equivalent. It's a certificate you request, not something India issues." },
+      { name: "Form 10F", steps: "File this yourself online on the Indian income tax portal: incometax.gov.in -> log in -> e-File -> Income Tax Forms -> File Income Tax Forms -> search \"10F\". It's a short online form where you enter your TRC details, and you download the filed copy afterwards." }
+    ]
+  },
+  "NRE and NRO account statements, separately": {
+    summary: "From the bank(s) where you hold these accounts. Keep the NRE and the NRO statements as separate downloads — don't merge them, because they're taxed differently.",
+    sources: [
+      { name: "Net banking", steps: "Log in to each bank -> Account Statements -> generate a statement for the full financial year, once for the NRE account and once for the NRO account. Download each as its own file." },
+      { name: "Branch request", steps: "If you can't access net banking from abroad, email or call your branch and ask them to send the NRE and NRO statements for the year separately." }
+    ]
+  },
+  "Rental income details and tenant TDS certificate (Form 16A)": {
+    summary: "The rent figures come from your own records; the TDS certificate comes from your tenant.",
+    sources: [
+      { name: "Rental details", steps: "From your own lease/rent agreement and bank credits — total rent received for the year, plus any municipal tax you paid on the property." },
+      { name: "Form 16A", steps: "Ask your tenant for it. If they deducted TDS on the rent, they're required to issue you a Form 16A (they download it from the TRACES portal). You can also cross-check the amount in your own AIS/Form 26AS on incometax.gov.in." }
+    ]
+  },
+  "Loan interest certificate(s)": {
+    summary: "From whoever gave you the loan — one certificate per loan, for the financial year.",
+    sources: [
+      { name: "From your lender", steps: "Most banks and housing finance companies let you download an annual \"Interest Certificate\" (sometimes \"Provisional/Final Interest Certificate\") from their net banking or app, usually under Loans, Statements, or a Tax section. Many also email it once a year." },
+      { name: "Education / EV loans", steps: "Same idea — ask the bank or lender that issued the education or electric-vehicle loan for the yearly interest certificate if it isn't already on their portal." }
+    ]
   }
 };

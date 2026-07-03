@@ -54,6 +54,26 @@ export function evaluateRiskTriggers(
     });
   }
 
+  if (flags.hasForeignAssets) {
+    triggers.push({
+      id: "foreign_assets_schedule_fa",
+      label: "Foreign assets must be disclosed in Schedule FA",
+      consequence:
+        "As a resident, every foreign holding (shares, RSUs, ESPP, accounts) goes in Schedule FA of ITR-2/ITR-3 — never ITR-1 — for the calendar year, with no minimum value. Missing one carries a flat ₹10 lakh penalty under the Black Money Act.",
+      severity: "form-changing"
+    });
+  }
+
+  if (flags.hasInsurancePayout) {
+    triggers.push({
+      id: "insurance_payout_10_10d",
+      label: "Life-insurance payout may not be fully tax-free",
+      consequence:
+        "A maturity payout loses its Section 10(10D) exemption if annual premium crossed ₹2.5 lakh (ULIP) or ₹5 lakh (traditional), or exceeded 10% of the sum assured. Then the gain is taxable. Check the premium history before treating it as exempt.",
+      severity: "routine"
+    });
+  }
+
   if (hasBusinessIncome) {
     triggers.push({
       id: "business_income_itr_form",

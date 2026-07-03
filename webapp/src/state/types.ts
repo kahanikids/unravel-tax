@@ -40,6 +40,10 @@ export type OrientationAnswers = {
   epfWithdrawal: boolean | null;
   epfBeforeFiveYears: boolean | null;
   loansRepaid: boolean | null;
+  /** Received a life-insurance maturity/survival payout this year. Flags the Section 10(10D) taxability question. */
+  insurancePayout: boolean | null;
+  /** Resident only. Holds any asset outside India (foreign shares, RSUs, ESPP, foreign accounts/property). Forces Schedule FA / ITR-2. */
+  foreignAssets: boolean | null;
 };
 
 export const BLANK_ORIENTATION: OrientationAnswers = {
@@ -56,7 +60,9 @@ export const BLANK_ORIENTATION: OrientationAnswers = {
   hasLandlordPan: null,
   epfWithdrawal: null,
   epfBeforeFiveYears: null,
-  loansRepaid: null
+  loansRepaid: null,
+  insurancePayout: null,
+  foreignAssets: null
 };
 
 export type ProfileFlags = {
@@ -73,6 +79,8 @@ export type ProfileFlags = {
   hraRisk: boolean;
   epfRisk: boolean;
   hasLoans: boolean;
+  hasInsurancePayout: boolean;
+  hasForeignAssets: boolean;
 };
 
 export type AppStep = "welcome" | "orientation" | "documents" | "results";
@@ -120,6 +128,10 @@ export type SupplementalFigures = {
   educationLoanInterest80e: number;
   /** Old-regime only. Electric-vehicle-loan interest (Section 80EEB, capped). */
   evLoanInterest80eeb: number;
+  /** Aggregate annual life-insurance premium across policies, checked against the Section 10(10D) exemption caps (ULIP ₹2.5L / traditional ₹5L, read from rules/insurance.json). Planning figure only - not folded into taxable income, since the exact payout taxability needs the policy's issue date and sum-assured history. */
+  insuranceAnnualPremium: number;
+  /** Resident only. Total money sent abroad this year under the LRS, checked against the Section 206C(1G) TCS threshold (read from rules/foreign-investments.json). Planning figure only; the TCS is a prepaid credit, not a cost. */
+  foreignRemittanceLrs: number;
 };
 
 export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
@@ -141,7 +153,9 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   homeLoanInterestSelfOccupied: 0,
   homeLoanInterest80eea: 0,
   educationLoanInterest80e: 0,
-  evLoanInterest80eeb: 0
+  evLoanInterest80eeb: 0,
+  insuranceAnnualPremium: 0,
+  foreignRemittanceLrs: 0
 };
 
 /**

@@ -13,6 +13,9 @@ import {
   type PastFilingFields
 } from "../lib/pastFilings";
 import { extractPdfText } from "../ingest/pdfExtract";
+import type { InsurancePayoutCheck } from "../lib/insurance";
+import type { ForeignRemittanceTcs } from "../lib/foreignInvestments";
+import { RuleSourceLink } from "./RuleSourceLink";
 import {
   DeductionBar,
   Donut,
@@ -94,6 +97,25 @@ export type DeductionProgress = {
   limit: number;
 };
 
+/** Section 10(10D) insurance-payout premium-cap check (see lib/insurance.ts).
+ * `applies` is the orientation flag (received a payout this year); the widget
+ * also shows once a premium is entered, even without the flag. */
+export type InsuranceSnapshot = InsurancePayoutCheck & {
+  applies: boolean;
+  sourceRefs: readonly string[];
+};
+
+/** Foreign-asset disclosure reminder + LRS-TCS threshold check (see
+ * lib/foreignInvestments.ts). Every rupee figure here is read from
+ * rules/foreign-investments.json, never hardcoded. */
+export type ForeignInvestmentsSnapshot = ForeignRemittanceTcs & {
+  applies: boolean;
+  scheduleFaMinValueInr: number;
+  requiresItrForms: string[];
+  blackMoneyPenaltyInr: number;
+  sourceRefs: readonly string[];
+};
+
 /** AIS/TDS variance summary, from what the user has entered vs AIS figures. */
 export type VarianceSnapshot = {
   /** How many figures were actually compared (AIS + TDS + broker rows). */
@@ -117,6 +139,8 @@ export type ThisYearSnapshot = {
   estimatedCapitalGainsTax: number;
   regime: RegimeSnapshot;
   deductions: DeductionProgress[];
+  insurance: InsuranceSnapshot;
+  foreignInvestments: ForeignInvestmentsSnapshot;
   variance: VarianceSnapshot;
 };
 
@@ -127,6 +151,7 @@ export function Dashboard({
   onRemovePastFiling,
   onGoToFiling,
   onChangeDeduction,
+  onChangeFigure,
   showAdvanced,
   onToggleAdvanced
 }: {
@@ -136,6 +161,7 @@ export function Dashboard({
   onRemovePastFiling: (id: string) => void;
   onGoToFiling: () => void;
   onChangeDeduction: (key: DeductionProgress["key"], value: number) => void;
+  onChangeFigure: (key: "insuranceAnnualPremium" | "foreignRemittanceLrs", value: number) => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
 }) {
@@ -179,6 +205,26 @@ export function Dashboard({
 
   const variance = thisYear.variance;
   const matched = Math.max(0, variance.checkCount - variance.mismatchCount);
+
+  // Insurance and foreign-investment widgets only clutter the dashboard for
+  // someone they apply to: the orientation flag, or once a figure is entered.
+  const insurance = thisYear.insurance;
+  const foreign = thisYear.foreignInvestments;
+  const showInsurance = insurance.applies || insurance.annualPremium > 0;
+  const showForeign = foreign.applies || foreign.remittance > 0;
+  const insuranceStatus = insurance.overTraditionalCap
+    ? `Over both the ${formatCompactInr(insurance.ulipCap)} ULIP and ${formatCompactInr(
+        insurance.traditionalCap
+      )} traditional lines. A ULIP maturity is taxed as capital gains, a traditional one as income from other sources.`
+    : insurance.overUlipCap
+      ? `Over the ${formatCompactInr(insurance.ulipCap)} ULIP line. If any policy is a ULIP issued on/after 1-Feb-2021, its maturity is taxable as capital gains; traditional policies are still under the ${formatCompactInr(
+          insurance.traditionalCap
+        )} line.`
+      : insurance.annualPremium > 0
+        ? `Under both the ${formatCompactInr(insurance.ulipCap)} ULIP and ${formatCompactInr(
+            insurance.traditionalCap
+          )} traditional lines, so the maturity stays tax-free under 10(10D).`
+        : "Enter your total annual premium to check whether a maturity payout would still be tax-free.";
 
   return (
     <div className="step-card dashboard">
@@ -338,6 +384,74 @@ export function Dashboard({
                   <p className="widget-empty">Enter your AIS/26AS figures in Results to check for mismatches.</p>
                 )}
               </article>
+
+              {/* 5. Insurance payout: Section 10(10D) premium-cap check */}
+              {showInsurance ? (
+                <article className="dashboard-widget" aria-labelledby="widget-insurance">
+                  <h4 id="widget-insurance">Insurance payout still tax-free? (10(10D))</h4>
+                  <label className="deduction-bar-input">
+                    <span className="visually-hidden">Aggregate annual life-insurance premium</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={insurance.annualPremium}
+                      placeholder="₹0"
+                      onChange={(event) => onChangeFigure("insuranceAnnualPremium", Number(event.target.value) || 0)}
+                    />
+                  </label>
+                  <Meter
+                    used={insurance.annualPremium}
+                    limit={insurance.ulipCap}
+                    caption={`Aggregate annual premium vs the ${formatCompactInr(insurance.ulipCap)} ULIP exemption line.`}
+                    overLabel={`Past the ${formatCompactInr(insurance.ulipCap)} ULIP line — a ULIP maturity loses its 10(10D) exemption.`}
+                  />
+                  <p className="widget-note">{insuranceStatus}</p>
+                  <p className="widget-note">
+                    The exact taxable figure still needs the policy&apos;s issue date and premium-to-sum-assured history,
+                    which this tool doesn&apos;t hold. Death benefits stay fully exempt.{" "}
+                    <RuleSourceLink refs={insurance.sourceRefs} />
+                  </p>
+                </article>
+              ) : null}
+
+              {/* 6. Foreign assets: Schedule FA reminder + LRS TCS threshold */}
+              {showForeign ? (
+                <article className="dashboard-widget" aria-labelledby="widget-foreign">
+                  <h4 id="widget-foreign">Foreign assets &amp; LRS remittances</h4>
+                  <p className="widget-note">
+                    Every foreign asset held at any point in the calendar year goes in Schedule FA —{" "}
+                    {foreign.scheduleFaMinValueInr === 0 ? "no minimum value" : `above ${formatCompactInr(foreign.scheduleFaMinValueInr)}`}, and it
+                    needs {foreign.requiresItrForms.join(" or ")} (never ITR-1). Missing one risks a{" "}
+                    {formatCompactInr(foreign.blackMoneyPenaltyInr)} Black Money Act penalty.
+                  </p>
+                  <label className="deduction-bar-input">
+                    <span className="visually-hidden">LRS money sent abroad this year</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={foreign.remittance}
+                      placeholder="₹0"
+                      onChange={(event) => onChangeFigure("foreignRemittanceLrs", Number(event.target.value) || 0)}
+                    />
+                  </label>
+                  <Meter
+                    used={foreign.remittance}
+                    limit={foreign.threshold}
+                    caption={`LRS money sent abroad vs the ${formatCompactInr(foreign.threshold)} yearly TCS-free limit.`}
+                    overLabel={`Over ${formatCompactInr(foreign.threshold)} — about ${formatCompactInr(
+                      foreign.estimatedTcs
+                    )} TCS is collected at ${formatPercent(foreign.rate)} on the excess.`}
+                  />
+                  <p className="widget-note">
+                    {foreign.overThreshold
+                      ? `That ${formatCompactInr(
+                          foreign.estimatedTcs
+                        )} TCS is a prepaid credit shown in your AIS/26AS, recoverable in the return — not an added cost.`
+                      : "TCS applies only above the threshold, and even then it's a prepaid credit, not a cost."}{" "}
+                    Foreign tax paid abroad is credited via Form 67. <RuleSourceLink refs={foreign.sourceRefs} />
+                  </p>
+                </article>
+              ) : null}
             </div>
 
             <button type="button" className="text-button" onClick={onGoToFiling}>

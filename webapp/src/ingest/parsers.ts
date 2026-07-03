@@ -2,6 +2,7 @@ import Papa from "papaparse";
 import readXlsxFile from "read-excel-file/universal";
 import {
   EXPECTED_TRANSACTION_COLUMNS,
+  type ExtractionSummaryFigures,
   type IngestionKind,
   type IngestResult,
   type IngestWarning,
@@ -327,13 +328,133 @@ export function parsePastedExtraction(text: string): IngestResult {
   const trimmed = text.trim();
   if (!trimmed) {
     return emptyResult("structured_text", undefined, [
-      { code: "parse_error", message: "Paste the table you got back from the extraction prompt." }
+      { code: "parse_error", message: "Paste the JSON block you got back from the extraction prompt." }
     ]);
+  }
+  // The extraction prompt now asks the AI for one standardised JSON object, so
+  // that's the primary contract. A markdown/TSV table is still accepted as a
+  // graceful fallback (older prompts, or a user who pastes a table by hand).
+  if (trimmed.startsWith("{")) {
+    return parseExtractionJson(trimmed);
   }
   if (trimmed.includes("|")) {
     return parseMarkdownTable(trimmed);
   }
   return parseStructuredText(trimmed);
+}
+
+/**
+ * Parses the standardised extraction JSON. Defensive by design: unknown fields
+ * are ignored, missing/null fields are treated as absent, and numbers written
+ * as strings with ₹/commas are tolerated (the normalizer already cleans those).
+ * capitalGainsTransactions map straight onto the canonical row-shape and run
+ * through the same normalizeRowsSoft/deriveComputedFields path as every other
+ * format, so classification is identical. Annual figures and any net-realised
+ * gain are surfaced for guidance only - never fed into the tax engine here.
+ */
+export function parseExtractionJson(text: string): IngestResult {
+  const pasteHint =
+    "That doesn't look like complete JSON. Paste the whole JSON block the AI gave you, starting with { and ending with }.";
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return emptyResult("structured_text", undefined, [{ code: "parse_error", message: pasteHint }]);
+  }
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return emptyResult("structured_text", undefined, [{ code: "parse_error", message: pasteHint }]);
+  }
+
+  const obj = data as Record<string, unknown>;
+  const rawTransactions = Array.isArray(obj.capitalGainsTransactions) ? obj.capitalGainsTransactions : [];
+  const rowInputs = rawTransactions
+    .map((item) => ({ row: jsonTransactionToRow(item) }))
+    // A row with no scrip name isn't a usable transaction - mirrors buildIngestResult.
+    .filter(({ row }) => String(row["Scrip Name"] ?? "").trim() !== "");
+  const { transactions, warnings } = normalizeRowsSoft(rowInputs);
+
+  const summaryFigures = parseAnnualFigures(obj.annualFigures, obj.netRealisedCapitalGainNoDetail);
+
+  return {
+    kind: "structured_text",
+    transactions,
+    summary: summarizeTransactions(transactions),
+    warnings,
+    headerMap: {},
+    headerDetails: [],
+    sourceHeaders: [],
+    sourceRecords: [],
+    summaryFigures,
+    // A net realised gain with no per-transaction rows can't be split ST/LT, so
+    // it's a gap to flag, not a figure to use - only when no real rows came in.
+    netGainOnly: summaryFigures?.netRealisedGainNoDetail !== undefined && transactions.length === 0,
+    documentType: optionalString(obj.documentType),
+    confidence: optionalString(obj.confidence),
+    notes: optionalString(obj.notes)
+  };
+}
+
+/** Maps one JSON transaction object onto the canonical RawTransactionRow keys. Values pass through as-is; the normalizer cleans dates/numbers. */
+function jsonTransactionToRow(item: unknown): RawTransactionRow {
+  const t = (typeof item === "object" && item !== null ? item : {}) as Record<string, unknown>;
+  const cell = (value: unknown): string | number => {
+    if (typeof value === "number" || typeof value === "string") {
+      return value;
+    }
+    return "";
+  };
+  return {
+    "Scrip Name": cell(t.scripName),
+    "Purchase Date": cell(t.purchaseDate),
+    "Sell Date": cell(t.sellDate),
+    Units: cell(t.units),
+    "Buy Value": cell(t.buyValue),
+    "Sell Value": cell(t.sellValue),
+    "Buy Price": cell(t.buyPrice),
+    "Sell Price": cell(t.sellPrice),
+    "Instrument Type": cell(t.instrumentType)
+  };
+}
+
+function parseAnnualFigures(annual: unknown, netRealisedGain: unknown): ExtractionSummaryFigures | undefined {
+  const figures: ExtractionSummaryFigures = {};
+  const source = (typeof annual === "object" && annual !== null ? annual : {}) as Record<string, unknown>;
+  const assign = (key: keyof ExtractionSummaryFigures, value: unknown) => {
+    const amount = coerceAmount(value);
+    if (amount !== undefined) {
+      figures[key] = amount;
+    }
+  };
+  assign("dividendIncome", source.dividendIncome);
+  assign("interestIncome", source.interestIncome);
+  assign("tdsDeducted", source.tdsDeducted);
+  assign("deductibleCharges", source.deductibleCharges);
+  assign("netRealisedGainNoDetail", netRealisedGain);
+  return Object.keys(figures).length > 0 ? figures : undefined;
+}
+
+/** Tolerant number coercion: plain numbers, or strings with ₹/commas; null/undefined/"not stated" -> absent. */
+function coerceAmount(value: unknown): number | undefined {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const cleaned = value.replace(/[₹,\s]/g, "").replace(/[^0-9.\-]/g, "");
+  if (!cleaned || cleaned === "-" || cleaned === ".") {
+    return undefined;
+  }
+  const amount = Number(cleaned);
+  return Number.isFinite(amount) ? amount : undefined;
+}
+
+function optionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 function parseMarkdownTable(text: string): IngestResult {
