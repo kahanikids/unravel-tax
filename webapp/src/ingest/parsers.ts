@@ -533,7 +533,16 @@ export async function parseFile(file: File): Promise<IngestResult> {
         { extractedText: text, diagnosticSummary: diagnostic.summary }
       );
       return { ...result, kind: "pdf_or_freeform", promptRoute };
-    } catch {
+    } catch (error) {
+      const { PdfPasswordError } = await import("./pdfExtract");
+      if (error instanceof PdfPasswordError) {
+        return emptyResult(
+          "pdf_or_freeform",
+          routePdfOrFreeform(
+            "This PDF is password-protected. Open it, save/print an unprotected copy (most PDF readers and phone apps can do this), and upload that instead."
+          )
+        );
+      }
       return emptyResult("pdf_or_freeform", routePdfOrFreeform("Could not read text from this PDF."));
     }
   }

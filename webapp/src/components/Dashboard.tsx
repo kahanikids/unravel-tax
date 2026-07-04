@@ -690,8 +690,15 @@ function AddPastFilingForm({
       setAutoRead(new Set(parsed.readFields));
       setAutoSource(parsed.ok ? (isPdf ? "itr-v" : "itr-json") : null);
       setNotice(parsed.message);
-    } catch {
+    } catch (error) {
       setAutoSource(null);
+      const { PdfPasswordError } = await import("../ingest/pdfExtract");
+      if (isPdf && error instanceof PdfPasswordError) {
+        setError(
+          "This PDF is password-protected. Open it, save/print an unprotected copy, and upload that instead - or enter the figures by hand below."
+        );
+        return;
+      }
       setError(
         isPdf
           ? "Couldn't read this ITR-V automatically. Enter the figures by hand below."

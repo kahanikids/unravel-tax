@@ -45,6 +45,14 @@ export type PdfTextExtraction = {
   pageCount: number;
 };
 
+/** Thrown instead of pdf.js's own PasswordException, so callers can show "remove the password" instead of a generic read failure without depending on pdf.js's error shape. */
+export class PdfPasswordError extends Error {
+  constructor() {
+    super("This PDF is password-protected.");
+    this.name = "PdfPasswordError";
+  }
+}
+
 export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtraction> {
   const pdfjs = await import("pdfjs-dist");
   if (typeof window !== "undefined") {
@@ -52,7 +60,18 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtrac
     pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
   }
 
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+  let pdf;
+  try {
+    pdf = await pdfjs.getDocument({ data: buffer }).promise;
+  } catch (error) {
+    // pdf.js doesn't export its PasswordException class from the public API
+    // (only PasswordResponses), so the documented way to recognise it is by
+    // name: https://github.com/mozilla/pdf.js/blob/master/src/shared/util.js
+    if (error instanceof Error && error.name === "PasswordException") {
+      throw new PdfPasswordError();
+    }
+    throw error;
+  }
   const pages: string[] = [];
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
     const page = await pdf.getPage(pageNum);
