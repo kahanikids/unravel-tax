@@ -13,10 +13,15 @@
   <a href="https://kahanikids.github.io/unravel-tax/"><img src="https://img.shields.io/badge/Try%20it-live%20demo-orange.svg" alt="Live demo"></a>
 </p>
 
-Unravel Tax turns PDFs, Excel files, CSVs, and saved webpages into two clean
-files: a concise summary for your CA, and a full workbook to keep. No signup,
-no install, no server — it runs entirely in your browser, and nothing you
-enter ever leaves your device.
+Unravel Tax is a free, browser based tool built to solve the most common pain
+point in Indian income tax filing: a drawer or inbox full of PDFs, Excel
+sheets, CSVs, and saved webpages that never get organized until the deadline
+is close. It reads all of these formats, flags what is missing before it
+shows you any numbers, and turns everything into two clean outputs, a concise
+summary you can hand your CA and a full workbook to keep for your records.
+There is no signup, no installation, and no backend server. The entire tool
+runs as lightweight code inside your browser, so none of your financial data
+is ever uploaded or stored anywhere outside your own device.
 
 **Not tax advice. Not affiliated with the Income Tax Department, CBDT, or
 Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
