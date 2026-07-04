@@ -42,6 +42,7 @@ Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
 - [Contributing](#contributing)
 - [Maintainer](#maintainer)
 - [Status](#status)
+- [Feature coverage](#feature-coverage)
 - [Other docs](#other-docs)
 
 ---
@@ -115,10 +116,13 @@ new features.
 
 ## Status
 
-Milestones 1–4 are built. The webapp validator suite runs through
-`npm run validate:all`, and the same validators can run under Vitest with
-`npm run test` or `npm run test:coverage`. "Built" means the code passes
-checks, not that every profile is fully calculated yet. Highlights:
+The core browser workflow is live, but some advanced tax areas are partial.
+For the full built / partial / pending breakdown, see
+[FEATURE_COVERAGE.md](FEATURE_COVERAGE.md).
+
+The webapp validator suite runs through `npm run validate:all`, and the same
+validators can run under Vitest with `npm run test` or
+`npm run test:coverage`. Highlights:
 
 - Hosted free on GitHub Pages; redeploys on push to `main` when `webapp/` changes
 - Resident + senior-citizen calculations from `rules/*.json`
@@ -130,10 +134,18 @@ checks, not that every profile is fully calculated yet. Highlights:
 
 ---
 
+## Feature coverage
+
+See [FEATURE_COVERAGE.md](FEATURE_COVERAGE.md) for what is built, what is
+partial or half-baked, and what is still pending.
+
+---
+
 ## Other docs
 
 | Doc | For |
 |-----|-----|
+| [FEATURE_COVERAGE.md](FEATURE_COVERAGE.md) | Built, partial, and pending feature coverage |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to submit rule fixes and code |
 | [CHANGELOG.md](CHANGELOG.md) | Dated rule and project changes |
 | [DISCLAIMER.md](DISCLAIMER.md) | Legal scope and non-affiliation |

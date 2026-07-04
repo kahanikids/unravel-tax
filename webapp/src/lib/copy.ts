@@ -174,7 +174,7 @@ export const TOOL_TOUR_USE_CASES: string[] = [
   "Hands you two files at the end: a short summary for your CA, and a full workbook to keep."
 ];
 
-export type Capability = { label: string; status: "available" | "planned"; detail: string };
+export type Capability = { label: string; status: "available" | "partial" | "planned"; detail: string };
 
 /**
  * Full scope list for the "What can this do?" panel: a pre-commitment
@@ -267,9 +267,9 @@ export const CAPABILITIES: Capability[] = [
     detail: "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
   },
   {
-    label: "Advance tax interest estimator (234B/234C)",
-    status: "planned",
-    detail: "Estimating interest owed for paying tax later than the law expects isn't built yet."
+    label: "Section 234B advance-tax interest estimator",
+    status: "partial",
+    detail: "Enter total tax liability, tax already paid, and an as-of date to estimate Section 234B interest. Section 234C quarterly instalment interest is not built yet."
   },
   {
     label: "Carrying forward last year's filing",
@@ -277,9 +277,14 @@ export const CAPABILITIES: Capability[] = [
     detail: "Importing a previous year's exported workbook to reuse your profile and carry-forward losses isn't built yet."
   },
   {
-    label: "NRI, HUF, and single-parent number calculations",
-    status: "planned",
-    detail: "These profiles get the right checklist and orientation, but NRE/NRO separation, TDS-vs-owed reconciliation, HUF clubbing, and minor's-income clubbing amounts aren't calculated yet. The webapp says so plainly and points you to a CA for that part."
+    label: "NRI, HUF, and single-parent coverage",
+    status: "partial",
+    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest and minor-income clubbing are partly calculated. DTAA relief, NRO TDS precision, repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
+  },
+  {
+    label: "Insurance and foreign-asset planning checks",
+    status: "partial",
+    detail: "The dashboard checks insurance premium caps, foreign-asset disclosure risk, and LRS TCS. It does not compute policy-level taxable payout, Schedule FA rows, foreign income, or Form 67 figures."
   }
 ];
 

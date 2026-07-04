@@ -15,6 +15,7 @@ import { CAPABILITIES } from "../lib/copy";
  */
 export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const available = CAPABILITIES.filter((capability) => capability.status === "available");
+  const partial = CAPABILITIES.filter((capability) => capability.status === "partial");
   const planned = CAPABILITIES.filter((capability) => capability.status === "planned");
 
   useEffect(() => {
@@ -56,6 +57,21 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
                 <summary className="capabilities-item-heading">
                 <strong>{capability.label}</strong>
                 <span className="pill pill-ready">Available</span>
+                </summary>
+                <p>{capability.detail}</p>
+              </details>
+            </li>
+          ))}
+        </ul>
+
+        <h4 className="capabilities-group-title">Partial, use with care</h4>
+        <ul className="capabilities-list">
+          {partial.map((capability) => (
+            <li key={capability.label}>
+              <details className="capabilities-item">
+                <summary className="capabilities-item-heading">
+                <strong>{capability.label}</strong>
+                <span className="pill pill-neutral">Partial</span>
                 </summary>
                 <p>{capability.detail}</p>
               </details>
