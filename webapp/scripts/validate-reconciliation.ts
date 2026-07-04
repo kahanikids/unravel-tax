@@ -28,7 +28,7 @@ type ReconciliationFixture = {
   expected_mismatch_fields: string[];
 };
 
-async function main() {
+export async function main() {
   const fixture = JSON.parse(
     await readFile(resolve(fixturesDir, "reconciliation-m3c.json"), "utf8")
   ) as ReconciliationFixture;
@@ -81,4 +81,6 @@ async function main() {
   );
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

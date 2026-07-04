@@ -35,7 +35,7 @@ function comparableRows(result: IngestResult): string[] {
   );
 }
 
-async function main() {
+export async function main() {
   const csv = parseCsvText(await readFile(resolve(fixturesDir, "sample-broker-statement.csv"), "utf8"));
   const structuredText = parseStructuredText(
     await readFile(resolve(fixturesDir, "sample-broker-statement.tsv"), "utf8")
@@ -272,4 +272,6 @@ async function main() {
   );
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

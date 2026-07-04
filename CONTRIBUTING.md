@@ -55,6 +55,10 @@ npm run validate:all
 `validate:all` runs rule-sync check plus ingest, calculations, reconciliation,
 guided UI, and export validators.
 
+Run `npm run test:coverage` to run that same validator suite under Vitest and
+print a code coverage report for `src/`. Use `npm run test` for a quicker run
+without coverage instrumentation.
+
 When you edit `rules/*.json`, always run `npm run sync-rules` before committing.
 
 Root rule pairs (markdown + JSON structure) are also checked by:

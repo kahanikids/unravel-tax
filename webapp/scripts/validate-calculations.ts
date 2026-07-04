@@ -61,7 +61,7 @@ function normalizeReferenceAmount(value: string) {
   return Number.isNaN(number) ? value : number;
 }
 
-async function main() {
+export async function main() {
   await assertMirroredRuleJsonMatchesSource();
 
   const csv = await readFile(resolve(fixturesDir, "sample-broker-statement.csv"), "utf8");
@@ -366,4 +366,6 @@ async function main() {
   );
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
