@@ -3,9 +3,9 @@ import type { BrokerGainCheck, CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
-import { computeLoanDeductions } from "../lib/loanDeductions";
+import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
 import { ruleCatalog, type AdvanceTaxRule, type LoanTreatmentRule, type RegimeChoiceRule } from "../rules";
-import type { AisReportedFigures, SupplementalFigures } from "../state/types";
+import type { AisReportedFigures, NumericFigureKey, SupplementalFigures } from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
@@ -42,7 +42,7 @@ function sourceRefsForRow(row: CaSummaryRow): readonly string[] | null {
   return null;
 }
 
-const SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
+const SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "dividends", label: "Dividends received this year" },
   { key: "interestOtherIncome", label: "Bank interest & other income" },
   { key: "eligibleInterestDeduction", label: "Interest deduction (savings/FD, Section 80TTA/B)" },
@@ -51,13 +51,17 @@ const SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] =
 ];
 
 /** NRI only: kept out of the general list above so it only shows for that profile. */
-const NRI_SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
+const NRI_SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "nreExemptInterest", label: "NRE interest (exempt, keep out of the field above)" }
 ];
 
 /** Single parent/guardian only: kept out of the general list above so it only shows for that profile. */
-const SINGLE_PARENT_SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
+const SINGLE_PARENT_SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "minorIncomeToClub", label: "Minor's income to club (before the per-child exemption)" },
+  {
+    key: "minorIncomeExemptFromClubbing",
+    label: "Of that, income the law never clubs (minor's own work/skill, or an 80U disability)"
+  },
   { key: "numberOfMinors", label: "Number of minor children with this income" }
 ];
 
@@ -137,6 +141,9 @@ export function ResultsStep({
   // (auto-filled figures or a still-needed note), so it isn't left undiscovered.
   // Local state, seeded from that signal, so the user can still collapse it.
   const [refineOpen, setRefineOpen] = useState(hasPrefilled || netGainMissingDetail);
+  // Rented-out home from the Loans section, per regime - shared by the loans
+  // note and the regime comparison so both always show the same figure.
+  const letOut = computeLetOutHouseProperty(supplementalFigures, loanTreatmentRule);
   return (
     <div className="step-card">
       <div className={caRecommendation.recommendCa ? "recommendation-banner recommendation-ca" : "recommendation-banner"}>
@@ -279,7 +286,7 @@ export function ResultsStep({
 
         {hasLoans ? (
           <details className="refine-section" open>
-            <summary>Loans (home, education, electric vehicle)</summary>
+            <summary>Loans (home, rented-out home, education, electric vehicle)</summary>
             <LoanDeductionsPanel
               supplementalFigures={supplementalFigures}
               onChangeSupplementalFigures={onChangeSupplementalFigures}
@@ -306,6 +313,8 @@ export function ResultsStep({
               intradayGain={intradayGain}
               seniorCitizen={seniorCitizen}
               loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
+              letOutIncomeOldRegime={letOut.oldRegimeIncome}
+              letOutIncomeNewRegime={letOut.newRegimeIncome}
               rule={regimeChoiceRule}
             />
           )}

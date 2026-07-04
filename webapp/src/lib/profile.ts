@@ -274,9 +274,9 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   if (flags.singleParent) {
     caveats.push({
       id: "single_parent_scope",
-      label: "Minor's-income clubbing is only partly calculated here",
+      label: "Minor's-income clubbing: check the exceptions yourself",
       note:
-        "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. It doesn't check whether an exception applies (the minor's own manual work, skill/talent income, or a Section 80U disability), and it doesn't place the figure in Schedule SPI itself. Confirm those with a CA."
+        "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
     });
   }
 
@@ -305,16 +305,21 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
  * Section 64(1A)/10(32): a minor child's income is clubbed into the higher-
  * earning parent's return, minus an exemption of up to per_child_exemption_inr
  * per child (capped at max_children_for_exemption children), or the actual
- * clubbed income if that's less. See rules/single-parent-clubbing.md.
+ * clubbed income if that's less. Income Section 64(1A) never clubs - the
+ * minor's own manual work, own skill/talent, or an 80U disability (see
+ * rule.values.excluded_from_clubbing) - is left out first, before the
+ * exemption. See rules/single-parent-clubbing.md.
  */
 export function clubbedMinorIncome(
   minorIncomeToClub: number,
   numberOfMinors: number,
-  rule: SingleParentClubbingRule
+  rule: SingleParentClubbingRule,
+  exemptFromClubbing = 0
 ): number {
+  const clubbable = Math.max(0, minorIncomeToClub - Math.max(0, exemptFromClubbing));
   const eligibleChildren = Math.min(Math.max(0, numberOfMinors), rule.values.max_children_for_exemption);
   const exemption = eligibleChildren * rule.values.per_child_exemption_inr;
-  return Math.max(0, minorIncomeToClub - exemption);
+  return Math.max(0, clubbable - exemption);
 }
 
 export type ItrFormChoice = {

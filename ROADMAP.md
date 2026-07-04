@@ -10,17 +10,21 @@ Items are ordered roughly by user impact, not commitment date.
 
 ### Advance tax
 
-Built today: a partial Section 234B estimator using total tax liability, tax
-already paid, and an as-of date.
+Built today: the Section 234B estimator, plus an instalment-by-instalment
+Section 234C estimate from what was paid in each window (with the 12%/36%
+safe harbours and the Rs 10,000 floor).
 
-Still pending: Section 234C quarterly instalment interest. That needs income
-timing by quarter, which the current workflow does not capture reliably.
+Still pending: 234C precision from income dated by quarter. The section's
+proviso excludes mid-year dividends/capital gains from earlier instalments,
+so the current estimate is a whole-year ceiling (the tool says so with every
+figure).
 
 ### Profile-specific calculations
 
 Built today: orientation, checklist, ITR routing, CA recommendation, and scope
 caveats for NRI, HUF, senior-citizen, and single-parent profiles. NRE exempt
-interest and minor-income clubbing are partly calculated.
+interest is calculated, and minor-income clubbing is calculated including the
+Section 64(1A) exclusions (minor's own work/skill, 80U disability).
 
 Still pending:
 
@@ -30,7 +34,6 @@ Still pending:
 - HUF coparcener/member data model
 - HUF Section 64(2) transfer clubbing
 - HUF partition tracking
-- Single-parent clubbing exceptions
 - Schedule SPI placement
 
 ### Prior-year carry-forward
@@ -51,26 +54,26 @@ external AI chat copy-paste step.
 ### Advanced disclosure and planning widgets
 
 Built today: disclosure reminders and lightweight estimates for insurance
-payout premium caps, foreign assets, and LRS TCS.
+payout premium caps, foreign assets, and LRS TCS with the purpose's rate
+branch (investment/gift, education/medical, education-loan funded).
 
 Still pending:
 
 - Policy-level taxable insurance payout computation
 - Schedule FA builder and foreign income computation
 - Form 67 foreign-tax-credit inputs
-- Education/medical LRS rate branches
 
 ### Loans and house property
 
 Built today: old-regime interest deductions for self-occupied home loan, 80EEA,
-80E, and 80EEB.
+80E, and 80EEB; the let-out house-property computation (30% standard
+deduction, uncapped interest, per-regime loss treatment, carry-forward note);
+and home-loan principal inside the shared 80C ceiling.
 
 Still pending:
 
-- Let-out house-property interest treatment
-- Home-loan principal under 80C
 - Business-use vehicle interest
-- Broader property-income modelling
+- Multiple let-out properties and pre-construction interest spreading
 
 ### Manual spreadsheet path
 

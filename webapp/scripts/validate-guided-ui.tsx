@@ -871,11 +871,59 @@ function checkAdvanceTaxPanel() {
       onChooseLocalFolder={noop}
     />
   );
-  assertIncludes(html, "Section 234B interest");
+  assertIncludes(html, "Section 234B or 234C interest");
   assertIncludes(html, "Total tax liability for the year");
   assertIncludes(html, "Enter your total tax liability above to see an estimate.");
+  // The 234C instalment inputs only appear once there's a liability to
+  // estimate from - a blank panel stays skip-friendly.
+  if (html.includes("instalment-by-instalment")) {
+    throw new Error("The 234C instalment section should stay hidden until a tax liability is entered.");
+  }
 
-  console.log("Validated advance tax panel: Section 234B estimator renders with its inputs and skip-friendly default.");
+  const withLiabilityHtml = renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, advanceTaxLiability: 100000 }}
+      onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
+      brokerCheck={null}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+  // With a liability entered: the per-instalment inputs, the total, and the
+  // later-income caveat (never shown without it) all render.
+  assertIncludes(withLiabilityHtml, "instalment-by-instalment");
+  // React SSR splits "Paid by {date}" text nodes with comment markers, so
+  // the label and the rule-driven date are asserted separately.
+  assertIncludes(withLiabilityHtml, "Paid by");
+  assertIncludes(withLiabilityHtml, "15 Jun 2025");
+  assertIncludes(withLiabilityHtml, "15 Mar 2026");
+  assertIncludes(withLiabilityHtml, "Estimated Section 234C interest, total");
+  assertIncludes(withLiabilityHtml, "Treat this as the ceiling, not the bill.");
+
+  console.log(
+    "Validated advance tax panel: Section 234B estimator renders with its inputs and skip-friendly default, and the 234C instalment estimate appears with its always-on later-income caveat once a liability is entered."
+  );
 }
 
 function checkNriHufSingleParentPartialCalculations() {
@@ -938,7 +986,29 @@ function checkNriHufSingleParentPartialCalculations() {
     <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} singleParent />
   );
   assertIncludes(singleParentHtml, "income to club");
+  assertIncludes(singleParentHtml, "income the law never clubs");
   assertIncludes(singleParentHtml, "Number of minor children");
+
+  // Loans section (hasLoans profile): the capped interest lines plus the
+  // let-out house-property inputs and the 80C-principal field all render,
+  // with a Rs 1,60,000 loss shown and explained per regime.
+  const loansHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{
+        ...BLANK_SUPPLEMENTAL_FIGURES,
+        letOutRentReceived: 240000,
+        letOutMunicipalTaxes: 40000,
+        homeLoanInterestLetOut: 300000
+      }}
+      hasLoans
+    />
+  );
+  assertIncludes(loansHtml, "Rented-out home (both regimes)");
+  assertIncludes(loansHtml, "Rent received this year");
+  assertIncludes(loansHtml, "Home-loan principal repaid (Section 80C)");
+  assertIncludes(loansHtml, "1,60,000 loss");
+  assertIncludes(loansHtml, "it can&#x27;t offset other income at all");
 
   const clubbed = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing);
   if (clubbed !== 7000) {
@@ -1114,6 +1184,7 @@ const SAMPLE_THIS_YEAR: ThisYearSnapshot = {
   foreignInvestments: {
     applies: false,
     remittance: 0,
+    purpose: "investment_gift_other",
     threshold: 1000000,
     rate: 0.2,
     estimatedTcs: 0,
@@ -1138,6 +1209,7 @@ function checkDashboardDestination() {
       onGoToFiling={noop}
       onChangeDeduction={noop}
       onChangeFigure={noop}
+      onChangeRemittancePurpose={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
     />
@@ -1157,6 +1229,30 @@ function checkDashboardDestination() {
   assertIncludes(simpleHtml, "Tax-free LTCG left");
   assertIncludes(simpleHtml, "Deductions used");
   assertIncludes(simpleHtml, "80CCD(1B)");
+  // The 80C bar can carry home-loan principal from the Loans section: it
+  // shows in the meter's note without becoming part of the editable field.
+  const with80cExtraHtml = renderToString(
+    <Dashboard
+      thisYear={{
+        ...SAMPLE_THIS_YEAR,
+        deductions: SAMPLE_THIS_YEAR.deductions.map((deduction) =>
+          deduction.key === "deduction80C"
+            ? { ...deduction, extra: 80000, extraNote: "Includes ₹80,000 of home-loan principal from the Loans section - it counts inside this ceiling, not on top." }
+            : deduction
+        )
+      }}
+      pastFilings={SAMPLE_PAST_FILINGS}
+      onAddPastFiling={noop}
+      onRemovePastFiling={noop}
+      onGoToFiling={noop}
+      onChangeDeduction={noop}
+      onChangeFigure={noop}
+      onChangeRemittancePurpose={noop}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+    />
+  );
+  assertIncludes(with80cExtraHtml, "home-loan principal from the Loans section");
   assertIncludes(simpleHtml, "AIS / TDS match");
   assertIncludes(simpleHtml, "mismatch");
   // A conic-gradient donut (no charting dependency) renders the gains split.
@@ -1192,12 +1288,46 @@ function checkDashboardDestination() {
       onGoToFiling={noop}
       onChangeDeduction={noop}
       onChangeFigure={noop}
+      onChangeRemittancePurpose={noop}
       showAdvanced
       onToggleAdvanced={noop}
     />
   );
   assertIncludes(advancedHtml, ">Effective rate<");
   assertIncludes(advancedHtml, "Effective tax rate over time");
+
+  // Foreign widget: the LRS purpose selector renders all three Section
+  // 206C(1G) rate branches, and the education-loan-funded branch reports the
+  // exemption instead of a 20% figure.
+  const foreignHtml = renderToString(
+    <Dashboard
+      thisYear={{
+        ...SAMPLE_THIS_YEAR,
+        foreignInvestments: {
+          ...SAMPLE_THIS_YEAR.foreignInvestments,
+          applies: true,
+          remittance: 1_500_000,
+          purpose: "education_loan_funded",
+          rate: 0,
+          estimatedTcs: 0,
+          overThreshold: true
+        }
+      }}
+      pastFilings={SAMPLE_PAST_FILINGS}
+      onAddPastFiling={noop}
+      onRemovePastFiling={noop}
+      onGoToFiling={noop}
+      onChangeDeduction={noop}
+      onChangeFigure={noop}
+      onChangeRemittancePurpose={noop}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+    />
+  );
+  assertIncludes(foreignHtml, "Investment, gift, or anything else");
+  assertIncludes(foreignHtml, "Education or medical treatment");
+  assertIncludes(foreignHtml, "Education, funded by an education loan");
+  assertIncludes(foreignHtml, "fully exempt from LRS TCS");
 
   // Empty state: one obvious next action (the add form is open).
   const emptyHtml = renderToString(
@@ -1209,6 +1339,7 @@ function checkDashboardDestination() {
       onGoToFiling={noop}
       onChangeDeduction={noop}
       onChangeFigure={noop}
+      onChangeRemittancePurpose={noop}
       showAdvanced={false}
       onToggleAdvanced={noop}
     />

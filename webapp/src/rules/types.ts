@@ -162,6 +162,18 @@ export type SingleParentClubbingValues = {
   per_child_exemption_inr: number;
   max_children_for_exemption: number;
   reported_in_schedule: string;
+  /** Income kinds Section 64(1A) never clubs: the minor's own manual work, own skill/talent, or an 80U disability. */
+  excluded_from_clubbing: string[];
+};
+
+export type AdvanceTaxInstalmentRule = {
+  due_date: string;
+  /** Fraction of assessed tax (liability minus TDS) due cumulatively by this date, e.g. 0.15. */
+  cumulative_fraction_due: number;
+  /** How many months of 1%/month interest a shortfall in this instalment is charged. */
+  months_charged: number;
+  /** Paying at least this cumulative fraction clears the instalment even below the due fraction (null = no safe harbour). */
+  safe_harbor_cumulative_fraction: number | null;
 };
 
 export type AdvanceTaxValues = {
@@ -173,8 +185,13 @@ export type AdvanceTaxValues = {
     part_month_counts_as_full_month: boolean;
   };
   senior_citizen_exempt_without_business_income: boolean;
-  section_234c_status: string;
-  section_234c_reason: string;
+  section_234c: {
+    interest_rate_per_month: number;
+    no_interest_if_net_liability_below_inr: number;
+    instalments: AdvanceTaxInstalmentRule[];
+    /** Shown with every 234C estimate: later-arriving gains/dividends make the true figure lower. */
+    later_income_caveat: string;
+  };
 };
 
 export type DeductionLimitsValues = {
@@ -196,6 +213,8 @@ export type LoanTreatmentValues = {
     let_out_interest_24b: {
       limit_inr: number | null;
       regime: string;
+      /** Section 24(a): flat standard deduction on the net annual value (rent minus municipal taxes). */
+      net_annual_value_standard_deduction_rate: number;
       house_property_loss_setoff_cap_against_other_heads_inr: number;
       old_regime_loss_carry_forward_years: number;
       new_regime_no_setoff_against_other_heads: boolean;
@@ -276,6 +295,10 @@ export type ForeignInvestmentsValues = {
     section: string;
     threshold_inr: number;
     rate_investment_gift_other: number;
+    /** Remittances for education or medical treatment above the threshold. */
+    rate_education_medical: number;
+    /** Remittances funded by a Section 80E education loan collect no TCS at all. */
+    education_loan_funded: string;
   };
   black_money_act_penalties: {
     non_disclosure_penalty_inr: number;

@@ -6,12 +6,17 @@ import {
   brokerGainCheck,
   caSummaryAmountMap,
   caSummaryRows,
+  combined80cUsage,
   compareRegimes,
+  computeForeignRemittanceTcs,
+  computeLetOutHouseProperty,
   computeRegimeBreakEven,
   estimateAdvanceTaxInterest,
+  estimateSection234cInterest,
   summarizeWithRules
 } from "../src/lib";
 import { clubbedMinorIncome } from "../src/lib/profile";
+import { BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
 import { parseCsvText, parseHtmlText } from "../src/ingest";
 import { ruleCatalog } from "../src/rules";
 
@@ -361,9 +366,192 @@ export async function main() {
   if (clubbedCappedAtTwo !== clubbedTwoChildren) {
     throw new Error("Minor's-income exemption should cap at max_children_for_exemption even with more children entered.");
   }
+  // Section 64(1A) exceptions (the minor's own work/skill or an 80U
+  // disability) come off before the Rs 1,500-per-child exemption:
+  // 10,000 - 4,000 excluded - 3,000 exemption = 3,000.
+  const clubbedWithExclusion = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing, 4000);
+  if (clubbedWithExclusion !== 3000) {
+    throw new Error(`Expected Rs 3,000 clubbed after a Rs 4,000 exclusion and two exemptions, got ${clubbedWithExclusion}.`);
+  }
+  // Excluding everything (or more than the income) clubs nothing, never negative.
+  if (clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing, 12000) !== 0) {
+    throw new Error("Excluding more than the minor's income should club zero, not go negative.");
+  }
+
+  // Section 234C: an assessed tax of Rs 100,000 with nothing paid at all owes
+  // interest on every instalment's full cumulative target -
+  // (15,000 + 45,000 + 75,000) x 1% x 3 months + 100,000 x 1% x 1 month = Rs 5,050.
+  const c234Nothing = estimateSection234cInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 0, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (c234Nothing.totalInterest !== 5050) {
+    throw new Error(`Expected Rs 5,050 total 234C interest on a full Rs 100,000 default, got ${c234Nothing.totalInterest}.`);
+  }
+  if (c234Nothing.instalments.map((instalment) => instalment.interest).join(",") !== "450,1350,2250,1000") {
+    throw new Error(`Unexpected per-instalment 234C interest: ${JSON.stringify(c234Nothing.instalments)}.`);
+  }
+
+  // Safe harbours: 12% paid by 15 June clears the first instalment despite the
+  // 15% target; 36% by 15 September clears the second despite 45%. Third and
+  // fourth targets met exactly leave nothing due.
+  const c234SafeHarbor = estimateSection234cInterest(
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 100000,
+      instalmentsPaid: [12000, 24000, 39000, 25000],
+      seniorCitizenExempt: false
+    },
+    ruleCatalog.advanceTax
+  );
+  if (c234SafeHarbor.totalInterest !== 0 || c234SafeHarbor.interestApplies) {
+    throw new Error(`Expected the 12%/36% safe harbours + met targets to owe no 234C interest, got ${c234SafeHarbor.totalInterest}.`);
+  }
+  if (!c234SafeHarbor.instalments[0].safeHarborApplied || !c234SafeHarbor.instalments[1].safeHarborApplied) {
+    throw new Error("The first two instalments should be cleared by the 12%/36% safe harbours.");
+  }
+
+  // Just under a safe harbour, interest is charged on the shortfall from the
+  // real target, not from the safe-harbour line: paid 11% by 15 June means
+  // (15,000 - 11,000) x 1% x 3 = Rs 120 for the first instalment.
+  const c234UnderHarbor = estimateSection234cInterest(
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 100000,
+      instalmentsPaid: [11000, 34000, 30000, 25000],
+      seniorCitizenExempt: false
+    },
+    ruleCatalog.advanceTax
+  );
+  if (c234UnderHarbor.instalments[0].interest !== 120) {
+    throw new Error(`Expected Rs 120 first-instalment 234C interest at 11% paid, got ${c234UnderHarbor.instalments[0].interest}.`);
+  }
+  if (c234UnderHarbor.totalInterest !== 120) {
+    throw new Error(`Expected only the first instalment to owe (45%/75%/100% met), got ${c234UnderHarbor.totalInterest}.`);
+  }
+
+  // TDS is whatever part of taxAlreadyPaid exceeds the entered instalments,
+  // and comes off the liability before the targets: liability Rs 100,000 with
+  // Rs 95,000 of pure TDS leaves assessed tax Rs 5,000 - under the Rs 10,000
+  // floor, so no 234C at all.
+  const c234TdsOnly = estimateSection234cInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 95000, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (c234TdsOnly.required || c234TdsOnly.interestApplies || c234TdsOnly.assessedTax !== 5000) {
+    throw new Error(`TDS above the floor should leave no 234C: ${JSON.stringify(c234TdsOnly)}.`);
+  }
+
+  // Senior citizens without business income owe no 234C either (Section 207(2)).
+  const c234Senior = estimateSection234cInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 0, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: true },
+    ruleCatalog.advanceTax
+  );
+  if (c234Senior.required || c234Senior.interestApplies) {
+    throw new Error("Senior citizens without business income should be exempt from 234C (Section 207(2)).");
+  }
+
+  // Let-out house property: rent Rs 2,40,000 minus Rs 40,000 municipal taxes
+  // = NAV Rs 2,00,000; minus 30% (Rs 60,000) and Rs 3,00,000 interest =
+  // Rs 1,60,000 loss. Old regime takes the full loss (under the Rs 2L cap);
+  // new regime takes none of it.
+  const letOutFigures = {
+    ...BLANK_SUPPLEMENTAL_FIGURES,
+    letOutRentReceived: 240000,
+    letOutMunicipalTaxes: 40000,
+    homeLoanInterestLetOut: 300000
+  };
+  const letOutLoss = computeLetOutHouseProperty(letOutFigures, ruleCatalog.loanTreatment);
+  if (letOutLoss.netIncome !== -160000 || letOutLoss.oldRegimeIncome !== -160000 || letOutLoss.newRegimeIncome !== 0) {
+    throw new Error(`Unexpected let-out loss case: ${JSON.stringify(letOutLoss)}.`);
+  }
+  if (letOutLoss.lossCarriedForward !== 0) {
+    throw new Error("A loss inside the Rs 2L set-off cap should carry nothing forward.");
+  }
+  // A bigger loss caps old-regime set-off at Rs 2,00,000 and carries the rest.
+  const letOutBigLoss = computeLetOutHouseProperty(
+    { ...letOutFigures, homeLoanInterestLetOut: 500000 },
+    ruleCatalog.loanTreatment
+  );
+  if (letOutBigLoss.netIncome !== -360000 || letOutBigLoss.oldRegimeIncome !== -200000 || letOutBigLoss.lossCarriedForward !== 160000) {
+    throw new Error(`Unexpected capped let-out loss case: ${JSON.stringify(letOutBigLoss)}.`);
+  }
+  // Positive house-property income lands on both regimes' slab income:
+  // rent Rs 3,00,000, no municipal taxes, Rs 50,000 interest ->
+  // 3,00,000 x 70% - 50,000 = Rs 1,60,000.
+  const letOutIncome = computeLetOutHouseProperty(
+    { ...letOutFigures, letOutRentReceived: 300000, letOutMunicipalTaxes: 0, homeLoanInterestLetOut: 50000 },
+    ruleCatalog.loanTreatment
+  );
+  if (letOutIncome.netIncome !== 160000 || letOutIncome.oldRegimeIncome !== 160000 || letOutIncome.newRegimeIncome !== 160000) {
+    throw new Error(`Unexpected let-out income case: ${JSON.stringify(letOutIncome)}.`);
+  }
+
+  // The regime comparison actually uses the let-out figures per regime: adding
+  // a Rs 1,60,000 old-regime-only loss to the Rs 12L salary case leaves the
+  // new regime at zero and cuts the old regime's tax below its no-loss figure.
+  const regimeWithLetOutLoss = compareRegimes(
+    {
+      salaryIncome: 1_200_000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      letOutIncomeOldRegime: -160_000,
+      letOutIncomeNewRegime: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  // Old-regime taxable falls from Rs 11.5L to Rs 9.9L: 12,500 + 100,000 +
+  // 30% of 4.9L = Rs 2,59,500, x1.04 cess = Rs 2,69,880... recomputed:
+  // 5% of 2.5L (12,500) + 20% of 5L (100,000) + 30% of 4.9L-10L band.
+  // 9.9L - 10L threshold: 9.9L is below 10L, so 12,500 + 20% of (9.9L-5L)
+  // = 12,500 + 98,000 = 110,500, x1.04 = 114,920.
+  if (regimeWithLetOutLoss.newRegimeTax !== 0) {
+    throw new Error(`A let-out loss must not change the zero new-regime tax on Rs 12L salary, got ${regimeWithLetOutLoss.newRegimeTax}.`);
+  }
+  if (regimeWithLetOutLoss.oldRegimeTax !== 114920) {
+    throw new Error(`Expected Rs 1,14,920 old-regime tax with a Rs 1.6L house-property loss, got ${regimeWithLetOutLoss.oldRegimeTax}.`);
+  }
+
+  // Home-loan principal shares the single 80C ceiling: Rs 1,00,000 of
+  // investments + Rs 80,000 of principal counts Rs 1,50,000, not Rs 1,80,000.
+  const usage80c = combined80cUsage(
+    { ...BLANK_SUPPLEMENTAL_FIGURES, deduction80C: 100000, homeLoanPrincipal80c: 80000 },
+    ruleCatalog.deductionLimits
+  );
+  if (usage80c.combined !== 180000 || usage80c.allowed !== 150000 || usage80c.limit !== 150000) {
+    throw new Error(`Unexpected combined 80C usage: ${JSON.stringify(usage80c)}.`);
+  }
+
+  // LRS TCS rate branches (Section 206C(1G)): Rs 15L remitted is Rs 5L over
+  // the Rs 10L threshold - 20% (Rs 1,00,000) for investment/gift, 2%
+  // (Rs 10,000) for education/medical, and nothing when education-loan funded.
+  const lrsBase = { ...BLANK_SUPPLEMENTAL_FIGURES, foreignRemittanceLrs: 1_500_000 };
+  const lrsInvestment = computeForeignRemittanceTcs(lrsBase, ruleCatalog.foreignInvestments);
+  if (lrsInvestment.estimatedTcs !== 100000 || lrsInvestment.rate !== 0.2) {
+    throw new Error(`Expected Rs 1,00,000 TCS at 20% on the investment branch, got ${JSON.stringify(lrsInvestment)}.`);
+  }
+  const lrsEducation = computeForeignRemittanceTcs(
+    { ...lrsBase, foreignRemittancePurpose: "education_medical" },
+    ruleCatalog.foreignInvestments
+  );
+  if (lrsEducation.estimatedTcs !== 10000 || lrsEducation.rate !== 0.02) {
+    throw new Error(`Expected Rs 10,000 TCS at 2% on the education/medical branch, got ${JSON.stringify(lrsEducation)}.`);
+  }
+  const lrsLoanFunded = computeForeignRemittanceTcs(
+    { ...lrsBase, foreignRemittancePurpose: "education_loan_funded" },
+    ruleCatalog.foreignInvestments
+  );
+  if (lrsLoanFunded.estimatedTcs !== 0 || lrsLoanFunded.rate !== 0) {
+    throw new Error(`Expected no TCS on an education-loan-funded remittance, got ${JSON.stringify(lrsLoanFunded)}.`);
+  }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, and minor's-income clubbing matches the known two-child case."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

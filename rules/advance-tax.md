@@ -1,8 +1,8 @@
-# Advance tax and Section 234B interest
+# Advance tax and Section 234B/234C interest
 
 **Applies to:** every profile with capital gains, dividends, or other
 income beyond what's covered by salary TDS
-**Last verified:** 2026-07-03, against multiple current filing guides
+**Last verified:** 2026-07-04, against multiple current filing guides
 (see `source_refs` in the paired JSON).
 
 ## What this covers
@@ -21,7 +21,7 @@ are exempt from all of this** under Section 207(2). This is the same
 exemption already recorded in
 `rules/senior-citizen-advance-tax-and-regime.json`.
 
-## What this tool calculates
+## What this tool calculates: Section 234B
 
 You enter your total tax liability for the year and what's already been
 paid through TDS or advance tax instalments, plus a date. The tool
@@ -30,21 +30,44 @@ citizen exemption applies, and if neither lets you off, estimates the
 234B interest using the 1%-per-month, part-month-counts-as-full-month
 rule above.
 
-## What this tool does not calculate: Section 234C
+## What this tool calculates: Section 234C
 
-Section 234C charges the same 1%-per-month rate, but on a shortfall in
-each of four quarterly instalments (15% by 15 June, 45% by 15 September,
-75% by 15 December, 100% by 15 March) rather than on the year as a whole.
-Doing this correctly needs to know *when* in the year each rupee of
-income arrived, because capital gains and dividends that only showed up
-later in the year are excluded from the earlier instalments' targets.
-This tool doesn't capture income by quarter yet, so a naive full-year
-estimate would overstate 234C interest for anyone whose gains or
-dividends came in later in the year. Rather than show a number that's
-likely wrong in the direction of frightening you more than the law
-actually requires, 234C is left out entirely for now. If your total tax
-after TDS is meaningfully more than ₹10,000, assume some 234C interest
-may also apply and ask a CA for the precise figure.
+Section 234C charges the same 1%-per-month rate, but on the shortfall in
+each of four instalments during the year rather than on the year as a
+whole. Counting only your tax after TDS ("assessed tax"), you were meant
+to have paid at least **15% by 15 June, 45% by 15 September, 75% by
+15 December, and 100% by 15 March**. Each of the first three shortfalls
+is charged 1% a month for three months; the last one for one month.
+
+Two softenings are built in, and this tool applies both:
+
+- **Safe harbours for the first two instalments.** If you'd paid at
+  least 12% of your assessed tax by 15 June, the first instalment
+  charges nothing (even though the target is 15%); at least 36% by
+  15 September clears the second (target 45%).
+- **The ₹10,000 floor.** If your tax after TDS is under ₹10,000, advance
+  tax wasn't required and no 234C interest applies at all. Resident
+  senior citizens with no business income stay fully exempt, same as for
+  234B.
+
+You enter what you actually paid as advance tax in each instalment
+window; anything left over in your "tax already paid" figure is treated
+as TDS and subtracted from the liability before the instalment targets
+are worked out (TDS never needed to be paid as instalments — it was
+deducted at source through the year).
+
+**The one thing this estimate can't see: when your income arrived.**
+Dividends and capital gains only count toward the instalments due
+*after* they actually showed up, and escape 234C entirely if the next
+instalment covered the tax on them. This estimate spreads your whole
+year's tax across all four instalments, so if part of your tax comes
+from gains or dividends that arrived mid-year, the true figure is
+**lower** than what's shown. The tool says this next to the number every
+time (see `later_income_caveat` in the paired JSON): treat the estimate
+as the ceiling, not the bill, and have a CA compute the precise figure
+if it's material. The estimate also skips Rule 119A's
+round-down-to-₹100 step, which can only make the real figure very
+slightly smaller.
 
 ## Renumbering under the new Income Tax Act, 2025
 

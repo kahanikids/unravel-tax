@@ -11,6 +11,14 @@ export type RegimeComparisonInputs = {
   intradayGain: number;
   /** A single lump sum for 80C, 80D, HRA, home loan interest, and similar - old regime only. */
   oldRegimeDeductions: number;
+  /**
+   * Let-out house-property income for the old-regime side, from
+   * computeLetOutHouseProperty: may be negative (a loss), already capped at
+   * the Section 71(3A) set-off limit. Defaults to 0 when there's no let-out home.
+   */
+  letOutIncomeOldRegime?: number;
+  /** Let-out house-property income for the new-regime side: a loss can't offset other heads, so never negative. */
+  letOutIncomeNewRegime?: number;
   seniorCitizen: boolean;
 };
 
@@ -59,8 +67,17 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
     Math.max(0, inputs.debtMfShortTermDeemedGain) +
     Math.max(0, inputs.intradayGain);
   const salary = Math.max(0, inputs.salaryIncome);
+  // House property is the one head that can go negative here: the let-out
+  // figures arrive pre-capped per regime (loss floored at zero for new,
+  // capped at the set-off limit for old), so they're added as-is rather than
+  // clamped like the other components.
+  const letOutNew = Math.max(0, inputs.letOutIncomeNewRegime ?? 0);
+  const letOutOld = inputs.letOutIncomeOldRegime ?? 0;
 
-  const newRegimeSlabIncome = Math.max(0, salary - rule.values.new_regime.standard_deduction_inr) + otherSlabIncome;
+  const newRegimeSlabIncome = Math.max(
+    0,
+    Math.max(0, salary - rule.values.new_regime.standard_deduction_inr) + otherSlabIncome + letOutNew
+  );
   // The new regime doesn't have separate age-based slabs, unlike the old one.
   let newRegimeTax = taxFromSlabs(newRegimeSlabIncome, rule.values.new_regime.slabs);
   newRegimeTax = applyRebate(newRegimeTax, newRegimeSlabIncome, rule.values.new_regime.rebate_87a);
@@ -83,7 +100,7 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
   const oldRegimeSalaryAfterStandardDeduction = Math.max(0, salary - rule.values.old_regime.standard_deduction_inr);
   const oldRegimeSlabIncome = Math.max(
     0,
-    oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome - Math.max(0, inputs.oldRegimeDeductions)
+    oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome + letOutOld - Math.max(0, inputs.oldRegimeDeductions)
   );
   const oldRegimeSlabs = inputs.seniorCitizen ? rule.values.old_regime.slabs_60_to_80 : rule.values.old_regime.slabs_below_60;
   let oldRegimeTax = taxFromSlabs(oldRegimeSlabIncome, oldRegimeSlabs);

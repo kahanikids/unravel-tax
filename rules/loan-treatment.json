@@ -12,12 +12,12 @@
   "assessment_year": "2026-27",
   "verification": {
     "status": "verified_secondary_source",
-    "last_verified": "2026-07-03",
-    "note": "Loans mostly matter to income tax as interest deductions, and (with one exception) only under the OLD regime. Section 24(b) home-loan interest: up to Rs 2,00,000 for a self-occupied home (old regime only), or the full interest for a let-out home with no cap (both regimes), where the house-property loss set off against other income is capped at Rs 2,00,000 (old regime; the new regime allows no set-off against other heads and no carry-forward). Home-loan principal is part of the Section 80C Rs 1,50,000 ceiling (see deduction-limits.json). Section 80EE (loans sanctioned 1-Apr-2016 to 31-Mar-2017, cap Rs 50,000) and Section 80EEA (first-time buyer, affordable housing, loans sanctioned 1-Apr-2019 to 31-Mar-2022, cap Rs 1,50,000) give extra home-loan interest on top of 24(b); you cannot claim both for the same loan. Section 80E education-loan interest has no rupee cap, is interest-only, and runs for up to 8 years from when repayment starts. Section 80EEB electric-vehicle-loan interest is capped at Rs 1,50,000 (loans sanctioned 1-Apr-2019 to 31-Mar-2023). All of these are old-regime-only except let-out home-loan interest. Cross-checked against multiple current FY 2025-26 filing guides (ClearTax, TaxGuru); confirm against incometax.gov.in before relying on this as filing advice. The rupee ceilings that overlap with 80C live in deduction-limits.json and are cross-referenced, not duplicated.",
+    "last_verified": "2026-07-04",
+    "note": "Loans mostly matter to income tax as interest deductions, and (with one exception) only under the OLD regime. Section 24(b) home-loan interest: up to Rs 2,00,000 for a self-occupied home (old regime only), or the full interest for a let-out home with no cap (both regimes), where the house-property loss set off against other income is capped at Rs 2,00,000 (old regime; the new regime allows no set-off against other heads and no carry-forward). Let-out taxable income starts from the net annual value (rent minus municipal taxes) less the flat 30% standard deduction of Section 24(a) - a long-standing, unchanged rate. Home-loan principal is part of the Section 80C Rs 1,50,000 ceiling (see deduction-limits.json). Section 80EE (loans sanctioned 1-Apr-2016 to 31-Mar-2017, cap Rs 50,000) and Section 80EEA (first-time buyer, affordable housing, loans sanctioned 1-Apr-2019 to 31-Mar-2022, cap Rs 1,50,000) give extra home-loan interest on top of 24(b); you cannot claim both for the same loan. Section 80E education-loan interest has no rupee cap, is interest-only, and runs for up to 8 years from when repayment starts. Section 80EEB electric-vehicle-loan interest is capped at Rs 1,50,000 (loans sanctioned 1-Apr-2019 to 31-Mar-2023). All of these are old-regime-only except let-out home-loan interest. Cross-checked against multiple current FY 2025-26 filing guides (ClearTax, TaxGuru); confirm against incometax.gov.in before relying on this as filing advice. The rupee ceilings that overlap with 80C live in deduction-limits.json and are cross-referenced, not duplicated.",
     "source_type": "secondary"
   },
   "source_refs": [
-    "Income Tax Act, 1961, Sections 24(b), 80C, 80EE, 80EEA, 80EEB, 80E, 64",
+    "Income Tax Act, 1961, Sections 24(a), 24(b), 80C, 80EE, 80EEA, 80EEB, 80E, 64",
     "https://cleartax.in/s/deductions-under-section24-income-from-house-property",
     "https://taxguru.in/income-tax/old-vs-new-tax-regime-complete-comparison-deductions-tax-benefits.html",
     "https://www.taxsmooth.com/knowledge-center/section-80e-80ee-80eea-80eeb",
@@ -35,11 +35,12 @@
       "let_out_interest_24b": {
         "limit_inr": null,
         "regime": "both",
+        "net_annual_value_standard_deduction_rate": 0.3,
         "house_property_loss_setoff_cap_against_other_heads_inr": 200000,
         "old_regime_loss_carry_forward_years": 8,
         "new_regime_no_setoff_against_other_heads": true,
         "new_regime_no_carry_forward": true,
-        "note": "For a rented-out home there is no cap on the interest you can deduct against the rent, under either regime. But a resulting loss from house property can be set off against your other income only up to Rs 2,00,000 a year (old regime), with the balance carried forward 8 years. Under the new regime that loss cannot be set off against other heads at all and cannot be carried forward, so the interest benefit is effectively limited to the rental income."
+        "note": "For a rented-out home, taxable house-property income is worked out as rent received minus municipal taxes paid (the net annual value), minus a flat 30% standard deduction on that value (Section 24(a)), minus the full home-loan interest with no cap (Section 24(b)), under either regime. A resulting loss from house property can be set off against your other income only up to Rs 2,00,000 a year (old regime), with the balance carried forward 8 years. Under the new regime that loss cannot be set off against other heads at all and cannot be carried forward, so the interest benefit is effectively limited to the rental income."
       },
       "principal_repayment_80c": {
         "within_section_80c_limit": true,

@@ -1,5 +1,5 @@
 import type { ExtractionSummaryFigures } from "../ingest";
-import type { SupplementalFigures } from "../state/types";
+import type { NumericFigureKey, SupplementalFigures } from "../state/types";
 
 /**
  * Routes recognised annual totals from a pasted summary statement into their
@@ -16,15 +16,15 @@ import type { SupplementalFigures } from "../state/types";
 export function applySummaryFiguresToSupplemental(
   current: SupplementalFigures,
   figures: ExtractionSummaryFigures
-): { next: SupplementalFigures; applied: (keyof SupplementalFigures)[] } {
-  const mapping: [number | undefined, keyof SupplementalFigures][] = [
+): { next: SupplementalFigures; applied: NumericFigureKey[] } {
+  const mapping: [number | undefined, NumericFigureKey][] = [
     [figures.dividendIncome, "dividends"],
     [figures.interestIncome, "interestOtherIncome"],
     [figures.deductibleCharges, "deductibleTransactionCharges"],
     [figures.tdsDeducted, "advanceTaxPaid"]
   ];
   const next = { ...current };
-  const applied: (keyof SupplementalFigures)[] = [];
+  const applied: NumericFigureKey[] = [];
   for (const [value, key] of mapping) {
     if (typeof value === "number" && next[key] === 0) {
       next[key] = value;

@@ -267,9 +267,9 @@ export const CAPABILITIES: Capability[] = [
     detail: "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
   },
   {
-    label: "Section 234B advance-tax interest estimator",
-    status: "partial",
-    detail: "Enter total tax liability, tax already paid, and an as-of date to estimate Section 234B interest. Section 234C quarterly instalment interest is not built yet."
+    label: "Section 234B and 234C advance-tax interest estimator",
+    status: "available",
+    detail: "Enter total tax liability, tax already paid, and what you paid in each instalment window to estimate Section 234B interest and instalment-by-instalment Section 234C interest (with the 12%/36% safe harbours). The 234C figure is a whole-year ceiling: gains or dividends that arrived mid-year make the true figure lower, and the tool says so next to the number."
   },
   {
     label: "Carrying forward last year's filing",
@@ -279,12 +279,17 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "NRI, HUF, and single-parent coverage",
     status: "partial",
-    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest and minor-income clubbing are partly calculated. DTAA relief, NRO TDS precision, repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
+    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest and minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability) are calculated. DTAA relief, NRO TDS precision, repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
   },
   {
     label: "Insurance and foreign-asset planning checks",
     status: "partial",
-    detail: "The dashboard checks insurance premium caps, foreign-asset disclosure risk, and LRS TCS. It does not compute policy-level taxable payout, Schedule FA rows, foreign income, or Form 67 figures."
+    detail: "The dashboard checks insurance premium caps, foreign-asset disclosure risk, and LRS TCS with the right rate for the remittance's purpose (20% investment/gift, 2% education/medical, nil when education-loan funded). It does not compute policy-level taxable payout, Schedule FA rows, foreign income, or Form 67 figures."
+  },
+  {
+    label: "Loans, home-loan principal, and a rented-out home",
+    status: "available",
+    detail: "Capped old-regime interest deductions for self-occupied home, 80EEA, 80E, and 80EEB loans; home-loan principal counted inside the shared 80C ceiling; and the full let-out house-property computation (30% standard deduction, uncapped interest, the ₹2 lakh loss set-off cap old regime, no set-off new regime), all folded into the regime comparison and the CA Summary. Business-use vehicle interest and multiple let-out properties are not modelled."
   }
 ];
 

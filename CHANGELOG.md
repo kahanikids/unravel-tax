@@ -4,6 +4,48 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-04 (four pending features built: 234C, let-out home + 80C principal, LRS rate branches, clubbing exceptions)
+
+- **Section 234C instalment interest is now estimated** (was: 234B only).
+  `rules/advance-tax.json` gains a `section_234c` block — the instalment
+  calendar (15%/45%/75%/100% by 15 Jun/15 Sep/15 Dec/15 Mar), the 12%/36%
+  safe harbours for the first two instalments, the 3/3/3/1-month interest
+  periods, the ₹10,000 floor, and a `later_income_caveat` that the UI must
+  always show (source: Income Tax Act, 1961, Section 234C — long-standing,
+  unchanged provisions). `estimateSection234cInterest` in
+  `webapp/src/lib/advanceTax.ts` computes per-instalment shortfall interest
+  from what the user paid in each window; whatever part of "tax already paid"
+  exceeds the entered instalments is treated as TDS and subtracted from the
+  liability first. The advance-tax panel shows the per-instalment breakdown,
+  the safe-harbour outcomes, and the whole-year-ceiling caveat next to the
+  number every time. `rules/advance-tax.md` rewritten accordingly.
+- **Let-out house property and home-loan principal are now modelled**
+  (`rules/loan-treatment.json` gains the Section 24(a) 30%
+  `net_annual_value_standard_deduction_rate`). The Loans panel takes rent
+  received, municipal taxes, and uncapped let-out interest; computes the
+  house-property income/loss; caps a loss's set-off at ₹2,00,000 on the
+  old-regime side of the regime comparison (rest reported as carry-forward)
+  and drops it on the new-regime side; and adds the figure as its own CA
+  Summary row. Home-loan principal gets its own field that counts *inside*
+  the shared Section 80C ceiling (capped together with the dashboard's 80C
+  investments figure, shown on the same progress bar), never on top.
+- **LRS TCS now uses the remittance purpose's rate branch**: the dashboard's
+  foreign widget gains a purpose selector — 20% investment/gift/other, 2%
+  education/medical, and nil when funded by a Section 80E education loan (all
+  three already recorded in `rules/foreign-investments.json`; no rule change).
+- **Minor's-income clubbing exceptions**: a new field for the portion of the
+  minor's income Section 64(1A) never clubs (their own manual work, own
+  skill/talent, or an 80U disability, per `excluded_from_clubbing` in
+  `rules/single-parent-clubbing.json`), subtracted before the ₹1,500
+  per-child exemption. The scope caveat now says the tool can't verify the
+  exception applies, rather than that it ignores exceptions entirely.
+- Validators extended with known-figure cases for all four:
+  234C full-default (₹5,050 on a ₹1,00,000 default), safe-harbour and
+  TDS-floor cases; let-out loss-cap/carry-forward/income cases including the
+  per-regime feed into the comparison; combined 80C capping; the three LRS
+  rate branches; and clubbing with exclusions. FEATURE_COVERAGE.md and
+  ROADMAP.md updated to match.
+
 ## 2026-07-04 (standardised JSON extraction contract + missing-detail guidance)
 
 - Rewrote the extraction prompt (`prompts/01-extract-statement.md` and its

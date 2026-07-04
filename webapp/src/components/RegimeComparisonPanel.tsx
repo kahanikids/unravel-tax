@@ -20,6 +20,8 @@ export function RegimeComparisonPanel({
   intradayGain,
   seniorCitizen,
   loanDeductionsTotal = 0,
+  letOutIncomeOldRegime = 0,
+  letOutIncomeNewRegime = 0,
   rule
 }: {
   supplementalFigures: SupplementalFigures;
@@ -29,6 +31,9 @@ export function RegimeComparisonPanel({
   seniorCitizen: boolean;
   /** Capped loan-interest deductions from the Loans section, added to the old-regime side. */
   loanDeductionsTotal?: number;
+  /** Let-out house-property income/loss from the Loans section, per regime (loss pre-capped; see lib/loanDeductions.ts). */
+  letOutIncomeOldRegime?: number;
+  letOutIncomeNewRegime?: number;
   rule: RegimeChoiceRule;
 }) {
   const hasEnoughToCompare = supplementalFigures.salaryIncome > 0;
@@ -40,6 +45,8 @@ export function RegimeComparisonPanel({
     debtMfShortTermDeemedGain,
     intradayGain,
     oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + Math.max(0, loanDeductionsTotal),
+    letOutIncomeOldRegime,
+    letOutIncomeNewRegime,
     seniorCitizen
   };
   const result = hasEnoughToCompare ? compareRegimes(comparisonInputs, rule) : null;
@@ -88,6 +95,15 @@ export function RegimeComparisonPanel({
         <p className="step-lede">
           Plus ₹{formatAmount(loanDeductionsTotal)} of loan-interest deductions from the Loans section, already added to
           the old-regime side. Don't re-enter those in the field above.
+        </p>
+      ) : null}
+      {letOutIncomeOldRegime !== 0 || letOutIncomeNewRegime !== 0 ? (
+        <p className="step-lede">
+          Your rented-out home from the Loans section is already counted:{" "}
+          {letOutIncomeOldRegime < 0
+            ? `a ₹${formatAmount(-letOutIncomeOldRegime)} house-property loss on the old-regime side (the new regime can't use it)`
+            : `₹${formatAmount(letOutIncomeNewRegime)} of house-property income on both sides`}
+          . Don't re-enter it in the fields above.
         </p>
       ) : null}
 

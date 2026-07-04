@@ -42,7 +42,24 @@ infer scope from the roadmap or implementation notes.
 - Final "Before you export" confidence check that groups missing documents,
   mismatches, form-changing triggers, routine flags, and profile caveats.
 - Old-vs-new regime comparison for slab-taxed income, with break-even
-  deductions and loan-interest deductions folded into the old-regime side.
+  deductions, loan-interest deductions, and let-out house-property
+  income/loss (per regime) folded into the right sides.
+- Section 234B and Section 234C advance-tax interest estimates. 234C works
+  instalment by instalment from what was paid in each window, applies the
+  12%/36% safe harbours and the Rs 10,000 floor, and always shows the
+  caveat that mid-year gains/dividends make the true figure lower.
+- Let-out house-property computation (rent, municipal taxes, 30% standard
+  deduction, uncapped interest), with the Rs 2 lakh loss set-off cap on the
+  old-regime side, no set-off on the new-regime side, carry-forward noted,
+  and its own CA Summary row.
+- Home-loan principal counted inside the shared Section 80C ceiling,
+  capped together with the dashboard's 80C investments figure.
+- LRS TCS estimate using the remittance purpose's rate branch: 20%
+  investment/gift/other, 2% education/medical, nil when education-loan
+  funded.
+- Minor's-income clubbing with the Section 10(32) per-child exemption and a
+  field for income Section 64(1A) never clubs (the minor's own work/skill
+  or an 80U disability), excluded before the exemption.
 - Year-over-year dashboard with current-year widgets, past-filing history,
   ITR JSON import, ITR-V PDF text read, manual past-year entry, trends, and
   simple charts.
@@ -60,9 +77,11 @@ infer scope from the roadmap or implementation notes.
 - PDF support extracts text locally, but transaction-table reconstruction still
   depends on the user's external AI chat and copy-paste JSON. Scanned/image PDFs
   may fail.
-- Advance-tax support estimates only Section 234B from total tax liability,
-  tax already paid, and an as-of date. Section 234C quarterly instalment
-  interest is not calculated.
+- Section 234C is a whole-year ceiling estimate: dividends and capital gains
+  that arrived mid-year are excluded from earlier instalments by the
+  section's proviso, which needs income dated by quarter to apply, so the
+  true figure can be lower than shown. The caveat is displayed with every
+  estimate.
 - Regime comparison covers slab-taxed income only. It excludes surcharge above
   Rs 50 lakh, the age 80+ super-senior slab, and capital gains taxed the same
   under both regimes. It is hidden for HUF.
@@ -79,18 +98,19 @@ infer scope from the roadmap or implementation notes.
   and skips the regime comparison. It does not calculate coparcener/member
   detail, Section 64(2) transfer clubbing, or partition effects.
 - Single-parent support orients the user, builds the checklist, and computes
-  minor-income clubbing after the Section 10(32) per-child exemption. It does
-  not check exceptions for the minor's own skill/manual work or Section 80U,
-  and it does not place values into Schedule SPI.
-- Loan deductions cover common old-regime interest lines: self-occupied home
-  loan interest, 80EEA, 80E, and 80EEB. Let-out property treatment, 80C home
-  loan principal, and business-use vehicle interest are not modelled.
+  minor-income clubbing after the Section 64(1A) exclusions and the Section
+  10(32) per-child exemption. It cannot verify an exclusion genuinely
+  applies, and it does not place values into Schedule SPI.
+- Loan deductions cover the old-regime interest lines (self-occupied home
+  loan, 80EEA, 80E, 80EEB), the let-out house-property computation, and 80C
+  home-loan principal. Business-use vehicle interest, multiple let-out
+  properties, and pre-construction interest spreading are not modelled.
 - Insurance payout support checks annual premium against major 10(10D) caps,
   but does not compute taxable payout amounts because it does not hold issue
   dates, policy type history, sum-assured ratios, or premium-by-policy detail.
-- Foreign-asset support is a disclosure reminder and LRS TCS estimate. It does
-  not build Schedule FA, compute foreign dividends/interest/gains, or prepare
-  Form 67 foreign-tax-credit inputs.
+- Foreign-asset support is a disclosure reminder and a purpose-aware LRS TCS
+  estimate. It does not build Schedule FA, compute foreign
+  dividends/interest/gains, or prepare Form 67 foreign-tax-credit inputs.
 - Past-filing import is a dashboard history feature. It reads a handful of ITR
   JSON or ITR-V PDF fields when it can, but it does not import the previous
   Unravel Tax workbook to prefill this year's filing or carry forward losses.
@@ -103,7 +123,8 @@ infer scope from the roadmap or implementation notes.
 
 ## Pending
 
-- Section 234C quarterly advance-tax interest.
+- Section 234C precision from income dated by quarter (the current estimate
+  is a whole-year ceiling).
 - Import a previous Unravel Tax full workbook to reuse profile answers and
   carry-forward loss figures.
 - Full NRI calculation path: NRE/NRO separation throughout, NRO TDS-rate
@@ -111,12 +132,12 @@ infer scope from the roadmap or implementation notes.
   repatriation tracking.
 - Full HUF calculation path: coparceners/members, Section 64(2) transfer
   clubbing, and partition tracking.
-- Full single-parent path: clubbing exceptions and Schedule SPI placement.
+- Single-parent Schedule SPI placement.
 - Schedule FA and foreign income computation for resident foreign assets.
 - Full insurance payout tax computation from policy-level premium and issue
   data.
-- Let-out house-property loan treatment, home-loan principal, and broader loan
-  edge cases.
+- Business-use vehicle interest, multiple let-out properties, and
+  pre-construction interest spreading.
 - Native PDF table extraction reliable enough to avoid the external AI
   copy-paste step.
 - Published Google Sheets master template.

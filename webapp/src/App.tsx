@@ -16,7 +16,9 @@ import {
   buildConfidenceReport,
   clearSession,
   clubbedMinorIncome,
+  combined80cUsage,
   computeForeignRemittanceTcs,
+  computeLetOutHouseProperty,
   computeInsurancePayoutCheck,
   computeLoanDeductions,
   deriveProfileFlags,
@@ -63,7 +65,9 @@ import {
   STEP_ORDER,
   type AisReportedFigures,
   type AppStep,
+  type NumericFigureKey,
   type OrientationAnswers,
+  type RemittancePurpose,
   type SupplementalFigures
 } from "./state/types";
 import { fixtureTransactions } from "./demo/sampleState";
@@ -96,7 +100,7 @@ function App() {
   // Which "A few more numbers" fields were auto-filled from a pasted statement
   // (drives the check-these banner on the results screen). Ephemeral UI hint:
   // not persisted, so a resumed session keeps the values but drops the banner.
-  const [prefilledFigureKeys, setPrefilledFigureKeys] = useState<(keyof SupplementalFigures)[]>([]);
+  const [prefilledFigureKeys, setPrefilledFigureKeys] = useState<NumericFigureKey[]>([]);
   // A pasted statement gave a net realised gain with no per-transaction detail:
   // flagged so the results screen can say the detailed statement is still needed.
   const [netGainMissingDetail, setNetGainMissingDetail] = useState(false);
@@ -303,15 +307,37 @@ function App() {
   }
   if (flags.singleParent) {
     const perChild = ruleCatalog.singleParentClubbing.values.per_child_exemption_inr;
+    const exemptFromClubbing = supplementalFigures.minorIncomeExemptFromClubbing;
     rows.push({
       head: "Minor's income clubbed",
       ruleSection: "64(1A)",
       amount: clubbedMinorIncome(
         supplementalFigures.minorIncomeToClub,
         supplementalFigures.numberOfMinors,
-        ruleCatalog.singleParentClubbing
+        ruleCatalog.singleParentClubbing,
+        exemptFromClubbing
       ),
-      notes: `Entered by you under "A few more numbers" on the Current Filing page. The minor's income minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
+      notes: `Entered by you under "A few more numbers" on the Current Filing page. The minor's income${
+        exemptFromClubbing > 0
+          ? `, minus the ₹${exemptFromClubbing.toLocaleString("en-IN")} you marked as never clubbed (the minor's own work/skill or an 80U disability - keep the evidence for a CA)`
+          : ""
+      }, minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
+    });
+  }
+
+  // Rented-out home with a loan (Section 24): computed from the Loans section's
+  // figures. Shown as its own CA Summary row so the CA sees the same
+  // house-property figure the regime comparison uses.
+  const letOutHouseProperty = computeLetOutHouseProperty(supplementalFigures, ruleCatalog.loanTreatment);
+  if (letOutHouseProperty.hasInputs) {
+    const setOffCap =
+      ruleCatalog.loanTreatment.values.home_loan.let_out_interest_24b
+        .house_property_loss_setoff_cap_against_other_heads_inr;
+    rows.push({
+      head: "House property (let-out) income/(loss)",
+      ruleSection: "24(a)/(b)",
+      amount: letOutHouseProperty.netIncome,
+      notes: `Entered by you under "Loans" on the Current Filing page: rent ₹${letOutHouseProperty.rentReceived.toLocaleString("en-IN")} minus municipal taxes ₹${letOutHouseProperty.municipalTaxes.toLocaleString("en-IN")}, minus the 30% standard deduction (Section 24(a)) ₹${letOutHouseProperty.standardDeduction.toLocaleString("en-IN")}, minus uncapped home-loan interest (Section 24(b)) ₹${letOutHouseProperty.interest.toLocaleString("en-IN")}. A loss offsets other income only up to ₹${setOffCap.toLocaleString("en-IN")} a year under the old regime (₹${letOutHouseProperty.lossCarriedForward.toLocaleString("en-IN")} carried forward here), and not at all under the new regime.`
     });
   }
 
@@ -390,6 +416,10 @@ function App() {
     debtMfShortTermDeemedGain: rulesSummary.debtMfShortTermDeemedGain,
     intradayGain: rulesSummary.intradayGain,
     oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + loanDeductionsTotal,
+    // Let-out house property from the Loans section: income on both sides, a
+    // loss only on the old-regime side (pre-capped per rules/loan-treatment.json).
+    letOutIncomeOldRegime: letOutHouseProperty.oldRegimeIncome,
+    letOutIncomeNewRegime: letOutHouseProperty.newRegimeIncome,
     seniorCitizen: flags.seniorCitizen
   };
   const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
@@ -442,7 +472,14 @@ function App() {
         section: "80C",
         label: "Section 80C investments",
         used: supplementalFigures.deduction80C,
-        limit: deductionLimits.section_80c.limit_inr
+        limit: deductionLimits.section_80c.limit_inr,
+        // Home-loan principal (entered in the Loans section) shares this
+        // ceiling, so the bar counts it without letting this input edit it.
+        extra: combined80cUsage(supplementalFigures, ruleCatalog.deductionLimits).homeLoanPrincipal,
+        extraNote:
+          supplementalFigures.homeLoanPrincipal80c > 0
+            ? `Includes ₹${supplementalFigures.homeLoanPrincipal80c.toLocaleString("en-IN")} of home-loan principal from the Loans section - it counts inside this ceiling, not on top.`
+            : undefined
       },
       {
         key: "deduction80D",
@@ -693,6 +730,12 @@ function App() {
     setSupplementalFigures((prev) => ({ ...prev, [key]: value }));
   }
 
+  // The LRS remittance purpose picks the Section 206C(1G) TCS rate branch
+  // (20% investment/gift, 2% education/medical, nil when education-loan funded).
+  function changeRemittancePurpose(purpose: RemittancePurpose) {
+    setSupplementalFigures((prev) => ({ ...prev, foreignRemittancePurpose: purpose }));
+  }
+
   /** Only ever jumps to a step the user has already reached - never a way to skip ahead. */
   function goToStep(target: AppStep) {
     if (STEP_ORDER.indexOf(target) > furthestStepIndex) {
@@ -852,6 +895,7 @@ function App() {
             onGoToFiling={goToFilingFromDashboard}
             onChangeDeduction={changeDeduction}
             onChangeFigure={changeFigure}
+            onChangeRemittancePurpose={changeRemittancePurpose}
             showAdvanced={showAdvanced}
             onToggleAdvanced={() => setShowAdvanced((value) => !value)}
           />

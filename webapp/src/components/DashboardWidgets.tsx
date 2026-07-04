@@ -131,23 +131,29 @@ export function DeductionBar({
   section,
   used,
   limit,
+  extra = 0,
+  extraNote,
   onChange
 }: {
   label: string;
   section: string;
   used: number;
   limit: number;
+  /** Counted toward the same ceiling but entered elsewhere (e.g. home-loan principal inside 80C): shown in the meter, never in the editable field. */
+  extra?: number;
+  extraNote?: string;
   onChange: (value: number) => void;
 }) {
-  const over = used > limit;
-  const width = Math.max(0, Math.min(1, limit > 0 ? used / limit : 0)) * 100;
+  const counted = used + Math.max(0, extra);
+  const over = counted > limit;
+  const width = Math.max(0, Math.min(1, limit > 0 ? counted / limit : 0)) * 100;
   return (
     <div className="deduction-bar">
       <div className="deduction-bar-head">
         <span className="deduction-bar-label">{section}</span>
         <span className="deduction-bar-limit">limit {formatCompactInr(limit)}</span>
       </div>
-      <div className="meter-track" role="img" aria-label={`${label}: ${formatInr(used)} of ${formatInr(limit)}`}>
+      <div className="meter-track" role="img" aria-label={`${label}: ${formatInr(counted)} of ${formatInr(limit)}`}>
         <span className={over ? "meter-fill meter-fill-over" : "meter-fill"} style={{ width: `${width}%` }} />
       </div>
       <label className="deduction-bar-input">
@@ -160,6 +166,7 @@ export function DeductionBar({
           onChange={(event) => onChange(Number(event.target.value) || 0)}
         />
       </label>
+      {extra > 0 && extraNote ? <p className="widget-note">{extraNote}</p> : null}
     </div>
   );
 }
