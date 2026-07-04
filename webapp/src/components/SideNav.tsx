@@ -46,7 +46,13 @@ const UTILITY_ITEMS = [
 ] as const;
 
 const DESTINATION_ITEMS = [
-  { key: "home", label: "Home", mobileLabel: "Home", Icon: IconHome, className: "side-nav-home" },
+  {
+    key: "home",
+    label: "Home",
+    mobileLabel: "Home",
+    Icon: IconHome,
+    className: "side-nav-home side-nav-home-mobile-only"
+  },
   { key: "dashboard", label: "Dashboard", mobileLabel: "Dash", Icon: IconDashboard, className: "side-nav-dashboard" }
 ] as const;
 
