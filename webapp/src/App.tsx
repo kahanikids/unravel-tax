@@ -22,6 +22,7 @@ import {
   computeLetOutHouseProperty,
   computeInsurancePayoutCheck,
   computeNriDividendTax,
+  summarizeInsurancePolicies,
   computeLoanDeductions,
   deriveProfileFlags,
   downloadExport,
@@ -51,6 +52,7 @@ import {
   type ChecklistItem,
   type ExportFile,
   type FilingSource,
+  type InsurancePolicy,
   type LocalFolderHandle,
   type PastFiling,
   type PastFilingFields,
@@ -108,6 +110,7 @@ function App() {
   const [netGainMissingDetail, setNetGainMissingDetail] = useState(false);
   const [aisFigures, setAisFigures] = useState<AisReportedFigures>(BLANK_AIS_REPORTED_FIGURES);
   const [tdsRows, setTdsRows] = useState<TdsRow[]>([]);
+  const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
@@ -201,7 +204,8 @@ function App() {
         acknowledgedTriggerIds,
         aisFigures,
         tdsRows,
-        pastFilings
+        pastFilings,
+        insurancePolicies
       };
       saveSession(input);
       // The folder is a disk-durable backup: write the same session there so
@@ -227,6 +231,7 @@ function App() {
     aisFigures,
     tdsRows,
     pastFilings,
+    insurancePolicies,
     sampleMode,
     folderHandle
   ]);
@@ -376,6 +381,30 @@ function App() {
     });
   }
 
+  // Insurance payouts (Section 10(10D)): computed from the per-policy detail
+  // entered under "Insurance" on the Current Filing page. Only shown once at
+  // least one policy has lost its exemption - an all-exempt policy list adds
+  // no new tax, so it stays out of the summary.
+  const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, ruleCatalog.insurance, ruleCatalog.capitalGainsEquity);
+  if (insuranceSummary.totalOtherSourcesSlabIncome > 0) {
+    rows.push({
+      head: "Insurance payout (traditional, taxable)",
+      ruleSection: "10(10D)",
+      amount: insuranceSummary.totalOtherSourcesSlabIncome,
+      notes:
+        "Entered by you under \"Insurance\" on the Current Filing page: one or more traditional policies lost their Section 10(10D) exemption, so (payout minus premiums paid) is taxable as income from other sources. Already added to the \"other income\" side of the old-vs-new regime comparison, at your slab rate."
+    });
+  }
+  if (insuranceSummary.totalUlipCapitalGainsTax > 0) {
+    rows.push({
+      head: "Insurance payout (ULIP, capital gains)",
+      ruleSection: "10(10D)",
+      amount: insuranceSummary.totalUlipCapitalGainsTax,
+      notes:
+        "Entered by you under \"Insurance\" on the Current Filing page: one or more ULIPs lost their Section 10(10D) exemption, so their maturity gain is taxed as capital gains at listed-equity rates. Each policy's tax here uses the full annual LTCG exemption on its own; if you also have other equity long-term gains this year, the two share one exemption combined, so ask a CA to combine both before filing."
+    });
+  }
+
   const calculationSummary = {
     ...rulesSummary,
     recommendedItrForm: itrForm.form,
@@ -458,6 +487,9 @@ function App() {
     // NRI dividends are taxed flat under Section 115A/DTAA, never at slab -
     // see the "Dividend tax" CA Summary row and lib/nriTax.ts.
     excludeDividendsFromSlab: flags.nri,
+    // A taxable traditional-insurance-policy payout, folded into the same
+    // "other income" bucket the Insurance panel's own note explains.
+    additionalOtherSlabIncome: insuranceSummary.totalOtherSourcesSlabIncome,
     seniorCitizen: flags.seniorCitizen
   };
   const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
@@ -583,6 +615,7 @@ function App() {
     setAcknowledgedTriggerIds([]);
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
+    setInsurancePolicies([]);
   }
 
   function startOrientation() {
@@ -697,6 +730,7 @@ function App() {
     setAisFigures(session.aisFigures ?? BLANK_AIS_REPORTED_FIGURES);
     setTdsRows(session.tdsRows ?? []);
     setPastFilings(session.pastFilings ?? []);
+    setInsurancePolicies(session.insurancePolicies ?? []);
     setSampleMode(false);
   }
 
@@ -727,6 +761,7 @@ function App() {
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
     setPastFilings([]);
+    setInsurancePolicies([]);
     setSampleMode(false);
     setShowDashboard(false);
     setFurthestStepIndex(0);
@@ -1054,6 +1089,10 @@ function App() {
                 huf={flags.huf}
                 singleParent={flags.singleParent}
                 hasLoans={flags.hasLoans}
+                hasInsurancePayout={flags.hasInsurancePayout}
+                insurancePolicies={insurancePolicies}
+                onChangeInsurancePolicies={setInsurancePolicies}
+                insuranceRule={ruleCatalog.insurance}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
                 loanTreatmentRule={ruleCatalog.loanTreatment}
                 nriDtaaRule={ruleCatalog.nriDtaa}

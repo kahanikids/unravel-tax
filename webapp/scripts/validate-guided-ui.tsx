@@ -487,6 +487,8 @@ function checkResultsStepDefaultsToSimple() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -532,6 +534,8 @@ function checkResultsStepAdvancedToggle() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -618,6 +622,8 @@ function checkResultsStepSummaryPrefill() {
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
+    insurancePolicies: [],
+    onChangeInsurancePolicies: noop,
     aisFigures: BLANK_AIS_REPORTED_FIGURES,
     onChangeAisFigures: noop,
     tdsRows: [],
@@ -684,6 +690,8 @@ function checkRegimeComparisonPanel() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -719,6 +727,8 @@ function checkRegimeComparisonPanel() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -768,6 +778,8 @@ function resultsStepWithReconciliation(props: {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={props.aisFigures}
       onChangeAisFigures={noop}
       tdsRows={props.tdsRows}
@@ -832,6 +844,8 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -866,6 +880,8 @@ function checkAdvanceTaxPanel() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -906,6 +922,8 @@ function checkAdvanceTaxPanel() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -955,6 +973,8 @@ function checkAdvanceTaxPanel() {
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
       capitalGainsTaxByInstalment={{ cumulativeByInstalment: [0, 0, 0, 40000], totalForYear: 40000 }}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -994,6 +1014,8 @@ function checkNriHufSingleParentPartialCalculations() {
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
+    insurancePolicies: [],
+    onChangeInsurancePolicies: noop,
     aisFigures: BLANK_AIS_REPORTED_FIGURES,
     onChangeAisFigures: noop,
     tdsRows: [],
@@ -1101,6 +1123,93 @@ function checkNriHufSingleParentPartialCalculations() {
 
   console.log(
     "Validated NRI/HUF/single-parent partial calculations: NRE exempt line, HUF regime-comparison skip, minor's-income clubbing math."
+  );
+}
+
+function checkInsurancePolicyPanel() {
+  const baseProps = {
+    rows: SAMPLE_ROWS,
+    documents: [],
+    openIssueCount: 0,
+    caRecommendation: SAMPLE_RECOMMENDATION,
+    onChangeSupplementalFigures: noop,
+    debtMfShortTermDeemedGain: 0,
+    intradayGain: 0,
+    seniorCitizen: false,
+    regimeChoiceRule: ruleCatalog.regimeChoice,
+    advanceTaxRule: ruleCatalog.advanceTax,
+    capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
+    aisFigures: BLANK_AIS_REPORTED_FIGURES,
+    onChangeAisFigures: noop,
+    tdsRows: [],
+    onChangeTdsRows: noop,
+    brokerCheck: null,
+    confidenceReport: SAMPLE_CONFIDENCE_REPORT,
+    showAdvanced: false,
+    onToggleAdvanced: noop,
+    exportMessage: "",
+    onExportCsv: noop,
+    onExportXlsx: noop,
+    onExportFullWorkbook: noop,
+    localFolderSupported: false,
+    localFolderName: null,
+    onChooseLocalFolder: noop
+  };
+
+  const withoutFlagHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
+    />
+  );
+  if (withoutFlagHtml.includes("is it actually taxable?")) {
+    throw new Error("The insurance policy panel should only render for the hasInsurancePayout profile.");
+  }
+
+  const withFlagNoPoliciesHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      hasInsurancePayout
+      insurancePolicies={[]}
+      onChangeInsurancePolicies={noop}
+    />
+  );
+  assertIncludes(withFlagNoPoliciesHtml, "is it actually taxable?");
+  assertIncludes(withFlagNoPoliciesHtml, "No policies added yet.");
+
+  // A traditional policy over the Rs 5L aggregate cap: taxable amount and
+  // treatment render, and the regime-comparison note about the auto-added
+  // other-income figure appears.
+  const taxablePolicy = {
+    id: "p1",
+    policyType: "traditional" as const,
+    isDeathBenefit: false,
+    issueDate: "2024-01-01",
+    sumAssured: 10000000,
+    annualPremium: 600000,
+    totalPremiumsPaidToDate: 2000000,
+    maturityPayoutThisYear: 3000000
+  };
+  const withTaxablePolicyHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, salaryIncome: 1_200_000 }}
+      hasInsurancePayout
+      insurancePolicies={[taxablePolicy]}
+      onChangeInsurancePolicies={noop}
+    />
+  );
+  assertIncludes(withTaxablePolicyHtml, "Taxable - income from other sources");
+  assertIncludes(withTaxablePolicyHtml, "10,00,000");
+  assertIncludes(withTaxablePolicyHtml, "already added to the");
+  assertIncludes(withTaxablePolicyHtml, "other income");
+  assertIncludes(withTaxablePolicyHtml, "side of both regimes");
+
+  console.log(
+    "Validated insurance policy panel: hidden without the profile flag, renders empty-state and per-policy taxable computation, and feeds the taxable amount into the regime comparison's other-income note."
   );
 }
 
@@ -1623,6 +1732,7 @@ export function main() {
   checkResultsStepSummaryPrefill();
   checkAdvanceTaxPanel();
   checkNriHufSingleParentPartialCalculations();
+  checkInsurancePolicyPanel();
   checkReconciliationPanel();
   checkConfidenceReportPanel();
   checkDashboardDestination();

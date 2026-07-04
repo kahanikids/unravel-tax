@@ -56,15 +56,41 @@ The premium side needs nothing new: your life and health premiums already
 flow through the ₹1,50,000 80C figure and the 80D figure you enter, and
 the tool folds those into the old vs new regime comparison.
 
-For the payout side there is no number for the tool to compute — whether a
-maturity is taxable depends on the policy's issue date and its
-premium-to-sum-assured history, which the tool doesn't hold. So if you
-tell the tool you received a life-insurance payout this year, it adds an
-insurance-payout item to your document checklist and flags the 10(10D)
-taxability question for a closer look, rather than silently assuming the
-payout is tax-free. If your premiums are above the ₹2.5 lakh (ULIP) or
-₹5 lakh (traditional) lines, treat the payout as taxable and check with a
-CA on the exact figure.
+For the payout side, the dashboard's aggregate-premium figure is a quick
+planning signal, but a precise answer needs the policy's issue date and
+premium-to-sum-assured history — so the Results page has a per-policy
+"Insurance" section where you add one card per policy (type, issue date,
+sum assured, this policy year's premium, total premiums paid to date, and
+this year's payout). From that the tool:
+
+- Checks **both** the sum-assured-ratio test and the type's
+  aggregate-premium cap, per policy — either one failing loses the
+  exemption, independent of the other.
+- Pools the aggregate-premium test correctly: it sums premium across every
+  policy of the *same type* issued on/after that type's cutoff date, not
+  just the one policy, since a shortfall on one policy can be caused by
+  premium paid into another of the same type.
+- Computes the **taxable amount** (payout minus premiums paid) for any
+  policy that loses its exemption.
+- For a taxable **ULIP**, estimates the capital-gains tax at listed-equity
+  rates, split short/long-term by that policy's own holding period —
+  folded into the CA Summary as its own row. It does **not** yet combine
+  that gain with any other equity long-term gains you have this year under
+  the *one* shared ₹1.25 lakh annual exemption; each taxable ULIP uses the
+  full exemption on its own, so your real combined liability may be higher
+  than shown if you also have other LTCG this year. The tool says this
+  plainly rather than silently double-exempting.
+- For a taxable **traditional** policy, computes the taxable amount and
+  folds it into the "other income" side of the old-vs-new regime
+  comparison at slab rate (both regimes see it the same way, since regime
+  choice doesn't change how it's taxed).
+- Death benefits are always exempt, and skip the rest of the form.
+
+If you don't want to enter per-policy detail, the dashboard's original
+aggregate-premium check against the ₹2.5 lakh (ULIP) / ₹5 lakh
+(traditional) lines still works as a lighter-weight signal — treat it as a
+heads-up, not a final answer, since it can't see any individual policy's
+issue date or exact ratio.
 
 ## Renumbering under the new Income Tax Act, 2025
 

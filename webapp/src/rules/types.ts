@@ -294,6 +294,7 @@ export type LoanTreatmentValues = {
 export type InsuranceValues = {
   payouts_section_10_10d: {
     death_benefit_always_exempt: boolean;
+    death_benefit_exception: string;
     ulip: {
       issued_on_or_after: string;
       aggregate_annual_premium_exemption_cap_inr: number;
@@ -303,6 +304,12 @@ export type InsuranceValues = {
       issued_on_or_after: string;
       aggregate_annual_premium_exemption_cap_inr: number;
       taxed_as_if_breached: string;
+      taxable_amount_basis: string;
+    };
+    sum_assured_ratio_rule: {
+      issued_on_or_after_2012_04_01_premium_max_pct_of_sum_assured: number;
+      issued_2003_04_01_to_2012_03_31_premium_max_pct_of_sum_assured: number;
+      note: string;
     };
     tds_section_194da: {
       rate: number;

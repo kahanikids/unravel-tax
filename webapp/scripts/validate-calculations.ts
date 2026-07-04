@@ -14,6 +14,8 @@ import {
   computeNriDividendTax,
   computeNroTdsReconciliation,
   computeRegimeBreakEven,
+  summarizeInsurancePolicies,
+  type InsurancePolicy,
   estimateAdvanceTaxInterest,
   estimateSection234cInterest,
   summarizeWithRules
@@ -627,6 +629,143 @@ export async function main() {
     throw new Error(`Expected NRI dividends to be fully excluded from slab income, got ${JSON.stringify(nriRegimeResult)}.`);
   }
 
+  // Insurance payouts (Section 10(10D)), computed per policy:
+  const blankPolicy: InsurancePolicy = {
+    id: "test",
+    policyType: "traditional",
+    isDeathBenefit: false,
+    issueDate: "",
+    sumAssured: 0,
+    annualPremium: 0,
+    totalPremiumsPaidToDate: 0,
+    maturityPayoutThisYear: 0
+  };
+
+  // A death benefit is exempt regardless of premium or payout size.
+  const deathBenefitSummary = summarizeInsurancePolicies(
+    [{ ...blankPolicy, isDeathBenefit: true, annualPremium: 900000, maturityPayoutThisYear: 10000000 }],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  if (!deathBenefitSummary.results[0].exempt || deathBenefitSummary.totalOtherSourcesSlabIncome !== 0) {
+    throw new Error(`Expected a death benefit to stay exempt, got ${JSON.stringify(deathBenefitSummary.results[0])}.`);
+  }
+
+  // A modest traditional policy within both the sum-assured ratio (5%) and
+  // the aggregate cap stays exempt.
+  const exemptTraditionalSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        issueDate: "2024-01-01",
+        sumAssured: 1000000,
+        annualPremium: 50000,
+        totalPremiumsPaidToDate: 150000,
+        maturityPayoutThisYear: 200000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  if (!exemptTraditionalSummary.results[0].exempt) {
+    throw new Error(`Expected a modest traditional policy to stay exempt, got ${JSON.stringify(exemptTraditionalSummary.results[0])}.`);
+  }
+
+  // A traditional policy breaching the Rs 5,00,000 aggregate cap loses its
+  // exemption; taxable amount = payout minus premiums paid = Rs 10,00,000.
+  const aggregateTraditionalSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        issueDate: "2024-01-01",
+        sumAssured: 10000000,
+        annualPremium: 600000,
+        totalPremiumsPaidToDate: 2000000,
+        maturityPayoutThisYear: 3000000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const aggregateResult = aggregateTraditionalSummary.results[0];
+  if (aggregateResult.exempt || !aggregateResult.failsAggregateTest || aggregateResult.taxableAmount !== 1000000) {
+    throw new Error(`Expected the aggregate-cap traditional policy to owe tax on Rs 10,00,000, got ${JSON.stringify(aggregateResult)}.`);
+  }
+  if (aggregateTraditionalSummary.totalOtherSourcesSlabIncome !== 1000000) {
+    throw new Error(`Expected Rs 10,00,000 total other-sources slab income, got ${aggregateTraditionalSummary.totalOtherSourcesSlabIncome}.`);
+  }
+
+  // A policy can lose its exemption purely on the sum-assured ratio even
+  // when nowhere near the aggregate cap: Rs 20,000 premium on a Rs 1,00,000
+  // sum assured is 20%, over the 10% limit for policies issued after
+  // 1-Apr-2012.
+  const ratioTraditionalSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        issueDate: "2024-01-01",
+        sumAssured: 100000,
+        annualPremium: 20000,
+        totalPremiumsPaidToDate: 40000,
+        maturityPayoutThisYear: 60000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const ratioResult = ratioTraditionalSummary.results[0];
+  if (ratioResult.exempt || !ratioResult.failsRatioTest || ratioResult.failsAggregateTest) {
+    throw new Error(`Expected the sum-assured-ratio test alone to disqualify this policy, got ${JSON.stringify(ratioResult)}.`);
+  }
+
+  // A ULIP breaching its Rs 2,50,000 aggregate cap, issued long enough ago to
+  // be long-term: taxable amount Rs 15,00,000, LTCG tax after the Rs 1,25,000
+  // exemption = (15,00,000 - 1,25,000) x 12.5% = Rs 1,71,875.
+  const ulipLtSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        policyType: "ulip",
+        issueDate: "2023-01-01",
+        sumAssured: 10000000,
+        annualPremium: 300000,
+        totalPremiumsPaidToDate: 1000000,
+        maturityPayoutThisYear: 2500000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const ulipLtResult = ulipLtSummary.results[0];
+  if (ulipLtResult.taxTreatment !== "capital_gains_lt" || ulipLtResult.estimatedTax !== 171875) {
+    throw new Error(`Expected Rs 1,71,875 long-term ULIP capital-gains tax, got ${JSON.stringify(ulipLtResult)}.`);
+  }
+  if (ulipLtSummary.totalUlipCapitalGainsTax !== 171875 || ulipLtSummary.totalOtherSourcesSlabIncome !== 0) {
+    throw new Error(`Expected the ULIP tax to stay out of other-sources slab income, got ${JSON.stringify(ulipLtSummary)}.`);
+  }
+
+  // A recently-issued ULIP failing the sum-assured ratio test (15% > 10%
+  // limit) is short-term: taxable amount Rs 35,000, STCG tax at 20% = Rs 7,000.
+  const ulipStSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        policyType: "ulip",
+        issueDate: "2026-01-01",
+        sumAssured: 100000,
+        annualPremium: 15000,
+        totalPremiumsPaidToDate: 15000,
+        maturityPayoutThisYear: 50000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const ulipStResult = ulipStSummary.results[0];
+  if (ulipStResult.taxTreatment !== "capital_gains_st" || ulipStResult.estimatedTax !== 7000) {
+    throw new Error(`Expected Rs 7,000 short-term ULIP capital-gains tax, got ${JSON.stringify(ulipStResult)}.`);
+  }
+
   // Let-out house property: rent Rs 2,40,000 minus Rs 40,000 municipal taxes
   // = NAV Rs 2,00,000; minus 30% (Rs 60,000) and Rs 3,00,000 interest =
   // Rs 1,60,000 loss. Old regime takes the full loss (under the Rs 2L cap);
@@ -727,7 +866,7 @@ export async function main() {
   }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, insurance-policy Section 10(10D) exemption matches the death-benefit/exempt/aggregate-cap/ratio-test/ULIP-LT/ULIP-ST known cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

@@ -27,6 +27,14 @@ export type RegimeComparisonInputs = {
    * (resident behaviour: dividends are ordinary slab income).
    */
   excludeDividendsFromSlab?: boolean;
+  /**
+   * Extra ordinary slab income from elsewhere in the tool (currently: a
+   * taxable traditional-insurance-policy payout, see lib/insurance.ts),
+   * folded into the same "other income" bucket as interestOtherIncome -
+   * including sharing its 80TTA/80TTB deduction on the old-regime side,
+   * the same blended-bucket approximation interestOtherIncome already makes.
+   */
+  additionalOtherSlabIncome?: number;
 };
 
 export type RegimeComparisonResult = {
@@ -72,7 +80,8 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
     (inputs.excludeDividendsFromSlab ? 0 : Math.max(0, inputs.dividends)) +
     Math.max(0, inputs.interestOtherIncome) +
     Math.max(0, inputs.debtMfShortTermDeemedGain) +
-    Math.max(0, inputs.intradayGain);
+    Math.max(0, inputs.intradayGain) +
+    Math.max(0, inputs.additionalOtherSlabIncome ?? 0);
   const salary = Math.max(0, inputs.salaryIncome);
   // House property is the one head that can go negative here: the let-out
   // figures arrive pre-capped per regime (loss floored at zero for new,

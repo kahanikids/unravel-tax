@@ -282,9 +282,9 @@ export const CAPABILITIES: Capability[] = [
     detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, and an NRO interest/dividend TDS-vs-treaty-rate reconciliation are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
   },
   {
-    label: "Insurance and foreign-asset planning checks",
+    label: "Insurance payout and foreign-asset planning checks",
     status: "partial",
-    detail: "The dashboard checks insurance premium caps, foreign-asset disclosure risk, and LRS TCS with the right rate for the remittance's purpose (20% investment/gift, 2% education/medical, nil when education-loan funded). It does not compute policy-level taxable payout, Schedule FA rows, foreign income, or Form 67 figures."
+    detail: "The dashboard's aggregate-premium check is a quick planning signal. For a precise answer, the Results page's per-policy insurance section takes each policy's issue date, sum assured, premium history, and this year's payout, checks both the sum-assured-ratio and aggregate-premium tests, and computes the actual taxable amount - capital gains for a taxable ULIP (folded into the CA Summary), income from other sources for a taxable traditional policy (folded into the regime comparison's other income). It doesn't yet combine a taxable ULIP's gain with your other equity LTCG under the one shared annual exemption - that's flagged, not silently assumed. Foreign-asset checks (LRS TCS by remittance purpose) remain a disclosure reminder; Schedule FA rows, foreign income, and Form 67 figures aren't built."
   },
   {
     label: "Loans, home-loan principal, and a rented-out home",

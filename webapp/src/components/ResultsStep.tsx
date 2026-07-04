@@ -5,11 +5,13 @@ import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
 import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
-import { ruleCatalog, type AdvanceTaxRule, type LoanTreatmentRule, type NriDtaaRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
+import { summarizeInsurancePolicies, type InsurancePolicy } from "../lib/insurance";
+import { ruleCatalog, type AdvanceTaxRule, type InsuranceRule, type LoanTreatmentRule, type NriDtaaRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
 import type { AisReportedFigures, NriCountry, NumericFigureKey, SupplementalFigures } from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
+import { InsurancePolicyPanel } from "./InsurancePolicyPanel";
 import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
 import { NriDtaaPanel } from "./NriDtaaPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
@@ -84,12 +86,16 @@ export function ResultsStep({
   huf = false,
   singleParent = false,
   hasLoans = false,
+  hasInsurancePayout = false,
   regimeChoiceRule,
   loanTreatmentRule = ruleCatalog.loanTreatment,
   advanceTaxRule,
   capitalGainsTaxByInstalment,
   nriDtaaRule = ruleCatalog.nriDtaa,
   nriTdsRule = ruleCatalog.nriTdsAndRefunds,
+  insuranceRule = ruleCatalog.insurance,
+  insurancePolicies,
+  onChangeInsurancePolicies,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -125,6 +131,7 @@ export function ResultsStep({
   huf?: boolean;
   singleParent?: boolean;
   hasLoans?: boolean;
+  hasInsurancePayout?: boolean;
   regimeChoiceRule: RegimeChoiceRule;
   loanTreatmentRule?: LoanTreatmentRule;
   advanceTaxRule: AdvanceTaxRule;
@@ -132,6 +139,9 @@ export function ResultsStep({
   capitalGainsTaxByInstalment: QuarterlyCapitalGainsTax;
   nriDtaaRule?: NriDtaaRule;
   nriTdsRule?: NriTdsAndRefundsRule;
+  insuranceRule?: InsuranceRule;
+  insurancePolicies: InsurancePolicy[];
+  onChangeInsurancePolicies: (policies: InsurancePolicy[]) => void;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -156,6 +166,9 @@ export function ResultsStep({
   // Rented-out home from the Loans section, per regime - shared by the loans
   // note and the regime comparison so both always show the same figure.
   const letOut = computeLetOutHouseProperty(supplementalFigures, loanTreatmentRule);
+  // Insurance policies from the Insurance section - shared by that panel and
+  // the regime comparison's "other income" addend so both show the same figure.
+  const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, insuranceRule, ruleCatalog.capitalGainsEquity);
   return (
     <div className="step-card">
       <div className={caRecommendation.recommendCa ? "recommendation-banner recommendation-ca" : "recommendation-banner"}>
@@ -320,6 +333,18 @@ export function ResultsStep({
           </details>
         ) : null}
 
+        {hasInsurancePayout ? (
+          <details className="refine-section" open>
+            <summary>Insurance payout: is it actually taxable? (10(10D))</summary>
+            <InsurancePolicyPanel
+              policies={insurancePolicies}
+              onChangePolicies={onChangeInsurancePolicies}
+              insuranceRule={insuranceRule}
+              capitalGainsRule={ruleCatalog.capitalGainsEquity}
+            />
+          </details>
+        ) : null}
+
         <details className="refine-section">
           <summary>Old vs new regime</summary>
           {huf ? (
@@ -341,6 +366,7 @@ export function ResultsStep({
               loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
               letOutIncomeOldRegime={letOut.oldRegimeIncome}
               letOutIncomeNewRegime={letOut.newRegimeIncome}
+              additionalOtherSlabIncome={insuranceSummary.totalOtherSourcesSlabIncome}
               rule={regimeChoiceRule}
             />
           )}

@@ -23,6 +23,7 @@ export function RegimeComparisonPanel({
   loanDeductionsTotal = 0,
   letOutIncomeOldRegime = 0,
   letOutIncomeNewRegime = 0,
+  additionalOtherSlabIncome = 0,
   rule
 }: {
   supplementalFigures: SupplementalFigures;
@@ -37,6 +38,8 @@ export function RegimeComparisonPanel({
   /** Let-out house-property income/loss from the Loans section, per regime (loss pre-capped; see lib/loanDeductions.ts). */
   letOutIncomeOldRegime?: number;
   letOutIncomeNewRegime?: number;
+  /** A taxable traditional-insurance-policy payout, folded into the ordinary "other income" bucket on both regimes. */
+  additionalOtherSlabIncome?: number;
   rule: RegimeChoiceRule;
 }) {
   const hasEnoughToCompare = supplementalFigures.salaryIncome > 0;
@@ -50,6 +53,7 @@ export function RegimeComparisonPanel({
     oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + Math.max(0, loanDeductionsTotal),
     letOutIncomeOldRegime,
     letOutIncomeNewRegime,
+    additionalOtherSlabIncome,
     excludeDividendsFromSlab: nri,
     seniorCitizen
   };
@@ -99,6 +103,12 @@ export function RegimeComparisonPanel({
         <p className="step-lede">
           Plus ₹{formatAmount(loanDeductionsTotal)} of loan-interest deductions from the Loans section, already added to
           the old-regime side. Don't re-enter those in the field above.
+        </p>
+      ) : null}
+      {additionalOtherSlabIncome > 0 ? (
+        <p className="step-lede">
+          Plus ₹{formatAmount(additionalOtherSlabIncome)} of taxable insurance-payout income from the Insurance
+          section, already added to the "other income" side of both regimes. Don't re-enter it above.
         </p>
       ) : null}
       {nri && supplementalFigures.dividends > 0 ? (
