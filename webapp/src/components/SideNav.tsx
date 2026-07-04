@@ -79,15 +79,17 @@ export function SideNav({
   return (
     <nav className="side-nav" aria-label="Filing steps">
       <div className="side-nav-primary" aria-label="Destinations">
-        {/* Home returns to the welcome screen - the same destination as the
-            header brand mark, surfaced here too since the header logo isn't
-            always within easy reach on mobile. */}
+        {/* Home lives next to the header brand mark on laptop/tablet (same
+            eye level as the logo - see .header-home-button), so it's only
+            rendered here for the mobile bottom bar, where the header isn't
+            always within easy reach. Hidden above the mobile breakpoint via
+            .side-nav-home-mobile-only. */}
         <button
           type="button"
           className={
             !dashboardActive && current === "welcome"
-              ? "side-nav-step side-nav-util side-nav-home side-nav-step-current"
-              : "side-nav-step side-nav-util side-nav-home"
+              ? "side-nav-step side-nav-util side-nav-home side-nav-home-mobile-only side-nav-step-current"
+              : "side-nav-step side-nav-util side-nav-home side-nav-home-mobile-only"
           }
           onClick={onGoHome}
           aria-current={!dashboardActive && current === "welcome" ? "page" : undefined}
@@ -100,7 +102,9 @@ export function SideNav({
         {/* Dashboard is a standalone destination, not a filing step - it sits
             outside STEP_ORDER so the guided flow keeps its single next action,
             but it's a real navigable view (with an active state), unlike the
-            info panels below it. */}
+            info panels below it. On laptop/tablet it's the first thing in the
+            rail, lining up with the top of the welcome/content card (see the
+            .side-nav top-padding comment). */}
         <button
           type="button"
           className={

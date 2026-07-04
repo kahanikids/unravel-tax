@@ -113,6 +113,14 @@ ol {
   gap: 4px;
 }
 
+/* On laptop/tablet, Home lives next to the logo in the header (see
+   .header-home-button) instead of the rail, so the rail's own Home button
+   only reappears in the mobile bottom bar - see the max-width: 620px
+   override below. */
+.side-nav-step.side-nav-home-mobile-only {
+  display: none;
+}
+
 /* Utility/info actions stack directly beneath the filing steps (not pushed to
    the bottom of the rail) so the icons read as one tight cluster. A modest
    top padding + divider keeps them clearly separate from the numbered steps. */
@@ -221,6 +229,36 @@ button.side-nav-step.side-nav-step-current:hover {
   height: 40px;
   width: auto;
   object-fit: contain;
+}
+
+.header-home-button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.header-home-button:hover,
+.header-home-button:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.header-home-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .help-button {
@@ -2604,6 +2642,16 @@ button.side-nav-step.side-nav-step-current:hover {
   }
 
   .side-nav-util:not(.side-nav-home):not(.side-nav-dashboard) {
+    display: none;
+  }
+
+  /* Mobile has no room next to the logo for a header Home button, and the
+     bottom bar already has one - so flip which Home button is visible. */
+  .side-nav-step.side-nav-home-mobile-only {
+    display: flex;
+  }
+
+  .header-home-button {
     display: none;
   }
 
