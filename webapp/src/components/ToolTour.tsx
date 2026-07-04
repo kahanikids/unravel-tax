@@ -110,7 +110,7 @@ export function ToolTour({
           )}
           {isLastStep ? (
             <button type="button" className="primary-button" onClick={handleTrySample}>
-              See with sample data
+              See With Sample Data
             </button>
           ) : (
             <button type="button" className="primary-button" onClick={() => setStepIndex((value) => value + 1)}>

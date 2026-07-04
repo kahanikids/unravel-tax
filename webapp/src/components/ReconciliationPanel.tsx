@@ -128,7 +128,7 @@ export function ReconciliationPanel({
           className="text-button"
           onClick={() => onChangeTdsRows([...tdsRows, { source: "", tdsPerDocument: 0, tdsPerAis: 0 }])}
         >
-          + Add a TDS row
+          + Add A TDS Row
         </button>
       </div>
 

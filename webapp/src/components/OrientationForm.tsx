@@ -390,7 +390,7 @@ export function OrientationForm({
               setMode("questions");
             }}
           >
-            Update answers
+            Update Answers
           </button>
         </div>
       </div>
@@ -479,7 +479,7 @@ export function OrientationForm({
           </button>
         ) : enteredWithAnswers ? (
           <button type="button" className="text-button" onClick={() => setMode("summary")}>
-            ← Back to my answers
+            ← Back To My Answers
           </button>
         ) : (
           <span />

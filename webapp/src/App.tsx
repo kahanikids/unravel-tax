@@ -812,7 +812,7 @@ function App() {
       {showConfirmClear ? (
         <ConfirmModal
           message="Clear everything you've entered in this browser and start over?"
-          confirmLabel="Clear and start over"
+          confirmLabel="Clear And Start Over"
           onConfirm={clearAllProgress}
           onCancel={() => setShowConfirmClear(false)}
         />
@@ -877,7 +877,7 @@ function App() {
             </ul>
             <div className="modal-actions">
               <button type="button" className="primary-button" onClick={acknowledgeFormChangingTriggers}>
-                I understand, continue
+                I Understand, Continue
               </button>
             </div>
           </div>
@@ -910,7 +910,7 @@ function App() {
                 You skipped the questions, so this checklist and recommendation use default assumptions: resident,
                 no special circumstances.{" "}
                 <button type="button" className="text-button" onClick={() => setStep("orientation")}>
-                  Answer them now
+                  Answer Them Now
                 </button>{" "}
                 for a more accurate one.
               </p>
@@ -996,15 +996,15 @@ function App() {
             <nav className="footer-links" aria-label="Project and legal links">
               <div className="footer-disclaimer-link">
                 <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
-                  Full disclaimer, AI use &amp; privacy
+                  Full Disclaimer, AI Use &amp; Privacy
                 </button>
                 <span className="footer-disclaimer-hint">Please read before you blindly rely on this tool</span>
               </div>
               <a className="footer-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
-                Source on GitHub
+                Source On GitHub
               </a>
               <a className="footer-link" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
-                Report an issue
+                Report An Issue
               </a>
             </nav>
           </div>

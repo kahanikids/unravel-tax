@@ -148,7 +148,7 @@ export function ResultsStep({
         <div className="panel-heading">
           <h3>{showAdvanced ? "Full detail" : "Summary"}</h3>
           <button type="button" className="view-toggle" onClick={onToggleAdvanced}>
-            {showAdvanced ? "Show simple view" : "Show full detail"}
+            {showAdvanced ? "Show Simple View" : "Show Full Detail"}
           </button>
         </div>
 
@@ -367,7 +367,7 @@ export function ResultsStep({
             onClick={onExportFullWorkbook}
             aria-label={localFolderName ? undefined : "Download full workbook"}
           >
-            {localFolderName ? "Save full workbook" : <><DownloadIcon /> full workbook</>}
+            {localFolderName ? "Save Full Workbook" : <><DownloadIcon /> Full Workbook</>}
           </button>
           <details className="other-format">
             <summary>Other format</summary>
@@ -387,7 +387,7 @@ export function ResultsStep({
               <>Saving to <strong>{localFolderName}</strong> on your computer instead of your Downloads folder.</>
             ) : (
               <button type="button" className="text-button" onClick={onChooseLocalFolder}>
-                Alternate Option: Save to Local Folder
+                Alternate Option: Save To Local Folder
               </button>
             )}
           </p>

@@ -44,7 +44,7 @@ export function WelcomeScreen({
         <div className="welcome-disclaimer-banner" role="status">
           <p>{WELCOME_DISCLAIMER_BANNER}</p>
           <button type="button" className="text-button welcome-disclaimer-dismiss" onClick={dismissDisclaimer}>
-            Got it
+            Got It
           </button>
         </div>
       ) : null}
@@ -77,11 +77,11 @@ export function WelcomeScreen({
           <p>You have a filing in progress, saved in this browser.</p>
           <div className="resume-banner-actions">
             <button type="button" className="primary-button" onClick={onResume}>
-              <span className="welcome-resume-desktop">Resume where you left off</span>
+              <span className="welcome-resume-desktop">Resume Where You Left Off</span>
               <span className="welcome-resume-mobile">Resume</span>
             </button>
             <button type="button" className="secondary-button" onClick={onStartOver}>
-              Start over
+              Start Over
             </button>
           </div>
         </div>
@@ -102,14 +102,14 @@ export function WelcomeScreen({
         <button type="button" className="entry-path-card" onClick={onStartComputationFirst}>
           <IconUpload className="entry-path-icon" />
           <span className="entry-path-text">
-            <h3>Add documents</h3>
+            <h3>Add Documents</h3>
             <p>Skip the questions. Upload and see your numbers.</p>
           </span>
         </button>
         <button type="button" className="entry-path-card" onClick={onShowTour}>
           <IconCompass className="entry-path-icon" />
           <span className="entry-path-text">
-            <h3>Get to know the tool</h3>
+            <h3>Get To Know The Tool</h3>
             <p>A quick tour, then try it with sample data.</p>
           </span>
         </button>
@@ -119,13 +119,13 @@ export function WelcomeScreen({
         <p className="welcome-restore">
           Saved a filing to a folder before?{" "}
           <button type="button" className="text-button" onClick={onRestoreFromFolder}>
-            Restore from a folder
+            Restore From A Folder
           </button>
         </p>
       ) : null}
 
       <details className="welcome-legal">
-        <summary>Legal, AI use &amp; privacy</summary>
+        <summary>Legal, AI Use &amp; Privacy</summary>
         <div className="welcome-legal-body">
           {LEGAL_INTRO.map((part) => (
             <p className="welcome-legal-intro" key={part.label}>
@@ -142,11 +142,11 @@ export function WelcomeScreen({
           ))}
           <p className="welcome-legal-links">
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-              View the source on GitHub
+              View The Source On GitHub
             </a>
             <span aria-hidden="true"> · </span>
             <a href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
-              Report an issue
+              Report An Issue
             </a>
           </p>
         </div>

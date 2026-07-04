@@ -34,13 +34,13 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <div className="error-boundary-actions">
             <button type="button" className="primary-button" onClick={() => window.location.reload()}>
-              Reload this page
+              Reload This Page
             </button>
             <a className="secondary-button" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
-              Report an issue
+              Report An Issue
             </a>
             <a className="text-button" href={REPO_URL} target="_blank" rel="noopener noreferrer">
-              View source on GitHub
+              View Source On GitHub
             </a>
           </div>
         </div>

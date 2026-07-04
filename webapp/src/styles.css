@@ -1297,11 +1297,13 @@ button.side-nav-step.side-nav-step-current:hover {
   font-size: 0.88rem;
 }
 
-/* ---------- Info tip (hover/focus "i" icon) ---------- */
+/* ---------- Info tip (click/tap "i" icon) ---------- */
 
 .info-tip {
   position: relative;
   display: inline-flex;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 .info-tip-trigger {
@@ -1310,6 +1312,7 @@ button.side-nav-step.side-nav-step-current:hover {
   justify-content: center;
   width: 20px;
   height: 20px;
+  min-width: 20px;
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 50%;
@@ -1319,12 +1322,13 @@ button.side-nav-step.side-nav-step-current:hover {
   font-style: italic;
   font-weight: 600;
   line-height: 1;
-  cursor: help;
+  cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .info-tip-trigger:hover,
-.info-tip-trigger:focus-visible {
+.info-tip-trigger:focus-visible,
+.info-tip-trigger[aria-expanded="true"] {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-soft);
@@ -1333,11 +1337,12 @@ button.side-nav-step.side-nav-step-current:hover {
 
 .info-tip-bubble {
   position: absolute;
+  z-index: 30;
   top: calc(100% + 8px);
-  right: 0;
-  z-index: 5;
+  left: 50%;
+  transform: translateX(-50%);
   width: max-content;
-  max-width: 280px;
+  max-width: min(280px, calc(100vw - 56px));
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -1349,17 +1354,12 @@ button.side-nav-step.side-nav-step-current:hover {
   font-weight: 400;
   text-align: left;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
 }
 
-.info-tip:hover .info-tip-bubble,
-.info-tip:focus-within .info-tip-bubble {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+.info-tip.align-right .info-tip-bubble {
+  left: auto;
+  right: 0;
+  transform: none;
 }
 
 .upload-info-tip {
@@ -2269,59 +2269,6 @@ button.side-nav-step.side-nav-step-current:hover {
 .export-message-success {
   color: var(--good);
   font-weight: 600;
-}
-
-/* ---------- Info tooltip ---------- */
-
-.info-tooltip {
-  position: relative;
-  display: inline-flex;
-  vertical-align: middle;
-  margin-left: 6px;
-}
-
-.info-tooltip-trigger {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent);
-  background: var(--surface);
-  color: var(--accent-dark);
-  font-size: 0.72rem;
-  font-weight: 700;
-  font-style: italic;
-  line-height: 1;
-  padding: 0;
-  cursor: pointer;
-}
-
-.info-tooltip-trigger:hover,
-.info-tooltip-trigger[aria-expanded="true"] {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-.info-tooltip-popover {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 8px);
-  left: 0;
-  width: max-content;
-  max-width: min(300px, calc(100vw - 56px));
-  background: var(--surface);
-  color: var(--muted);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md, 12px);
-  box-shadow: 0 8px 24px rgba(42, 40, 34, 0.16);
-  padding: 10px 14px;
-  font-size: 0.84rem;
-  font-weight: 400;
-  line-height: 1.45;
 }
 
 /* ---------- Footer ---------- */

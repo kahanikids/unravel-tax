@@ -13,6 +13,7 @@ import {
 import { EXPECTED_TRANSACTION_COLUMNS } from "../ingest/types";
 import type { CanonicalTransactionColumn } from "../ingest/headerMatching";
 import type { RawSheet } from "../lib";
+import { InfoTooltip } from "./InfoTooltip";
 
 /** Dates from Excel/HTML arrive as Date objects; flatten to a stable string so the reference sheet and saved session hold plain primitives. */
 function toRawSheet(headers: string[], records: Record<string, string | number | Date>[]): RawSheet {
@@ -331,22 +332,17 @@ export function UploadStep({
             handleFiles(event.dataTransfer.files);
           }}
         >
-          <span className="info-tip upload-info-tip">
-            <button type="button" className="info-tip-trigger" aria-label="About adding documents">
-              i
-            </button>
-            <span className="info-tip-bubble" role="tooltip">
-              Drop files here, or click to choose. You can pick several at once. Broker/AMC capital gains statements
-              are the main thing this step is for; bank interest, dividend, and MF statements can be added too.
-            </span>
-          </span>
+          <InfoTooltip label="About adding documents" className="upload-info-tip align-right">
+            Drop files here, or click to choose. You can pick several at once. Broker/AMC capital gains statements
+            are the main thing this step is for; bank interest, dividend, and MF statements can be added too.
+          </InfoTooltip>
           <label className="primary-button upload-button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            Choose files
+            Choose Files
             <input
               type="file"
               accept=".csv,.xlsx,.xls,.html,.htm,.tsv,.txt,.pdf"
@@ -366,7 +362,7 @@ export function UploadStep({
             </p>
           ) : (
             <button type="button" className="text-button" onClick={onChooseLocalFolder}>
-              Save to a local folder
+              Save To A Local Folder
             </button>
           )}
         </div>
@@ -398,7 +394,7 @@ export function UploadStep({
           />
           <div className="paste-actions">
             <button type="button" className="primary-button" onClick={handlePasteSubmit} disabled={!pasteText.trim()}>
-              Read this
+              Read This
             </button>
             <button
               type="button"
@@ -462,7 +458,7 @@ export function UploadStep({
           ) : null}
           <div className="paste-actions">
             <button type="button" className="primary-button" onClick={dismissSummaryGuidance}>
-              {summaryGuidance.figures ? "See these on your results" : "Got it, continue"}
+              {summaryGuidance.figures ? "See These On Your Results" : "Got It, Continue"}
             </button>
           </div>
         </div>
@@ -489,7 +485,7 @@ export function UploadStep({
               <div className="column-mapper">
                 <p>
                   <strong>Map columns:</strong> we couldn't match every required column automatically. Pick the right
-                  source column for each, then click Apply mapping.
+                  source column for each, then click Apply Mapping.
                 </p>
                 {pending.ingest.promptRoute ? (
                   <p className="column-mapper-alt">
@@ -502,7 +498,7 @@ export function UploadStep({
                         setPending(null);
                       }}
                     >
-                      use the AI extraction prompt
+                      Use The AI Extraction Prompt
                     </button>{" "}
                     instead.
                   </p>
@@ -536,7 +532,7 @@ export function UploadStep({
                   </label>
                 ))}
                 <button type="button" className="text-button" onClick={applyColumnMap}>
-                  Apply mapping
+                  Apply Mapping
                 </button>
               </div>
             ) : null}
@@ -647,7 +643,7 @@ export function UploadStep({
               <p className="column-mapper-alt">
                 Not a capital-gains statement (e.g. bank interest, dividends, or an MF holdings list)?{" "}
                 <button type="button" className="text-button" onClick={addAsReference}>
-                  Keep it as a reference sheet
+                  Keep It As A Reference Sheet
                 </button>
                 . Its rows go into your workbook as-is, without being tax-calculated.
               </p>
@@ -659,10 +655,10 @@ export function UploadStep({
                 onClick={confirmPending}
                 disabled={pending.transactions.length === 0}
               >
-                Looks right, add to my filing
+                Looks Right, Add To My Filing
               </button>
               <button type="button" className="text-button" onClick={discardPending}>
-                Discard this document
+                Discard This Document
               </button>
             </div>
           </div>
@@ -686,14 +682,14 @@ export function UploadStep({
 
       <div className="step-actions">
         <button type="button" className="primary-button" onClick={onContinue} disabled={documents.length === 0}>
-          Continue to your results
+          Continue To Your Results
         </button>
       </div>
       {documents.length === 0 ? (
         <p className="upload-empty-hint">
           Add a document to continue. Or, if you didn't sell any shares or mutual funds this year,{" "}
           <button type="button" className="text-button" onClick={onContinue}>
-            skip this step
+            Skip This Step
           </button>{" "}
           and type your dividend/interest figures in on the results screen.
         </p>

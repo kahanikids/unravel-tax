@@ -89,8 +89,8 @@ export const STEP_ORDER: AppStep[] = ["welcome", "orientation", "documents", "re
 
 export const STEP_LABELS: Record<AppStep, string> = {
   welcome: "Start",
-  orientation: "About you",
-  documents: "Add documents",
+  orientation: "About You",
+  documents: "Add Documents",
   results: "Current Filing"
 };
 

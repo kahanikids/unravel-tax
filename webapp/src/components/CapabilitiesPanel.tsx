@@ -80,7 +80,7 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
 
         <div className="modal-actions">
           <button type="button" className="primary-button" onClick={onClose}>
-            Got it
+            Got It
           </button>
         </div>
       </div>

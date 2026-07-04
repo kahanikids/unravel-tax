@@ -15,6 +15,7 @@ import {
 import type { InsurancePayoutCheck } from "../lib/insurance";
 import type { ForeignRemittanceTcs } from "../lib/foreignInvestments";
 import { RuleSourceLink } from "./RuleSourceLink";
+import { InfoTooltip } from "./InfoTooltip";
 import {
   DeductionBar,
   Donut,
@@ -236,7 +237,7 @@ export function Dashboard({
           </p>
         </div>
         <button type="button" className="view-toggle" onClick={onToggleAdvanced}>
-          {showAdvanced ? "Show simple view" : "Show full detail"}
+          {showAdvanced ? "Show Simple View" : "Show Full Detail"}
         </button>
       </div>
 
@@ -455,14 +456,14 @@ export function Dashboard({
             </div>
 
             <button type="button" className="text-button" onClick={onGoToFiling}>
-              Go to this year&apos;s results →
+              Go To This Year&apos;s Results →
             </button>
           </>
         ) : (
           <div className="dashboard-empty">
             <p>You haven&apos;t started this year&apos;s filing yet.</p>
             <button type="button" className="primary-button" onClick={onGoToFiling}>
-              Start this year&apos;s filing
+              Start This Year&apos;s Filing
             </button>
           </div>
         )}
@@ -724,24 +725,14 @@ function AddPastFilingForm({
     <details className="refine-panel dashboard-add" open={startOpen}>
       <summary>
         Add a past year
-        <span className="info-tip dashboard-add-tip">
-          <button
-            type="button"
-            className="info-tip-trigger"
-            aria-label="About adding a past year"
-            onClick={(event) => event.preventDefault()}
-          >
-            i
-          </button>
-          <span className="info-tip-bubble" role="tooltip">
-            Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
-            these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
-          </span>
-        </span>
+        <InfoTooltip label="About adding a past year" className="dashboard-add-tip">
+          Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
+          these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
+        </InfoTooltip>
       </summary>
       <div className="dashboard-add-body">
         <label className="secondary-button dashboard-json-button">
-          Prefill from ITR JSON or ITR-V PDF
+          Prefill From ITR JSON Or ITR-V PDF
           <input
             type="file"
             accept=".json,application/json,.pdf,application/pdf"

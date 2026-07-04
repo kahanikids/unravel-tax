@@ -40,7 +40,7 @@ const MOBILE_STEP_LABELS: Record<Exclude<AppStep, "welcome">, string> = {
 const UTILITY_ITEMS = [
   { key: "help", label: "Help", mobileLabel: "Help", Icon: IconHelp },
   { key: "features", label: "Features", mobileLabel: "Tools", Icon: IconSparkles },
-  { key: "tour", label: "Take a tour", mobileLabel: "Tour", Icon: IconCompass },
+  { key: "tour", label: "Take A Tour", mobileLabel: "Tour", Icon: IconCompass },
   { key: "legal", label: "Legal", mobileLabel: "Legal", Icon: IconShield }
 ] as const;
 

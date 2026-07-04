@@ -89,13 +89,13 @@ export function HelpPanel({ initialOpen = false, open: controlledOpen, onOpenCha
             <p>{DISCLAIMER_FULL}</p>
             <p>
               <a href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
-                Something wrong? Report it on GitHub
+                Something Wrong? Report It On GitHub
               </a>
             </p>
 
             <div className="modal-actions">
               <button type="button" className="primary-button" onClick={() => setOpen(false)}>
-                Got it
+                Got It
               </button>
             </div>
           </div>
