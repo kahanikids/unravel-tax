@@ -40,6 +40,8 @@ type PendingReview = {
   transactions: NormalizedTransaction[];
   warnings: IngestWarning[];
   columnAssignments: Partial<Record<CanonicalTransactionColumn, string>>;
+  /** Page-1 preview for a PDF upload, so the user can visually confirm this is the right document before it's used anywhere. */
+  thumbnailDataUrl?: string;
 };
 
 export function UploadStep({
@@ -54,8 +56,8 @@ export function UploadStep({
   onChooseLocalFolder
 }: {
   documents: UploadedDocument[];
-  onCommit: (transactions: NormalizedTransaction[], fileName: string) => void;
-  onCommitReference: (fileName: string, rawSheet: RawSheet) => void;
+  onCommit: (transactions: NormalizedTransaction[], fileName: string, sheetNameHint?: string) => void;
+  onCommitReference: (fileName: string, rawSheet: RawSheet, sheetNameHint?: string) => void;
   /** Push recognised annual totals into the results-screen "A few more numbers" fields, plus a net-gain-with-no-detail flag. */
   onApplySummaryFigures?: (figures: ExtractionSummaryFigures, netGainOnly: boolean) => void;
   onRemove: (index: number) => void;
@@ -65,7 +67,15 @@ export function UploadStep({
   onChooseLocalFolder: () => void;
 }) {
   const [pending, setPending] = useState<PendingReview | null>(null);
-  const [awaitingPaste, setAwaitingPaste] = useState<{ fileName: string; reason?: string } | null>(null);
+  const [awaitingPaste, setAwaitingPaste] = useState<{
+    fileName: string;
+    reason?: string;
+    extractedText?: string;
+    diagnosticSummary?: string;
+    suggestedSheetName?: string;
+    thumbnailDataUrl?: string;
+  } | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   // A paste that yielded only annual totals / a net-gain-only marker (no usable
   // transaction rows) lands here instead of dead-ending as a generic error.
   const [summaryGuidance, setSummaryGuidance] = useState<{
@@ -94,10 +104,14 @@ export function UploadStep({
       .catch(() => setExtractionPrompt("Could not load extraction prompt. See prompts/01-extract-statement.md in the repo."));
   }, [awaitingPaste, extractionPrompt]);
 
+  useEffect(() => {
+    setCopyStatus("idle");
+  }, [awaitingPaste?.fileName]);
+
   /** Opens the right review UI for a file. Returns true when it needs the user
    * (a review modal or the paste panel), false when nothing interactive opened
    * (a hard error) so a queued batch can move on to the next file. */
-  function openReview(fileName: string, result: IngestResult): boolean {
+  function openReview(fileName: string, result: IngestResult, thumbnailDataUrl?: string): boolean {
     const missingCols = EXPECTED_TRANSACTION_COLUMNS.filter(
       (col) => !Object.values(result.headerMap).includes(col)
     );
@@ -108,7 +122,8 @@ export function UploadStep({
         ingest: result,
         transactions: result.transactions,
         warnings: result.warnings,
-        columnAssignments: {}
+        columnAssignments: {},
+        thumbnailDataUrl
       });
       return true;
     }
@@ -119,13 +134,21 @@ export function UploadStep({
         ingest: result,
         transactions: [],
         warnings: result.warnings,
-        columnAssignments: {}
+        columnAssignments: {},
+        thumbnailDataUrl
       });
       return true;
     }
 
     if (result.promptRoute) {
-      setAwaitingPaste({ fileName, reason: result.promptRoute.reason });
+      setAwaitingPaste({
+        fileName,
+        reason: result.promptRoute.reason,
+        extractedText: result.promptRoute.extractedText,
+        diagnosticSummary: result.promptRoute.diagnosticSummary,
+        suggestedSheetName: result.promptRoute.suggestedSheetName,
+        thumbnailDataUrl
+      });
       return true;
     }
 
@@ -133,11 +156,24 @@ export function UploadStep({
     return false;
   }
 
+  async function generatePdfThumbnail(file: File): Promise<string | undefined> {
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      return undefined;
+    }
+    try {
+      const { renderPdfThumbnail } = await import("../ingest/pdfExtract");
+      return await renderPdfThumbnail(await file.arrayBuffer());
+    } catch {
+      return undefined;
+    }
+  }
+
   async function processFile(file: File) {
     setParsing(true);
     let opened = false;
     try {
-      opened = openReview(file.name, await parseFile(file));
+      const [result, thumbnailDataUrl] = await Promise.all([parseFile(file), generatePdfThumbnail(file)]);
+      opened = openReview(file.name, result, thumbnailDataUrl);
     } catch {
       setError(`Could not read ${file.name}.`);
     } finally {
@@ -183,10 +219,14 @@ export function UploadStep({
     if (result.transactions.length > 0) {
       setPending({
         fileName: awaitingPaste.fileName,
-        ingest: result,
+        // The AI-extraction JSON knows nothing about the original PDF's own
+        // metadata, so carry the hint found before routing here across the
+        // paste round trip.
+        ingest: { ...result, suggestedSheetName: awaitingPaste.suggestedSheetName },
         transactions: result.transactions,
         warnings: result.warnings,
-        columnAssignments: {}
+        columnAssignments: {},
+        thumbnailDataUrl: awaitingPaste.thumbnailDataUrl
       });
       setAwaitingPaste(null);
       setPasteText("");
@@ -258,7 +298,7 @@ export function UploadStep({
     if (!pending || pending.transactions.length === 0) {
       return;
     }
-    onCommit(pending.transactions, pending.fileName);
+    onCommit(pending.transactions, pending.fileName, pending.ingest.suggestedSheetName);
     setPending(null);
     advanceQueue();
   }
@@ -270,7 +310,11 @@ export function UploadStep({
     if (!pending) {
       return;
     }
-    onCommitReference(pending.fileName, toRawSheet(pending.ingest.sourceHeaders, pending.ingest.sourceRecords));
+    onCommitReference(
+      pending.fileName,
+      toRawSheet(pending.ingest.sourceHeaders, pending.ingest.sourceRecords),
+      pending.ingest.suggestedSheetName
+    );
     setPending(null);
     advanceQueue();
   }
@@ -372,19 +416,61 @@ export function UploadStep({
 
       {awaitingPaste ? (
         <div className="paste-panel">
+          {awaitingPaste.thumbnailDataUrl ? (
+            <img
+              className="pdf-thumbnail"
+              src={awaitingPaste.thumbnailDataUrl}
+              alt={`Page 1 preview of ${awaitingPaste.fileName}`}
+            />
+          ) : null}
           <p>
             <strong>{awaitingPaste.fileName}</strong> needs the AI extraction step.
             {awaitingPaste.reason ? ` ${awaitingPaste.reason}` : " This app couldn't read it on its own."}
           </p>
-          <ol className="paste-steps">
-            <li>Copy the prompt below.</li>
-            <li>Paste it into your AI chat of choice, along with the document.</li>
-            <li>Paste the JSON it gives you back here.</li>
-          </ol>
-          <details className="extraction-prompt">
-            <summary>Show the extraction prompt</summary>
-            <pre>{extractionPrompt || "Loading prompt…"}</pre>
-          </details>
+          {awaitingPaste.diagnosticSummary ? (
+            <p className="ingest-warnings">{awaitingPaste.diagnosticSummary}</p>
+          ) : null}
+          {awaitingPaste.extractedText ? (
+            <>
+              <ol className="paste-steps">
+                <li>Copy the prompt and document text below (one button does both).</li>
+                <li>Paste it into your AI chat of choice - no need to attach the file again, we already read it.</li>
+                <li>Paste the JSON it gives you back here.</li>
+              </ol>
+              <div className="paste-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => {
+                    const bundle = `${extractionPrompt}\n\n== DOCUMENT TEXT (read from ${awaitingPaste.fileName} by this app) ==\n\n${awaitingPaste.extractedText}`;
+                    navigator.clipboard
+                      .writeText(bundle)
+                      .then(() => setCopyStatus("copied"))
+                      .catch(() => setError("Could not copy to clipboard. Use \"Show the extraction prompt\" below and copy manually."));
+                  }}
+                >
+                  {copyStatus === "copied" ? "Copied!" : "Copy Prompt + Document Text"}
+                </button>
+              </div>
+              <details className="extraction-prompt">
+                <summary>Show the extraction prompt and document text separately</summary>
+                <pre>{extractionPrompt || "Loading prompt…"}</pre>
+                <pre>{awaitingPaste.extractedText}</pre>
+              </details>
+            </>
+          ) : (
+            <>
+              <ol className="paste-steps">
+                <li>Copy the prompt below.</li>
+                <li>Paste it into your AI chat of choice, along with the document.</li>
+                <li>Paste the JSON it gives you back here.</li>
+              </ol>
+              <details className="extraction-prompt">
+                <summary>Show the extraction prompt</summary>
+                <pre>{extractionPrompt || "Loading prompt…"}</pre>
+              </details>
+            </>
+          )}
           <textarea
             className="paste-textarea"
             value={pasteText}
@@ -401,6 +487,7 @@ export function UploadStep({
               className="text-button"
               onClick={() => {
                 setAwaitingPaste(null);
+                setCopyStatus("idle");
                 advanceQueue();
               }}
             >
@@ -470,6 +557,14 @@ export function UploadStep({
             <h3 id="confirm-title">Here's what we read from {pending.fileName}</h3>
             <p>Fix anything that's wrong, or remove a row entirely, before it's used anywhere.</p>
 
+            {pending.thumbnailDataUrl ? (
+              <img
+                className="pdf-thumbnail"
+                src={pending.thumbnailDataUrl}
+                alt={`Page 1 preview of ${pending.fileName}`}
+              />
+            ) : null}
+
             {pending.warnings.length > 0 ? (
               <details className="ingest-warnings" open>
                 <summary>{pending.warnings.length} note(s) about this file</summary>
@@ -494,7 +589,14 @@ export function UploadStep({
                       type="button"
                       className="text-button"
                       onClick={() => {
-                        setAwaitingPaste({ fileName: pending.fileName, reason: pending.ingest.promptRoute?.reason });
+                        setAwaitingPaste({
+                          fileName: pending.fileName,
+                          reason: pending.ingest.promptRoute?.reason,
+                          extractedText: pending.ingest.promptRoute?.extractedText,
+                          diagnosticSummary: pending.ingest.promptRoute?.diagnosticSummary,
+                          suggestedSheetName: pending.ingest.promptRoute?.suggestedSheetName ?? pending.ingest.suggestedSheetName,
+                          thumbnailDataUrl: pending.thumbnailDataUrl
+                        });
                         setPending(null);
                       }}
                     >

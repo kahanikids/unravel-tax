@@ -13,6 +13,8 @@ import {
   type IngestResult,
   type NormalizedTransaction
 } from "../src/ingest";
+import { extractPdfText } from "../src/ingest/pdfExtract";
+import { parseItrVText } from "../src/lib/pastFilings";
 
 const repoRoot = resolve(import.meta.dirname, "..", "..");
 const fixturesDir = resolve(repoRoot, "fixtures");
@@ -269,6 +271,47 @@ export async function main() {
 
   console.log(
     "Validated webapp ingestion: CSV, Excel, HTML, structured text match; fuzzy/alt-date headers parse; missing columns warn + route; PDF/free-form routes to prompt; JSON extraction paste maps transactions + recognises annual figures (incl. Indian lakh-grouped ₹ amounts) + flags net-gain-only + errors on invalid JSON, markdown-table fallback still parses; edited rows reclassify correctly."
+  );
+
+  // Regression test for a real bug: the pre-fix pdf.js text extraction joined
+  // every text item in raw content-stream order with a single space, so a PDF
+  // whose generator draws a row's value before its label (a real-world
+  // multi-column layout quirk, not contrived) produced text where
+  // numberAfterLabel's "label, then the next number" regex would skip the
+  // real value and grab a later field's number instead - silently wrong data,
+  // not a crash. sample-itr-v.pdf (fictitious data) has two such rows on
+  // purpose. The fix groups text by y-position and sorts by x within each
+  // line before handing it to parseItrVText.
+  const itrVBuffer = await readFile(resolve(fixturesDir, "sample-itr-v.pdf"));
+  const itrVArrayBuffer = itrVBuffer.buffer.slice(itrVBuffer.byteOffset, itrVBuffer.byteOffset + itrVBuffer.byteLength);
+  const { text: itrVText } = await extractPdfText(itrVArrayBuffer);
+  const itrV = parseItrVText(itrVText);
+  if (!itrV.ok) {
+    throw new Error(`Expected sample-itr-v.pdf to parse, got: ${itrV.message}`);
+  }
+  if (itrV.fields.assessmentYear !== "2024-25") {
+    throw new Error(`Expected AY 2024-25 from sample-itr-v.pdf, got ${itrV.fields.assessmentYear}.`);
+  }
+  if (itrV.fields.itrForm !== "ITR-2") {
+    throw new Error(`Expected ITR-2 from sample-itr-v.pdf, got ${itrV.fields.itrForm}.`);
+  }
+  if (itrV.fields.grossTotalIncome !== 1_500_000) {
+    throw new Error(
+      `Expected gross total income 1,500,000 from sample-itr-v.pdf (its row draws the value before the label, on purpose), got ${itrV.fields.grossTotalIncome}. This is the exact bug the y/x-sorted PDF text extraction fixes.`
+    );
+  }
+  if (itrV.fields.totalTaxPaid !== 180_000) {
+    throw new Error(`Expected total taxes paid 180,000 from sample-itr-v.pdf, got ${itrV.fields.totalTaxPaid}.`);
+  }
+  if (itrV.fields.refundOrPayable !== 5_000) {
+    throw new Error(`Expected a 5,000 refund from sample-itr-v.pdf, got ${itrV.fields.refundOrPayable}.`);
+  }
+  if (itrV.fields.regime !== "new") {
+    throw new Error(`Expected the new regime from sample-itr-v.pdf, got ${itrV.fields.regime}.`);
+  }
+
+  console.log(
+    "Validated PDF text extraction end-to-end against sample-itr-v.pdf: y/x-position sorting correctly reconstructs a row whose value is drawn before its label in the file's own content stream, matching a real pdf.js/parseItrVText mis-extraction this fixture pins down."
   );
 }
 

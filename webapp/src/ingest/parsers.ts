@@ -82,12 +82,16 @@ export function detectIngestionKind(fileName: string, mimeType = ""): IngestionK
   return "pdf_or_freeform";
 }
 
-export function routePdfOrFreeform(reason: string): PromptRoute {
+export function routePdfOrFreeform(
+  reason: string,
+  extra?: { extractedText?: string; diagnosticSummary?: string; suggestedSheetName?: string }
+): PromptRoute {
   return {
     kind: "pdf_or_freeform",
     route: "guided_prompt",
     prompt: "prompts/01-extract-statement.md",
-    reason
+    reason,
+    ...extra
   };
 }
 
@@ -517,18 +521,28 @@ export async function parseFile(file: File): Promise<IngestResult> {
 
   if (kind === "pdf_or_freeform" && file.name.toLowerCase().endsWith(".pdf")) {
     try {
-      const { extractPdfText } = await import("./pdfExtract");
-      const text = await extractPdfText(await file.arrayBuffer());
+      const { extractPdfText, diagnosePdfText } = await import("./pdfExtract");
+      const { text, pageCount, sheetNameHint, mergedDocumentsNote } = await extractPdfText(await file.arrayBuffer());
+      const diagnostic = diagnosePdfText(text, pageCount, mergedDocumentsNote);
       const result = parseTextSource(file.name, text, file.type);
       if (result.transactions.length > 0) {
-        return { ...result, kind: "pdf_or_freeform" };
+        return { ...result, kind: "pdf_or_freeform", suggestedSheetName: sheetNameHint };
       }
-      return {
-        ...result,
-        kind: "pdf_or_freeform",
-        promptRoute: result.promptRoute ?? routePdfOrFreeform("Could not find a transaction table in this PDF.")
-      };
-    } catch {
+      const promptRoute = routePdfOrFreeform(
+        result.promptRoute?.reason ?? "Could not find a transaction table in this PDF.",
+        { extractedText: text, diagnosticSummary: diagnostic.summary, suggestedSheetName: sheetNameHint }
+      );
+      return { ...result, kind: "pdf_or_freeform", promptRoute };
+    } catch (error) {
+      const { PdfPasswordError } = await import("./pdfExtract");
+      if (error instanceof PdfPasswordError) {
+        return emptyResult(
+          "pdf_or_freeform",
+          routePdfOrFreeform(
+            "This PDF is password-protected. Open it, save/print an unprotected copy (most PDF readers and phone apps can do this), and upload that instead."
+          )
+        );
+      }
       return emptyResult("pdf_or_freeform", routePdfOrFreeform("Could not read text from this PDF."));
     }
   }

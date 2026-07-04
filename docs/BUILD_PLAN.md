@@ -162,6 +162,7 @@ unravel-tax/
     sample-broker-statement.html  <- includes 2-3 noise tables alongside the real one, mirrors real-world broker reports
     sample-broker-statement.xlsx
     sample-pdf-extracted-text.txt <- what a PDF text-extraction step typically returns, for testing the AI-assisted path
+    sample-itr-v.pdf              <- synthetic ITR-V acknowledgement (fictitious data), tests the real pdf.js text-extraction pipeline end-to-end, including label/value pairs deliberately out of left-to-right order in the file's own content stream
 ```
 
 ## 7. The single entry-point conversation
