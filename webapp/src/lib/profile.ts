@@ -205,7 +205,7 @@ function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCavea
       id: "nri_mf_dtaa_unknown_country",
       label: "MF capital gains — DTAA depends on where you live",
       note:
-        "A 2025 ITAT ruling held that mutual fund units are not company shares, so gains may be exempt in India if your country's DTAA has a residual clause (Singapore, UAE, etc.). Tell us your country of residence in About you so we can flag the right treaty. The tax figures below still use Indian domestic rates until a CA applies the exemption."
+        "A 2025 ITAT ruling held that mutual fund units are not company shares, so gains may be exempt in India if your country's DTAA has a residual clause (Singapore, UAE, etc.). Tell us your country of residence in About You so we can flag the right treaty. The tax figures below still use Indian domestic rates until a CA applies the exemption."
     };
   }
   if (flags.nriCountry === "Other") {

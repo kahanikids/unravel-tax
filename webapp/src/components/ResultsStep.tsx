@@ -342,10 +342,13 @@ export function ResultsStep({
           <h3 id="handover-title">
             Your files
             <InfoTooltip label="What to do with these files">
-              Give the CA Summary to your CA. Keep the full workbook for your own records, especially for carrying
-              forward any losses next year.
+              CA Summary is the short handover file. Full Workbook is the detailed record behind it.
             </InfoTooltip>
           </h3>
+          <p className="step-lede">
+            Give the CA Summary to your CA. Keep the Full Workbook for your own records, especially for carrying
+            forward any losses next year.
+          </p>
           <p>
             {openIssueCount === 0
               ? "Both handover files are ready."

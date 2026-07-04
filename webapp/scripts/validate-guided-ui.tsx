@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { renderToString } from "react-dom/server";
 import App from "../src/App";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
@@ -1422,6 +1423,6 @@ export function main() {
   checkItrVTextParsing();
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }

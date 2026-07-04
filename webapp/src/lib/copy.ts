@@ -156,9 +156,9 @@ export const ITR_FORM_REASONS: Record<string, string> = {
 export type HowToStep = { title: string; detail: string };
 
 export const HOW_IT_WORKS: HowToStep[] = [
-  { title: "About you", detail: "A few quick questions, plain language, no tax jargon." },
+  { title: "About You", detail: "A few quick questions, plain language, no tax jargon." },
   { title: "Your checklist", detail: "Exactly what documents to gather, and why each one's needed." },
-  { title: "Add documents", detail: "Add them one at a time; confirm what we read before it's used." },
+  { title: "Add Documents", detail: "Add them one at a time; confirm what we read before it's used." },
   { title: "Your results", detail: "What you owe, what's missing, and whether to self-file or get a CA." }
 ];
 

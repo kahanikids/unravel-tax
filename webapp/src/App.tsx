@@ -712,6 +712,10 @@ function App() {
     setStep(target);
   }
 
+  function goHome() {
+    goToStep("welcome");
+  }
+
   async function handleChooseFolder() {
     const handle = await chooseLocalFolder();
     if (handle) {
@@ -788,10 +792,7 @@ function App() {
         current={step}
         furthestIndex={furthestStepIndex}
         onNavigate={goToStep}
-        onGoHome={() => {
-          setShowDashboard(false);
-          setStep("welcome");
-        }}
+        onGoHome={goHome}
         onShowDashboard={() => setShowDashboard(true)}
         dashboardActive={showDashboard}
         onShowHelp={() => setShowHelp(true)}
@@ -804,10 +805,7 @@ function App() {
         <button
           type="button"
           className="brand-mark-button"
-          onClick={() => {
-            setShowDashboard(false);
-            setStep("welcome");
-          }}
+          onClick={goHome}
           aria-label="Back to home"
         >
           <img

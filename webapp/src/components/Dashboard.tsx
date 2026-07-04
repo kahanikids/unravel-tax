@@ -732,7 +732,7 @@ function AddPastFilingForm({
     <details className="refine-panel dashboard-add" open={startOpen}>
       <summary>
         Add a past year
-        <InfoTooltip label="About adding a past year" className="dashboard-add-tip">
+        <InfoTooltip label="About adding a past year" className="dashboard-add-tip align-right">
           Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
           these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
         </InfoTooltip>

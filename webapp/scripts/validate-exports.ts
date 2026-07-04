@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import Papa from "papaparse";
 import readWorkbook from "read-excel-file/universal";
 import {
@@ -235,6 +236,6 @@ function normalizeAmount(value: unknown) {
   return Number.isNaN(number) ? String(value) : number;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }

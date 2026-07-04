@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { caSummaryRows, reconciliationReport } from "../src/lib";
 import { parseCsvText } from "../src/ingest";
 import { ruleCatalog } from "../src/rules";
@@ -81,6 +82,6 @@ export async function main() {
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }
