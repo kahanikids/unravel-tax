@@ -1,5 +1,16 @@
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
 
+async function loadPdfJs(): Promise<typeof import("pdfjs-dist")> {
+  if (typeof window === "undefined") {
+    return import("pdfjs-dist/legacy/build/pdf.mjs");
+  }
+
+  const pdfjs = await import("pdfjs-dist");
+  const workerModule = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+  pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
+  return pdfjs;
+}
+
 /**
  * pdf.js gives text items with no inherent line breaks - joining them with a
  * space alone collapses an entire page into one line and destroys row
@@ -134,11 +145,7 @@ export type PdfTextExtraction = {
 };
 
 export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtraction> {
-  const pdfjs = await import("pdfjs-dist");
-  if (typeof window !== "undefined") {
-    const workerModule = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-    pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
-  }
+  const pdfjs = await loadPdfJs();
 
   let pdf;
   try {
@@ -199,11 +206,7 @@ export async function renderPdfThumbnail(buffer: ArrayBuffer, maxWidth = 200): P
     return undefined;
   }
   try {
-    const pdfjs = await import("pdfjs-dist");
-    if (typeof window !== "undefined") {
-      const workerModule = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-      pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
-    }
+    const pdfjs = await loadPdfJs();
     const pdf = await pdfjs.getDocument({ data: buffer }).promise;
     const page = await pdf.getPage(1);
     const baseViewport = page.getViewport({ scale: 1 });

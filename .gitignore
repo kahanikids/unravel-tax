@@ -28,6 +28,11 @@ Thumbs.db
 # Scratch / one-off scripts
 *.tmp
 *.tmp.*
+scripts/render-open-graph.py
+
+# Manually uploaded GitHub social preview assets
+webapp/public/open-graph-right-illustration.png
+webapp/public/repository-open-graph.png
 
 # Internal dev docs (not needed by users, the app, or CI)
 WORKING_PLAN.md
