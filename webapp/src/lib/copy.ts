@@ -273,8 +273,8 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     label: "Carrying forward last year's filing",
-    status: "planned",
-    detail: "Importing a previous year's exported workbook to reuse your profile and carry-forward losses isn't built yet."
+    status: "available",
+    detail: "On the welcome screen, \"Import Last Year's Workbook\" reads a previously exported Unravel Tax workbook (.xlsx) and prefills this year's profile answers plus dividends, interest, and carry-forward-loss figures - never overwriting anything you've already typed. A workbook exported before this existed has no profile to prefill, but its figures still import."
   },
   {
     label: "NRI, HUF, and single-parent coverage",
@@ -290,6 +290,11 @@ export const CAPABILITIES: Capability[] = [
     label: "Loans, home-loan principal, and a rented-out home",
     status: "available",
     detail: "Capped old-regime interest deductions for self-occupied home, 80EEA, 80E, and 80EEB loans; home-loan principal counted inside the shared 80C ceiling; and the full let-out house-property computation (30% standard deduction, uncapped interest, the ₹2 lakh loss set-off cap old regime, no set-off new regime), all folded into the regime comparison and the CA Summary. Business-use vehicle interest and multiple let-out properties are not modelled."
+  },
+  {
+    label: "HUF partition/clubbing, NRI repatriation, Schedule FA builder",
+    status: "planned",
+    detail: "The bigger remaining gaps: an HUF coparcener/member data model with Section 64(2) transfer clubbing and partition tracking, NRI repatriation-limit tracking (a FEMA/banking question more than a tax-return one), and a full Schedule FA builder (a multi-part schedule needing a per-asset data model this tool doesn't collect today). Bring these to a CA for now."
   }
 ];
 

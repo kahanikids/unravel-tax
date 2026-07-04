@@ -4,15 +4,18 @@ import { fileURLToPath } from "node:url";
 import Papa from "papaparse";
 import readWorkbook from "read-excel-file/universal";
 import {
+  applyPreviousWorkbookToOrientation,
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
   buildFullWorkbookExport,
   caSummaryRows,
+  parsePreviousWorkbook,
   rateInputsFromRule,
   type ExportState
 } from "../src/lib";
 import { calculationRows, fixtureTransactions } from "../src/demo/sampleState";
 import { ruleCatalog } from "../src/rules";
+import { BLANK_ORIENTATION, type OrientationAnswers } from "../src/state/types";
 
 const repoRoot = resolve(import.meta.dirname, "..", "..");
 const dryRunDir = resolve(repoRoot, "dry-runs", "m1c");
@@ -176,8 +179,73 @@ export async function main() {
     throw new Error("Reference sheet should preserve the raw upload's data rows verbatim.");
   }
 
+  // Round trip: a Full Workbook exported WITH a profile (synthetic, never
+  // real data) must let a later session read that profile and the
+  // carry-forward-loss/dividend/interest figures back out, without
+  // evaluating any of the CA Summary sheet's capital-gains formulas.
+  const syntheticOrientation: OrientationAnswers = {
+    ...BLANK_ORIENTATION,
+    residency: "nri",
+    nriCountry: "United Arab Emirates",
+    huf: false,
+    seniorCitizen: true,
+    singleParent: false,
+    incomeSources: ["capital_gains", "dividends"],
+    multipleEmployers: false,
+    hraClaimed: null,
+    foreignAssets: true
+  };
+  const exportWithOrientation = await buildFullWorkbookExport({ ...exportState, orientation: syntheticOrientation });
+  const importedBuffer = await exportWithOrientation.blob.arrayBuffer();
+  const imported = await parsePreviousWorkbook(importedBuffer);
+  if (!imported.foundAnything) {
+    throw new Error("Expected the round-tripped workbook import to find the orientation sheet and CA Summary figures.");
+  }
+  if (imported.orientation?.residency !== "nri" || imported.orientation?.nriCountry !== "United Arab Emirates") {
+    throw new Error(`Expected residency/nriCountry to round-trip, got ${JSON.stringify(imported.orientation)}.`);
+  }
+  if (imported.orientation?.seniorCitizen !== true || imported.orientation?.huf !== false) {
+    throw new Error(`Expected boolean Yes/No answers to round-trip, got ${JSON.stringify(imported.orientation)}.`);
+  }
+  if (imported.orientation?.hraClaimed !== undefined) {
+    throw new Error("An unanswered (null) orientation field should round-trip as absent, not a guessed value.");
+  }
+  if (imported.orientation?.incomeSources?.join(",") !== "capital_gains,dividends") {
+    throw new Error(`Expected income sources to round-trip, got ${JSON.stringify(imported.orientation?.incomeSources)}.`);
+  }
+  if (imported.dividends !== 4000 || imported.interestOtherIncome !== 24000 || imported.carryForwardLossesAvailable !== 500) {
+    throw new Error(`Expected the known synthetic figures to round-trip, got ${JSON.stringify(imported)}.`);
+  }
+
+  // Merging into a blank current orientation fills every field the import
+  // found; merging into an already-answered orientation must never clobber it.
+  const mergedIntoBlank = applyPreviousWorkbookToOrientation(BLANK_ORIENTATION, imported.orientation);
+  if (mergedIntoBlank.residency !== "nri" || mergedIntoBlank.seniorCitizen !== true) {
+    throw new Error(`Expected merge into a blank orientation to fill every found field, got ${JSON.stringify(mergedIntoBlank)}.`);
+  }
+  const alreadyAnswered = { ...BLANK_ORIENTATION, residency: "resident" as const };
+  const mergedIntoAnswered = applyPreviousWorkbookToOrientation(alreadyAnswered, imported.orientation);
+  if (mergedIntoAnswered.residency !== "resident") {
+    throw new Error("Importing a workbook should never overwrite an orientation answer already given.");
+  }
+  if (mergedIntoAnswered.seniorCitizen !== true) {
+    throw new Error("Importing a workbook should still fill in fields that are still blank.");
+  }
+
+  // A workbook exported without an orientation (or an older one predating the
+  // Orientation sheet) must degrade gracefully - no orientation to prefill,
+  // but the CA Summary figures still come through.
+  const exportWithoutOrientation = await buildFullWorkbookExport(exportState);
+  const importedWithoutOrientation = await parsePreviousWorkbook(await exportWithoutOrientation.blob.arrayBuffer());
+  if (importedWithoutOrientation.orientation !== null) {
+    throw new Error("A workbook with no Orientation sheet should report orientation as null, not a guessed profile.");
+  }
+  if (importedWithoutOrientation.dividends !== 4000) {
+    throw new Error("CA Summary figures should still import even without an Orientation sheet.");
+  }
+
   console.log(
-    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), and multi-file sheet naming + raw reference passthrough."
+    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), multi-file sheet naming + raw reference passthrough, and the previous-workbook import round trip (orientation profile, carry-forward losses, dividends, interest, never-clobber merge, and graceful no-Orientation-sheet fallback)."
   );
 }
 

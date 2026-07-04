@@ -1676,6 +1676,7 @@ function checkWelcomeDisclaimerBanner() {
       onShowTour={noop}
       localFolderSupported={false}
       onRestoreFromFolder={noop}
+      onImportPreviousWorkbook={noop}
     />
   );
   assertIncludes(html, WELCOME_DISCLAIMER_BANNER);
