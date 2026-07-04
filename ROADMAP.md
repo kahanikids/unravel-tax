@@ -14,10 +14,16 @@ Built today: the Section 234B estimator, plus an instalment-by-instalment
 Section 234C estimate from what was paid in each window (with the 12%/36%
 safe harbours and the Rs 10,000 floor).
 
-Still pending: 234C precision from income dated by quarter. The section's
-proviso excludes mid-year dividends/capital gains from earlier instalments,
-so the current estimate is a whole-year ceiling (the tool says so with every
-figure).
+Built today: 234C quarter precision for listed-equity capital gains, which
+have exact transaction dates and a flat, slab-independent tax rate. Each
+instalment's required cumulative tax now separates the equity capital-gains
+share (dated precisely) from ordinary income (still spread by instalment
+fraction).
+
+Still pending: the same precision for dividends, intraday gains, and debt
+mutual fund gains, which are taxed at slab rates and would need full income
+context this tool doesn't have to date precisely. The estimate for those
+stays a whole-year ceiling (the tool says so with every figure).
 
 ### Profile-specific calculations
 
@@ -26,23 +32,31 @@ caveats for NRI, HUF, senior-citizen, and single-parent profiles. NRE exempt
 interest is calculated, and minor-income clubbing is calculated including the
 Section 64(1A) exclusions (minor's own work/skill, 80U disability).
 
+Built today: NRI dividend tax at the flat Section 115A/DTAA rate (whichever
+is lower), and NRO interest/dividend TDS reconciliation against the
+treaty withholding rate for 16 countries.
+
 Still pending:
 
-- NRI DTAA relief applied to tax numbers
-- NRI NRO TDS-rate precision and refund reconciliation
+- NRO interest taxed precisely at slab rate (currently ordinary slab
+  treatment plus TDS reconciliation, without the same flat-rate precision
+  dividends now have)
 - NRI repatriation tracking
 - HUF coparcener/member data model
 - HUF Section 64(2) transfer clubbing
 - HUF partition tracking
 - Schedule SPI placement
 
+The HUF items and NRI repatriation tracking have design proposals in
+[docs/DESIGN-remaining-gaps.md](docs/DESIGN-remaining-gaps.md) awaiting
+sign-off before implementation.
+
 ### Prior-year carry-forward
 
 Built today: dashboard history can import some ITR JSON and ITR-V PDF fields,
-or accept manual past-year entries.
-
-Still pending: importing a previous Unravel Tax full workbook to reuse profile
-answers and carry-forward loss figures in the current-year filing.
+or accept manual past-year entries. A previous Unravel Tax full workbook can
+also be imported from the welcome screen to prefill profile answers and
+carry-forward loss figures for the current-year filing.
 
 ### PDF extraction
 
@@ -57,11 +71,20 @@ Built today: disclosure reminders and lightweight estimates for insurance
 payout premium caps, foreign assets, and LRS TCS with the purpose's rate
 branch (investment/gift, education/medical, education-loan funded).
 
+Built today: policy-level taxable insurance payout computation, including
+the sum-assured-ratio test and the aggregate-annual-premium cap pooled
+across all policies of the same type.
+
 Still pending:
 
-- Policy-level taxable insurance payout computation
+- Combining ULIP long-term capital gains with other equity long-term gains
+  under one exemption threshold, rather than treating them separately
 - Schedule FA builder and foreign income computation
 - Form 67 foreign-tax-credit inputs
+
+Schedule FA has a design proposal in
+[docs/DESIGN-remaining-gaps.md](docs/DESIGN-remaining-gaps.md) awaiting
+sign-off before implementation.
 
 ### Loans and house property
 
