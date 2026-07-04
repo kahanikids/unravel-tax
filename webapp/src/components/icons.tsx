@@ -113,6 +113,16 @@ export function IconPlus({ className }: IconProps) {
   );
 }
 
+export function IconHome({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className} aria-hidden="true">
+      <path d="M4 11.5L12 4l8 7.5" />
+      <path d="M6 10v9h12v-9" />
+      <path d="M10 19v-6h4v6" />
+    </svg>
+  );
+}
+
 export function IconShield({ className }: IconProps) {
   return (
     <svg {...svgProps} className={className} aria-hidden="true">

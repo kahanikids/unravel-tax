@@ -2583,14 +2583,14 @@ button.side-nav-step.side-nav-step-current:hover {
 
   /* Flatten both groups into the bottom bar's flex row. The info actions
      (help/features/tour/legal) still drop out here - they'd overcrowd the bar
-     and are reachable from the header "?" - but Dashboard stays, as a real
-     navigable destination worth one tap on mobile. */
+     and are reachable from the header "?" - but Home and Dashboard stay, as
+     real navigable destinations worth one tap on mobile. */
   .side-nav-steps,
   .side-nav-utility {
     display: contents;
   }
 
-  .side-nav-util:not(.side-nav-dashboard) {
+  .side-nav-util:not(.side-nav-home):not(.side-nav-dashboard) {
     display: none;
   }
 

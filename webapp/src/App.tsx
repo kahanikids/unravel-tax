@@ -779,6 +779,10 @@ function App() {
         current={step}
         furthestIndex={furthestStepIndex}
         onNavigate={goToStep}
+        onGoHome={() => {
+          setShowDashboard(false);
+          setStep("welcome");
+        }}
         onShowDashboard={() => setShowDashboard(true)}
         dashboardActive={showDashboard}
         onShowHelp={() => setShowHelp(true)}
