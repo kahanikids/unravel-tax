@@ -55,3 +55,7 @@ jobs:
       - name: Run all webapp validators
         working-directory: webapp
         run: npm run validate:all
+
+      - name: Run validate suite under Vitest with coverage
+        working-directory: webapp
+        run: npm run test:coverage

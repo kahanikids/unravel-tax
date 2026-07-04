@@ -21,7 +21,7 @@ type ReferenceRow = {
   Amount: string;
 };
 
-async function main() {
+export async function main() {
   const cgRule = ruleCatalog.capitalGainsEquity;
   const exportState: ExportState = {
     documents: [{ name: "sample-broker-statement.csv", transactions: fixtureTransactions }],
@@ -235,4 +235,6 @@ function normalizeAmount(value: unknown) {
   return Number.isNaN(number) ? String(value) : number;
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

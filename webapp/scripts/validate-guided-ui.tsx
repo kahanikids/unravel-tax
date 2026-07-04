@@ -92,8 +92,8 @@ function checkWelcomeScreen() {
   // "Show value first" redesign: welcome no longer funnels straight into
   // orientation. It offers 3 equally-weighted entry paths as cards.
   assertIncludes(html, "Checklist");
-  assertIncludes(html, "Add documents");
-  assertIncludes(html, "Get to know the tool");
+  assertIncludes(html, "Add Documents");
+  assertIncludes(html, "Get To Know The Tool");
   assertIncludes(html, 'class="entry-path-cards"');
   const entryPathCardCount = html.split('class="entry-path-card"').length - 1;
   if (entryPathCardCount !== 3) {
@@ -144,7 +144,7 @@ function checkWelcomeScreen() {
   // The side nav shows on every screen, including welcome - as an inert
   // preview there (nothing's been reached yet), never a way to skip ahead.
   assertIncludes(html, 'class="side-nav"');
-  assertIncludes(html, "About you");
+  assertIncludes(html, "About You");
   // The Dashboard is a standalone destination in the side nav's utility group,
   // reachable from every screen (including welcome), never a way to skip ahead
   // in the filing flow.
@@ -163,8 +163,8 @@ function checkWelcomeScreen() {
   // saved session exists. This render has none (Node has no localStorage), so
   // it should be absent here - and it's confirmed present in the saved-session
   // render inside checkSideNavReflectsResumedSession().
-  if (html.includes("Start over")) {
-    throw new Error("'Start over' should only render on the welcome screen when a saved session exists.");
+  if (html.includes("Start Over")) {
+    throw new Error("'Start Over' should only render on the welcome screen when a saved session exists.");
   }
 
   console.log("Validated welcome screen: 3 entry-path cards (Checklist / Add documents / Get to know the tool), no dev/milestone jargon leaking into the UI.");
@@ -231,8 +231,8 @@ function checkSideNavReflectsResumedSession() {
     // ...and because a saved session exists, the resume-banner offers both
     // "Resume where you left off" and "Start over" (moved here from the
     // orientation card, so it sits next to Resume).
-    assertIncludes(html, "Resume where you left off");
-    assertIncludes(html, "Start over");
+    assertIncludes(html, "Resume Where You Left Off");
+    assertIncludes(html, "Start Over");
 
     // ...but orientation/documents are already clickable in the side nav,
     // since they're all <= the saved furthestStepIndex.
@@ -278,7 +278,7 @@ function checkHelpPanel() {
   assertIncludes(closedHtml, 'aria-label="How this works');
 
   const html = renderToString(<HelpPanel initialOpen />);
-  assertIncludes(html, "Report it on GitHub");
+  assertIncludes(html, "Report It On GitHub");
   assertIncludes(html, REPORT_ISSUE_URL);
 
   if (HOW_IT_WORKS.length === 0 || HOW_IT_WORKS.some((step) => !step.title.trim() || !step.detail.trim())) {
@@ -343,8 +343,8 @@ function checkOrientationForm() {
   );
   assertIncludes(html, "Question 1 of");
   assertIncludes(html, "Are you living in India right now");
-  if (html.includes("Start over")) {
-    throw new Error("'Start over' no longer belongs in the orientation card; it moved to the welcome resume-banner.");
+  if (html.includes("Start Over")) {
+    throw new Error("'Start Over' no longer belongs in the orientation card; it moved to the welcome resume-banner.");
   }
   if (html.includes(">Skip<")) {
     throw new Error("Residency decides the whole checklist/rules branch and should not be skippable.");
@@ -365,7 +365,7 @@ function checkOrientationForm() {
   assertIncludes(summaryHtml, "I live in India");
   assertIncludes(summaryHtml, "Salary or pension");
   assertIncludes(summaryHtml, ">Continue<");
-  assertIncludes(summaryHtml, ">Update answers<");
+  assertIncludes(summaryHtml, ">Update Answers<");
 
   console.log("Validated orientation flow: blank answers start the one-question flow at residency; saved answers show an editable recap first; Start over is no longer in the card.");
 }
@@ -425,7 +425,7 @@ function checkUploadStep() {
     />
   );
   assertIncludes(html, "Add your documents");
-  assertIncludes(html, "Choose files");
+  assertIncludes(html, "Choose Files");
   assertIncludes(html, "broker-statement.csv");
   if (html.includes("Here's what we read from")) {
     throw new Error("The extraction review modal should be closed until a document is actually parsed.");
@@ -500,11 +500,11 @@ function checkResultsStepDefaultsToSimple() {
   );
 
   assertIncludes(html, "Get a CA to review this before filing");
-  assertIncludes(html, "Show full detail");
+  assertIncludes(html, "Show Full Detail");
   assertIncludes(html, "Download CA Summary CSV");
   assertIncludes(html, "Download full workbook");
 
-  if (html.includes("Show simple view")) {
+  if (html.includes("Show Simple View")) {
     throw new Error("First-time default view should be simple; advanced detail must require the explicit toggle.");
   }
 
@@ -542,7 +542,7 @@ function checkResultsStepAdvancedToggle() {
       onChooseLocalFolder={noop}
     />
   );
-  assertIncludes(html, "Show simple view");
+  assertIncludes(html, "Show Simple View");
   assertIncludes(html, "sample.csv");
   console.log("Validated results step: advanced toggle reveals full detail and the documents ledger.");
 }
@@ -1174,8 +1174,8 @@ function checkDashboardDestination() {
   assertIncludes(simpleHtml, "Entered");
   // Income-growth insight is derived, not fabricated: 1.0M -> 1.2M = +20%.
   assertIncludes(simpleHtml, "+20%");
-  assertIncludes(simpleHtml, "Show full detail");
-  if (simpleHtml.includes("Show simple view")) {
+  assertIncludes(simpleHtml, "Show Full Detail");
+  if (simpleHtml.includes("Show Simple View")) {
     throw new Error("Dashboard should default to the simple view; advanced detail must require the explicit toggle.");
   }
   if (simpleHtml.includes(">Effective rate<")) {
@@ -1214,10 +1214,10 @@ function checkDashboardDestination() {
   );
   assertIncludes(emptyHtml, "No past years yet");
   assertIncludes(emptyHtml, "Add a past year");
-  assertIncludes(emptyHtml, "Prefill from ITR JSON");
+  assertIncludes(emptyHtml, "Prefill From ITR JSON");
   // The add-past-filing upload now also accepts an ITR-V acknowledgement PDF.
   assertIncludes(emptyHtml, "ITR-V PDF");
-  assertIncludes(emptyHtml, "Start this year");
+  assertIncludes(emptyHtml, "Start This Year");
 
   console.log(
     "Validated dashboard destination: this-year panel, year-over-year history table + derived growth, JSON/manual add form, simple-by-default with advanced toggle."
@@ -1363,7 +1363,7 @@ function checkWelcomeDisclaimerBanner() {
   );
   assertIncludes(html, WELCOME_DISCLAIMER_BANNER);
   assertIncludes(html, 'class="welcome-disclaimer-banner"');
-  assertIncludes(html, "Got it");
+  assertIncludes(html, "Got It");
   console.log("Validated welcome disclaimer banner: Stage-1 dismissible CA line renders on first visit.");
 }
 
@@ -1378,8 +1378,8 @@ function checkErrorBoundaryRecovery() {
   for (const phrase of [
     "Something went wrong",
     "Your filing may still be saved in this browser",
-    "Reload this page",
-    "Report an issue"
+    "Reload This Page",
+    "Report An Issue"
   ]) {
     if (!source.includes(phrase)) {
       throw new Error(`ErrorBoundary is missing recovery copy: ${phrase}`);
@@ -1394,7 +1394,7 @@ function assertIncludes(value: string, expected: string) {
   }
 }
 
-function main() {
+export function main() {
   checkWelcomeScreen();
   checkWelcomeDisclaimerBanner();
   checkErrorBoundaryRecovery();
@@ -1422,4 +1422,6 @@ function main() {
   checkItrVTextParsing();
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
