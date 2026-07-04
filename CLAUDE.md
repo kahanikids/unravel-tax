@@ -56,12 +56,14 @@ condensed, always-apply subset of that context.
 ## Build order
 Milestones are sequential and each is a checkpoint against the user
 journey, not just a feature list (docs/BUILD_PLAN.md Section 12). Do not
-start Milestone 4 (the web app) before Milestones 1–3 are done and
-validated:
+start a later milestone before the earlier ones are done and validated:
 1. Template workbook + guided chat prompt pack (manual loop, all profiles)
 2. Colab notebook (zero-install alternative, lightweight formats only)
 3. Reconciliation engine + rules-as-data (rules/*.json)
 4. Web app (webapp/ — do not scaffold early, see docs/BUILD_PLAN.md Section 13)
+
+All four milestones are built today (see README.md "Status"); this order
+still governs how any future milestone gets added.
 
 ## When rules change (after a Budget or Finance Act amendment)
 Update the relevant rules/*.json and rules/*.md together, bump the
