@@ -4,19 +4,23 @@
 
 <h1 align="center">Unravel Tax</h1>
 
-<p align="center"><strong>Feed it your tax documents in whatever mess they're in — get back a filing you actually understand.</strong></p>
+<p align="center"><strong>Feed it your tax documents in whatever mess they're in, and get back a filing you actually understand.</strong></p>
 
 <p align="center">
+  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/status-beta-yellow.svg" alt="Status: beta"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg" alt="Contributions welcome"></a>
   <a href="https://github.com/kahanikids/unravel-tax/actions/workflows/validate.yml"><img src="https://github.com/kahanikids/unravel-tax/actions/workflows/validate.yml/badge.svg" alt="Validate status"></a>
   <a href="https://kahanikids.github.io/unravel-tax/"><img src="https://img.shields.io/badge/Try%20it-live%20demo-orange.svg" alt="Live demo"></a>
 </p>
 
-Unravel Tax turns PDFs, Excel files, CSVs, and saved webpages into two clean
-files: a concise summary for your CA, and a full workbook to keep. No signup,
-no install, no server — it runs entirely in your browser, and nothing you
-enter ever leaves your device.
+Unravel Tax is a lightweight Indian income tax filing helper that turns
+PDFs, Excel files, CSVs, and saved webpages into a clearer checklist,
+supported tax calculations, risk flags, a CA Summary, and a full workbook to
+keep. It helps taxpayers organize messy statements, spot missing documents,
+check AIS and TDS mismatches, compare tax regimes, and hand clean numbers to
+a CA, with no signup, no install, no server, and everything staying in your
+browser.
 
 **Not tax advice. Not affiliated with the Income Tax Department, CBDT, or
 Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
@@ -44,7 +48,7 @@ Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
 
 ## Start here
 
-**[Open the webapp](https://kahanikids.github.io/unravel-tax/)** — no install,
+**[Open the webapp](https://kahanikids.github.io/unravel-tax/)**: no install,
 no signup. Everything happens in your browser.
 
 **Manual path (no browser app):** copy
@@ -63,7 +67,7 @@ That's the whole journey. The sections below are background.
 - **Infer, don't interrogate.** Plain-language questions once; the tool works
   out which checklist and forms apply.
 - **Spreadsheet engine, chat guide.** Arithmetic is deterministic. AI only reads
-  messy documents and explains results — never does the maths.
+  messy documents and explains results; it never does the maths.
 - **Consequences before numbers.** Missing items and risk flags come before totals.
 - **Simple by default.** Full detail is one click away, never the starting view.
 - **Your file is the record.** No account, no server. Export the workbook and keep it.
@@ -87,12 +91,12 @@ You don't need to know Git, or how GitHub Discussions work, to talk to us.
 
 **[Open a new issue](https://github.com/kahanikids/unravel-tax/issues/new/choose)**,
 pick whichever option sounds closest to what happened, and describe it in
-your own words — "this number looked wrong," "I got stuck on this screen,"
+your own words: "this number looked wrong," "I got stuck on this screen,"
 "can you support X." That's the whole process. Someone will read it and
 reply; you don't need to format anything or tag anyone.
 
 If it's a security issue (something that could expose someone's data),
-please don't post it publicly — see [SECURITY.md](SECURITY.md) instead.
+please don't post it publicly. See [SECURITY.md](SECURITY.md) instead.
 
 ---
 
@@ -141,4 +145,4 @@ calculated yet. Highlights:
 ## License
 
 MIT. See [LICENSE](LICENSE). Fork and adapt freely; keep the copyright notice.
-Not tax or legal advice — see [DISCLAIMER.md](DISCLAIMER.md).
+Not tax or legal advice. See [DISCLAIMER.md](DISCLAIMER.md).
