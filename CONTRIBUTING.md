@@ -18,8 +18,8 @@ Use the [issue templates](https://github.com/kahanikids/unravel-tax/issues/new/c
 
 For security issues, see [SECURITY.md](SECURITY.md) — do not post exploits publicly.
 
-For general questions (not bugs), use **GitHub Discussions** once enabled on
-the repo (Settings → General → Discussions → Q&A category).
+For general questions (not bugs), use the closest issue template for now.
+GitHub Discussions can be enabled later if question volume grows.
 
 Read [DISCLAIMER.md](DISCLAIMER.md) before relying on any output for filing.
 

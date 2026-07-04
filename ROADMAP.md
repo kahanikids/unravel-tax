@@ -29,8 +29,8 @@ exists (NRE exempt interest, minor's-income clubbing). Still deferred:
 - HUF partition and Section 64(2) transfer clubbing (needs asset-level inputs)
 - Single-parent clubbing exceptions (minor's own skill income, Section 80U)
 
-The webapp states these gaps plainly in "Things to check" and points complex
-cases to a CA.
+The webapp states these gaps plainly in the final "Before you export" check
+and points complex cases to a CA.
 
 ## How to help
 

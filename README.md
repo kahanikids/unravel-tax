@@ -53,8 +53,8 @@ no signup. Everything happens in your browser.
 
 **Manual path (no browser app):** copy
 [prompts/00-master-guide.md](prompts/00-master-guide.md) into an AI chat and
-use the [template workbook](templates/master-template.gsheet-link.md) (for now,
-open `templates/excel-export/UnravelTax-Template.xlsx` directly).
+use the Excel workbook in `templates/excel-export/UnravelTax-Template.xlsx`.
+The Google Sheets master link is not published yet.
 
 **Run locally:** clone this repo, then `cd webapp`, `npm install`, `npm run dev`.
 
@@ -72,15 +72,12 @@ That's the whole journey. The sections below are background.
 - **Simple by default.** Full detail is one click away, never the starting view.
 - **Your file is the record.** No account, no server. Export the workbook and keep it.
 
-More detail: [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md) (maintainers).
-
----
-
 ## Profiles (NRI, HUF, senior citizens, single parents)
 
 The webapp orients each profile and builds the right checklist. NRE exempt
 interest and minor's-income clubbing are partially calculated; full NRI/HUF
-paths remain deferred. The app says so in "Things to check". See
+paths remain deferred. The app says so in the final "Before you export" check.
+See
 [ROADMAP.md](ROADMAP.md) and `rules/` for profile-specific rules.
 
 ---
@@ -118,14 +115,18 @@ new features.
 
 ## Status
 
-Milestones 1–4 are built and covered by `npm run validate:all` in `webapp/`.
-"Built" means the code passes checks, not that every profile is fully
-calculated yet. Highlights:
+Milestones 1–4 are built. The webapp validator suite runs through
+`npm run validate:all`, and the same validators can run under Vitest with
+`npm run test` or `npm run test:coverage`. "Built" means the code passes
+checks, not that every profile is fully calculated yet. Highlights:
 
 - Hosted free on GitHub Pages; redeploys on push to `main` when `webapp/` changes
 - Resident + senior-citizen calculations from `rules/*.json`
 - Partial NRI/single-parent numbers; HUF regime comparison explicitly skipped
-- Fuzzy header matching, PDF text extraction path, session cache, local-folder save (Chromium)
+- CSV, Excel, saved-webpage, structured-text, and guided PDF/free-text ingestion
+- Editable extraction review, fuzzy header matching, summary-only JSON guidance, and local-folder save on supported Chromium browsers
+- CA Summary CSV/XLSX plus full workbook export, generated entirely in the browser
+- AIS/Form 26AS/TDS reconciliation, old-vs-new regime comparison with break-even, loan deduction inputs, partial 234B interest estimate, and year-over-year dashboard
 
 ---
 
@@ -139,8 +140,6 @@ calculated yet. Highlights:
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [ROADMAP.md](ROADMAP.md) | Planned features |
-| [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md) | Full product and architecture spec (maintainers) |
-| [docs/SYSTEM_SPEC.md](docs/SYSTEM_SPEC.md) | Problem statement, data model, rules library (maintainers) |
 
 ## License
 

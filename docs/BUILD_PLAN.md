@@ -149,7 +149,7 @@ unravel-tax/
   notebooks/
     build-workbook.ipynb          <- Colab-ready, see Milestone 2
 
-  webapp/                         <- Milestone 4, do not start early, see Section 13
+  webapp/                         <- shipped primary static app, see Section 13
     src/
       ingest/                     <- format router + per-format parsers, see Section 3
       rules/
@@ -396,6 +396,11 @@ only in one place).
 
 ## 12. Milestones — each one is a checkpoint against the journey, not just a feature list
 
+> Current status: these milestones are historical checkpoints, not a current
+> build queue. All four have shipped, and the hosted static webapp is now the
+> primary user path. Keep this section for acceptance criteria and sequencing
+> rationale, but treat the original sequencing gate as completed.
+
 **Milestone 1 — Template + guided chat (Stages 1–7, manual loop).**
 Build: the Google Sheets template (all tabs from the data model, Section 14), the Excel export equivalent, `prompts/00-master-guide.md` plus its two sub-prompts (now format-agnostic per Section 3), the full `rules/` library.
 Done when: a first-time tester who has never seen the project can go from opening the README to holding a completed CA Summary export, submitting at least one document in a non-CSV format, using only the README and the guided chat, without ever being unsure what to do next. Test this literally — hand it to someone who hasn't seen the repo and watch where they hesitate.
@@ -409,12 +414,22 @@ Build: the checklist-diffing and cross-check logic from Section 4 as plain, unit
 Done when: given a partially-filled checklist state and a set of ingested documents, the engine correctly reports what's missing and flags at least one deliberately-planted figure mismatch in the test fixtures.
 
 **Milestone 4 — Web app (Stages 2–7, in-browser, simple/advanced views).**
-Build: static React/TypeScript app per the stack in Section 13, the format router from Section 3 (native HTML/CSV/Excel parsing, PDF/free-text routed to the AI step), the reconciliation engine wired into a persistent "things to check" panel, the simple/advanced toggle from Section 5, both export formats generated in-browser.
+Build: static React/TypeScript app per the stack in Section 13, the format router from Section 3 (native HTML/CSV/Excel parsing, PDF/free-text routed to the AI step), the reconciliation engine wired into the final confidence check, the simple/advanced toggle from Section 5, both export formats generated in-browser.
 Done when: the same "hand it to a first-time tester" check from Milestone 1 passes using the web app instead of the chat+sheet combination; a side-by-side run of the fixture set through both the spreadsheet and the web app produces identical numbers; and a tester can find the advanced view without being told it exists, but isn't shown it by default.
 
-Build strictly in this order. Do not start Milestone 4 before Milestones 1–3 are done and validated — the spreadsheet+chat path has to work standalone, both because it ships value immediately and because it's the reference implementation the web app gets checked against.
+Historical sequencing rule: the milestones were built in this order so the
+manual loop could act as the reference implementation before the webapp. For
+current work, preserve parity with the manual path where it matters, but make
+user-facing product changes in `webapp/` first unless the issue specifically
+targets templates, notebooks, or prompts.
 
-## 13. Web app stack (Milestone 4 only — do not build early)
+## 13. Web app stack
+
+> Current implementation: the shipped app is Vite + React + TypeScript in
+> `webapp/`. It uses `papaparse` for CSV, `read-excel-file` for Excel,
+> native `DOMParser` for saved webpages, `pdfjs-dist` only for raw PDF text
+> extraction, `write-excel-file` for XLSX exports, and Vitest coverage around
+> the validator suite. It remains static, browser-only, and account-free.
 
 | Layer | Choice | Reasoning |
 |---|---|---|

@@ -10,8 +10,10 @@ only when those steps are needed.
 The two supporting prompts are included for maintainers and for users who
 need to restart a specific step:
 
-- `01-extract-statement.md` extracts one document into clean transaction
-  rows.
+- `01-extract-statement.md` extracts one document into the JSON shape the
+  webapp expects: transaction rows where available, annual figures where
+  available, and an explicit warning when only a net capital-gain total is
+  present.
 - `02-explain-my-results.md` explains completed results in plain language.
 
 Do not ask users to choose between these prompts up front. The master

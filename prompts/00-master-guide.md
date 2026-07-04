@@ -31,8 +31,9 @@ Do not ask all of these at once. Have a short back-and-forth.
 Step 2 — Tell them what they need, don't ask them to choose. Based on
 their answers:
 - Tell them which sections of the template spreadsheet apply to them —
-  don't list all options, just state what's relevant, briefly explaining
-  why in one sentence per item.
+  or which webapp path to take if they are using the browser tool. Don't
+  list all options, just state what's relevant, briefly explaining why in
+  one sentence per item.
 - Give them a document checklist, personal to their answers, ordered
   easiest-to-hardest to obtain, each item stating why it's needed.
 - State plainly any risk triggers from rules/filing-mistakes-and-penalties.md

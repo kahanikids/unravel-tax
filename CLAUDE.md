@@ -54,16 +54,19 @@ condensed, always-apply subset of that context.
 3. Everything else.
 
 ## Build order
-Milestones are sequential and each is a checkpoint against the user
-journey, not just a feature list (docs/BUILD_PLAN.md Section 12). Do not
-start a later milestone before the earlier ones are done and validated:
+Historical milestone order still matters when reconstructing why the repo
+is shaped this way (docs/BUILD_PLAN.md Section 12), but the milestones
+below are already built. Do not treat the old "do not start yet" language
+in BUILD_PLAN.md as current blocking guidance for `webapp/` work:
 1. Template workbook + guided chat prompt pack (manual loop, all profiles)
 2. Colab notebook (zero-install alternative, lightweight formats only)
 3. Reconciliation engine + rules-as-data (rules/*.json)
-4. Web app (webapp/ — do not scaffold early, see docs/BUILD_PLAN.md Section 13)
+4. Web app (webapp/)
 
-All four milestones are built today (see README.md "Status"); this order
-still governs how any future milestone gets added.
+For current work, the hosted static webapp is the primary product surface.
+Keep templates, notebooks, prompts, rules, and docs aligned with it, but
+make user-facing behavior changes in `webapp/` first unless the request is
+specifically about the manual path.
 
 ## When rules change (after a Budget or Finance Act amendment)
 Update the relevant rules/*.json and rules/*.md together, bump the
