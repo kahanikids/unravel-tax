@@ -82,12 +82,16 @@ export function detectIngestionKind(fileName: string, mimeType = ""): IngestionK
   return "pdf_or_freeform";
 }
 
-export function routePdfOrFreeform(reason: string): PromptRoute {
+export function routePdfOrFreeform(
+  reason: string,
+  extra?: { extractedText?: string; diagnosticSummary?: string }
+): PromptRoute {
   return {
     kind: "pdf_or_freeform",
     route: "guided_prompt",
     prompt: "prompts/01-extract-statement.md",
-    reason
+    reason,
+    ...extra
   };
 }
 
@@ -517,17 +521,18 @@ export async function parseFile(file: File): Promise<IngestResult> {
 
   if (kind === "pdf_or_freeform" && file.name.toLowerCase().endsWith(".pdf")) {
     try {
-      const { extractPdfText } = await import("./pdfExtract");
-      const text = await extractPdfText(await file.arrayBuffer());
+      const { extractPdfText, diagnosePdfText } = await import("./pdfExtract");
+      const { text, pageCount } = await extractPdfText(await file.arrayBuffer());
+      const diagnostic = diagnosePdfText(text, pageCount);
       const result = parseTextSource(file.name, text, file.type);
       if (result.transactions.length > 0) {
         return { ...result, kind: "pdf_or_freeform" };
       }
-      return {
-        ...result,
-        kind: "pdf_or_freeform",
-        promptRoute: result.promptRoute ?? routePdfOrFreeform("Could not find a transaction table in this PDF.")
-      };
+      const promptRoute = routePdfOrFreeform(
+        result.promptRoute?.reason ?? "Could not find a transaction table in this PDF.",
+        { extractedText: text, diagnosticSummary: diagnostic.summary }
+      );
+      return { ...result, kind: "pdf_or_freeform", promptRoute };
     } catch {
       return emptyResult("pdf_or_freeform", routePdfOrFreeform("Could not read text from this PDF."));
     }

@@ -684,7 +684,7 @@ function AddPastFilingForm({
     const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
     try {
       const parsed = isPdf
-        ? parseItrVText(await (await import("../ingest/pdfExtract")).extractPdfText(await file.arrayBuffer()))
+        ? parseItrVText((await (await import("../ingest/pdfExtract")).extractPdfText(await file.arrayBuffer())).text)
         : parseItrJson(await file.text());
       setFields({ ...BLANK_PAST_FILING_FIELDS, ...parsed.fields });
       setAutoRead(new Set(parsed.readFields));

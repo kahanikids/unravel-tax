@@ -65,7 +65,13 @@ export function UploadStep({
   onChooseLocalFolder: () => void;
 }) {
   const [pending, setPending] = useState<PendingReview | null>(null);
-  const [awaitingPaste, setAwaitingPaste] = useState<{ fileName: string; reason?: string } | null>(null);
+  const [awaitingPaste, setAwaitingPaste] = useState<{
+    fileName: string;
+    reason?: string;
+    extractedText?: string;
+    diagnosticSummary?: string;
+  } | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   // A paste that yielded only annual totals / a net-gain-only marker (no usable
   // transaction rows) lands here instead of dead-ending as a generic error.
   const [summaryGuidance, setSummaryGuidance] = useState<{
@@ -93,6 +99,10 @@ export function UploadStep({
       .then(setExtractionPrompt)
       .catch(() => setExtractionPrompt("Could not load extraction prompt. See prompts/01-extract-statement.md in the repo."));
   }, [awaitingPaste, extractionPrompt]);
+
+  useEffect(() => {
+    setCopyStatus("idle");
+  }, [awaitingPaste?.fileName]);
 
   /** Opens the right review UI for a file. Returns true when it needs the user
    * (a review modal or the paste panel), false when nothing interactive opened
@@ -125,7 +135,12 @@ export function UploadStep({
     }
 
     if (result.promptRoute) {
-      setAwaitingPaste({ fileName, reason: result.promptRoute.reason });
+      setAwaitingPaste({
+        fileName,
+        reason: result.promptRoute.reason,
+        extractedText: result.promptRoute.extractedText,
+        diagnosticSummary: result.promptRoute.diagnosticSummary
+      });
       return true;
     }
 
@@ -376,15 +391,50 @@ export function UploadStep({
             <strong>{awaitingPaste.fileName}</strong> needs the AI extraction step.
             {awaitingPaste.reason ? ` ${awaitingPaste.reason}` : " This app couldn't read it on its own."}
           </p>
-          <ol className="paste-steps">
-            <li>Copy the prompt below.</li>
-            <li>Paste it into your AI chat of choice, along with the document.</li>
-            <li>Paste the JSON it gives you back here.</li>
-          </ol>
-          <details className="extraction-prompt">
-            <summary>Show the extraction prompt</summary>
-            <pre>{extractionPrompt || "Loading prompt…"}</pre>
-          </details>
+          {awaitingPaste.diagnosticSummary ? (
+            <p className="ingest-warnings">{awaitingPaste.diagnosticSummary}</p>
+          ) : null}
+          {awaitingPaste.extractedText ? (
+            <>
+              <ol className="paste-steps">
+                <li>Copy the prompt and document text below (one button does both).</li>
+                <li>Paste it into your AI chat of choice - no need to attach the file again, we already read it.</li>
+                <li>Paste the JSON it gives you back here.</li>
+              </ol>
+              <div className="paste-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => {
+                    const bundle = `${extractionPrompt}\n\n== DOCUMENT TEXT (read from ${awaitingPaste.fileName} by this app) ==\n\n${awaitingPaste.extractedText}`;
+                    navigator.clipboard
+                      .writeText(bundle)
+                      .then(() => setCopyStatus("copied"))
+                      .catch(() => setError("Could not copy to clipboard. Use \"Show the extraction prompt\" below and copy manually."));
+                  }}
+                >
+                  {copyStatus === "copied" ? "Copied!" : "Copy Prompt + Document Text"}
+                </button>
+              </div>
+              <details className="extraction-prompt">
+                <summary>Show the extraction prompt and document text separately</summary>
+                <pre>{extractionPrompt || "Loading prompt…"}</pre>
+                <pre>{awaitingPaste.extractedText}</pre>
+              </details>
+            </>
+          ) : (
+            <>
+              <ol className="paste-steps">
+                <li>Copy the prompt below.</li>
+                <li>Paste it into your AI chat of choice, along with the document.</li>
+                <li>Paste the JSON it gives you back here.</li>
+              </ol>
+              <details className="extraction-prompt">
+                <summary>Show the extraction prompt</summary>
+                <pre>{extractionPrompt || "Loading prompt…"}</pre>
+              </details>
+            </>
+          )}
           <textarea
             className="paste-textarea"
             value={pasteText}
@@ -401,6 +451,7 @@ export function UploadStep({
               className="text-button"
               onClick={() => {
                 setAwaitingPaste(null);
+                setCopyStatus("idle");
                 advanceQueue();
               }}
             >
@@ -494,7 +545,12 @@ export function UploadStep({
                       type="button"
                       className="text-button"
                       onClick={() => {
-                        setAwaitingPaste({ fileName: pending.fileName, reason: pending.ingest.promptRoute?.reason });
+                        setAwaitingPaste({
+                          fileName: pending.fileName,
+                          reason: pending.ingest.promptRoute?.reason,
+                          extractedText: pending.ingest.promptRoute?.extractedText,
+                          diagnosticSummary: pending.ingest.promptRoute?.diagnosticSummary
+                        });
                         setPending(null);
                       }}
                     >
