@@ -12,6 +12,7 @@ import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
 import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
 import { RegimeComparisonPanel } from "./RegimeComparisonPanel";
+import { InfoTooltip } from "./InfoTooltip";
 import type { UploadedDocument } from "./UploadStep";
 
 function formatAmount(value: number) {
@@ -338,17 +339,19 @@ export function ResultsStep({
 
       <section className="handover-panel" aria-labelledby="handover-title">
         <div>
-          <h3 id="handover-title">Your files</h3>
+          <h3 id="handover-title">
+            Your files
+            <InfoTooltip label="What to do with these files">
+              Give the CA Summary to your CA. Keep the full workbook for your own records, especially for carrying
+              forward any losses next year.
+            </InfoTooltip>
+          </h3>
           <p>
             {openIssueCount === 0
               ? "Both handover files are ready."
               : `${openIssueCount} thing${openIssueCount === 1 ? "" : "s"} still open. Export anyway, or go back and check.`}
           </p>
         </div>
-        <p className="closing-note">
-          Give the CA Summary to your CA. Keep the full workbook for your own records, especially for carrying forward
-          any losses next year.
-        </p>
         <div className="export-actions">
           <button
             type="button"
