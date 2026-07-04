@@ -95,6 +95,18 @@ ol {
   overflow-y: auto;
 }
 
+/* Home and Dashboard are real navigable destinations, not filing steps or
+   info panels, so they sit in their own cluster at the top of the rail,
+   above the numbered steps. */
+.side-nav-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
 .side-nav-steps {
   display: flex;
   flex-direction: column;
@@ -2585,6 +2597,7 @@ button.side-nav-step.side-nav-step-current:hover {
      (help/features/tour/legal) still drop out here - they'd overcrowd the bar
      and are reachable from the header "?" - but Home and Dashboard stay, as
      real navigable destinations worth one tap on mobile. */
+  .side-nav-primary,
   .side-nav-steps,
   .side-nav-utility {
     display: contents;

@@ -78,6 +78,46 @@ export function SideNav({
 
   return (
     <nav className="side-nav" aria-label="Filing steps">
+      <div className="side-nav-primary" aria-label="Destinations">
+        {/* Home returns to the welcome screen - the same destination as the
+            header brand mark, surfaced here too since the header logo isn't
+            always within easy reach on mobile. */}
+        <button
+          type="button"
+          className={
+            !dashboardActive && current === "welcome"
+              ? "side-nav-step side-nav-util side-nav-home side-nav-step-current"
+              : "side-nav-step side-nav-util side-nav-home"
+          }
+          onClick={onGoHome}
+          aria-current={!dashboardActive && current === "welcome" ? "page" : undefined}
+          title="Home"
+        >
+          <IconHome className="side-nav-icon" />
+          <span className="side-nav-label side-nav-label-full">Home</span>
+          <span className="side-nav-label side-nav-label-mobile">Home</span>
+        </button>
+        {/* Dashboard is a standalone destination, not a filing step - it sits
+            outside STEP_ORDER so the guided flow keeps its single next action,
+            but it's a real navigable view (with an active state), unlike the
+            info panels below it. */}
+        <button
+          type="button"
+          className={
+            dashboardActive
+              ? "side-nav-step side-nav-util side-nav-dashboard side-nav-step-current"
+              : "side-nav-step side-nav-util side-nav-dashboard"
+          }
+          onClick={onShowDashboard}
+          aria-current={dashboardActive ? "page" : undefined}
+          title="Dashboard"
+        >
+          <IconDashboard className="side-nav-icon" />
+          <span className="side-nav-label side-nav-label-full">Dashboard</span>
+          <span className="side-nav-label side-nav-label-mobile">Dash</span>
+        </button>
+      </div>
+
       <div className="side-nav-steps">
       {RAIL_STEPS.map((step) => {
         const index = STEP_ORDER.indexOf(step);
@@ -116,44 +156,7 @@ export function SideNav({
       })}
       </div>
 
-      <div className="side-nav-utility" aria-label="Destinations, help and information">
-        {/* Home returns to the welcome screen - the same destination as the
-            header brand mark, surfaced here too since the header logo isn't
-            always within easy reach on mobile. */}
-        <button
-          type="button"
-          className={
-            !dashboardActive && current === "welcome"
-              ? "side-nav-step side-nav-util side-nav-home side-nav-step-current"
-              : "side-nav-step side-nav-util side-nav-home"
-          }
-          onClick={onGoHome}
-          aria-current={!dashboardActive && current === "welcome" ? "page" : undefined}
-          title="Home"
-        >
-          <IconHome className="side-nav-icon" />
-          <span className="side-nav-label side-nav-label-full">Home</span>
-          <span className="side-nav-label side-nav-label-mobile">Home</span>
-        </button>
-        {/* Dashboard is a standalone destination, not a filing step - it sits
-            outside STEP_ORDER so the guided flow keeps its single next action,
-            but it's a real navigable view (with an active state), unlike the
-            info panels below it. */}
-        <button
-          type="button"
-          className={
-            dashboardActive
-              ? "side-nav-step side-nav-util side-nav-dashboard side-nav-step-current"
-              : "side-nav-step side-nav-util side-nav-dashboard"
-          }
-          onClick={onShowDashboard}
-          aria-current={dashboardActive ? "page" : undefined}
-          title="Dashboard"
-        >
-          <IconDashboard className="side-nav-icon" />
-          <span className="side-nav-label side-nav-label-full">Dashboard</span>
-          <span className="side-nav-label side-nav-label-mobile">Dash</span>
-        </button>
+      <div className="side-nav-utility" aria-label="Help and information">
         {UTILITY_ITEMS.map(({ key, label, mobileLabel, Icon }) => (
           <button
             type="button"
