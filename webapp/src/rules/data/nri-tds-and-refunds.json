@@ -7,11 +7,17 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-04",
+    "note": "Section 195 requires TDS at 30% on NRO interest and Section 115A sets a flat 20% rate on dividends paid to a non-resident (other than Section 115-O company dividends) - both well-established, long-standing rates. The capital-gains TDS rates mirror the domestic Sections 111A/112A rates, since Indian brokers/AMCs withhold at the same rate that applies to the final tax. Cross-checked against the Income Tax Department's own non-resident taxation guide and multiple current NRI filing guides; re-check only if a Budget/Finance Act amendment is reported.",
+    "source_type": "secondary"
   },
   "source_refs": [
+    "Income Tax Act, 1961, Section 195 (TDS on payments to a non-resident)",
+    "Income Tax Act, 1961, Section 115A (tax on dividends, interest, royalties, fees for a non-resident)",
+    "https://www.incometaxindia.gov.in/documents/20117/42998/Taxation-of-Non-Resident_2026-03-19_04-28-57_6dbd99_en.pdf",
+    "https://www.incometaxindia.gov.in/taxation-of-dividend-and-interest",
+    "rules/nri-dtaa.json (per-country treaty rates, applied when more beneficial than these domestic defaults)",
     "SYSTEM_SPEC.md Sections 9.2, 9.3"
   ],
   "values": {
@@ -19,7 +25,12 @@
     "resident_capital_gains_tds_at_source": false,
     "stt_paid_equity_ltcg_tds_rate": 0.125,
     "stt_paid_equity_stcg_tds_rate": 0.2,
+    "nro_interest_tds_rate": 0.3,
+    "nro_dividend_tds_rate": 0.2,
+    "nro_dividend_tds_section": "115A",
+    "nro_interest_tds_section": "195",
     "form_13_lower_or_nil_deduction_certificate": true,
-    "requires_tds_reconciliation": true
+    "requires_tds_reconciliation": true,
+    "note": "These are the domestic default rates before any DTAA relief - a Tax Residency Certificate and Form 10F let the payer withhold at a lower treaty rate instead, where rules/nri-dtaa.json's nro_withholding_rates records one for the country. Section 115A dividend tax is always the lower of this 20% domestic rate and the treaty rate, never the higher one, even if the treaty rate happens to exceed 20%. Surcharge and health-and-education cess are not included in any rate here."
   }
 }

@@ -21,6 +21,7 @@ import {
   computeForeignRemittanceTcs,
   computeLetOutHouseProperty,
   computeInsurancePayoutCheck,
+  computeNriDividendTax,
   computeLoanDeductions,
   deriveProfileFlags,
   downloadExport,
@@ -286,6 +287,13 @@ function App() {
     (trigger) => trigger.severity === "form-changing" && !acknowledgedTriggerIds.includes(trigger.id)
   );
 
+  // NRI dividends are taxed at a flat Section 115A/DTAA rate, not slab -
+  // computed once here so both the CA Summary override and the new row below
+  // use the same figure.
+  const nriDividendTax = flags.nri
+    ? computeNriDividendTax(supplementalFigures.dividends, flags.nriCountry, ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds)
+    : null;
+
   const baseRows = caSummaryRows(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection, supplementalFigures);
   const rows = baseRows.map((row) => {
     if (row.head === "Recommended ITR form") {
@@ -297,6 +305,13 @@ function App() {
     }
     if (row.head === "CA review recommendation") {
       return { ...row, amount: caRecommendation.headline, notes: caRecommendation.reason };
+    }
+    if (row.head === "Dividends" && nriDividendTax) {
+      return {
+        ...row,
+        notes:
+          "Entered by you under \"A few more numbers\" on the Current Filing page, not read from an uploaded document. As a non-resident this is taxed at a flat Section 115A/DTAA rate, not your slab rate - see the \"Dividend tax\" row below."
+      };
     }
     return row;
   });
@@ -311,6 +326,18 @@ function App() {
       amount: supplementalFigures.nreExemptInterest,
       notes:
         "Entered by you under \"A few more numbers\" on the Current Filing page. NRE account interest is exempt from Indian income tax entirely, so it's kept separate here rather than folded into the taxable \"Interest & other income\" row above."
+    });
+  }
+  if (flags.nri && nriDividendTax) {
+    rows.push({
+      head: "Dividend tax (Section 115A/DTAA)",
+      ruleSection: "115A",
+      amount: nriDividendTax.tax,
+      notes: `Dividends taxed at a flat ${(nriDividendTax.effectiveRate * 100).toLocaleString("en-IN")}%${
+        nriDividendTax.treatyApplied
+          ? ` (the lower ${flags.nriCountry} treaty rate)`
+          : ` (the 20% domestic Section 115A rate${flags.nriCountry ? " - the treaty here isn't lower, or isn't known" : ""})`
+      }, not slab rate. This is the final tax on the "Dividends" row above, and it's excluded from the old-vs-new regime comparison since it doesn't depend on regime.`
     });
   }
   if (flags.singleParent) {
@@ -428,6 +455,9 @@ function App() {
     // loss only on the old-regime side (pre-capped per rules/loan-treatment.json).
     letOutIncomeOldRegime: letOutHouseProperty.oldRegimeIncome,
     letOutIncomeNewRegime: letOutHouseProperty.newRegimeIncome,
+    // NRI dividends are taxed flat under Section 115A/DTAA, never at slab -
+    // see the "Dividend tax" CA Summary row and lib/nriTax.ts.
+    excludeDividendsFromSlab: flags.nri,
     seniorCitizen: flags.seniorCitizen
   };
   const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
@@ -1020,11 +1050,14 @@ function App() {
                 intradayGain={calculationSummary.intradayGain}
                 seniorCitizen={flags.seniorCitizen}
                 nri={flags.nri}
+                nriCountry={flags.nriCountry}
                 huf={flags.huf}
                 singleParent={flags.singleParent}
                 hasLoans={flags.hasLoans}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
                 loanTreatmentRule={ruleCatalog.loanTreatment}
+                nriDtaaRule={ruleCatalog.nriDtaa}
+                nriTdsRule={ruleCatalog.nriTdsAndRefunds}
                 advanceTaxRule={ruleCatalog.advanceTax}
                 capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
                 aisFigures={aisFigures}

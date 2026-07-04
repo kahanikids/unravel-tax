@@ -20,6 +20,13 @@ export type RegimeComparisonInputs = {
   /** Let-out house-property income for the new-regime side: a loss can't offset other heads, so never negative. */
   letOutIncomeNewRegime?: number;
   seniorCitizen: boolean;
+  /**
+   * NRI only: a non-resident's dividends are taxed at a flat Section 115A/DTAA
+   * rate (see lib/nriTax.ts), never at slab rate, so they're left out of both
+   * regimes' slab income entirely when this is true. Defaults to false
+   * (resident behaviour: dividends are ordinary slab income).
+   */
+  excludeDividendsFromSlab?: boolean;
 };
 
 export type RegimeComparisonResult = {
@@ -62,7 +69,7 @@ function applyRebate(tax: number, taxableIncome: number, rebate: RegimeRebate87a
  */
 export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoiceRule): RegimeComparisonResult {
   const otherSlabIncome =
-    Math.max(0, inputs.dividends) +
+    (inputs.excludeDividendsFromSlab ? 0 : Math.max(0, inputs.dividends)) +
     Math.max(0, inputs.interestOtherIncome) +
     Math.max(0, inputs.debtMfShortTermDeemedGain) +
     Math.max(0, inputs.intradayGain);

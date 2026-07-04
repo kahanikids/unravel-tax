@@ -256,9 +256,9 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   if (flags.nri) {
     caveats.push({
       id: "nri_scope",
-      label: "Most NRI-specific numbers aren't calculated here yet",
+      label: "Some NRI-specific numbers are calculated; others still need a CA",
       note:
-        "NRE interest can be entered as its own exempt line under \"A few more numbers\" on the Current Filing page, so it's kept out of your taxable total. This tool still doesn't apply DTAA relief to NRO TDS amounts or track repatriation limits. TDS withheld can be checked against AIS/26AS in the reconciliation panel above. Bring your NRO TDS certificates and DTAA paperwork to a CA."
+        "NRE interest can be entered as its own exempt line, and the \"NRI: DTAA relief & NRO TDS\" section computes your actual dividend tax (Section 115A, the lower of the 20% domestic rate and your treaty's rate) and checks NRO interest/dividend TDS withheld against the treaty rate for a possible refund. This tool still taxes NRO interest at your ordinary slab rate rather than a precise treaty-capped figure, and doesn't track repatriation limits. Bring your NRO TDS certificates and DTAA paperwork to a CA."
     });
   }
 

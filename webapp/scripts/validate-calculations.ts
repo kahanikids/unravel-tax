@@ -11,6 +11,8 @@ import {
   compareRegimes,
   computeForeignRemittanceTcs,
   computeLetOutHouseProperty,
+  computeNriDividendTax,
+  computeNroTdsReconciliation,
   computeRegimeBreakEven,
   estimateAdvanceTaxInterest,
   estimateSection234cInterest,
@@ -543,6 +545,88 @@ export async function main() {
     throw new Error(`Expected Rs 9,375 total LTCG tax after the cumulative exemption, got ${ltcgExemptionAllocation.totalForYear}.`);
   }
 
+  // NRI dividend tax (Section 115A/DTAA): UAE's 10% treaty rate beats the 20%
+  // domestic rate, so it applies - Rs 1,00,000 dividends -> Rs 10,000 tax.
+  const uaeDividendTax = computeNriDividendTax(100000, "United Arab Emirates", ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  if (uaeDividendTax.tax !== 10000 || !uaeDividendTax.treatyApplied || uaeDividendTax.effectiveRate !== 0.1) {
+    throw new Error(`Expected Rs 10,000 UAE dividend tax at the 10% treaty rate, got ${JSON.stringify(uaeDividendTax)}.`);
+  }
+
+  // The US treaty's individual/portfolio dividend rate (25%) is actually
+  // higher than the 20% domestic Section 115A rate, so the domestic rate
+  // wins and the treaty gives no benefit - Rs 1,00,000 -> Rs 20,000 tax, not
+  // Rs 25,000.
+  const usDividendTax = computeNriDividendTax(100000, "United States", ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  if (usDividendTax.tax !== 20000 || usDividendTax.treatyApplied || usDividendTax.effectiveRate !== 0.2) {
+    throw new Error(`Expected Rs 20,000 US dividend tax at the 20% domestic rate (25% treaty rate is higher), got ${JSON.stringify(usDividendTax)}.`);
+  }
+
+  // No known country (or no corroborated treaty rate): falls back to the 20%
+  // domestic rate, same as the US case above.
+  const unknownDividendTax = computeNriDividendTax(100000, null, ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  if (unknownDividendTax.tax !== 20000 || unknownDividendTax.treatyApplied) {
+    throw new Error(`Expected Rs 20,000 dividend tax with no known country, got ${JSON.stringify(unknownDividendTax)}.`);
+  }
+
+  // NRO TDS reconciliation (UAE): Rs 2,00,000 NRO interest withheld at the
+  // domestic 30% (Rs 60,000) vs the treaty's 12.5% cap (Rs 25,000) leaves a
+  // Rs 35,000 recoverable gap; Rs 1,00,000 dividends withheld at the domestic
+  // 20% (Rs 20,000) vs the treaty's 10% cap (Rs 10,000) leaves Rs 10,000 more
+  // - Rs 45,000 total.
+  const uaeTdsReconciliation = computeNroTdsReconciliation(
+    {
+      nroInterest: 200000,
+      dividends: 100000,
+      interestTdsWithheld: 60000,
+      dividendTdsWithheld: 20000,
+      nriCountry: "United Arab Emirates"
+    },
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
+  if (uaeTdsReconciliation.interest.recoverableIfTreatyApplies !== 35000) {
+    throw new Error(`Expected Rs 35,000 recoverable NRO interest TDS, got ${uaeTdsReconciliation.interest.recoverableIfTreatyApplies}.`);
+  }
+  if (uaeTdsReconciliation.dividends.recoverableIfTreatyApplies !== 10000) {
+    throw new Error(`Expected Rs 10,000 recoverable dividend TDS, got ${uaeTdsReconciliation.dividends.recoverableIfTreatyApplies}.`);
+  }
+  if (uaeTdsReconciliation.totalRecoverable !== 45000) {
+    throw new Error(`Expected Rs 45,000 total recoverable NRO TDS, got ${uaeTdsReconciliation.totalRecoverable}.`);
+  }
+
+  // With no known treaty rate for the country, there's nothing to compare
+  // against, so the reconciliation must never invent a recoverable amount.
+  const unknownTdsReconciliation = computeNroTdsReconciliation(
+    { nroInterest: 200000, dividends: 100000, interestTdsWithheld: 60000, dividendTdsWithheld: 20000, nriCountry: null },
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
+  if (unknownTdsReconciliation.totalRecoverable !== 0) {
+    throw new Error(`Expected no recoverable NRO TDS with an unknown country, got ${unknownTdsReconciliation.totalRecoverable}.`);
+  }
+
+  // Regime comparison excludes NRI dividends from slab income entirely: a Rs
+  // 12L salary plus Rs 1L dividends should tax exactly the same as the known
+  // Rs 12L-salary-only case (new regime zero, old regime Rs 1,63,800) once
+  // excludeDividendsFromSlab is set.
+  const nriRegimeResult = compareRegimes(
+    {
+      salaryIncome: 1_200_000,
+      dividends: 100_000,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      excludeDividendsFromSlab: true,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  if (nriRegimeResult.newRegimeTax !== 0 || nriRegimeResult.oldRegimeTax !== 163800) {
+    throw new Error(`Expected NRI dividends to be fully excluded from slab income, got ${JSON.stringify(nriRegimeResult)}.`);
+  }
+
   // Let-out house property: rent Rs 2,40,000 minus Rs 40,000 municipal taxes
   // = NAV Rs 2,00,000; minus 30% (Rs 60,000) and Rs 3,00,000 interest =
   // Rs 1,60,000 loss. Old regime takes the full loss (under the Rs 2L cap);
@@ -643,7 +727,7 @@ export async function main() {
   }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

@@ -114,6 +114,10 @@ export type SupplementalFigures = {
   oldRegimeDeductions: number;
   /** NRI only. Interest on an NRE account, exempt under Section 10(4)(ii), kept out of interestOtherIncome above. */
   nreExemptInterest: number;
+  /** NRI only. TDS actually withheld on the NRO interest in interestOtherIncome (Section 195), for the treaty-rate reconciliation. */
+  nriNroInterestTdsWithheld: number;
+  /** NRI only. TDS actually withheld on the dividends figure above (Section 115A), for the treaty-rate reconciliation. */
+  nriDividendTdsWithheld: number;
   /** Single parent/guardian only. Minor's income before the Section 10(32) per-child exemption. */
   minorIncomeToClub: number;
   /** Single parent/guardian only. Portion of the minor's income Section 64(1A) never clubs (their own manual work, own skill/talent, or an 80U disability), left out before the exemption. */
@@ -173,6 +177,8 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   salaryIncome: 0,
   oldRegimeDeductions: 0,
   nreExemptInterest: 0,
+  nriNroInterestTdsWithheld: 0,
+  nriDividendTdsWithheld: 0,
   minorIncomeToClub: 0,
   minorIncomeExemptFromClubbing: 0,
   numberOfMinors: 0,

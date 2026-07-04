@@ -1025,6 +1025,26 @@ function checkNriHufSingleParentPartialCalculations() {
     <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} nri />
   );
   assertIncludes(nriHtml, "NRE interest");
+  assertIncludes(nriHtml, "NRI: DTAA relief");
+  if (defaultHtml.includes("NRI: DTAA relief")) {
+    throw new Error("The NRI DTAA/TDS panel should only render for the NRI profile.");
+  }
+
+  // With a UAE country and dividends entered, the panel shows the treaty rate
+  // (10%, lower than the 20% domestic rate) applying.
+  const nriUaeHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, dividends: 100000 }}
+      nri
+      nriCountry="United Arab Emirates"
+    />
+  );
+  // React SSR splits "flat {rate}" text nodes with comment markers, so the
+  // label and the rule-driven rate are asserted separately.
+  assertIncludes(nriUaeHtml, "taxed at a flat");
+  assertIncludes(nriUaeHtml, "10%");
+  assertIncludes(nriUaeHtml, "the lower treaty rate for United Arab Emirates");
 
   const hufHtml = renderToString(
     <ResultsStep

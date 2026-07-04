@@ -279,7 +279,7 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "NRI, HUF, and single-parent coverage",
     status: "partial",
-    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest and minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability) are calculated. DTAA relief, NRO TDS precision, repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
+    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, and an NRO interest/dividend TDS-vs-treaty-rate reconciliation are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
   },
   {
     label: "Insurance and foreign-asset planning checks",

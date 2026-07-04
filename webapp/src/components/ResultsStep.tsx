@@ -5,12 +5,13 @@ import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
 import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
-import { ruleCatalog, type AdvanceTaxRule, type LoanTreatmentRule, type RegimeChoiceRule } from "../rules";
-import type { AisReportedFigures, NumericFigureKey, SupplementalFigures } from "../state/types";
+import { ruleCatalog, type AdvanceTaxRule, type LoanTreatmentRule, type NriDtaaRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
+import type { AisReportedFigures, NriCountry, NumericFigureKey, SupplementalFigures } from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
 import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
+import { NriDtaaPanel } from "./NriDtaaPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
 import { RegimeComparisonPanel } from "./RegimeComparisonPanel";
 import { InfoTooltip } from "./InfoTooltip";
@@ -79,6 +80,7 @@ export function ResultsStep({
   intradayGain,
   seniorCitizen,
   nri = false,
+  nriCountry = null,
   huf = false,
   singleParent = false,
   hasLoans = false,
@@ -86,6 +88,8 @@ export function ResultsStep({
   loanTreatmentRule = ruleCatalog.loanTreatment,
   advanceTaxRule,
   capitalGainsTaxByInstalment,
+  nriDtaaRule = ruleCatalog.nriDtaa,
+  nriTdsRule = ruleCatalog.nriTdsAndRefunds,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -116,6 +120,8 @@ export function ResultsStep({
   intradayGain: number;
   seniorCitizen: boolean;
   nri?: boolean;
+  /** NRI only. Drives the DTAA treaty rate lookups in the NRI panel. */
+  nriCountry?: NriCountry;
   huf?: boolean;
   singleParent?: boolean;
   hasLoans?: boolean;
@@ -124,6 +130,8 @@ export function ResultsStep({
   advanceTaxRule: AdvanceTaxRule;
   /** Listed-equity STCG/LTCG tax dated by real transaction sell dates, from allocateCapitalGainsTaxByInstalment. */
   capitalGainsTaxByInstalment: QuarterlyCapitalGainsTax;
+  nriDtaaRule?: NriDtaaRule;
+  nriTdsRule?: NriTdsAndRefundsRule;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -299,6 +307,19 @@ export function ResultsStep({
           </details>
         ) : null}
 
+        {nri ? (
+          <details className="refine-section" open>
+            <summary>NRI: DTAA relief &amp; NRO TDS</summary>
+            <NriDtaaPanel
+              supplementalFigures={supplementalFigures}
+              onChangeSupplementalFigures={onChangeSupplementalFigures}
+              nriCountry={nriCountry}
+              dtaaRule={nriDtaaRule}
+              tdsRule={nriTdsRule}
+            />
+          </details>
+        ) : null}
+
         <details className="refine-section">
           <summary>Old vs new regime</summary>
           {huf ? (
@@ -316,6 +337,7 @@ export function ResultsStep({
               debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
               intradayGain={intradayGain}
               seniorCitizen={seniorCitizen}
+              nri={nri}
               loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
               letOutIncomeOldRegime={letOut.oldRegimeIncome}
               letOutIncomeNewRegime={letOut.newRegimeIncome}

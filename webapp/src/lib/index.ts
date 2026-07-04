@@ -3,6 +3,7 @@ export * from "./confidence";
 export * from "./advanceTax";
 export * from "./regimeComparison";
 export * from "./loanDeductions";
+export * from "./nriTax";
 export * from "./insurance";
 export * from "./foreignInvestments";
 export * from "./exports";

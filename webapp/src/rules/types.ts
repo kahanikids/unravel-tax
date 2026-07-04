@@ -121,6 +121,20 @@ export type NriNreNroValues = {
   common_error: string;
 };
 
+/** Domestic (no-treaty) Section 195/115A TDS defaults - see rules/nri-tds-and-refunds.json. */
+export type NriTdsAndRefundsValues = {
+  capital_gains_tds_at_source: boolean;
+  resident_capital_gains_tds_at_source: boolean;
+  stt_paid_equity_ltcg_tds_rate: number;
+  stt_paid_equity_stcg_tds_rate: number;
+  nro_interest_tds_rate: number;
+  nro_dividend_tds_rate: number;
+  nro_dividend_tds_section: string;
+  nro_interest_tds_section: string;
+  form_13_lower_or_nil_deduction_certificate: boolean;
+  requires_tds_reconciliation: boolean;
+};
+
 export type NriDtaaMfTreatment =
   | "country_of_residence_only"
   | "taxable_in_india"
@@ -130,6 +144,13 @@ export type NriDtaaCountryEntry = {
   treatment: NriDtaaMfTreatment;
   dtaa_article: string;
   note: string;
+};
+
+/** Treaty withholding-rate caps for one country's NRO interest/dividends - null means this tool has no corroborated figure, so the domestic default applies. */
+export type NriDtaaWithholdingEntry = {
+  interest_rate: number | null;
+  dividend_rate: number | null;
+  dtaa_articles: string;
 };
 
 export type NriDtaaValues = {
@@ -142,6 +163,10 @@ export type NriDtaaValues = {
   mutual_fund_capital_gains: {
     default_treatment: string;
     countries: Record<string, NriDtaaCountryEntry>;
+  };
+  nro_withholding_rates: {
+    default_note: string;
+    countries: Record<string, NriDtaaWithholdingEntry>;
   };
 };
 
@@ -317,6 +342,7 @@ export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
 export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;
 export type RegimeChoiceRule = RuleDocument<RegimeChoiceValues>;
 export type NriNreNroRule = RuleDocument<NriNreNroValues>;
+export type NriTdsAndRefundsRule = RuleDocument<NriTdsAndRefundsValues>;
 export type NriDtaaRule = RuleDocument<NriDtaaValues>;
 export type HufBasicsRule = RuleDocument<HufBasicsValues>;
 export type SingleParentClubbingRule = RuleDocument<SingleParentClubbingValues>;
