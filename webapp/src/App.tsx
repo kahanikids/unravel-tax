@@ -80,7 +80,12 @@ import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
 import { ToolTour } from "./components/ToolTour";
 import { ConfirmModal } from "./components/ConfirmModal";
 
-type DocumentEntry = UploadedDocument & { transactions: NormalizedTransaction[]; rawSheet?: RawSheet };
+type DocumentEntry = UploadedDocument & {
+  transactions: NormalizedTransaction[];
+  rawSheet?: RawSheet;
+  /** Short word/acronym pulled from a PDF's own Title/Subject metadata, used to name its workbook sheet instead of the full filename. */
+  sheetNameHint?: string;
+};
 
 function App() {
   const [step, setStep] = useState<AppStep>("welcome");
@@ -546,14 +551,17 @@ function App() {
     setStep("results");
   }
 
-  function commitDocument(newTransactions: NormalizedTransaction[], fileName: string) {
+  function commitDocument(newTransactions: NormalizedTransaction[], fileName: string, sheetNameHint?: string) {
     // A real document added while viewing sample data starts a real filing:
     // drop the demo transactions instead of mixing them into real numbers.
     if (sampleMode) {
       clearSampleData();
-      setDocuments([{ fileName, rowCount: newTransactions.length, transactions: newTransactions }]);
+      setDocuments([{ fileName, rowCount: newTransactions.length, transactions: newTransactions, sheetNameHint }]);
     } else {
-      setDocuments((prev) => [...prev, { fileName, rowCount: newTransactions.length, transactions: newTransactions }]);
+      setDocuments((prev) => [
+        ...prev,
+        { fileName, rowCount: newTransactions.length, transactions: newTransactions, sheetNameHint }
+      ]);
     }
     if (folderHandle) {
       saveDocumentCopyToFolder(folderHandle, fileName, transactionsCsv(newTransactions)).catch(() => {
@@ -565,8 +573,8 @@ function App() {
   // A raw upload that isn't a capital-gains statement (bank interest,
   // dividends, MF holdings). Kept with no transactions so it never affects the
   // tax numbers, but its rows ride along as a reference sheet in the workbook.
-  function commitReferenceDocument(fileName: string, rawSheet: RawSheet) {
-    const entry: DocumentEntry = { fileName, rowCount: rawSheet.records.length, transactions: [], rawSheet };
+  function commitReferenceDocument(fileName: string, rawSheet: RawSheet, sheetNameHint?: string) {
+    const entry: DocumentEntry = { fileName, rowCount: rawSheet.records.length, transactions: [], rawSheet, sheetNameHint };
     if (sampleMode) {
       clearSampleData();
       setDocuments([entry]);
@@ -760,10 +768,11 @@ function App() {
     const cgRule = ruleCatalog.capitalGainsEquity;
     await deliverExport(
       await buildFullWorkbookExport({
-        documents: documents.map(({ fileName, transactions: docTxns, rawSheet }) => ({
+        documents: documents.map(({ fileName, transactions: docTxns, rawSheet, sheetNameHint }) => ({
           name: fileName,
           transactions: docTxns,
-          rawSheet
+          rawSheet,
+          sheetNameHint
         })),
         caSummaryRows: rows,
         rateInputs: rateInputsFromRule(cgRule),

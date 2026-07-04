@@ -84,7 +84,7 @@ export function detectIngestionKind(fileName: string, mimeType = ""): IngestionK
 
 export function routePdfOrFreeform(
   reason: string,
-  extra?: { extractedText?: string; diagnosticSummary?: string }
+  extra?: { extractedText?: string; diagnosticSummary?: string; suggestedSheetName?: string }
 ): PromptRoute {
   return {
     kind: "pdf_or_freeform",
@@ -522,15 +522,15 @@ export async function parseFile(file: File): Promise<IngestResult> {
   if (kind === "pdf_or_freeform" && file.name.toLowerCase().endsWith(".pdf")) {
     try {
       const { extractPdfText, diagnosePdfText } = await import("./pdfExtract");
-      const { text, pageCount } = await extractPdfText(await file.arrayBuffer());
-      const diagnostic = diagnosePdfText(text, pageCount);
+      const { text, pageCount, sheetNameHint, mergedDocumentsNote } = await extractPdfText(await file.arrayBuffer());
+      const diagnostic = diagnosePdfText(text, pageCount, mergedDocumentsNote);
       const result = parseTextSource(file.name, text, file.type);
       if (result.transactions.length > 0) {
-        return { ...result, kind: "pdf_or_freeform" };
+        return { ...result, kind: "pdf_or_freeform", suggestedSheetName: sheetNameHint };
       }
       const promptRoute = routePdfOrFreeform(
         result.promptRoute?.reason ?? "Could not find a transaction table in this PDF.",
-        { extractedText: text, diagnosticSummary: diagnostic.summary }
+        { extractedText: text, diagnosticSummary: diagnostic.summary, suggestedSheetName: sheetNameHint }
       );
       return { ...result, kind: "pdf_or_freeform", promptRoute };
     } catch (error) {

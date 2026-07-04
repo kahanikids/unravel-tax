@@ -1487,6 +1487,13 @@ button.side-nav-step.side-nav-step-current:hover {
   padding: 10px 12px;
 }
 
+.pdf-thumbnail {
+  max-width: 140px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
 .extraction-prompt summary {
   cursor: pointer;
   color: var(--accent);

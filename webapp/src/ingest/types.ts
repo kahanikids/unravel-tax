@@ -84,6 +84,8 @@ export type PromptRoute = {
   extractedText?: string;
   /** Plain-language read on how complete that extracted text looks (scanned/no text layer, has transaction-shaped wording, etc). */
   diagnosticSummary?: string;
+  /** Carried from the original PDF's metadata so it survives the round trip through the AI extraction paste, for sheet naming once the pasted result is committed. */
+  suggestedSheetName?: string;
 };
 
 /**
@@ -124,6 +126,8 @@ export type IngestResult = {
   confidence?: string;
   /** From the extraction JSON: free-text notes (holdings-only warning, missing detail, etc.). */
   notes?: string;
+  /** For a PDF: a short word/acronym pulled from its own Title/Subject metadata, to use as the workbook sheet name instead of the full filename. */
+  suggestedSheetName?: string;
 };
 
 /** @deprecated Use IngestResult — kept for scripts that only need transactions. */

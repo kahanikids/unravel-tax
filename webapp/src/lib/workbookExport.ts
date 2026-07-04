@@ -13,6 +13,8 @@ export type ExportDocument = {
    * instead of the formula-driven broker sheet.
    */
   rawSheet?: RawSheet;
+  /** Short word/acronym pulled from a PDF's own Title/Subject metadata - preferred over `name` for the sheet tab so it stays readable within Excel's 31-char limit. `name` (the full filename) still appears in the sheet's own "Source:" line either way. */
+  sheetNameHint?: string;
 };
 
 /** A raw upload kept as-is for reference: header names plus already-normalized primitive cell values. */

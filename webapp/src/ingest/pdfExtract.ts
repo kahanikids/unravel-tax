@@ -1,3 +1,5 @@
+import type { TextItem } from "pdfjs-dist/types/src/display/api";
+
 /**
  * pdf.js gives text items with no inherent line breaks - joining them with a
  * space alone collapses an entire page into one line and destroys row
@@ -7,8 +9,6 @@
  * AI extraction prompt, a human skimming the paste panel) needs to make
  * sense of a statement.
  */
-import type { TextItem } from "pdfjs-dist/types/src/display/api";
-
 function groupItemsIntoLines(items: TextItem[]): string[] {
   const lines: { y: number; parts: { x: number; str: string }[] }[] = [];
   const Y_TOLERANCE = 2;
@@ -40,11 +40,6 @@ function groupItemsIntoLines(items: TextItem[]): string[] {
     .filter((line) => line.length > 0);
 }
 
-export type PdfTextExtraction = {
-  text: string;
-  pageCount: number;
-};
-
 /** Thrown instead of pdf.js's own PasswordException, so callers can show "remove the password" instead of a generic read failure without depending on pdf.js's error shape. */
 export class PdfPasswordError extends Error {
   constructor() {
@@ -52,6 +47,91 @@ export class PdfPasswordError extends Error {
     this.name = "PdfPasswordError";
   }
 }
+
+/**
+ * Generic-sounding words that show up at the front of almost every statement
+ * title ("Statement of...", "Annual Report", ...) and would make a useless
+ * one-word sheet name if picked literally.
+ */
+const GENERIC_METADATA_WORDS = new Set([
+  "statement",
+  "report",
+  "the",
+  "a",
+  "an",
+  "annual",
+  "consolidated",
+  "account",
+  "capital",
+  "gains",
+  "gain",
+  "summary",
+  "final",
+  "document",
+  "copy",
+  "of",
+  "for",
+  "and",
+  "acknowledgement",
+  "form"
+]);
+
+/**
+ * Picks one short, sheet-name-sized word or acronym out of a PDF metadata
+ * string (Title/Subject), rather than the long descriptive sentence brokers
+ * often put there. An ALL-CAPS token (CAMS, NSDL, CDSL, AIS...) is preferred
+ * since that's usually the actual source/system name; otherwise the first
+ * word that isn't generic filler.
+ */
+function pickShortLabel(value: string): string | undefined {
+  const words = value
+    .replace(/[^A-Za-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const acronym = words.find((word) => /^[A-Z]{2,6}$/.test(word));
+  if (acronym) {
+    return acronym;
+  }
+  const meaningful = words.find((word) => word.length > 2 && !GENERIC_METADATA_WORDS.has(word.toLowerCase()));
+  return meaningful;
+}
+
+function deriveSheetNameHint(info: Record<string, unknown>): string | undefined {
+  const title = typeof info.Title === "string" ? info.Title.trim() : "";
+  const subject = typeof info.Subject === "string" ? info.Subject.trim() : "";
+  return (title && pickShortLabel(title)) || (subject && pickShortLabel(subject)) || undefined;
+}
+
+/**
+ * Bookmarks/outline entries and repeated "Page 1 of N" markers are both real,
+ * structural signals (not a guess at table content) that several source
+ * documents were merged into one PDF - each has its own page-1 restart and/or
+ * its own bookmark. Surfaced as a heads-up only; this app never auto-splits
+ * the file, since that would mean guessing where one statement ends and the
+ * next begins.
+ */
+function detectMergedDocumentsNote(text: string, outlineTitles: string[]): string | undefined {
+  const pageOneMarkers = text.match(/page\s*1\s*of\s*\d+/gi) ?? [];
+  const distinctTitles = [...new Set(outlineTitles.filter(Boolean))];
+
+  if (distinctTitles.length > 1) {
+    const preview = distinctTitles.slice(0, 4).join(", ") + (distinctTitles.length > 4 ? ", ..." : "");
+    return `This PDF's bookmarks suggest it contains ${distinctTitles.length} separate documents (${preview}). If the AI extraction step misses some transactions, try splitting this into separate files first (most PDF readers have an "extract pages" option) and uploading each on its own.`;
+  }
+  if (pageOneMarkers.length > 1) {
+    return `This PDF restarts its page numbering ${pageOneMarkers.length} times, which usually means several statements were merged into one file. If the AI extraction step misses some transactions, try splitting this into separate files first and uploading each on its own.`;
+  }
+  return undefined;
+}
+
+export type PdfTextExtraction = {
+  text: string;
+  pageCount: number;
+  /** A short word/acronym pulled from the PDF's own Title/Subject metadata, for naming a workbook sheet - never used for anything else. */
+  sheetNameHint?: string;
+  /** Set when bookmarks or repeated pagination suggest this PDF is several statements merged together. */
+  mergedDocumentsNote?: string;
+};
 
 export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtraction> {
   const pdfjs = await import("pdfjs-dist");
@@ -72,6 +152,7 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtrac
     }
     throw error;
   }
+
   const pages: string[] = [];
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
     const page = await pdf.getPage(pageNum);
@@ -79,7 +160,68 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtrac
     const items = content.items.filter((item): item is TextItem => "str" in item);
     pages.push(groupItemsIntoLines(items).join("\n"));
   }
-  return { text: pages.join("\n\n"), pageCount: pdf.numPages };
+  const text = pages.join("\n\n");
+
+  let sheetNameHint: string | undefined;
+  try {
+    const { info } = await pdf.getMetadata();
+    sheetNameHint = deriveSheetNameHint(info as Record<string, unknown>);
+  } catch {
+    // Metadata is a nice-to-have for sheet naming - never worth failing the whole read over.
+  }
+
+  let outlineTitles: string[] = [];
+  try {
+    const outline = await pdf.getOutline();
+    outlineTitles = (outline ?? []).map((node) => node.title).filter(Boolean);
+  } catch {
+    // Same as above - outline is only used for an advisory note.
+  }
+
+  return {
+    text,
+    pageCount: pdf.numPages,
+    sheetNameHint,
+    mergedDocumentsNote: detectMergedDocumentsNote(text, outlineTitles)
+  };
+}
+
+/**
+ * Renders page 1 at a small scale for the review UI, so a non-technical user
+ * can visually confirm "yes, this is my broker statement" before it's used
+ * anywhere (BUILD_PLAN Section 1.4's confirm-before-commit principle). Best
+ * effort only: returns undefined rather than throwing when no canvas 2D
+ * context is available (e.g. under test, or an unsupported browser), since a
+ * missing thumbnail should never block the actual extraction.
+ */
+export async function renderPdfThumbnail(buffer: ArrayBuffer, maxWidth = 200): Promise<string | undefined> {
+  if (typeof document === "undefined") {
+    return undefined;
+  }
+  try {
+    const pdfjs = await import("pdfjs-dist");
+    if (typeof window !== "undefined") {
+      const workerModule = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+      pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
+    }
+    const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+    const page = await pdf.getPage(1);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const scale = maxWidth / baseViewport.width;
+    const viewport = page.getViewport({ scale });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const canvasContext = canvas.getContext("2d");
+    if (!canvasContext) {
+      return undefined;
+    }
+    await page.render({ canvasContext, viewport }).promise;
+    return canvas.toDataURL("image/png");
+  } catch {
+    return undefined;
+  }
 }
 
 export type PdfTextDiagnostic = {
@@ -104,7 +246,7 @@ const TRANSACTION_KEYWORDS = [
   "cost of acquisition"
 ];
 
-export function diagnosePdfText(text: string, pageCount: number): PdfTextDiagnostic {
+export function diagnosePdfText(text: string, pageCount: number, mergedDocumentsNote?: string): PdfTextDiagnostic {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const wordCount = words.length;
   const wordsPerPage = pageCount > 0 ? wordCount / pageCount : wordCount;
@@ -119,6 +261,10 @@ export function diagnosePdfText(text: string, pageCount: number): PdfTextDiagnos
     summary = `We found ${wordCount} word(s) across ${pageCount} page(s), including wording that looks like a capital-gains statement. We can't reconstruct the table ourselves, but the AI extraction step below should have enough to work with.`;
   } else {
     summary = `We found ${wordCount} word(s) across ${pageCount} page(s), but nothing that clearly looks like transaction detail. It may still work with the AI extraction step - check its "notes" field once you try.`;
+  }
+
+  if (mergedDocumentsNote) {
+    summary = `${summary} ${mergedDocumentsNote}`;
   }
 
   return { pageCount, wordCount, looksScanned, mentionsTransactionTerms, summary };

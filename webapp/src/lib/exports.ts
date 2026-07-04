@@ -120,7 +120,7 @@ export async function buildCaSummaryWorkbookExport(
 
 export async function buildFullWorkbookExport(state: ExportState): Promise<ExportFile> {
   const documents = state.documents.length > 0 ? state.documents : [{ name: "Transactions", transactions: [] }];
-  const sheetNames = uniqueSheetNames(documents.map((doc) => doc.name));
+  const sheetNames = uniqueSheetNames(documents.map((doc) => doc.sheetNameHint || doc.name));
 
   // One sheet per raw uploaded document, kept in upload order. A document that
   // couldn't be parsed into capital-gains transactions (bank/dividend/MF
