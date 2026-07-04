@@ -87,6 +87,10 @@ function noop() {
   return undefined;
 }
 
+// No documents uploaded in these fixtures, so there's no dated capital-gains
+// tax to allocate by instalment - matches BLANK/SAMPLE-figures profiles below.
+const EMPTY_CAPITAL_GAINS_TAX = { cumulativeByInstalment: [0, 0, 0, 0], totalForYear: 0 };
+
 function checkWelcomeScreen() {
   const html = renderToString(<App />);
 
@@ -482,6 +486,7 @@ function checkResultsStepDefaultsToSimple() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -526,6 +531,7 @@ function checkResultsStepAdvancedToggle() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -611,6 +617,7 @@ function checkResultsStepSummaryPrefill() {
     seniorCitizen: false,
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
+    capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     aisFigures: BLANK_AIS_REPORTED_FIGURES,
     onChangeAisFigures: noop,
     tdsRows: [],
@@ -676,6 +683,7 @@ function checkRegimeComparisonPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -710,6 +718,7 @@ function checkRegimeComparisonPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -758,6 +767,7 @@ function resultsStepWithReconciliation(props: {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={props.aisFigures}
       onChangeAisFigures={noop}
       tdsRows={props.tdsRows}
@@ -821,6 +831,7 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -854,6 +865,7 @@ function checkAdvanceTaxPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -893,6 +905,7 @@ function checkAdvanceTaxPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
       onChangeAisFigures={noop}
       tdsRows={[]}
@@ -919,10 +932,52 @@ function checkAdvanceTaxPanel() {
   assertIncludes(withLiabilityHtml, "15 Jun 2025");
   assertIncludes(withLiabilityHtml, "15 Mar 2026");
   assertIncludes(withLiabilityHtml, "Estimated Section 234C interest, total");
-  assertIncludes(withLiabilityHtml, "Treat this as the ceiling, not the bill.");
+  assertIncludes(withLiabilityHtml, "so their tax is still spread evenly across all four instalments");
+  // No dated capital-gains tax in this fixture, so the ordinary/capital-gains
+  // split note (only shown once there's something to split) must stay hidden.
+  if (withLiabilityHtml.includes("dated from your actual transactions below")) {
+    throw new Error("The capital-gains split note should only render when capitalGainsTaxByInstalment has a nonzero total.");
+  }
+
+  // With dated capital-gains tax supplied, the split note must render and
+  // name both the capital-gains and ordinary portions.
+  const withCapitalGainsHtml = renderToString(
+    <ResultsStep
+      rows={SAMPLE_ROWS}
+      documents={[]}
+      openIssueCount={0}
+      caRecommendation={SAMPLE_RECOMMENDATION}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, advanceTaxLiability: 100000 }}
+      onChangeSupplementalFigures={noop}
+      debtMfShortTermDeemedGain={0}
+      intradayGain={0}
+      seniorCitizen={false}
+      regimeChoiceRule={ruleCatalog.regimeChoice}
+      advanceTaxRule={ruleCatalog.advanceTax}
+      capitalGainsTaxByInstalment={{ cumulativeByInstalment: [0, 0, 0, 40000], totalForYear: 40000 }}
+      aisFigures={BLANK_AIS_REPORTED_FIGURES}
+      onChangeAisFigures={noop}
+      tdsRows={[]}
+      onChangeTdsRows={noop}
+      brokerCheck={null}
+      confidenceReport={SAMPLE_CONFIDENCE_REPORT}
+      showAdvanced={false}
+      onToggleAdvanced={noop}
+      exportMessage=""
+      onExportCsv={noop}
+      onExportXlsx={noop}
+      onExportFullWorkbook={noop}
+      localFolderSupported={false}
+      localFolderName={null}
+      onChooseLocalFolder={noop}
+    />
+  );
+  assertIncludes(withCapitalGainsHtml, "dated from your actual transactions below");
+  assertIncludes(withCapitalGainsHtml, "40,000");
+  assertIncludes(withCapitalGainsHtml, "60,000");
 
   console.log(
-    "Validated advance tax panel: Section 234B estimator renders with its inputs and skip-friendly default, and the 234C instalment estimate appears with its always-on later-income caveat once a liability is entered."
+    "Validated advance tax panel: Section 234B estimator renders with its inputs and skip-friendly default, the 234C instalment estimate appears with its always-on later-income caveat once a liability is entered, and the capital-gains/ordinary split note only appears once there's dated capital-gains tax to split out."
   );
 }
 
@@ -938,6 +993,7 @@ function checkNriHufSingleParentPartialCalculations() {
     seniorCitizen: false,
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
+    capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     aisFigures: BLANK_AIS_REPORTED_FIGURES,
     onChangeAisFigures: noop,
     tdsRows: [],

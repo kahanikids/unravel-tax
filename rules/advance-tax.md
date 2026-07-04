@@ -56,18 +56,31 @@ as TDS and subtracted from the liability before the instalment targets
 are worked out (TDS never needed to be paid as instalments — it was
 deducted at source through the year).
 
-**The one thing this estimate can't see: when your income arrived.**
-Dividends and capital gains only count toward the instalments due
-*after* they actually showed up, and escape 234C entirely if the next
-instalment covered the tax on them. This estimate spreads your whole
-year's tax across all four instalments, so if part of your tax comes
-from gains or dividends that arrived mid-year, the true figure is
+**Listed-equity capital gains are dated precisely.** For gains from your
+uploaded broker/AMC statements, the tool reads each transaction's actual
+sale date and works out exactly how much Section 111A (short-term) and
+112A (long-term, after the ₹1,25,000 annual exemption — applied
+cumulatively, so it's used up by your earliest gains first) tax had
+arisen by each instalment's due date. That amount is required in full
+from the very next instalment, exactly as the section's proviso
+requires — not spread evenly across the year. A gain realised in the
+last quarter, for instance, owes nothing toward the first three
+instalments at all.
+
+**What still isn't dated: dividends, intraday/speculative income, and
+debt-mutual-fund gains (Section 50AA).** These are taxed at your slab
+rate, not a flat rate, so pinning down the exact tax on them by quarter
+would need full income context this tool doesn't have (your total
+taxable income at each point in the year). Whatever part of your
+"total tax liability" figure isn't attributed to dated listed-equity
+gains is still spread evenly across all four instalments. If a
+meaningful share of that remainder is dividends that arrived, or
+intraday trades made, mid-year or later, the true figure is somewhat
 **lower** than what's shown. The tool says this next to the number every
-time (see `later_income_caveat` in the paired JSON): treat the estimate
-as the ceiling, not the bill, and have a CA compute the precise figure
-if it's material. The estimate also skips Rule 119A's
-round-down-to-₹100 step, which can only make the real figure very
-slightly smaller.
+time (see `later_income_caveat` in the paired JSON) and have a CA
+compute the precise figure if it's material. The estimate also skips
+Rule 119A's round-down-to-₹100 step, which can only make the real figure
+very slightly smaller.
 
 ## Renumbering under the new Income Tax Act, 2025
 

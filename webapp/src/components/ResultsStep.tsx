@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { QuarterlyCapitalGainsTax } from "../lib/advanceTax";
 import type { BrokerGainCheck, CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
@@ -84,6 +85,7 @@ export function ResultsStep({
   regimeChoiceRule,
   loanTreatmentRule = ruleCatalog.loanTreatment,
   advanceTaxRule,
+  capitalGainsTaxByInstalment,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -120,6 +122,8 @@ export function ResultsStep({
   regimeChoiceRule: RegimeChoiceRule;
   loanTreatmentRule?: LoanTreatmentRule;
   advanceTaxRule: AdvanceTaxRule;
+  /** Listed-equity STCG/LTCG tax dated by real transaction sell dates, from allocateCapitalGainsTaxByInstalment. */
+  capitalGainsTaxByInstalment: QuarterlyCapitalGainsTax;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -327,6 +331,7 @@ export function ResultsStep({
             onChangeSupplementalFigures={onChangeSupplementalFigures}
             seniorCitizen={seniorCitizen}
             hasBusinessOrSpeculativeIncome={intradayGain > 0}
+            capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
             rule={advanceTaxRule}
           />
         </details>

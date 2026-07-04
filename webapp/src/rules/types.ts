@@ -178,6 +178,8 @@ export type AdvanceTaxInstalmentRule = {
 
 export type AdvanceTaxValues = {
   advance_tax_required_above_inr: number;
+  /** Start of the financial year the instalment due dates fall in (e.g. "2025-04-01") - the lower bound of the first 234C window. */
+  financial_year_start_date: string;
   assessment_year_start_date: string;
   section_234b: {
     minimum_paid_fraction_to_avoid_interest: number;

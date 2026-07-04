@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Papa from "papaparse";
 import {
+  allocateCapitalGainsTaxByInstalment,
   brokerGainCheck,
   caSummaryAmountMap,
   caSummaryRows,
@@ -451,6 +452,97 @@ export async function main() {
     throw new Error("Senior citizens without business income should be exempt from 234C (Section 207(2)).");
   }
 
+  // Section 234C quarter precision: a Rs 5,00,000 STCG sold 20-Feb-2026 (inside
+  // the last instalment window only) generates Rs 1,00,000 tax at the flat 20%
+  // rate (Section 111A). allocateCapitalGainsTaxByInstalment must attribute
+  // that tax only to the instalment due after the sale (15 Mar), not any
+  // earlier one.
+  const lateGainCsv = [
+    "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
+    "Late Gain Ltd,01-Feb-2026,20-Feb-2026,1000,0,500000,0,500"
+  ].join("\n");
+  const lateGainAllocation = allocateCapitalGainsTaxByInstalment(
+    parseCsvText(lateGainCsv).transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.advanceTax
+  );
+  if (lateGainAllocation.cumulativeByInstalment.join(",") !== "0,0,0,100000") {
+    throw new Error(`Expected the late STCG's tax to land only in the last instalment, got ${JSON.stringify(lateGainAllocation.cumulativeByInstalment)}.`);
+  }
+  if (lateGainAllocation.totalForYear !== 100000) {
+    throw new Error(`Expected Rs 1,00,000 total STCG tax for the year, got ${lateGainAllocation.totalForYear}.`);
+  }
+
+  // Feeding that allocation into estimateSection234cInterest with nothing paid:
+  // the first three instalments owe nothing (the gain hadn't happened yet), and
+  // only the last instalment's Rs 1,00,000 shortfall for one month draws
+  // interest - Rs 1,000, versus Rs 5,050 if the same total tax were naively
+  // spread evenly across the year (the c234Nothing case above). Quarter
+  // precision must produce the lower, legally correct figure.
+  const c234LateGain = estimateSection234cInterest(
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 0,
+      instalmentsPaid: [0, 0, 0, 0],
+      seniorCitizenExempt: false,
+      capitalGainsTax: lateGainAllocation
+    },
+    ruleCatalog.advanceTax
+  );
+  if (c234LateGain.instalments.slice(0, 3).some((instalment) => instalment.interest !== 0)) {
+    throw new Error(`Expected no interest on the first three instalments before the gain arose, got ${JSON.stringify(c234LateGain.instalments)}.`);
+  }
+  if (c234LateGain.totalInterest !== 1000) {
+    throw new Error(`Expected Rs 1,000 total 234C interest with quarter precision on an all-late gain, got ${c234LateGain.totalInterest}.`);
+  }
+  if (c234LateGain.ordinaryTax !== 0 || c234LateGain.capitalGainsTaxForYear !== 100000) {
+    throw new Error(`Expected the full Rs 1,00,000 to be attributed to capital gains, got ordinaryTax=${c234LateGain.ordinaryTax}, capitalGainsTaxForYear=${c234LateGain.capitalGainsTaxForYear}.`);
+  }
+
+  // An early gain is the mirror case: tax on a gain that already happened by
+  // the first due date must count in full toward that instalment, even though
+  // the naive whole-year spread would only ask for 15% of it. A Rs 2,00,000
+  // STCG sold 10-Apr-2025 (Rs 40,000 tax) plus the same late Rs 3,00,000 STCG
+  // sold 20-Feb-2026 (Rs 60,000 tax, in the last window only) gives cumulative
+  // targets of Rs 40,000/40,000/40,000/1,00,000 - the first instalment owes
+  // the full Rs 40,000, not just Rs 6,000 (15% of Rs 40,000).
+  const mixedGainsCsv = [
+    "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
+    "Early Gain Ltd,01-Apr-2025,10-Apr-2025,1000,0,200000,0,200",
+    "Late Gain Ltd,01-Feb-2026,20-Feb-2026,1000,0,300000,0,300"
+  ].join("\n");
+  const mixedGainsAllocation = allocateCapitalGainsTaxByInstalment(
+    parseCsvText(mixedGainsCsv).transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.advanceTax
+  );
+  if (mixedGainsAllocation.cumulativeByInstalment.join(",") !== "40000,40000,40000,100000") {
+    throw new Error(`Unexpected mixed-timing cumulative allocation: ${JSON.stringify(mixedGainsAllocation.cumulativeByInstalment)}.`);
+  }
+
+  // Long-term exemption is applied cumulatively, so it's used up by the
+  // earliest gains first: a Rs 1,00,000 LTCG sold 10-May-2025 (window 1) stays
+  // fully under the Rs 1,25,000 annual exemption (zero tax), and a further Rs
+  // 1,00,000 LTCG sold 01-Nov-2025 (window 3) pushes the cumulative to Rs
+  // 2,00,000, taxing only the Rs 75,000 above the exemption at 12.5% = Rs
+  // 9,375 - not a fresh per-transaction exemption.
+  const ltcgExemptionCsv = [
+    "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
+    "Old Holding Ltd,01-Jan-2023,10-May-2025,1000,0,100000,0,100",
+    "Older Holding Ltd,01-Jan-2022,01-Nov-2025,1000,0,100000,0,100"
+  ].join("\n");
+  const ltcgExemptionAllocation = allocateCapitalGainsTaxByInstalment(
+    parseCsvText(ltcgExemptionCsv).transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.advanceTax
+  );
+  if (ltcgExemptionAllocation.cumulativeByInstalment.join(",") !== "0,0,9375,9375") {
+    throw new Error(`Unexpected cumulative LTCG-exemption allocation: ${JSON.stringify(ltcgExemptionAllocation.cumulativeByInstalment)}.`);
+  }
+  if (ltcgExemptionAllocation.totalForYear !== 9375) {
+    throw new Error(`Expected Rs 9,375 total LTCG tax after the cumulative exemption, got ${ltcgExemptionAllocation.totalForYear}.`);
+  }
+
   // Let-out house property: rent Rs 2,40,000 minus Rs 40,000 municipal taxes
   // = NAV Rs 2,00,000; minus 30% (Rs 60,000) and Rs 3,00,000 interest =
   // Rs 1,60,000 loss. Old regime takes the full loss (under the Rs 2L cap);
@@ -551,7 +643,7 @@ export async function main() {
   }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

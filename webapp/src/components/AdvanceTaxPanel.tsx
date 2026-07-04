@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { estimateAdvanceTaxInterest, estimateSection234cInterest } from "../lib/advanceTax";
+import { estimateAdvanceTaxInterest, estimateSection234cInterest, type QuarterlyCapitalGainsTax } from "../lib/advanceTax";
 import type { AdvanceTaxRule } from "../rules";
 import type { NumericFigureKey, SupplementalFigures } from "../state/types";
 
@@ -38,12 +38,15 @@ export function AdvanceTaxPanel({
   onChangeSupplementalFigures,
   seniorCitizen,
   hasBusinessOrSpeculativeIncome,
+  capitalGainsTaxByInstalment,
   rule
 }: {
   supplementalFigures: SupplementalFigures;
   onChangeSupplementalFigures: (figures: SupplementalFigures) => void;
   seniorCitizen: boolean;
   hasBusinessOrSpeculativeIncome: boolean;
+  /** Listed-equity STCG/LTCG tax dated by real transaction sell dates, from allocateCapitalGainsTaxByInstalment. */
+  capitalGainsTaxByInstalment: QuarterlyCapitalGainsTax;
   rule: AdvanceTaxRule;
 }) {
   const [asOfDate, setAsOfDate] = useState(todayIso());
@@ -67,7 +70,8 @@ export function AdvanceTaxPanel({
           totalTaxLiability: supplementalFigures.advanceTaxLiability,
           taxAlreadyPaid: supplementalFigures.advanceTaxPaid,
           instalmentsPaid,
-          seniorCitizenExempt
+          seniorCitizenExempt,
+          capitalGainsTax: capitalGainsTaxByInstalment
         },
         rule
       )
@@ -138,6 +142,14 @@ export function AdvanceTaxPanel({
               : ""}
             ).
           </p>
+          {result234c.capitalGainsTaxForYear > 0 ? (
+            <p className="step-lede">
+              ₹{formatAmount(result234c.capitalGainsTaxForYear)} of that is listed-equity capital-gains tax, dated from
+              your actual transactions below - it only counts toward an instalment due after each gain was realised, not
+              spread evenly like the rest. The remaining ₹{formatAmount(result234c.ordinaryTax)} (salary, interest,
+              dividends, business, or debt-fund gains) is spread evenly across all four instalments, same as before.
+            </p>
+          ) : null}
           <div className="supplemental-grid">
             {/* Slice to the four stored instalment fields: a rules file with a
                 different calendar length must not index past them. */}

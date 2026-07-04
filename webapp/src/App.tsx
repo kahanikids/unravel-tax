@@ -4,6 +4,7 @@ import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
   buildFullWorkbookExport,
+  allocateCapitalGainsTaxByInstalment,
   brokerGainCheck,
   rateInputsFromRule,
   buildChecklist,
@@ -237,6 +238,13 @@ function App() {
   );
   const rulesSummary = useMemo(
     () => summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
+    [transactions]
+  );
+  // Section 234C quarter precision: listed-equity STCG/LTCG tax dated by real
+  // transaction sell dates, so it counts toward an instalment only once each
+  // gain actually happened - see lib/advanceTax.ts.
+  const capitalGainsTaxByInstalment = useMemo(
+    () => allocateCapitalGainsTaxByInstalment(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.advanceTax),
     [transactions]
   );
   // Total income for the ITR-1 Rs 50 lakh ceiling: the figures the app
@@ -1018,6 +1026,7 @@ function App() {
                 regimeChoiceRule={ruleCatalog.regimeChoice}
                 loanTreatmentRule={ruleCatalog.loanTreatment}
                 advanceTaxRule={ruleCatalog.advanceTax}
+                capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
                 aisFigures={aisFigures}
                 onChangeAisFigures={setAisFigures}
                 tdsRows={tdsRows}
