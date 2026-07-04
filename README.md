@@ -7,6 +7,7 @@
 <p align="center"><strong>Feed it your tax documents in whatever mess they're in, and get back a filing you actually understand.</strong></p>
 
 <p align="center">
+  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/status-beta-yellow.svg" alt="Status: beta"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg" alt="Contributions welcome"></a>
   <a href="https://github.com/kahanikids/unravel-tax/actions/workflows/validate.yml"><img src="https://github.com/kahanikids/unravel-tax/actions/workflows/validate.yml/badge.svg" alt="Validate status"></a>
