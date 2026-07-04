@@ -1,14 +1,22 @@
-# Unravel Tax
+<p align="center">
+  <img src="webapp/public/unravel-tax-logo.png" alt="Unravel Tax logo" width="120">
+</p>
 
-![Unravel Tax logo](webapp/public/unravel-tax-logo.png)
+<h1 align="center">Unravel Tax</h1>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg)](CONTRIBUTING.md)
+<p align="center"><strong>Feed it your tax documents in whatever mess they're in — get back a filing you actually understand.</strong></p>
 
-**Turn a pile of tax documents into a filing you understand.** Unravel Tax
-turns PDFs, Excel files, CSVs, and saved webpages into two clean files: one to
-send your CA, one to keep. Open source, no signup — everything runs in your
-browser; nothing you enter leaves your device.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Contributions-welcome-1c9a5b.svg" alt="Contributions welcome"></a>
+  <a href="https://github.com/kahanikids/unravel-tax/actions/workflows/validate.yml"><img src="https://github.com/kahanikids/unravel-tax/actions/workflows/validate.yml/badge.svg" alt="Validate status"></a>
+  <a href="https://kahanikids.github.io/unravel-tax/"><img src="https://img.shields.io/badge/Try%20it-live%20demo-orange.svg" alt="Live demo"></a>
+</p>
+
+Unravel Tax turns PDFs, Excel files, CSVs, and saved webpages into two clean
+files: a concise summary for your CA, and a full workbook to keep. No signup,
+no install, no server — it runs entirely in your browser, and nothing you
+enter ever leaves your device.
 
 **Not tax advice. Not affiliated with the Income Tax Department, CBDT, or
 Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
@@ -18,6 +26,19 @@ Ministry of Finance.** Built for FY 2025-26 (AY 2026-27). See
 [Report an issue](https://github.com/kahanikids/unravel-tax/issues/new/choose) ·
 [Fix a rule](CONTRIBUTING.md) ·
 [Disclaimer](DISCLAIMER.md)
+
+---
+
+## Contents
+
+- [Start here](#start-here)
+- [How it works](#how-it-works)
+- [Profiles](#profiles-nri-huf-senior-citizens-single-parents)
+- [Got feedback, a question, or found something wrong?](#got-feedback-a-question-or-found-something-wrong)
+- [Contributing](#contributing)
+- [Maintainer](#maintainer)
+- [Status](#status)
+- [Other docs](#other-docs)
 
 ---
 
@@ -60,13 +81,25 @@ paths remain deferred. The app says so in "Things to check". See
 
 ---
 
+## Got feedback, a question, or found something wrong?
+
+You don't need to know Git, or how GitHub Discussions work, to talk to us.
+
+**[Open a new issue](https://github.com/kahanikids/unravel-tax/issues/new/choose)**,
+pick whichever option sounds closest to what happened, and describe it in
+your own words — "this number looked wrong," "I got stuck on this screen,"
+"can you support X." That's the whole process. Someone will read it and
+reply; you don't need to format anything or tag anyone.
+
+If it's a security issue (something that could expose someone's data),
+please don't post it publicly — see [SECURITY.md](SECURITY.md) instead.
+
+---
+
 ## Contributing
 
 Rule updates after each Union Budget are the highest-value contribution.
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [ROADMAP.md](ROADMAP.md).
-
-Questions that are not bugs: enable **GitHub Discussions** on the repo (Q&A)
-and ask there — noted in CONTRIBUTING for maintainers setting up the repo.
 
 ---
 
