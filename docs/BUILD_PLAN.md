@@ -120,7 +120,7 @@ unravel-tax/
   templates/
     master-template.gsheet-link.md
     excel-export/
-      IndiaTaxAssistant-Template.xlsx
+      UnravelTax-Template.xlsx
 
   prompts/
     00-master-guide.md            <- single entry-point conversation, see Section 7

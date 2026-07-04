@@ -2,6 +2,17 @@
 
 Version 0.1. Drafted from a working session filing a sample taxpayer's FY2025-26 (AY2026-27) return. Every rule referenced here was checked against current sources during that session; see citations throughout.
 
+> **Status note:** this is the original discovery-phase draft, written before
+> `docs/BUILD_PLAN.md` and the repo scaffold were finalized. Dozens of files in
+> `rules/*.md` and `rules/*.json` cite specific section numbers from this
+> document as source material — **section numbers below must not be
+> renumbered or removed**, even when content is edited. Where this draft's
+> proposed prompt filenames, repo layout, or product name disagree with what's
+> actually in the repo today, `docs/BUILD_PLAN.md` and the live `prompts/`,
+> `rules/`, and `webapp/` directories are authoritative — this file's lasting
+> value is the problem statement (Section 1–2) and the sourced rule detail
+> (Sections 8–12, 14) that the rules library still points back to.
+
 ## 1. Problem
 
 Indian individual tax filing is not actually hard — it's scattered. The rules live in Finance Acts and CBDT circulars, the data lives in broker/AMC/bank PDFs with no common format, and the computation logic (LT vs ST vs speculative, exemptions, surcharge caps, what's deductible and what isn't) has to be held in someone's head and redone every year. Most families either pay a CA for routine work that's mostly mechanical, or muddle through and get it wrong — most commonly by missing a rate change, misclassifying a trade, or double-counting (or forgetting) a deduction.
@@ -54,15 +65,23 @@ Three things, all living in one open-source repo:
 
 Written the way it should appear in the repo's README, on the assumption the reader has never used ChatGPT or Google Sheets before.
 
+> Superseded by the actual shipped flow: the webapp ([README.md](../README.md)
+> "Start here") is now the primary path, and the manual prompt pack that
+> shipped is `prompts/00-master-guide.md` (single entry point) plus
+> `prompts/01-extract-statement.md` and `prompts/02-explain-my-results.md` —
+> not the three-prompt draft (`01-getting-started.md` /
+> `02-extract-statement.md` / `03-ask-a-rule.md`) originally sketched below.
+> Kept for the reasoning behind each step, which still holds.
+
 1. Go to `sheets.google.com` in a browser. Sign in with any Google account (free).
 2. Open the template link from the repo (`File > Make a copy` to get your own editable version). This is your working file from now on.
 3. Go to `chatgpt.com`. Sign up if you haven't — free, no card needed.
-4. Start a new chat. Copy the "Getting Started" prompt from the repo's `prompts/01-getting-started.md` and paste it in.
+4. Start a new chat. Copy the master guide prompt from the repo's `prompts/00-master-guide.md` and paste it in.
 5. Answer ChatGPT's questions about your situation (resident/NRI, HUF involved, age 60+, sole parent handling this, etc.). It will tell you which tabs in your spreadsheet copy you need and hand you a document checklist.
 6. Gather those documents — mainly your broker/AMC capital gains statement(s), Form 16 or pension statement, bank interest certificates, dividend statement if you have one.
-7. For each broker/AMC statement: start a fresh message (or new chat if the old one has gone quiet for a while — free tier forgets fast), copy the "Extract Statement" prompt from `prompts/02-extract-statement.md`, paste it in, and upload that one file. ChatGPT outputs a clean table.
+7. For each broker/AMC statement: start a fresh message (or new chat if the old one has gone quiet for a while — free tier forgets fast), the master guide switches to the extraction behaviour in `prompts/01-extract-statement.md` and you upload that one file. ChatGPT outputs a clean table.
 8. Copy that table and paste it into the matching "Raw Data" tab in your spreadsheet. The Summary tabs calculate themselves — no formulas to touch.
-9. Read the flagged notes in the Detailed Summary tab (colour-coded: things needing your input are highlighted). Use the "Ask About a Rule" prompt (`prompts/03-ask-a-rule.md`) for anything unclear, pasting in the relevant rules file from `rules/`.
+9. Read the flagged notes in the Detailed Summary tab (colour-coded: things needing your input are highlighted). When all documents are in, the master guide switches to `prompts/02-explain-my-results.md` for anything unclear.
 10. When done, the CA Summary tab is the one to hand to an actual CA for review, or to use for self-filing if you're comfortable.
 
 No step requires installing anything, writing a formula, or paying for anything.
@@ -106,6 +125,12 @@ No step requires installing anything, writing a formula, or paying for anything.
 - `Alimony/Maintenance Log` — periodic vs lump-sum flag, since they're taxed differently
 
 ## 7. Prompt Pack — draft content
+
+> Superseded by the shipped Prompt Pack (see `prompts/README.md`): a single
+> entry point, `prompts/00-master-guide.md`, internally routes to
+> `prompts/01-extract-statement.md` and `prompts/02-explain-my-results.md`
+> instead of the three separately-invoked drafts below. Kept as the earliest
+> version of the wording these prompts evolved from.
 
 ### `prompts/01-getting-started.md`
 
@@ -290,6 +315,12 @@ Design implication: the `Getting Started` prompt (Section 7 of the Prompt Pack) 
 
 ## 13. Repo structure (proposed)
 
+> Superseded by `docs/BUILD_PLAN.md` Section 6 and the repo as it actually
+> exists — the product was renamed from "IndiaTaxAssistant" to "Unravel Tax"
+> and the prompt pack shipped as `00-master-guide.md` /
+> `01-extract-statement.md` / `02-explain-my-results.md` (Section 7 above).
+> Left below only as the earliest draft of the idea.
+
 ```
 unravel-tax/
   README.md                  <- setup steps from Section 5
@@ -309,6 +340,11 @@ unravel-tax/
 ```
 
 ## 14. Phasing
+
+> Historical: all four phases/milestones described here and in
+> `docs/BUILD_PLAN.md` Section 12 have since shipped (webapp included — see
+> the README "Status" section for what's fully calculated vs. partial per
+> profile). Kept for the original prioritization reasoning.
 
 **Phase 1 (MVP):** General resident + Senior Citizen profiles only, since that's what's been built and validated this session. Equity capital gains, dividends, carry-forward register, CA Summary/Detailed Summary split, prompt pack v1.
 
@@ -368,6 +404,9 @@ unravel-tax/
 ```
 
 ### 15.5 Sequencing
+
+> Historical: this sequencing was followed and all three steps have shipped
+> (webapp is now the primary path — see README.md "Start here").
 
 1. Google Sheets template + Prompt Pack (Sections 5–7) — ships with no build step, works today.
 2. Google Colab notebook porting this session's actual Python/openpyxl scripts — near-zero additional work since the code already exists and is proven against a real filing, zero install for the user.
