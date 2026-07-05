@@ -570,26 +570,28 @@ function checkOrientationForm() {
     "Validated presumptive follow-up: shown for resident/RNOR with business income, hidden otherwise."
   );
 
-  const presumptiveHelperCopy =
-    "Presumptive taxation is an optional simplified scheme for small goods businesses (Section 44AD), freelancers and professionals (44ADA), or goods transport (44AE). You declare income as a fixed percentage of turnover instead of keeping full books. Say Yes only if you actually opted for this scheme this year. Skip if you're not sure yet.";
+  const presumptiveTooltipCopy =
+    "Presumptive taxation is an optional simplified scheme for small goods businesses (Section 44AD), freelancers and professionals (44ADA), or goods transport (44AE). You declare income as a fixed percentage of turnover instead of keeping full books.";
   const orientationSource = readFileSync(
     resolve(import.meta.dirname, "../src/components/OrientationForm.tsx"),
     "utf8"
   );
-  assertIncludes(orientationSource, presumptiveHelperCopy);
+  const presumptiveBlock = orientationSource.match(
+    /id: "presumptiveTaxation"[\s\S]*?(?=\n  \},\n  \{|\n\];)/
+  )?.[0];
+  if (!presumptiveBlock?.includes("infoTooltip:")) {
+    throw new Error("Presumptive question should use infoTooltip for the explanation.");
+  }
+  assertIncludes(presumptiveBlock, presumptiveTooltipCopy);
+  if (presumptiveBlock.includes("helper:") || presumptiveBlock.includes("mobileHelper:")) {
+    throw new Error("Presumptive question should not show default helper text below the prompt.");
+  }
   if (orientationSource.includes("On 44AD/44ADA/44AE? Say Yes.")) {
     throw new Error("Presumptive question should not use the old cryptic mobile helper.");
   }
-  if (orientationSource.includes("infoTooltip:")) {
-    throw new Error("Presumptive explanation should be helper text, not an info icon.");
-  }
-  if (businessPresumptiveSummary.includes('class="orientation-helper"')) {
-    throw new Error(
-      "Presumptive summary recap should not show a default helper block under the prompt."
-    );
-  }
+  assertIncludes(orientationSource, 'import { InfoTooltip } from "./InfoTooltip"');
   console.log(
-    "Validated presumptive helper: plain-language explanation shown below the question."
+    "Validated presumptive info tooltip: explanation only behind the i icon, not as helper text."
   );
 }
 

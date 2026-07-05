@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LLM extraction spike — Llama 3.2 3B</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; line-height: 1.4; }
+    body { max-width: 960px; margin: 1rem auto; padding: 0 1rem; }
+    textarea { width: 100%; min-height: 120px; font-family: ui-monospace, monospace; font-size: 12px; }
+    pre { background: #f4f4f4; padding: 0.75rem; overflow: auto; max-height: 320px; font-size: 11px; }
+    .score { padding: 0.5rem 0.75rem; border-radius: 6px; margin-top: 0.5rem; }
+    .ok { background: #e8f5e9; }
+    .warn { background: #fff8e1; }
+    .bad { background: #ffebee; }
+    .info { background: #e3f2fd; }
+    button { padding: 0.5rem 1rem; margin: 0 0.5rem 0.5rem 0; cursor: pointer; }
+    button.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+    #status { margin: 0.75rem 0; white-space: pre-wrap; }
+    h1 { font-size: 1.25rem; }
+    h2 { font-size: 1rem; margin-top: 1.5rem; }
+    label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+    .meta { color: #555; font-size: 0.9rem; }
+    .doc-types { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.75rem 0; }
+    .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 700px) { .score-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>PDF/free-form extraction spike — Llama 3.2 3B</h1>
+  <p class="meta">
+    Single-model benchmark via WebLLM (WebGPU). Open in Chrome/Edge with a GPU.
+    First run downloads ~2 GB. Text LLMs only — pdf.js extracted text, not PDF bytes.
+  </p>
+
+  <p class="meta"><strong>Document type</strong> (loads fixture into textarea below)</p>
+  <div class="doc-types" id="docTypes">
+    <button type="button" data-doc="broker-cg" class="active">Broker CG statement</button>
+    <button type="button" data-doc="itr-v">ITR-V (pdf.js)</button>
+    <button type="button" data-doc="ais-summary">AIS summary</button>
+    <button type="button" data-doc="custom">Paste / upload</button>
+  </div>
+  <p class="meta" id="docMeta">Broker CG: scored against 5-row ground truth from sample-broker-statement.csv.</p>
+
+  <label for="pdfFile">Upload PDF (optional)</label>
+  <input id="pdfFile" type="file" accept=".pdf,application/pdf" />
+
+  <label for="docText">Document text</label>
+  <textarea id="docText"></textarea>
+
+  <p>
+    <button id="runBtn" type="button">Run Llama extraction</button>
+    <button id="scoreOnlyBtn" type="button">Re-score output below</button>
+  </p>
+  <div id="status">Ready.</div>
+
+  <div class="score-grid">
+    <section>
+      <h2>Raw LLM output</h2>
+      <textarea id="llamaOut" rows="10"></textarea>
+    </section>
+    <section>
+      <h2>Scores</h2>
+      <pre id="rawScore"></pre>
+      <pre id="postScore"></pre>
+      <pre id="infoScore"></pre>
+    </section>
+  </div>
+
+  <script type="module">
+    import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+    import * as pdfjs from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+
+    const MODEL_ID = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
+
+    const DOC_TYPES = {
+      "broker-cg": {
+        label: "Broker CG statement",
+        meta: "Scored against 5-row ground truth from sample-broker-statement.csv.",
+        fixture: "sample-pdf-extracted-text.txt",
+        scorable: true
+      },
+      "itr-v": {
+        label: "ITR-V",
+        meta: "pdf.js text extract from sample-itr-v.pdf. Informational — no CG row ground truth.",
+        fixturePdf: "sample-itr-v.pdf",
+        scorable: false
+      },
+      "ais-summary": {
+        label: "AIS summary",
+        meta: "Synthetic AIS extract with dividend/interest/TDS totals, no CG transactions.",
+        fixture: "sample-ais-summary.txt",
+        scorable: false
+      },
+      custom: {
+        label: "Custom",
+        meta: "Paste text or upload a PDF. Broker CG scoring applies only if content matches the fixture.",
+        scorable: false
+      }
+    };
+
+    let currentDocType = "broker-cg";
+    let currentSourceText = "";
+    let engine;
+
+    const EXTRACTION_PROMPT = await fetch("/extraction-prompt.txt")
+      .then(async (res) => (res.ok ? res.text() : null))
+      .catch(() => null);
+
+    /** Ground truth from fixtures/sample-broker-statement.csv (5 rows). */
+    const EXPECTED = [
+      { scrip: "acme industries", purchaseDate: "01-Apr-2025", sellDate: "15-Apr-2025", units: 100, buyValue: 50000, sellValue: 51000 },
+      { scrip: "acme industries", purchaseDate: "10-Jan-2024", sellDate: "20-May-2025", units: 50, buyValue: 25000, sellValue: 27500 },
+      { scrip: "sample metals ltd", purchaseDate: "05-Jun-2025", sellDate: "05-Jun-2025", units: 200, buyValue: 40000, sellValue: 40800 },
+      { scrip: "sample metals ltd", purchaseDate: "12-Feb-2023", sellDate: "18-Jun-2025", units: 75, buyValue: 30000, sellValue: 33000 },
+      { scrip: "test pharma co", purchaseDate: "01-Aug-2025", sellDate: "30-Aug-2025", units: 150, buyValue: 45000, sellValue: 43500 }
+    ];
+
+    const normScrip = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const num = (v) => {
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v !== "string") return undefined;
+      const n = Number(v.replace(/[₹,\s]/g, "").replace(/[^0-9.-]/g, ""));
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    function extractJsonBlock(text) {
+      const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      if (fenced) return fenced[1].trim();
+      const start = text.indexOf("{");
+      const end = text.lastIndexOf("}");
+      if (start >= 0 && end > start) return text.slice(start, end + 1);
+      return text.trim();
+    }
+
+    // --- post-process mirror (minimal; full logic in extractionPostProcess.ts / score-extraction.mjs) ---
+    const DATE_TOKEN = /\b(\d{1,2})[-/](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[-/](\d{4})\b/gi;
+    const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+    const normalizeDateToken = (day, month, year) => {
+      const monthKey = month.slice(0, 3).toLowerCase();
+      const monthFormatted = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+      return `${String(Number(day)).padStart(2, "0")}-${monthFormatted}-${year}`;
+    };
+    const parseExtractionDate = (value) => {
+      const match = String(value).trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+      if (!match) return 0;
+      const month = MONTHS[match[2].toLowerCase()];
+      if (month === undefined) return 0;
+      return new Date(Number(match[3]), month, Number(match[1])).getTime();
+    };
+    const collectDatesInText = (text) => {
+      const normalized = text.replace(/(\d{1,2}-[A-Za-z]{3}-)\s+(\d{4})/g, "$1$2");
+      const found = [];
+      for (const match of normalized.matchAll(DATE_TOKEN)) {
+        found.push(normalizeDateToken(match[1], match[2], match[3]));
+      }
+      return found;
+    };
+    const findDatesNearTransaction = (sourceText, units, buyValue, sellValue) => {
+      const lines = sourceText.split(/\r?\n/);
+      let best;
+      for (let start = 0; start < lines.length; start += 1) {
+        for (let end = start; end < Math.min(start + 4, lines.length); end += 1) {
+          const window = lines.slice(start, end + 1).join(" ");
+          if (!new RegExp(`\\b${units}\\b`).test(window)) continue;
+          if (!new RegExp(`\\b${buyValue}\\b`).test(window)) continue;
+          if (!new RegExp(`\\b${sellValue}\\b`).test(window)) continue;
+          const dates = [...new Set(collectDatesInText(window))];
+          const span = end - start + 1;
+          if (!best || dates.length > best.dates.length || (dates.length === best.dates.length && span < best.span)) {
+            best = { span, dates };
+          }
+        }
+      }
+      return best?.dates ?? [];
+    };
+    const postProcessExtractionRaw = (rawText, sourceText) => {
+      const jsonText = extractJsonBlock(rawText);
+      let data;
+      try { data = JSON.parse(jsonText); } catch { return jsonText; }
+      if (typeof data !== "object" || data === null || Array.isArray(data)) return jsonText;
+      const isNullish = (v) => v == null || (typeof v === "string" && ["", "null", "undefined", "n/a"].includes(v.trim().toLowerCase()));
+      const repair = (tx) => {
+        const units = num(tx.units), buyValue = num(tx.buyValue), sellValue = num(tx.sellValue);
+        if (units === undefined || buyValue === undefined || sellValue === undefined) return tx;
+        const nearby = findDatesNearTransaction(sourceText, units, buyValue, sellValue);
+        if (nearby.length === 0) return tx;
+        let purchase = isNullish(tx.purchaseDate) ? "" : String(tx.purchaseDate).trim();
+        let sell = isNullish(tx.sellDate) ? "" : String(tx.sellDate).trim();
+        if (nearby.length >= 2 && !sell) {
+          const sorted = [...nearby].sort((a, b) => parseExtractionDate(a) - parseExtractionDate(b));
+          return { ...tx, purchaseDate: sorted[0], sellDate: sorted[sorted.length - 1] };
+        }
+        if (purchase && sell && parseExtractionDate(purchase) > parseExtractionDate(sell)) [purchase, sell] = [sell, purchase];
+        return { ...tx, purchaseDate: purchase || nearby[0] || null, sellDate: sell || nearby[nearby.length - 1] || null };
+      };
+      const raw = Array.isArray(data.capitalGainsTransactions) ? data.capitalGainsTransactions : [];
+      data.capitalGainsTransactions = raw.map((item) => (typeof item === "object" && item ? repair(item) : item));
+      return JSON.stringify(data);
+    };
+
+    function parseExtractionJson(text, sourceText, applyPostProcess) {
+      const jsonText = applyPostProcess && sourceText
+        ? postProcessExtractionRaw(text, sourceText)
+        : extractJsonBlock(text);
+      let data;
+      try { data = JSON.parse(extractJsonBlock(jsonText)); } catch (e) {
+        return { ok: false, error: "JSON.parse failed: " + e.message, transactions: [] };
+      }
+      if (typeof data !== "object" || data === null || Array.isArray(data)) {
+        return { ok: false, error: "Root must be a JSON object", transactions: [] };
+      }
+      const raw = Array.isArray(data.capitalGainsTransactions) ? data.capitalGainsTransactions : [];
+      const transactions = raw
+        .map((t) => ({
+          scripName: t?.scripName ?? "",
+          purchaseDate: t?.purchaseDate ?? "",
+          sellDate: t?.sellDate ?? "",
+          units: num(t?.units),
+          buyValue: num(t?.buyValue),
+          sellValue: num(t?.sellValue)
+        }))
+        .filter((t) => String(t.scripName).trim() !== "");
+      return {
+        ok: true,
+        documentType: data.documentType,
+        confidence: data.confidence,
+        notes: data.notes,
+        annualFigures: data.annualFigures,
+        transactions
+      };
+    }
+
+    function scoreBrokerCg(rawText, sourceText, applyPostProcess) {
+      const parsed = parseExtractionJson(rawText, sourceText, applyPostProcess);
+      if (!parsed.ok) return { ...parsed, score: 0, summary: parsed.error };
+
+      const rows = parsed.transactions;
+      const used = new Set();
+      let matched = 0;
+      let dateIssues = 0;
+
+      for (const exp of EXPECTED) {
+        const idx = rows.findIndex((r, i) => {
+          if (used.has(i)) return false;
+          return (
+            normScrip(r.scripName).includes(exp.scrip.split(" ")[0]) &&
+            num(r.units) === exp.units &&
+            num(r.buyValue) === exp.buyValue &&
+            num(r.sellValue) === exp.sellValue
+          );
+        });
+        if (idx >= 0) {
+          used.add(idx);
+          matched++;
+          const r = rows[idx];
+          if (String(r.purchaseDate).trim() !== exp.purchaseDate) dateIssues++;
+          if (String(r.sellDate).trim() !== exp.sellDate) dateIssues++;
+        }
+      }
+
+      const hallucinated = Math.max(0, rows.length - matched);
+      const score = 20 + matched * 14 + (matched === EXPECTED.length ? 10 : 0) - hallucinated * 12 - dateIssues * 3;
+      return {
+        ok: true,
+        score,
+        matched,
+        rowCount: rows.length,
+        hallucinated,
+        dateIssues,
+        summary: `rows=${rows.length} matched=${matched}/${EXPECTED.length} hallucinated=${hallucinated} dateMismatches=${dateIssues} score=${score}`
+      };
+    }
+
+    function scoreInformational(rawText) {
+      const parsed = parseExtractionJson(rawText, "", false);
+      if (!parsed.ok) return { summary: parsed.error, cls: "bad" };
+      const parts = [`documentType=${parsed.documentType ?? "?"}`];
+      parts.push(`confidence=${parsed.confidence ?? "?"}`);
+      parts.push(`cgRows=${parsed.transactions.length}`);
+      const af = parsed.annualFigures;
+      if (af && typeof af === "object") {
+        const filled = Object.entries(af).filter(([, v]) => v != null && v !== "");
+        if (filled.length) parts.push(`annualFigures=${filled.map(([k, v]) => `${k}:${v}`).join(", ")}`);
+      }
+      if (parsed.notes) parts.push(`notes=${String(parsed.notes).slice(0, 120)}`);
+      return { summary: parts.join(" | "), cls: "info" };
+    }
+
+    function rescore() {
+      const raw = document.getElementById("llamaOut").value;
+      const scorable = DOC_TYPES[currentDocType]?.scorable || currentDocType === "broker-cg";
+      const infoEl = document.getElementById("infoScore");
+      infoEl.textContent = "";
+      infoEl.className = "score";
+
+      if (!scorable) {
+        const info = scoreInformational(raw);
+        infoEl.className = "score " + info.cls;
+        infoEl.textContent = info.summary;
+        document.getElementById("rawScore").textContent = "(no CG ground truth for this doc type)";
+        document.getElementById("postScore").textContent = "";
+        return;
+      }
+
+      const source = currentSourceText || document.getElementById("docText").value;
+      const rawResult = scoreBrokerCg(raw, source, false);
+      const postResult = scoreBrokerCg(raw, source, true);
+
+      const rawEl = document.getElementById("rawScore");
+      const postEl = document.getElementById("postScore");
+      rawEl.className = "score " + (rawResult.ok && rawResult.matched === EXPECTED.length ? "ok" : "warn");
+      postEl.className = "score " + (postResult.ok && postResult.matched === EXPECTED.length ? "ok" : "warn");
+      rawEl.textContent = "RAW: " + rawResult.summary;
+      postEl.textContent = "POST-PROCESS: " + postResult.summary;
+    }
+
+    async function fetchFixture(path) {
+      const bases = ["/fixtures/", "../fixtures/", "../../fixtures/"];
+      for (const base of bases) {
+        try {
+          const res = await fetch(base + path);
+          if (res.ok) return res.text();
+        } catch { /* try next */ }
+      }
+      throw new Error(`Could not load ${path} — run via webapp dev server (npm run dev)`);
+    }
+
+    async function fetchFixtureBuffer(path) {
+      const bases = ["/fixtures/", "../fixtures/", "../../fixtures/"];
+      for (const base of bases) {
+        try {
+          const res = await fetch(base + path);
+          if (res.ok) return res.arrayBuffer();
+        } catch { /* try next */ }
+      }
+      throw new Error(`Could not load ${path}`);
+    }
+
+    function groupItemsIntoLines(items) {
+      const lines = [];
+      const Y_TOLERANCE = 2;
+      for (const item of items) {
+        if (!item.str) continue;
+        const x = item.transform[4];
+        const y = item.transform[5];
+        let line = lines.find((c) => Math.abs(c.y - y) <= Y_TOLERANCE);
+        if (!line) { line = { y, parts: [] }; lines.push(line); }
+        line.parts.push({ x, str: item.str });
+      }
+      return lines
+        .sort((a, b) => b.y - a.y)
+        .map((line) => line.parts.sort((a, b) => a.x - b.x).map((p) => p.str).join(" ").replace(/\s+/g, " ").trim())
+        .filter((line) => line.length > 0);
+    }
+
+    async function extractPdfText(buffer) {
+      const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+      const pages = [];
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        pages.push(groupItemsIntoLines(content.items.filter((item) => "str" in item)).join("\n"));
+      }
+      return { text: pages.join("\n\n"), pageCount: pdf.numPages };
+    }
+
+    async function loadDocType(docType) {
+      currentDocType = docType;
+      document.querySelectorAll("#docTypes button").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.doc === docType);
+      });
+      const cfg = DOC_TYPES[docType];
+      document.getElementById("docMeta").textContent = cfg.meta;
+      if (docType === "custom") {
+        document.getElementById("status").textContent = "Paste text or upload a PDF.";
+        return;
+      }
+      const status = document.getElementById("status");
+      try {
+        if (cfg.fixturePdf) {
+          status.textContent = `Loading ${cfg.fixturePdf}…`;
+          const buffer = await fetchFixtureBuffer(cfg.fixturePdf);
+          const { text, pageCount } = await extractPdfText(buffer);
+          currentSourceText = text;
+          document.getElementById("docText").value = text;
+          status.textContent = `Loaded ${cfg.fixturePdf} (${pageCount} page(s)).`;
+        } else if (cfg.fixture) {
+          status.textContent = `Loading ${cfg.fixture}…`;
+          const text = await fetchFixture(cfg.fixture);
+          currentSourceText = text;
+          document.getElementById("docText").value = text;
+          status.textContent = `Loaded ${cfg.fixture}.`;
+        }
+      } catch (error) {
+        status.textContent = "Load failed: " + (error?.message || error);
+      }
+    }
+
+    document.getElementById("docTypes").addEventListener("click", (event) => {
+      const btn = event.target.closest("button[data-doc]");
+      if (btn) void loadDocType(btn.dataset.doc);
+    });
+
+    document.getElementById("pdfFile").addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const buffer = await file.arrayBuffer();
+        const { text, pageCount } = await extractPdfText(buffer);
+        currentSourceText = text;
+        currentDocType = "custom";
+        document.getElementById("docText").value = text;
+        document.getElementById("status").textContent = `${file.name}: ${pageCount} page(s) via pdf.js.`;
+      } catch (error) {
+        document.getElementById("status").textContent = "PDF extract failed: " + (error?.message || error);
+      }
+    });
+
+    document.getElementById("scoreOnlyBtn").addEventListener("click", rescore);
+
+    async function runLlama() {
+      const doc = document.getElementById("docText").value.trim();
+      if (!doc) throw new Error("Load or paste document text first.");
+      currentSourceText = doc;
+      const prompt = EXTRACTION_PROMPT ?? "(prompt unavailable — copy from prompts/01-extract-statement.md)";
+      const userContent = `Document text to extract:\n\n${doc}`;
+      document.getElementById("runBtn").disabled = true;
+
+      try {
+        if (!engine) {
+          engine = await CreateMLCEngine(MODEL_ID, {
+            initProgressCallback: (p) => {
+              document.getElementById("status").textContent =
+                `Loading model: ${(p.progress * 100).toFixed(0)}% ${p.text}`;
+            }
+          });
+        }
+        document.getElementById("status").textContent = "Generating extraction…";
+        const reply = await engine.chat.completions.create({
+          messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: userContent }
+          ],
+          temperature: 0.1,
+          max_tokens: 1200
+        });
+        const rawText = reply.choices[0]?.message?.content ?? "";
+        document.getElementById("llamaOut").value = rawText;
+        document.getElementById("status").textContent = "Done.";
+        rescore();
+        return { rawText, docType: currentDocType, sourceText: currentSourceText };
+      } finally {
+        document.getElementById("runBtn").disabled = false;
+      }
+    }
+
+    document.getElementById("runBtn").addEventListener("click", () => {
+      runLlama().catch((e) => {
+        document.getElementById("status").textContent = "Error: " + (e?.message || e);
+        document.getElementById("runBtn").disabled = false;
+      });
+    });
+
+    window.runLlamaBenchmark = runLlama;
+    window.scoreBrokerCg = (raw, source, post) => scoreBrokerCg(raw, source, post);
+    window.getCurrentDocType = () => currentDocType;
+    window.loadDocType = loadDocType;
+
+    await loadDocType("broker-cg");
+  </script>
+</body>
+</html>

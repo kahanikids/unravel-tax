@@ -1,15 +1,13 @@
 {
   "topic": "nri-dtaa",
-  "applies_to": [
-    "nri"
-  ],
+  "applies_to": ["nri"],
   "effective_date": "2025-04-01",
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
     "status": "verified_secondary_source",
     "last_verified": "2026-07-04",
-    "note": "MF capital-gains country map checked against ITAT Mumbai Anushaka Sanjay Shah (ITA No. 174/MUM/2025, 26 Mar 2025) and current NRI filing guides. Treaty article numbers are indicative — confirm the exact article in your country's DTAA before filing. nro_withholding_rates is cross-checked against multiple current NRI filing/withholding-tax guides rather than the primary treaty text of every country, since several of these treaties don't have a single canonical rate table published in an easily verifiable form; a null rate means this tool could not corroborate a specific figure and defaults to the domestic Section 195/115A rate rather than guessing. Confirm the exact treaty article with a CA before relying on any of these as the withheld rate.",
+    "note": "MF capital-gains country map checked against ITAT Mumbai Anushaka Sanjay Shah (ITA No. 174/MUM/2025, 26 Mar 2025) and current NRI filing guides. Treaty article numbers are indicative, so confirm the exact article in your country's DTAA before filing. nro_withholding_rates is cross-checked against multiple current NRI filing/withholding-tax guides rather than the primary treaty text of every country, since several of these treaties don't have a single canonical rate table published in an easily verifiable form; a null rate means this tool could not corroborate a specific figure and defaults to the domestic Section 195/115A rate rather than guessing. Confirm the exact treaty article with a CA before relying on any of these as the withheld rate.",
     "source_type": "secondary"
   },
   "source_refs": [
@@ -21,10 +19,7 @@
     "SYSTEM_SPEC.md Section 9.4"
   ],
   "values": {
-    "exemption_method_documents": [
-      "tax_residency_certificate",
-      "form_10f"
-    ],
+    "exemption_method_documents": ["tax_residency_certificate", "form_10f"],
     "foreign_tax_credit_document": "form_67",
     "forms_not_interchangeable": true,
     "requires_country_of_tax_residence": true,
@@ -40,7 +35,7 @@
         "Singapore": {
           "treatment": "country_of_residence_only",
           "dtaa_article": "13(5)",
-          "note": "ITAT Mumbai (Mar 2025) held Indian MF gains taxable only in Singapore. Singapore does not levy personal capital-gains tax, so effective Indian tax can be zero — but you must still file an ITR in India to claim the exemption and recover any TDS."
+          "note": "ITAT Mumbai (Mar 2025) held Indian MF gains taxable only in Singapore. Singapore does not levy personal capital-gains tax, so effective Indian tax can be zero. You must still file an ITR in India to claim the exemption and recover any TDS."
         },
         "United Arab Emirates": {
           "treatment": "country_of_residence_only",
@@ -123,20 +118,40 @@
       "default_note": "Domestic Section 195/195A rates (see rules/nri-tds-and-refunds.json) apply when a country has no entry here, or a rate is null - never a guessed treaty figure.",
       "countries": {
         "Singapore": { "interest_rate": 0.15, "dividend_rate": 0.15, "dtaa_articles": "11, 10" },
-        "United Arab Emirates": { "interest_rate": 0.125, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
-        "United States": { "interest_rate": 0.15, "dividend_rate": 0.25, "dtaa_articles": "11, 10" },
-        "United Kingdom": { "interest_rate": 0.15, "dividend_rate": 0.15, "dtaa_articles": "12, 11" },
+        "United Arab Emirates": {
+          "interest_rate": 0.125,
+          "dividend_rate": 0.1,
+          "dtaa_articles": "11, 10"
+        },
+        "United States": {
+          "interest_rate": 0.15,
+          "dividend_rate": 0.25,
+          "dtaa_articles": "11, 10"
+        },
+        "United Kingdom": {
+          "interest_rate": 0.15,
+          "dividend_rate": 0.15,
+          "dtaa_articles": "12, 11"
+        },
         "Canada": { "interest_rate": 0.15, "dividend_rate": 0.25, "dtaa_articles": "11, 10" },
         "Australia": { "interest_rate": 0.15, "dividend_rate": 0.15, "dtaa_articles": "11, 10" },
         "Saudi Arabia": { "interest_rate": 0.1, "dividend_rate": 0.05, "dtaa_articles": "11, 10" },
         "Germany": { "interest_rate": 0.1, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
         "Malaysia": { "interest_rate": 0.1, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
-        "Kuwait": { "interest_rate": 0.1, "dividend_rate": null, "dtaa_articles": "11, check treaty" },
+        "Kuwait": {
+          "interest_rate": 0.1,
+          "dividend_rate": null,
+          "dtaa_articles": "11, check treaty"
+        },
         "Oman": { "interest_rate": null, "dividend_rate": null, "dtaa_articles": "check treaty" },
         "Qatar": { "interest_rate": 0.1, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
         "Italy": { "interest_rate": 0.15, "dividend_rate": 0.25, "dtaa_articles": "12, 10" },
         "Nepal": { "interest_rate": null, "dividend_rate": null, "dtaa_articles": "check treaty" },
-        "Philippines": { "interest_rate": 0.1, "dividend_rate": null, "dtaa_articles": "11, check treaty" },
+        "Philippines": {
+          "interest_rate": 0.1,
+          "dividend_rate": null,
+          "dtaa_articles": "11, check treaty"
+        },
         "Hong Kong": { "interest_rate": 0.1, "dividend_rate": 0.05, "dtaa_articles": "11, 10" }
       }
     }

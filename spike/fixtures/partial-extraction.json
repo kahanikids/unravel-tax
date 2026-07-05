@@ -1,0 +1,12 @@
+{
+  "documentType": "broker capital gains statement",
+  "capitalGainsTransactions": [
+    { "scripName": "Acme Industries", "purchaseDate": "01-Apr-2025", "sellDate": "15-Apr-2025", "units": 100, "buyValue": 50000, "sellValue": 51000 },
+    { "scripName": "Acme Industries", "purchaseDate": "10-Jan-2024", "sellDate": "20-May-2025", "units": 50, "buyValue": 25000, "sellValue": 27500 },
+    { "scripName": "SampleMetals Ltd", "purchaseDate": "05-Jun-2025", "sellDate": "05-Jun-2025", "units": 200, "buyValue": 40000, "sellValue": 40800 }
+  ],
+  "annualFigures": { "dividendIncome": null, "interestIncome": null, "tdsDeducted": null, "deductibleCharges": null },
+  "netRealisedCapitalGainNoDetail": null,
+  "confidence": "medium",
+  "notes": "Partial extract; missed broken-line rows."
+}

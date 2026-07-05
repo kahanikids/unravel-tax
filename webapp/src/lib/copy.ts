@@ -19,6 +19,51 @@ export const WELCOME_DISCLAIMER_BANNER = "This organizes your numbers. It does n
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";
 
+/** First-time extraction method picker (UploadStep). Keep these short: they render in compact cards. */
+export type ExtractionMethodOption = {
+  id: "frontier" | "browser" | "openrouter";
+  label: string;
+  takes: string;
+  gives: string;
+  accuracy: string;
+  time: string;
+  effort: string;
+  data: string;
+};
+
+export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
+  {
+    id: "frontier",
+    label: "Frontier AI",
+    takes: "ChatGPT, Claude, Gemini + copy-paste",
+    gives: "Best shot for messy reports",
+    accuracy: "Highest",
+    time: "A few minutes",
+    effort: "Manual",
+    data: "Leaves your browser"
+  },
+  {
+    id: "browser",
+    label: "Open-Source Llama 3.2 3B",
+    takes: "WebGPU + 2 GB download + smaller context window",
+    gives: "Private first try. If it misses info, use Frontier AI.",
+    accuracy: "Meta IFEval 77.4",
+    time: "2-10 min first run",
+    effort: "One click",
+    data: "Stays with you"
+  },
+  {
+    id: "openrouter",
+    label: "OpenRouter Nemotron",
+    takes: "OpenRouter key + network",
+    gives: "Automatic extraction with Nemotron",
+    accuracy: "Testing now",
+    time: "30 sec-2 min",
+    effort: "One click",
+    data: "Sent to OpenRouter"
+  }
+];
+
 export const REPORT_ISSUE_URL = "https://github.com/kahanikids/unravel-tax/issues/new/choose";
 
 export const REPO_URL = "https://github.com/kahanikids/unravel-tax";
@@ -30,9 +75,9 @@ export const REPO_URL = "https://github.com/kahanikids/unravel-tax";
  * than being duplicated as long prose in the footer. Substance is written to
  * be legally clear; framing is kept plain so a non-technical filer can follow
  * it. Accuracy of the AI and Privacy sections matters most - both describe
- * what the code actually does (client-side parsing for structured files, a
- * copy-paste prompt into the user's own LLM for PDFs/free text, deterministic
- * tax maths, nothing sent to any server by the app).
+ * what the code actually does (client-side parsing for structured files, optional
+ * in-browser Llama extraction or a copy-paste prompt for PDFs/free text,
+ * deterministic tax maths, nothing sent to any server by the app).
  */
 export type LegalSection = { heading: string; paragraphs: string[] };
 
@@ -66,9 +111,9 @@ export const LEGAL_SECTIONS: LegalSection[] = [
   {
     heading: "AI / LLM tools used, and for what",
     paragraphs: [
-      "The app itself does not call any AI service and has no AI API keys. Tax calculations are always deterministic: they run from versioned rule files and plain formulas in your browser, and are never done by an AI or language model.",
-      "AI is used for one narrow job only: reading data out of documents that are not already structured. CSV, Excel, and saved-webpage (HTML) statements are parsed directly in your browser with no AI involved. Only PDFs and free-form / unstructured text use the AI extraction step.",
-      "That extraction step is something you run yourself. The app gives you a copy-paste prompt; you paste it, together with your document, into whichever AI chat you choose (for example ChatGPT, Claude, or Gemini), and paste the AI's result back into the app. The app does not send the document anywhere for you.",
+      "Tax calculations are always deterministic: they run from versioned rule files and plain formulas in your browser, and are never done by an AI or language model.",
+      "LLM Options are used for one narrow job only: reading data out of documents that are not already structured. CSV, Excel, and saved-webpage (HTML) statements are parsed directly in your browser without needing LLM extraction. PDFs and free-form / unstructured text need that extraction step because reports are not standardised enough for reliable native parsing.",
+      "On supported browsers (WebGPU), you can run that extraction here with Llama 3.2 3B entirely on your device. The model weights download once, and nothing is sent to any server. Alternatively, you can use OpenRouter with your own API key to run Nemotron 3 Nano 30B A3B; document text is sent from your browser directly to OpenRouter. If neither suits you, the app still offers a copy-paste prompt you can run in whichever AI chat you choose (ChatGPT, Claude, Gemini, and so on).",
       "Because the AI only ever reads and transcribes numbers into a table you then review and edit, it never decides your tax. You confirm every extracted row before it is used."
     ]
   },
@@ -77,7 +122,7 @@ export const LEGAL_SECTIONS: LegalSection[] = [
     paragraphs: [
       'Everything runs locally in your browser. There is no account, no sign-up, no server, and no analytics or tracking. Nothing you enter is uploaded to or stored by us, because there is no "us" server to store it on.',
       "Your in-progress filing is saved only in this browser's local storage as a convenience so you can resume later, and, on supported browsers, optionally to a folder you choose on your own computer for backup. Both stay on your device and you can clear them at any time.",
-      "The one place your data can leave your machine is the optional AI extraction step: if you paste document contents into a third-party AI chat, that text is handled by that provider under their own privacy policy and terms, not ours. If a document is sensitive, review that provider's policy first, or use a structured format (CSV/Excel) that is parsed entirely in your browser instead."
+      "In-browser extraction keeps your document text on your machine. If you use OpenRouter, your document text and API key stay in this browser. The key is saved in local storage on your device only, but the text is sent from your browser directly to OpenRouter under their privacy policy. If you use the copy-paste fallback instead, pasting document contents into a third-party AI chat means that text is handled by that provider under their own privacy policy and terms, not ours. If a document is sensitive, review that provider's policy first, or use a structured format (CSV/Excel) that is parsed entirely in your browser instead."
     ]
   },
   {
@@ -152,7 +197,7 @@ export const ITR_FORM_REASONS: Record<string, string> = {
   business_or_speculative_non_audit:
     "Your documents show speculative or intraday income, which counts as business income under this form.",
   presumptive_non_audit:
-    "You told us your business or professional income is on the presumptive scheme (Section 44AD, 44ADA, or 44AE), total income is within ₹50 lakh, and you have no capital gains or foreign assets flagged, so ITR-4 (Sugam) fits. This tool does not compute presumptive turnover or audit thresholds — confirm eligibility with your CA before filing.",
+    "You told us your business or professional income is on the presumptive scheme (Section 44AD, 44ADA, or 44AE), total income is within ₹50 lakh, and you have no capital gains or foreign assets flagged, so ITR-4 (Sugam) fits. This tool does not compute presumptive turnover or audit thresholds, so confirm eligibility with your CA before filing.",
   huf_presumptive_non_audit:
     "Filing as a HUF with presumptive business income (Section 44AD, 44ADA, or 44AE) and total income within ₹50 lakh routes through ITR-4 (Sugam). Confirm presumptive eligibility with your CA."
 };
@@ -222,10 +267,10 @@ export const CAPABILITIES: Capability[] = [
       "Broker/AMC statements in these formats are read directly in your browser. Nothing is uploaded anywhere."
   },
   {
-    label: "Guided AI extraction for PDFs and free-form text",
+    label: "PDF extraction (in-browser, OpenRouter, or copy-paste)",
     status: "available",
     detail:
-      "A copy-paste prompt for your own AI chat turns a messy PDF into a table you paste back in. The AI only reads documents; it never does the tax maths."
+      "On WebGPU browsers, PDFs can be extracted here with an on-device Llama 3.2 3B model, or via OpenRouter's Nemotron route with your own API key. Otherwise, a copy-paste prompt for your own AI chat is available. The AI only reads documents; it never does the tax maths."
   },
   {
     label: "Capital gains, dividends, and interest calculations",
@@ -242,7 +287,8 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "ITR form and CA-vs-self-file recommendation",
     status: "available",
-    detail: "Worked out from your profile, documents, and risk flags — including ITR-4 when presumptive taxation applies — not left for you to guess."
+    detail:
+      "Worked out from your profile, documents, and risk flags, including ITR-4 when presumptive taxation applies. Not left for you to guess."
   },
   {
     label: "CA Summary and full workbook exports",

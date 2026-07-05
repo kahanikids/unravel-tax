@@ -33,6 +33,7 @@ Someone who handles tax filing for themselves and often their family, dreads it 
 ### 1.3 What the journey rules out
 
 Explicitly, because agentic build tools tend to add these back in the name of flexibility:
+
 - No landing-page choice between "spreadsheet mode," "Colab mode," "web app mode" shown to a first-time user. One default path. Alternatives exist for people who ask for them, not as an upfront fork.
 - No "which tabs do you want to keep" question. The tool decides from the Stage 2 answers and hands over exactly what's needed.
 - No file-format picker on export. Both fixed outputs are always generated; the user picks which one to send where, not how it's built.
@@ -43,16 +44,16 @@ Explicitly, because agentic build tools tend to add these back in the name of fl
 
 Every stage gets exactly the amount of interruption it needs — not zero, not maximum. The two moments that should hard-block progress with a popup are marked; everything else is inline copy the user can read or skim past.
 
-| Stage | What appears | Type |
-|---|---|---|
-| 1. First contact | "This organizes your numbers — it doesn't replace a CA." Shown once, dismissible, remembered afterward. | Banner, not a popup — don't block the first action with a legal wall. |
-| 2. Orientation | One line under the first question: answers only shape what's asked next, nothing is submitted anywhere. | Inline. |
-| 3. The ask | Each checklist item states plainly why it's needed and what happens if it's skipped. | Inline, part of the checklist itself. |
-| 4. Handoff loop | Before submitting a document: one line on what formats are accepted. After extraction, before the data is used anywhere: "here's what we read from this — confirm or fix it." | **Popup, blocking.** A bad extraction propagates into every downstream number, so this is the one step that should stop the user until they've looked. |
-| 5. The reveal | Any newly-fired routine risk trigger: inline flag in the "things to check" panel. Anything that would change which ITR form applies, or that materially changes the recommendation in Stage 6: a popup. | Inline for routine flags; **popup for form-changing or recommendation-changing triggers only.** |
-| 6. The decision | The CA-or-self-file recommendation, stated plainly with one line of reasoning. | Inline — it's information, not a blocker. |
-| 7. The handover | If the checklist still has open items when export is requested: "N things are still missing — export anyway, or go back?" | **Popup, but not a hard block** — the user can proceed knowingly; this is a confirm, not a wall. |
-| 8. The close | A short reminder of what to keep for audit, CA review, loss schedules, and disclosure notes. | Inline. |
+| Stage            | What appears                                                                                                                                                                                            | Type                                                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. First contact | "This organizes your numbers — it doesn't replace a CA." Shown once, dismissible, remembered afterward.                                                                                                 | Banner, not a popup — don't block the first action with a legal wall.                                                                                  |
+| 2. Orientation   | One line under the first question: answers only shape what's asked next, nothing is submitted anywhere.                                                                                                 | Inline.                                                                                                                                                |
+| 3. The ask       | Each checklist item states plainly why it's needed and what happens if it's skipped.                                                                                                                    | Inline, part of the checklist itself.                                                                                                                  |
+| 4. Handoff loop  | Before submitting a document: one line on what formats are accepted. After extraction, before the data is used anywhere: "here's what we read from this — confirm or fix it."                           | **Popup, blocking.** A bad extraction propagates into every downstream number, so this is the one step that should stop the user until they've looked. |
+| 5. The reveal    | Any newly-fired routine risk trigger: inline flag in the "things to check" panel. Anything that would change which ITR form applies, or that materially changes the recommendation in Stage 6: a popup. | Inline for routine flags; **popup for form-changing or recommendation-changing triggers only.**                                                        |
+| 6. The decision  | The CA-or-self-file recommendation, stated plainly with one line of reasoning.                                                                                                                          | Inline — it's information, not a blocker.                                                                                                              |
+| 7. The handover  | If the checklist still has open items when export is requested: "N things are still missing — export anyway, or go back?"                                                                               | **Popup, but not a hard block** — the user can proceed knowingly; this is a confirm, not a wall.                                                       |
+| 8. The close     | A short reminder of what to keep for audit, CA review, loss schedules, and disclosure notes.                                                                                                            | Inline.                                                                                                                                                |
 
 ## 2. Design principles (derived from Section 1, not invented separately)
 
@@ -68,20 +69,20 @@ Every stage gets exactly the amount of interruption it needs — not zero, not m
 
 ## 3. Format ingestion — lightweight by default, one real exception
 
-This section answers directly: most of this can stay lightweight, entirely client-side, no server, no AI step. One format genuinely can't, and it's worth being precise about why, because the reason isn't "it needs more infrastructure" — it's that the underlying problem (reconstructing a table from a PDF) doesn't have a reliable non-AI answer.
+This section answers directly: most of this can stay lightweight, entirely client-side, no server, and no mandatory cloud LLM step. One class of input genuinely needs LLM Options, and it's worth being precise about why: reconstructing a table from a PDF or free-form report does not have a reliable native answer when reports are not standardised.
 
 Every format funnels into one internal shape before anything downstream ever sees it — a plain list of rows with named columns. Nothing past this point knows or cares what format a number originally came from.
 
-| Format | Stays lightweight (client-side, no AI)? | Why |
-|---|---|---|
-| CSV | Yes | A solved problem — any small, well-maintained parsing library handles it fully in-browser. |
-| Excel (.xlsx) | Yes | A browser-side spreadsheet-reading library reads it fully client-side, no server round-trip. |
-| HTML | Yes, mostly | Every browser can parse HTML natively — no library needed at all to walk its tables. The real work is picking the *right* table when a source file bundles several (broker reports commonly mix summary blocks, disclaimers, and the actual transaction table in one file) — a light heuristic (largest table, or one matching expected column headers) handles this; it's not a heavy problem, just one that needs a specific, testable rule rather than assuming the first table is the right one. |
-| Plain text, already structured (tab/comma-separated) | Yes | Parses the same way CSV does. |
-| Plain text, free-form (a pasted email, an unformatted statement) | No | No lightweight answer exists for genuinely unstructured text — this is a job for the AI step, same as PDF below. |
-| PDF | **No — this is the real exception.** | Extracting raw text from a PDF client-side is lightweight (a standard library does it in a few lines). Extracting a *clean table of transactions* is not — PDFs preserve visual position, not table structure, and every broker's layout differs. Bespoke per-broker PDF table parsers are a maintenance trap: brittle, and there are dozens of brokers. This is the one format that should route through the AI extraction step already in the plan, rather than a hand-built parser. |
+| Format                                                           | Native parse before LLM Options?     | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CSV                                                              | Yes                                  | A solved problem — any small, well-maintained parsing library handles it fully in-browser.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Excel (.xlsx)                                                    | Yes                                  | A browser-side spreadsheet-reading library reads it fully client-side, no server round-trip.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| HTML                                                             | Yes, mostly                          | Every browser can parse HTML natively — no library needed at all to walk its tables. The real work is picking the _right_ table when a source file bundles several (broker reports commonly mix summary blocks, disclaimers, and the actual transaction table in one file) — a light heuristic (largest table, or one matching expected column headers) handles this; it's not a heavy problem, just one that needs a specific, testable rule rather than assuming the first table is the right one. |
+| Plain text, already structured (tab/comma-separated)             | Yes                                  | Parses the same way CSV does.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Plain text, free-form (a pasted email, an unformatted statement) | No                                   | No reliable lightweight answer exists for genuinely unstructured text — this routes to LLM Options, same as PDF below.                                                                                                                                                                                                                                                                                                                                                                               |
+| PDF                                                              | **No — this is the real exception.** | Extracting raw text from a PDF client-side is lightweight (a standard library does it in a few lines). Extracting a _clean table of transactions_ is not — PDFs preserve visual position, not table structure, and every broker's layout differs. Bespoke per-broker PDF table parsers are a maintenance trap: brittle, and there are dozens of brokers. This is the format that should route through LLM Options rather than a hand-built parser.                                                   |
 
-Practically: CSV, Excel, HTML, and structured text are parsed directly in the browser, instantly, with no AI involvement at all. PDF and free-form text go through the same "hand it to the chat, get a clean table back" step from Section 7 — and once that clean table comes back, it re-enters the exact same lightweight pipeline as everything else, because a clean table is just structured text. The AI dependency is isolated to the one place it's actually earning its keep, not spread across the whole ingestion layer.
+Practically: CSV, Excel, HTML, and structured text are parsed directly in the browser, instantly, without needing LLM extraction. PDF and free-form text go through LLM Options — in-browser Llama, OpenRouter, or a copy-paste prompt — and once that clean table comes back, it re-enters the exact same lightweight pipeline as everything else, because a clean table is just structured text. The LLM dependency is isolated to the one place it's actually earning its keep, not spread across the whole ingestion layer.
 
 This is also why Stage 4's confirm-before-commit popup (Section 1.4) matters most for PDF and free-form text specifically — those are the two paths where something can plausibly have been misread, and the user should see that before it's used anywhere.
 
@@ -348,13 +349,13 @@ and a full detailed workbook to keep.
 ## Non-negotiable constraints
 - No backend, no database, no accounts. Static/client-side only. If a
   task seems to need a server, stop and flag it rather than adding one.
-- All tax calculation logic must be deterministic (spreadsheet formulas
-  or plain functions), never delegated to an LLM at runtime.
+- All tax calculation logic must stay deterministic (spreadsheet formulas
+  or plain functions). LLM Options are for document extraction only.
 - Format parsing follows Section 3 of BUILD_PLAN.md exactly: CSV, Excel,
-  HTML, and structured text are parsed directly, client-side, no AI
-  involved. Only PDF and free-form text route through the AI extraction
-  prompt. Do not build a bespoke PDF table parser — that's a deliberate
-  decision, not a gap to fill in later.
+  HTML, and structured text are parsed directly, client-side, without
+  requiring LLM extraction. PDF and free-form text route through the
+  LLM Options flow. Do not build a bespoke PDF table parser — that's a
+  deliberate decision, not a gap to fill in later.
 - Every format, once ingested, normalizes into one common row-shape
   before touching any downstream logic. Don't let format-specific
   handling leak past the ingestion layer.
@@ -415,7 +416,7 @@ Build: the checklist-diffing and cross-check logic from Section 4 as plain, unit
 Done when: given a partially-filled checklist state and a set of ingested documents, the engine correctly reports what's missing and flags at least one deliberately-planted figure mismatch in the test fixtures.
 
 **Milestone 4 — Web app (Stages 2–7, in-browser, simple/advanced views).**
-Build: static React/TypeScript app per the stack in Section 13, the format router from Section 3 (native HTML/CSV/Excel parsing, PDF/free-text routed to the AI step), the reconciliation engine wired into the final confidence check, the simple/advanced toggle from Section 5, both export formats generated in-browser.
+Build: static React/TypeScript app per the stack in Section 13, the format router from Section 3 (native HTML/CSV/Excel parsing, PDF/free-text routed to LLM Options), the reconciliation engine wired into the final confidence check, the simple/advanced toggle from Section 5, both export formats generated in-browser.
 Done when: the same "hand it to a first-time tester" check from Milestone 1 passes using the web app instead of the chat+sheet combination; a side-by-side run of the fixture set through both the spreadsheet and the web app produces identical numbers; and a tester can find the advanced view without being told it exists, but isn't shown it by default.
 
 Historical sequencing rule: the milestones were built in this order so the
@@ -432,19 +433,19 @@ targets templates, notebooks, or prompts.
 > extraction, `write-excel-file` for XLSX exports, and Vitest coverage around
 > the validator suite. It remains static, browser-only, and account-free.
 
-| Layer | Choice | Reasoning |
-|---|---|---|
-| UI framework | Vite + React + TypeScript | Broadly known, easy for outside contributors, fully static-exportable |
-| HTML table extraction | Native browser `DOMParser` | No library needed — every browser already does this |
-| Spreadsheet read/write | Any actively-maintained, browser-based library that can read and write `.xlsx` client-side | Both export flavours generated entirely in-browser, no server round-trip |
-| CSV | Any well-maintained CSV parsing library for the chosen framework | Solved problem, not worth custom-building |
-| PDF text extraction | Any actively-maintained, browser-based PDF-to-text library | Only extracts raw text — table reconstruction deliberately routes to the AI step instead, per Section 3 |
-| Rules | `rules/*.json`, read at build or runtime | Keeps annual maintenance a data edit, not a code change |
-| Reconciliation state | Browser local storage only | Never the system of record — see Section 9 |
-| Hosting | Static hosting (e.g. GitHub Pages or an equivalent free static host) | Zero recurring cost |
-| Auth | None | Removes the largest trust/liability surface entirely |
+| Layer                  | Choice                                                                                     | Reasoning                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| UI framework           | Vite + React + TypeScript                                                                  | Broadly known, easy for outside contributors, fully static-exportable                                   |
+| HTML table extraction  | Native browser `DOMParser`                                                                 | No library needed — every browser already does this                                                     |
+| Spreadsheet read/write | Any actively-maintained, browser-based library that can read and write `.xlsx` client-side | Both export flavours generated entirely in-browser, no server round-trip                                |
+| CSV                    | Any well-maintained CSV parsing library for the chosen framework                           | Solved problem, not worth custom-building                                                               |
+| PDF text extraction    | Any actively-maintained, browser-based PDF-to-text library                                 | Only extracts raw text — table reconstruction deliberately routes to LLM Options instead, per Section 3 |
+| Rules                  | `rules/*.json`, read at build or runtime                                                   | Keeps annual maintenance a data edit, not a code change                                                 |
+| Reconciliation state   | Browser local storage only                                                                 | Never the system of record — see Section 9                                                              |
+| Hosting                | Static hosting (e.g. GitHub Pages or an equivalent free static host)                       | Zero recurring cost                                                                                     |
+| Auth                   | None                                                                                       | Removes the largest trust/liability surface entirely                                                    |
 
-Where the AI chat still fits even once the web app exists: PDF table reconstruction and free-form text stay routed to the chat (Section 3), even in the web-app version, unless a specific document format later proves reliable enough to parse natively. Everything else — CSV, Excel, HTML — never touches the AI step at all.
+Where LLM Options still fit once the web app exists: PDF table reconstruction and free-form text stay routed to in-browser Llama, OpenRouter, or a copy-paste AI chat (Section 3), unless a specific document format later proves reliable enough to parse natively. Everything else — CSV, Excel, HTML — uses the native browser parsing path and does not need LLM extraction.
 
 ## 14. Workbook / app data model
 
@@ -464,43 +465,47 @@ Where the AI chat still fits even once the web app exists: PDF table reconstruct
 ## 15. Rules content to port (generic — no personal source, transcribe as-is into `rules/`)
 
 ### 15.1 Capital gains, listed equity
+
 LTCG: 12.5% flat, no indexation, above a ₹1.25 lakh/year exemption. STCG: 20% flat. Both rates were raised (from 10%/15%) and the exemption raised (from ₹1 lakh) by the Finance Act 2024, effective 23 July 2024 — a mid-year change, not a Budget-cycle one, which is why the rules library needs an "effective date," not just a financial year tag. Surcharge on these specific gains (plus dividend income) is capped at 15% regardless of the taxpayer's total income, even where other income would attract a higher surcharge slab. Section 87A rebate cannot be applied against these specific gains from AY2026-27 onward, following the Finance Act 2025 — this reversed a favourable tribunal ruling from the prior year, a good example of why "last year's answer" can't be assumed current.
 
 ### 15.2 Transaction costs
+
 Securities Transaction Tax (STT) is never deductible when computing capital gains — it's excluded by law, not by omission, because paying it is what qualifies the trade for the concessional capital-gains rates in the first place. It is deductible when the same trading activity is instead classified as speculative/intraday business income, since that's a business-income computation with ordinary expense rules. Non-STT transaction costs (exchange fees, stamp duty, statutory charges) are deductible in both cases. A rules-library entry should flag, generically, that broker-provided summary reports don't reliably state whether such costs are already netted into the reported buy/sell values — this needs checking against the underlying contract notes, not assumed either way.
 
 ### 15.3 Dividends
+
 Fully taxable at the recipient's slab rate. Must be reported quarter-wise on the return, not as a single annual figure, because advance-tax interest calculations test each quarter against when the dividend was actually received. TDS threshold is ₹10,000 per company per year (raised from ₹5,000 by the Finance Act 2025).
 
 ### 15.4 Losses and carry-forward
+
 Short-term capital losses offset both short- and long-term gains; long-term capital losses offset long-term gains only. Both carry forward 8 assessment years from the year they arose. Carry-forward is only preserved if the return is filed by the applicable due date — a late return forfeits it, regardless of whether tax was actually owed.
 
 ### 15.5 Risk triggers (surface these actively, per Section 1.4, not passively in a document)
 
-| Trigger | Consequence |
-|---|---|
-| Wrong ITR form used (e.g. gains/income the simplest form doesn't support) | Return marked defective; a fixed window to refile correctly or it's treated as never filed |
-| Reported income/TDS doesn't match the pre-filled annual information statement | Automated mismatch notice |
-| More than one employer in the year, TDS not reconciled across both | Under-withholding surfaces as an unexpected shortfall |
-| Rent claimed against salary (HRA) above the threshold without the landlord's PAN | Claim rejected on a documentation technicality even if genuine |
-| Tax liability after TDS exceeds a small threshold and no advance tax was paid | Quarterly interest charges, compounding the longer it's unpaid |
-| Provident fund withdrawn before completing a minimum service period | Tax deducted at source at the time of withdrawal — easy to mistake for a tax-free lump sum |
-| Deductions claimed without retained proof | Flagged on automated cross-checks, sometimes years later |
-| Filed after the applicable due date | A late fee plus forfeiting the right to carry forward most losses |
-| Income genuinely missed (underreporting) | A meaningfully sized penalty on the tax attributable to the missed amount |
-| Income deliberately misstated or documentation fabricated (misreporting) | A much larger penalty tier — a materially different consequence from an honest mistake, and should be presented as such |
+| Trigger                                                                          | Consequence                                                                                                             |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Wrong ITR form used (e.g. gains/income the simplest form doesn't support)        | Return marked defective; a fixed window to refile correctly or it's treated as never filed                              |
+| Reported income/TDS doesn't match the pre-filled annual information statement    | Automated mismatch notice                                                                                               |
+| More than one employer in the year, TDS not reconciled across both               | Under-withholding surfaces as an unexpected shortfall                                                                   |
+| Rent claimed against salary (HRA) above the threshold without the landlord's PAN | Claim rejected on a documentation technicality even if genuine                                                          |
+| Tax liability after TDS exceeds a small threshold and no advance tax was paid    | Quarterly interest charges, compounding the longer it's unpaid                                                          |
+| Provident fund withdrawn before completing a minimum service period              | Tax deducted at source at the time of withdrawal — easy to mistake for a tax-free lump sum                              |
+| Deductions claimed without retained proof                                        | Flagged on automated cross-checks, sometimes years later                                                                |
+| Filed after the applicable due date                                              | A late fee plus forfeiting the right to carry forward most losses                                                       |
+| Income genuinely missed (underreporting)                                         | A meaningfully sized penalty on the tax attributable to the missed amount                                               |
+| Income deliberately misstated or documentation fabricated (misreporting)         | A much larger penalty tier — a materially different consequence from an honest mistake, and should be presented as such |
 
 ### 15.6 ITR form selection
 
-| Profile | Form logic |
-|---|---|
-| Resident, simple income (salary/pension, up to two properties, small capital gains under the ITR-1 threshold) | Simplest form |
-| Resident, capital gains beyond that threshold, foreign assets, director in a company, unlisted shares, or any clubbing provision | Mid-tier form |
-| Anyone (resident, NRI, or joint family) with business or professional income, including speculative/intraday trading | Business-income form — and note this form's due date typically differs from the simpler forms' due date, so don't hardcode a single "the deadline" assumption anywhere in the product |
-| NRI, any profile | Never the simplest form, regardless of how simple the income is — always at least the mid-tier form |
-| Joint family (HUF), no business income | Mid-tier form |
-| Joint family (HUF), with business income | Business-income form |
-| Any clubbed income present | Mid-tier or business-income form, reported in the specific schedule for income of specified persons — never the simplest form |
+| Profile                                                                                                                          | Form logic                                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resident, simple income (salary/pension, up to two properties, small capital gains under the ITR-1 threshold)                    | Simplest form                                                                                                                                                                         |
+| Resident, capital gains beyond that threshold, foreign assets, director in a company, unlisted shares, or any clubbing provision | Mid-tier form                                                                                                                                                                         |
+| Anyone (resident, NRI, or joint family) with business or professional income, including speculative/intraday trading             | Business-income form — and note this form's due date typically differs from the simpler forms' due date, so don't hardcode a single "the deadline" assumption anywhere in the product |
+| NRI, any profile                                                                                                                 | Never the simplest form, regardless of how simple the income is — always at least the mid-tier form                                                                                   |
+| Joint family (HUF), no business income                                                                                           | Mid-tier form                                                                                                                                                                         |
+| Joint family (HUF), with business income                                                                                         | Business-income form                                                                                                                                                                  |
+| Any clubbed income present                                                                                                       | Mid-tier or business-income form, reported in the specific schedule for income of specified persons — never the simplest form                                                         |
 
 ### 15.7 NRI-specific structural differences (not just "same rules, different numbers")
 
@@ -512,4 +517,5 @@ Short-term capital losses offset both short- and long-term gains; long-term capi
 - NRIs cannot use the simplest or presumptive-income forms at all, regardless of income simplicity.
 
 ### 15.8 HUF-specific rule not covered elsewhere
+
 If a member transfers a personal asset into the joint family (HUF) without adequate payment in return, income from that asset is clubbed back to the transferring member's own return — it is not taxed in the HUF's hands, even though the HUF holds the asset. This is distinct from, and more stringent than, the general clubbing rule for a spouse, and is a commonly missed rule when families consolidate assets into an HUF structure.

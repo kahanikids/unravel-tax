@@ -1,0 +1,52 @@
+# Optional live Llama benchmark — requires WebGPU (self-hosted GPU runner or local machine).
+# GitHub-hosted ubuntu-latest does NOT expose WebGPU; this workflow is manual only.
+
+name: Live LLM benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      doc_type:
+        description: "Document type preset (broker-cg, itr-v, ais-summary)"
+        required: false
+        default: broker-cg
+      headed:
+        description: "Run browser headed (often needed for WebGPU)"
+        type: boolean
+        default: true
+
+jobs:
+  benchmark:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: webapp
+        run: npx playwright install chromium
+
+      - name: Run live Llama benchmark
+        working-directory: webapp
+        run: |
+          FLAGS="--doc=${{ inputs.doc_type }}"
+          if [ "${{ inputs.headed }}" = "true" ]; then FLAGS="$FLAGS --headed"; fi
+          node ../spike/run-live-llm-benchmark.mjs $FLAGS
+
+      - name: Score output
+        run: node spike/score-extraction.mjs --compare-post-process spike/fixtures/llama-live-${{ inputs.doc_type }}.txt
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-live-${{ inputs.doc_type }}
+          path: spike/fixtures/llama-live-*.txt

@@ -7,6 +7,7 @@ import {
   findHeaderRowIndex,
   parseCsvText,
   parseExcelBuffer,
+  parseExtractionJson,
   parseHtmlText,
   parsePastedExtraction,
   parseTextSource,
@@ -283,6 +284,19 @@ export async function main() {
     throw new Error("Invalid JSON paste should surface a parse_error, not transactions.");
   }
 
+  const reasoningInsteadOfJson = parseExtractionJson(
+    'We need to extract capital gains transactions from the document. The document includes columns such as "Instrument Name", quantity, purchase date, and sell date.'
+  );
+  if (
+    reasoningInsteadOfJson.transactions.length !== 0 ||
+    reasoningInsteadOfJson.sourceHeaders.length !== 0 ||
+    !reasoningInsteadOfJson.warnings.some((w) => w.code === "parse_error")
+  ) {
+    throw new Error(
+      "Automated LLM prose should be rejected as non-JSON, not parsed as a structured table."
+    );
+  }
+
   // The markdown-table fallback must still work for a hand-pasted table.
   const tableFallback = parsePastedExtraction(
     [
@@ -294,6 +308,51 @@ export async function main() {
     throw new Error(
       "Markdown-table fallback should still parse a pasted table into one transaction."
     );
+  }
+
+  // Post-process fixes the spike's Llama failure on broken-line row 2 (string
+  // "null" sell date, purchase/sell dates swapped) using source-text date repair.
+  const llamaSpikeOutput = await readFile(
+    resolve(repoRoot, "spike", "fixtures", "llama-sample-pdf-run.txt"),
+    "utf8"
+  );
+  const fixturePdfText = await readFile(
+    resolve(fixturesDir, "sample-pdf-extracted-text.txt"),
+    "utf8"
+  );
+  const repaired = parsePastedExtraction(llamaSpikeOutput, fixturePdfText);
+  if (repaired.transactions.length !== 5) {
+    throw new Error(
+      `Post-processed Llama spike output should yield 5 transactions, got ${repaired.transactions.length}.`
+    );
+  }
+  const expectedRows = [
+    { scrip: "acme", purchaseDate: "01-Apr-2025", sellDate: "15-Apr-2025", units: 100 },
+    { scrip: "acme", purchaseDate: "10-Jan-2024", sellDate: "20-May-2025", units: 50 },
+    { scrip: "sample", purchaseDate: "05-Jun-2025", sellDate: "05-Jun-2025", units: 200 },
+    { scrip: "sample", purchaseDate: "12-Feb-2023", sellDate: "18-Jun-2025", units: 75 },
+    { scrip: "test", purchaseDate: "01-Aug-2025", sellDate: "30-Aug-2025", units: 150 }
+  ];
+  for (const expected of expectedRows) {
+    const row = repaired.transactions.find(
+      (tx) =>
+        tx.scripName.toLowerCase().includes(expected.scrip) &&
+        tx.units === expected.units &&
+        tx.purchaseDate === expected.purchaseDate &&
+        tx.sellDate === expected.sellDate
+    );
+    if (!row) {
+      throw new Error(
+        `Post-processed Llama spike missing row ${JSON.stringify(expected)} in ${JSON.stringify(
+          repaired.transactions.map((tx) => ({
+            scrip: tx.scripName,
+            purchaseDate: tx.purchaseDate,
+            sellDate: tx.sellDate,
+            units: tx.units
+          }))
+        )}.`
+      );
+    }
   }
 
   const promptTxt = await readFile(

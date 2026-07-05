@@ -319,7 +319,7 @@ export function parseItrVText(text: string): ParsedItrFiling {
       fields,
       readFields,
       message:
-        "Couldn't read any text from this PDF — it may be a scan or image. Enter the figures by hand below instead."
+        "Couldn't read any text from this PDF. It may be a scan or image. Enter the figures by hand below instead."
     };
   }
 

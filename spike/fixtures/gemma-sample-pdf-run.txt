@@ -1,0 +1,69 @@
+```json
+{
+  "documentType": "broker capital gains statement",
+  "capitalGainsTransactions": [
+    {
+      "scripName": "Acme Industries",
+      "purchaseDate": "01-Apr-2025",
+      "sellDate": "15-Apr-2025",
+      "units": 100,
+      "buyValue": 50000,
+      "sellValue": 51000,
+      "buyPrice": null,
+      "sellPrice": null,
+      "instrumentType": "equity"
+    },
+    {
+      "scripName": "Acme Industries",
+      "purchaseDate": "10-Jan-2024",
+      "sellDate": "20-May-2025",
+      "units": 50,
+      "buyValue": 25000,
+      "sellValue": 27500,
+      "buyPrice": null,
+      "sellPrice": null,
+      "instrumentType": "equity"
+    },
+    {
+      "scripName": "SampleMetals Ltd",
+      "purchaseDate": "05-Jun-2025",
+      "sellDate": "05-Jun-2025",
+      "units": 200,
+      "buyValue": 40000,
+      "sellValue": 40800,
+      "buyPrice": null,
+      "sellPrice": null,
+      "instrumentType": "equity"
+    },
+    {
+      "scripName": "SampleMetals Ltd",
+      "purchaseDate": "12-Feb-2023",
+      "sellDate": "18-Jun-2025",
+      "units": 75,
+      "buyValue": 30000,
+      "sellValue": 33000,
+      "buyPrice": null,
+      "sellPrice": null,
+      "instrumentType": "equity"
+    },
+    {
+      "scripName": "TestPharma Co",
+      "purchaseDate": "01-Aug-2025",
+      "sellDate": "30-Aug-2025",
+      "units": 150,
+      "buyValue": 45000,
+      "sellValue": 43500,
+      "buyPrice": null,
+      "sellPrice": null,
+      "instrumentType": "equity"
+    }
+  ],
+  "annualFigures": {
+    "dividendIncome": null,
+    "interestIncome": null,
+    "tdsDeducted": null,
+    "deductibleCharges": null
+  },
+  "netRealisedCapitalGainNoDetail": null,
+  "confidence": "medium",
+  "notes": "The document is a broker capital gains statement. It lists the buy and sell dates for each transaction. The document does not provide the buy/sell price per unit. It is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is not a detailed capital gains statement. It is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction details for the capital gains. The document is a holdings statement. The document does not provide per-transaction

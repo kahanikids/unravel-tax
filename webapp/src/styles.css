@@ -1556,6 +1556,195 @@ button.side-nav-step.side-nav-step-current:hover {
   align-items: center;
 }
 
+.extraction-choice-heading {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.extraction-dual-path {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.extraction-path {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.extraction-path h4 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.extraction-path-primary {
+  border-color: var(--accent);
+}
+
+.extraction-path-divider {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.extraction-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.extraction-method-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.extraction-method-card h4 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.extraction-method-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.extraction-method-columns > div,
+.extraction-method-facts > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 8px;
+}
+
+.extraction-method-column-label,
+.extraction-method-facts dt {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.extraction-method-columns p,
+.extraction-method-facts dd {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.extraction-method-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+
+.extraction-method-facts dd {
+  font-weight: 700;
+}
+
+.extraction-method-pick {
+  margin-top: auto;
+  align-self: stretch;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+}
+
+.extraction-method-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.extraction-splitter {
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.extraction-splitter p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.extraction-chunk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.extraction-chunk-actions button {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+.extraction-error-options {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.extraction-error-details {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--surface-soft);
+}
+
+.extraction-error-details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.extraction-error-details p {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .extraction-dual-path {
+    grid-template-columns: 1fr;
+  }
+
+  .extraction-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .extraction-path-divider {
+    text-align: center;
+  }
+
+  .extraction-chunk-actions {
+    flex-direction: column;
+  }
+}
+
 .document-list {
   display: flex;
   flex-direction: column;

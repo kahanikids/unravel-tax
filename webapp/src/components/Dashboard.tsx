@@ -285,7 +285,7 @@ export function Dashboard({
                 <li className="tax-timeline-step">
                   <span className="tax-timeline-dot" aria-hidden="true" />
                   <span className="tax-timeline-title">{`FY ${thisYear.financialYear}`}</span>
-                  <span className="tax-timeline-note">Income earned Apr–Mar</span>
+                  <span className="tax-timeline-note">Income earned Apr-Mar</span>
                 </li>
                 <li className="tax-timeline-step">
                   <span className="tax-timeline-dot" aria-hidden="true" />
@@ -612,7 +612,7 @@ export function Dashboard({
                 <span className="dashboard-stat-label">Income growth (latest year)</span>
                 <strong>
                   {insights.incomeGrowthPct === null
-                    ? "—"
+                    ? "-"
                     : `${insights.incomeGrowthPct >= 0 ? "+" : ""}${insights.incomeGrowthPct.toLocaleString(
                         "en-IN",
                         {
@@ -626,7 +626,7 @@ export function Dashboard({
                 <span className="dashboard-stat-label">Effective tax rate (latest)</span>
                 <strong>
                   {insights.latestEffectiveRate === null
-                    ? "—"
+                    ? "-"
                     : formatPercent(insights.latestEffectiveRate)}
                 </strong>
                 <span className="dashboard-stat-note">Total tax paid ÷ gross total income.</span>
@@ -696,7 +696,7 @@ export function Dashboard({
                     return (
                       <tr key={filing.id}>
                         <td data-label="Assessment year">{filing.assessmentYear}</td>
-                        <td data-label="ITR form">{filing.itrForm || "—"}</td>
+                        <td data-label="ITR form">{filing.itrForm || "-"}</td>
                         <td data-label="Gross total income">
                           ₹{formatAmount(filing.grossTotalIncome)}
                         </td>

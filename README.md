@@ -67,8 +67,8 @@ That's the whole journey. The sections below are background.
 
 - **Infer, don't interrogate.** Plain-language questions once; the tool works
   out which checklist and forms apply.
-- **Spreadsheet engine, chat guide.** Arithmetic is deterministic. AI only reads
-  messy documents and explains results; it never does the maths.
+- **Spreadsheet engine, LLM Options.** Arithmetic is deterministic. LLMs only
+  read messy, non-standard documents and explain results; they never do the maths.
 - **Consequences before numbers.** Missing items and risk flags come before totals.
 - **Simple by default.** Full detail is one click away, never the starting view.
 - **Your file is the record.** No account, no server. Export the workbook and keep it.
@@ -127,7 +127,7 @@ validators can run under Vitest with `npm run test` or
 - Hosted free on GitHub Pages; redeploys on push to `main` when `webapp/` changes
 - Resident + senior-citizen calculations from `rules/*.json`
 - Partial NRI/single-parent numbers; HUF regime comparison explicitly skipped
-- CSV, Excel, saved-webpage, structured-text, and guided PDF/free-text ingestion
+- CSV, Excel, saved-webpage, structured-text, and LLM Options for PDF/free-text ingestion
 - Editable extraction review, fuzzy header matching, summary-only JSON guidance, and local-folder save on supported Chromium browsers
 - CA Summary CSV/XLSX plus full workbook export, generated entirely in the browser
 - AIS/Form 26AS/TDS reconciliation, old-vs-new regime comparison with break-even, loan deduction inputs, partial 234B interest estimate, and year-over-year dashboard
@@ -143,15 +143,15 @@ partial or half-baked, and what is still pending.
 
 ## Other docs
 
-| Doc | For |
-|-----|-----|
+| Doc                                        | For                                          |
+| ------------------------------------------ | -------------------------------------------- |
 | [FEATURE_COVERAGE.md](FEATURE_COVERAGE.md) | Built, partial, and pending feature coverage |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to submit rule fixes and code |
-| [CHANGELOG.md](CHANGELOG.md) | Dated rule and project changes |
-| [DISCLAIMER.md](DISCLAIMER.md) | Legal scope and non-affiliation |
-| [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
-| [ROADMAP.md](ROADMAP.md) | Planned features |
+| [CONTRIBUTING.md](CONTRIBUTING.md)         | How to submit rule fixes and code            |
+| [CHANGELOG.md](CHANGELOG.md)               | Dated rule and project changes               |
+| [DISCLAIMER.md](DISCLAIMER.md)             | Legal scope and non-affiliation              |
+| [SECURITY.md](SECURITY.md)                 | Reporting vulnerabilities                    |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)   | Community standards                          |
+| [ROADMAP.md](ROADMAP.md)                   | Planned features                             |
 
 ## License
 

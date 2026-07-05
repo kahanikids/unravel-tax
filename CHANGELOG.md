@@ -32,8 +32,7 @@ change (Budget, Finance Act, CBDT circular).
   "add this to your own figures" note - this is what actually computing
   tax on Schedule FSI/OS income means, rather than leaving it as a
   disclosure-only reminder.
-- **A Section 90/91 foreign tax credit estimate is computed**, per Rule
-  128. New `webapp/src/lib/foreignTaxCredit.ts`: exact for long-term
+- **A Section 90/91 foreign tax credit estimate is computed**, per Rule 128. New `webapp/src/lib/foreignTaxCredit.ts`: exact for long-term
   foreign-share gains (a known flat rate - credit is the lower of foreign
   tax paid and the exact Indian tax); Rule 128's **average-rate method**
   for everything else taxed at slab (dividends, interest, short-term
@@ -177,7 +176,7 @@ change (Budget, Finance Act, CBDT circular).
   (type, issue date, sum assured, premiums, payout) and applies both
   Section 10(10D) tests independently: the sum-assured ratio test
   (10%/20% depending on issue date) and the aggregate-annual-premium cap
-  (₹2.5L ULIP / ₹5L traditional), pooling premium across *all* policies of
+  (₹2.5L ULIP / ₹5L traditional), pooling premium across _all_ policies of
   the same type issued on/after that type's cutoff — so one policy's premium
   can push a different policy of the same type over the cap, as the law
   requires. Failing either test makes the payout taxable (slab rate for
@@ -227,7 +226,7 @@ change (Budget, Finance Act, CBDT circular).
   house-property income/loss; caps a loss's set-off at ₹2,00,000 on the
   old-regime side of the regime comparison (rest reported as carry-forward)
   and drops it on the new-regime side; and adds the figure as its own CA
-  Summary row. Home-loan principal gets its own field that counts *inside*
+  Summary row. Home-loan principal gets its own field that counts _inside_
   the shared Section 80C ceiling (capped together with the dashboard's 80C
   investments figure, shown on the same progress bar), never on top.
 - **LRS TCS now uses the remittance purpose's rate branch**: the dashboard's
@@ -266,7 +265,7 @@ change (Budget, Finance Act, CBDT circular).
   invent transaction rows (a net/aggregate gain goes in
   `netRealisedCapitalGainNoDetail`), and holdings-only lists are noted in
   `notes`, never placed in the transactions array.
-- Deterministic JSON ingestion (no LLM at runtime): `parseExtractionJson` in
+- Deterministic JSON ingestion after the LLM Options step: `parseExtractionJson` in
   `ingest/parsers.ts` now runs first when a paste starts with `{`. It
   `JSON.parse`s defensively (ignores unknown fields, treats missing/null as
   absent, tolerates ₹/commas in numeric strings) and maps
@@ -351,7 +350,7 @@ change (Budget, Finance Act, CBDT circular).
   resident-only), profile flags `hasInsurancePayout` / `hasForeignAssets`,
   tailored checklist items (payout + premium history; foreign statements +
   Form 67 proof), and `profileScopeCaveats()` entries stating plainly what
-  the tool does *not* compute (10(10D) taxability, Schedule FA table).
+  the tool does _not_ compute (10(10D) taxability, Schedule FA table).
   Foreign assets now force **ITR-2/ITR-3** in `selectItrForm`, raise a
   form-changing risk trigger (Schedule FA / ₹10 lakh penalty) that flips
   the "get a CA to review" recommendation on; an insurance payout raises a
@@ -368,7 +367,7 @@ change (Budget, Finance Act, CBDT circular).
   `nriDaysInIndia` field on `OrientationAnswers`.
 - Populated `rules/nri-dtaa.json` / `.md` with a country-by-country map
   for **mutual fund capital gains** under DTAAs, including the ITAT Mumbai
-  Mar 2025 ruling (*Anushaka Sanjay Shah*) that MF units are not company
+  Mar 2025 ruling (_Anushaka Sanjay Shah_) that MF units are not company
   shares and may be exempt in India for Singapore/UAE-style residual-clause
   treaties. Synced to `webapp/src/rules/data/nri-dtaa.json`.
 - `profileScopeCaveats()` now surfaces a country-specific MF DTAA heads-up

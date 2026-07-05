@@ -263,7 +263,7 @@ function treatmentFormula(classCol: string, row: number): string {
 
 function ruleFlagFormula(classCol: string, row: number): string {
   const c = `${classCol}${row}`;
-  return `IF(${c}="Intraday","Business income — taxed with other income at slab rate; losses ring-fenced to speculative gains only (Sec 73)",IF(${c}="ST","Rate raised 15%->20% eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)",IF(${c}="Debt-MF","Short-term-deemed debt MF gain — slab rate (Sec 50AA)","Rate raised 10%->12.5% & exemption Rs1L->Rs1.25L eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)")))`;
+  return `IF(${c}="Intraday","Business income: taxed with other income at slab rate; losses ring-fenced to speculative gains only (Sec 73)",IF(${c}="ST","Rate raised 15%->20% eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)",IF(${c}="Debt-MF","Short-term-deemed debt MF gain: slab rate (Sec 50AA)","Rate raised 10%->12.5% & exemption Rs1L->Rs1.25L eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)")))`;
 }
 
 function toExcelDate(dateText: string): Date | string {
@@ -314,14 +314,14 @@ export function buildBrokerSheet(
   data.push(
     mergeTitle(
       emptyRow(totalCols),
-      `${documentName} — Realised Capital Gains, ${financialYear}`,
+      `${documentName} - Realised Capital Gains, ${financialYear}`,
       totalCols
     )
   );
   data.push(
     mergeTitle(
       emptyRow(totalCols),
-      `Source: ${documentName} | Columns A–J extracted by Unravel Tax; broker-reported columns preserved; formula columns added for tax working.`,
+      `Source: ${documentName} | Columns A-J extracted by Unravel Tax; broker-reported columns preserved; formula columns added for tax working.`,
       totalCols
     )
   );
@@ -442,14 +442,14 @@ export function buildRawSheet(
   data.push(
     mergeTitle(
       emptyRow(totalCols),
-      `${documentName} — Reference Copy (not tax-calculated)`,
+      `${documentName} - Reference Copy (not tax-calculated)`,
       totalCols
     )
   );
   data.push(
     mergeTitle(
       emptyRow(totalCols),
-      `Source: ${documentName} | Rows preserved exactly as uploaded. This is a reference only — no tax working is applied to it.`,
+      `Source: ${documentName} | Rows preserved exactly as uploaded. This is a reference only. No tax working is applied to it.`,
       totalCols
     )
   );
@@ -523,16 +523,16 @@ export function buildDetailedSummarySheet(
           ),
           C.currency()
         )
-      : txt("—", C.td),
-    anyBrokerReported ? f(`F${rowNum}-G${rowNum}`, C.currency()) : txt("—", C.td),
+      : txt("-", C.td),
+    anyBrokerReported ? f(`F${rowNum}-G${rowNum}`, C.currency()) : txt("-", C.td),
     txt(treatment, { ...C.tdWrap })
   ];
 
-  data.push(mergeTitle(emptyRow(cols), "Unravel Tax — Detailed Tax Working (Internal)", cols));
+  data.push(mergeTitle(emptyRow(cols), "Unravel Tax - Detailed Tax Working (Internal)", cols));
   data.push(
     mergeTitle(
       emptyRow(cols),
-      `${financialYear} (${assessmentYear}). Rates seeded from rules JSON — edit yellow cells to override. Gain/(Loss) is always Total Sale Value minus Total Cost; the Variance column checks it against the broker's own reported figure and should be zero (or explainable, e.g. the broker netting charges).`,
+      `${financialYear} (${assessmentYear}). Rates seeded from rules JSON. Edit yellow cells to override. Gain/(Loss) is always Total Sale Value minus Total Cost; the Variance column checks it against the broker's own reported figure and should be zero (or explainable, e.g. the broker netting charges).`,
       cols
     )
   );
@@ -555,7 +555,7 @@ export function buildDetailedSummarySheet(
       "Speculative / Intraday",
       "43(5)",
       "Intraday",
-      "Business income — taxed at your slab rate with other income.",
+      "Business income: taxed at your slab rate with other income.",
       DS_INTRADAY_ROW
     )
   );
@@ -585,7 +585,7 @@ export function buildDetailedSummarySheet(
       "Debt/specified MF (Sec 50AA)",
       "50AA",
       "Debt-MF",
-      "Short-term-deemed, taxed at slab rate — not the equity 111A/112A rates.",
+      "Short-term-deemed, taxed at slab rate. Not the equity 111A/112A rates.",
       DS_DEBT_ROW
     )
   );
@@ -641,7 +641,7 @@ export function buildDetailedSummarySheet(
   ]);
 
   while (data.length < DS_NET_LTCG_ROW - 2) data.push(emptyRow(cols));
-  data.push(mergeTitle(emptyRow(cols), "Tax Estimate — Equity (all brokers)", cols));
+  data.push(mergeTitle(emptyRow(cols), "Tax Estimate - Equity (all brokers)", cols));
 
   const dLtcg = `F${DS_LTCG_ROW}`;
   const dStcg = `F${DS_STCG_ROW}`;
@@ -653,7 +653,7 @@ export function buildDetailedSummarySheet(
   const bCess = `B${DS_CESS_ROW}`;
 
   data.push([
-    txt("Net LTCG this year — Equity", C.td),
+    txt("Net LTCG this year - Equity", C.td),
     f(dLtcg, C.currency()),
     null,
     null,
@@ -695,7 +695,7 @@ export function buildDetailedSummarySheet(
   ]);
   data.push(emptyRow(cols));
   data.push([
-    txt("Net STCG this year — Equity", C.td),
+    txt("Net STCG this year - Equity", C.td),
     f(dStcg, C.currency()),
     null,
     null,
@@ -729,7 +729,7 @@ export function buildDetailedSummarySheet(
   ]);
   data.push(emptyRow(cols));
   data.push([
-    txt("Speculative/intraday gain — Equity", C.td),
+    txt("Speculative/intraday gain - Equity", C.td),
     f(dIntra, C.currency()),
     null,
     null,
@@ -745,9 +745,9 @@ export function buildDetailedSummarySheet(
     null
   ]);
   data.push([
-    txt("Applicable slab rate — enter once total income is known", C.td),
+    txt("Applicable slab rate: enter once total income is known", C.td),
     num(0, C.inputPct),
-    txt("Broker reports often assume ~30% — enter your real marginal slab rate.", C.note),
+    txt("Broker reports often assume ~30%. Enter your real marginal slab rate.", C.note),
     null,
     null,
     null
@@ -762,7 +762,7 @@ export function buildDetailedSummarySheet(
   ]);
   data.push(emptyRow(cols));
   data.push([
-    txt("Subtotal — LTCG + STCG + Speculative tax", C.total),
+    txt("Subtotal - LTCG + STCG + Speculative tax", C.total),
     f(`B${DS_LTCG_TAX_ROW}+B${DS_STCG_TAX_ROW}+B${DS_SPEC_TAX_ROW}`, C.currencyBold()),
     null,
     null,
@@ -802,7 +802,7 @@ export function buildDetailedSummarySheet(
     null
   ]);
   data.push([
-    txt("ESTIMATED TOTAL TAX — Equity only", { ...C.total, backgroundColor: "#FCE4EC" }),
+    txt("ESTIMATED TOTAL TAX - Equity only", { ...C.total, backgroundColor: "#FCE4EC" }),
     f(`B${DS_SUBTOTAL_TAX_ROW}+B${DS_SURCHARGE_AMT_ROW}+B${DS_CESS_AMT_ROW}`, {
       ...C.currencyBold(),
       backgroundColor: "#FCE4EC"
@@ -849,19 +849,19 @@ export function buildLinkedCaSummarySheet(
   data.push(
     mergeTitle(
       emptyRow(span),
-      `Unravel Tax — ${financialYear} (${assessmentYear}) — Summary of Income for Filing`,
+      `Unravel Tax - ${financialYear} (${assessmentYear}) - Summary of Income for Filing`,
       span
     )
   );
   data.push(
     mergeTitle(
       emptyRow(span),
-      "Prepared for CA review — capital gains figures link to Detailed Summary; other heads from your entries in the app.",
+      "Prepared for CA review. Capital gains figures link to Detailed Summary; other heads from your entries in the app.",
       span
     )
   );
   data.push(emptyRow(span));
-  data.push(mergeTitle(emptyRow(span), "Capital Gains — Equity", span));
+  data.push(mergeTitle(emptyRow(span), "Capital Gains - Equity", span));
   data.push([txt("Head", C.th), txt("Section", C.th), txt("Amount ₹", C.th), null]);
 
   const equityHeads: { label: string; section: string; row: number }[] = [
@@ -889,7 +889,7 @@ export function buildLinkedCaSummarySheet(
 
   const debtRow = rows.find((r) => r.head.includes("Debt"));
   if (debtRow) {
-    data.push(mergeTitle(emptyRow(span), "Capital Gains — Mutual Funds / Debt", span));
+    data.push(mergeTitle(emptyRow(span), "Capital Gains - Mutual Funds / Debt", span));
     data.push([txt("Head", C.th), txt("Section", C.th), txt("Amount ₹", C.th), null]);
     data.push([
       txt(debtRow.head, C.td),
@@ -920,7 +920,7 @@ export function buildLinkedCaSummarySheet(
     null
   ]);
   data.push([
-    txt("Combined gain/(loss) — sale minus cost", C.total),
+    txt("Combined gain/(loss): sale minus cost", C.total),
     txt("Check", C.total),
     f(`C${totalsStart}-C${totalsStart + 1}`, C.currencyBold()),
     null
@@ -987,10 +987,7 @@ export function buildOrientationSheet(orientation: OrientationAnswers): SheetDat
     ["Super Senior Citizen (80+)", yesNoOrBlank(orientation.superSeniorCitizen)],
     ["Minor Child Income To Club", yesNoOrBlank(orientation.singleParent)],
     ["Income Sources", orientation.incomeSources.join(", ")],
-    [
-      "Capital Gains Asset Types",
-      orientation.capitalGainsAssetTypes.join(", ")
-    ],
+    ["Capital Gains Asset Types", orientation.capitalGainsAssetTypes.join(", ")],
     ["NRI TDS Deducted", yesNoOrBlank(orientation.nriTdsDeducted)],
     ["NRI Has TRC And Form 10F", yesNoOrBlank(orientation.nriHasTrcAndForm10F)],
     ["NRI Needs Form 13", yesNoOrBlank(orientation.nriNeedsForm13)],
@@ -1116,12 +1113,12 @@ export function buildStandaloneCaSummarySheet(
   data.push(
     mergeTitle(
       emptyRow(span),
-      `Unravel Tax — ${financialYear} (${assessmentYear}) — Summary of Income for Filing`,
+      `Unravel Tax - ${financialYear} (${assessmentYear}) - Summary of Income for Filing`,
       span
     )
   );
   data.push(
-    mergeTitle(emptyRow(span), "Prepared for CA review — figures from your filing session.", span)
+    mergeTitle(emptyRow(span), "Prepared for CA review. Figures from your filing session.", span)
   );
   data.push(emptyRow(span));
   data.push([txt("Head", C.th), txt("Section", C.th), txt("Amount ₹", C.th), txt("Notes", C.th)]);

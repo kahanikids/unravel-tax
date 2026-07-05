@@ -14,9 +14,9 @@ infer scope from the roadmap or implementation notes.
 - Personalized document checklist with source guidance for common documents.
 - CSV, Excel, saved-webpage HTML, TSV, and structured-text ingestion in the
   browser.
-- PDF raw-text extraction in the browser, followed by guided AI extraction for
-  table reconstruction when needed.
-- Standard JSON paste contract for AI extraction, including transaction rows,
+- PDF raw-text extraction in the browser, followed by LLM Options for table
+  reconstruction when needed: in-browser Llama, OpenRouter, or copy-paste.
+- Standard JSON contract for LLM extraction, including transaction rows,
   annual figures, document notes, and net-gain-without-detail warnings.
 - Editable extraction review before rows are committed.
 - Fuzzy header matching, manual column mapping, row-level parse warnings, and
@@ -105,8 +105,8 @@ infer scope from the roadmap or implementation notes.
 ## Partial or half-baked
 
 - PDF support extracts text locally, but transaction-table reconstruction still
-  depends on the user's external AI chat and copy-paste JSON. Scanned/image PDFs
-  may fail.
+  depends on the user's chosen LLM option because broker/PMS reports are not
+  standardised enough for reliable native parsing. Scanned/image PDFs may fail.
 - Section 234C is precise for listed-equity capital gains (dated from real
   transaction sell dates) but still a whole-year ceiling for the rest:
   dividends, intraday income, and debt-mutual-fund gains aren't dated the
@@ -169,7 +169,7 @@ infer scope from the roadmap or implementation notes.
   of ITR JSON or ITR-V PDF fields when it can. Importing a previous Unravel
   Tax workbook from the welcome screen is intentionally not exposed now; the
   primary flow stays focused on the FY 2025-26 filing.
-- TDS auto-fill from AI-extracted annual figures is lean: it lands in the
+- TDS auto-fill from LLM-extracted annual figures is lean: it lands in the
   existing tax-paid field and still needs user review against AIS/26AS.
 - Local-folder save is Chromium-only because it uses the File System Access API.
   Other browsers fall back to downloads and browser storage.
@@ -200,6 +200,6 @@ infer scope from the roadmap or implementation notes.
   independently.
 - Business-use vehicle interest, multiple let-out properties, and
   pre-construction interest spreading.
-- Native PDF table extraction reliable enough to avoid the external AI
-  copy-paste step.
+- Native PDF table extraction reliable enough to reduce reliance on LLM Options
+  for standardised reports.
 - Published Google Sheets master template.

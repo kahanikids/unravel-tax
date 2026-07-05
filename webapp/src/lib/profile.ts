@@ -39,9 +39,9 @@ export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
       foreignAssetsYes &&
       Boolean(
         answers.foreignSigningAuthority ||
-          answers.foreignProperty ||
-          answers.foreignTrust ||
-          answers.foreignCashValueInsurance
+        answers.foreignProperty ||
+        answers.foreignTrust ||
+        answers.foreignCashValueInsurance
       ),
     nriNeedsForm13: Boolean(answers.nriNeedsForm13),
     nriTdsDeducted: Boolean(answers.nriTdsDeducted),
@@ -142,7 +142,7 @@ export function buildChecklist(
     if (flags.nriNeedsForm13) {
       add(
         "Form 13 lower/nil deduction certificate (if approved)",
-        "If you applied for a lower or nil TDS rate under Section 197, keep the AO's certificate — otherwise TDS may have been deducted at the default NRI rate.",
+        "If you applied for a lower or nil TDS rate under Section 197, keep the AO's certificate. Otherwise TDS may have been deducted at the default NRI rate.",
         "Needed"
       );
     }
@@ -155,8 +155,8 @@ export function buildChecklist(
       add(
         "Rental income details and tenant TDS certificate (Form 16A)",
         flags.nriTenantMissingForm16A
-          ? "You said the tenant may not have issued Form 16A — confirm whether TDS was deducted under Section 195 and get the certificate or challan details."
-          : "Rent from Indian property is taxable here. Tenants often deduct TDS at 30% — you'll reconcile that in your return.",
+          ? "You said the tenant may not have issued Form 16A. Confirm whether TDS was deducted under Section 195 and get the certificate or challan details."
+          : "Rent from Indian property is taxable here. Tenants often deduct TDS at 30%. You'll reconcile that in your return.",
         "Needed"
       );
     }
@@ -166,7 +166,7 @@ export function buildChecklist(
     add(
       "HUF PAN and list of coparceners/members",
       flags.hufFilingAsEntity
-        ? "You're filing the HUF's return — the HUF is a separate taxable entity with its own PAN."
+        ? "You're filing the HUF's return. The HUF is a separate taxable entity with its own PAN."
         : "The HUF is a separate taxable entity from you personally, with its own PAN.",
       "Needed"
     );
@@ -212,14 +212,14 @@ export function buildChecklist(
 
   if (flags.hasForeignAssets) {
     add(
-      "Foreign asset and account statements (calendar year Jan–Dec)",
-      "Every foreign holding — shares, RSUs, ESPP, bank/brokerage accounts — must go in Schedule FA for the calendar year, with no minimum value. Missing one risks a ₹10 lakh Black Money Act penalty.",
+      "Foreign asset and account statements (calendar year Jan-Dec)",
+      "Every foreign holding, including shares, RSUs, ESPP, and bank/brokerage accounts, must go in Schedule FA for the calendar year, with no minimum value. Missing one risks a ₹10 lakh Black Money Act penalty.",
       "Needed"
     );
     if (flags.hasExtendedForeignAssets) {
       add(
         "Foreign property, trust, signing-authority, or cash-value insurance records",
-        "You flagged foreign property, a trust, signing authority abroad, or cash-value life insurance — each needs its own Schedule FA table. This tool does not yet compute those rows.",
+        "You flagged foreign property, a trust, signing authority abroad, or cash-value life insurance. Each needs its own Schedule FA table. This tool does not yet compute those rows.",
         "Needed"
       );
     }
@@ -254,13 +254,13 @@ export type ProfileScopeCaveat = {
 
 function nriTrcWhy(flags: ProfileFlags, rule: NriDtaaRule): string {
   if (!flags.nriCountry || flags.nriCountry === "Other") {
-    return "Mandatory for any DTAA claim. India has treaties with 90+ countries — your CA needs the TRC from whichever country you are a tax resident of.";
+    return "Mandatory for any DTAA claim. India has treaties with 90+ countries. Your CA needs the TRC from whichever country you are a tax resident of.";
   }
   const entry = rule.values.mutual_fund_capital_gains.countries[flags.nriCountry];
   if (flags.hasCapitalGains && entry?.treatment === "country_of_residence_only") {
-    return `AMCs often deduct TDS on MF redemptions anyway. With a TRC and Form 10F you claim exemption under the India–${flags.nriCountry} DTAA (Article ${entry.dtaa_article}) and recover that TDS when you file.`;
+    return `AMCs often deduct TDS on MF redemptions anyway. With a TRC and Form 10F you claim exemption under the India-${flags.nriCountry} DTAA (Article ${entry.dtaa_article}) and recover that TDS when you file.`;
   }
-  return `Needed to claim treaty relief under the India–${flags.nriCountry} DTAA — lower rates on NRO interest, dividends, or foreign tax credit on gains taxed in India.`;
+  return `Needed to claim treaty relief under the India-${flags.nriCountry} DTAA, including lower rates on NRO interest, dividends, or foreign tax credit on gains taxed in India.`;
 }
 
 function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCaveat | null {
@@ -270,15 +270,15 @@ function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCavea
   if (!flags.nriCountry) {
     return {
       id: "nri_mf_dtaa_unknown_country",
-      label: "MF capital gains — DTAA depends on where you live",
+      label: "MF capital gains: DTAA depends on where you live",
       note: "A 2025 ITAT ruling held that mutual fund units are not company shares, so gains may be exempt in India if your country's DTAA has a residual clause (Singapore, UAE, etc.). Tell us your country of residence in About You so we can flag the right treaty. The tax figures below still use Indian domestic rates until a CA applies the exemption."
     };
   }
   if (flags.nriCountry === "Other") {
     return {
       id: "nri_mf_dtaa_other_country",
-      label: "MF capital gains — check your specific DTAA",
-      note: "India has DTAAs with 90+ countries and article numbers differ. Mutual fund units may fall under a residual clause (exempt in India) or be taxed here. This tool cannot look up an unlisted country — bring your TRC and treaty text to a CA. Figures below use Indian domestic rates."
+      label: "MF capital gains: check your specific DTAA",
+      note: "India has DTAAs with 90+ countries and article numbers differ. Mutual fund units may fall under a residual clause (exempt in India) or be taxed here. This tool cannot look up an unlisted country. Bring your TRC and treaty text to a CA. Figures below use Indian domestic rates."
     };
   }
   const entry = rule.values.mutual_fund_capital_gains.countries[flags.nriCountry] ?? null;
@@ -289,13 +289,13 @@ function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCavea
     return {
       id: "nri_mf_dtaa_exempt",
       label: `MF gains may be exempt in India (${flags.nriCountry} DTAA)`,
-      note: `${entry.note} This tool still shows Indian domestic tax on capital gains above — it does not apply the DTAA exemption to those numbers. You must file ITR-2, disclose the gains, and claim relief under Section 90 with your TRC and Form 10F. Direct equity shares are treated differently from MF units.`
+      note: `${entry.note} This tool still shows Indian domestic tax on capital gains above. It does not apply the DTAA exemption to those numbers. You must file ITR-2, disclose the gains, and claim relief under Section 90 with your TRC and Form 10F. Direct equity shares are treated differently from MF units.`
     };
   }
   return {
     id: "nri_mf_dtaa_taxable_india",
     label: `MF gains taxable in India (${flags.nriCountry} DTAA)`,
-    note: `${entry.note} TDS is often deducted at source on redemptions — reconcile against your return. Figures below use Indian rates.`
+    note: `${entry.note} TDS is often deducted at source on redemptions. Reconcile against your return. Figures below use Indian rates.`
   };
 }
 
@@ -319,7 +319,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   if (flags.rnor) {
     caveats.push({
       id: "rnor_scope",
-      label: "RNOR — some resident rules apply, but not all",
+      label: "RNOR: some resident rules apply, but not all",
       note: "As RNOR you file like a resident for most Indian income, but Schedule FA foreign-asset disclosure and some senior-citizen slab benefits may not apply the same way as for someone resident and ordinarily resident (ROR). Confirm your exact status and Schedule FA obligation with a CA before filing."
     });
   }
@@ -334,8 +334,8 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
 
   if (flags.huf) {
     const hufNote = flags.hufFilingAsEntity
-      ? 'You told us this is the HUF\'s own return. The "HUF: members & Section 64(2) transfers" section computes clubbing for any asset a member transferred into the HUF without adequate consideration. Partition isn\'t computed — see the checklist. The old-vs-new regime comparison tool doesn\'t fit an HUF\'s numbers, so it\'s hidden.'
-      : 'You told us this is your personal return but some income is held through a HUF. Section 64(2) clubbing may apply on transfers into the HUF — use the members/transfers panel if relevant. If you actually meant to file the HUF\'s return, update About You.';
+      ? "You told us this is the HUF's own return. The \"HUF: members & Section 64(2) transfers\" section computes clubbing for any asset a member transferred into the HUF without adequate consideration. Partition is not computed. See the checklist. The old-vs-new regime comparison tool does not fit an HUF's numbers, so it is hidden."
+      : "You told us this is your personal return but some income is held through a HUF. Section 64(2) clubbing may apply on transfers into the HUF. Use the members/transfers panel if relevant. If you actually meant to file the HUF's return, update About You.";
     caveats.push({
       id: "huf_scope",
       label: "Some HUF-specific numbers are calculated; partition still needs a CA",
@@ -347,7 +347,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "single_parent_scope",
       label: "Minor's-income clubbing: check the exceptions yourself",
-      note: "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. The higher-earning parent usually clubs it — not only single parents. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
+      note: "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. The higher-earning parent usually clubs it, not only single parents. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
     });
   }
 
@@ -363,7 +363,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "foreign_assets_scope",
       label: "Foreign accounts/shares: disclosure and tax are calculated; some gaps remain",
-      note: 'As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. "Foreign accounts: Schedule FA rows" produces disclosure rows for a foreign bank/brokerage account (Phase 1) and folds the interest into your slab income; "Foreign shares, RSU & ESPP" computes actual tax on a sale (unlisted-share rates: long-term after 24 months at 12.5%, short-term at slab) plus a Section 90/91 foreign tax credit estimate. Foreign property, trusts, and a per-country Form 67/Schedule FSI/TR breakdown aren\'t built — the credit shown here is a planning estimate, not the exact filing figure. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA.'
+      note: 'As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan-Dec), with no minimum value. This needs ITR-2/ITR-3, never ITR-1. "Foreign accounts: Schedule FA rows" produces disclosure rows for a foreign bank/brokerage account (Phase 1) and folds the interest into your slab income; "Foreign shares, RSU & ESPP" computes actual tax on a sale (unlisted-share rates: long-term after 24 months at 12.5%, short-term at slab) plus a Section 90/91 foreign tax credit estimate. Foreign property, trusts, and a per-country Form 67/Schedule FSI/TR breakdown are not built. The credit shown here is a planning estimate, not the exact filing figure. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA.'
     });
   }
 

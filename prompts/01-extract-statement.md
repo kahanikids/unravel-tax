@@ -1,5 +1,5 @@
 I'm organizing my own data to file an Indian income-tax return. I'm sharing
-one document — it could be a PDF, an Excel file, a CSV, a saved webpage, or
+one document. It could be a PDF, an Excel file, a CSV, a saved webpage, or
 pasted text. It might be any kind of statement: a broker or mutual-fund
 capital-gains statement, a profit-and-loss statement, a PMS annual report, a
 bank statement, a dividend or interest statement, an insurance statement, a
@@ -10,14 +10,14 @@ A separate tool does all the tax maths deterministically. Your job is only to
 READ this document and hand back what it actually says, in ONE fixed JSON
 format, so the tool can classify and total it the same way every time. Do NOT
 decide whether a gain is short-term or long-term, and do NOT calculate any gain
-or tax yourself — that logic lives in the tool. The tool works out the holding
+or tax yourself. That logic lives in the tool. The tool works out the holding
 period (and so the short-term/long-term split) from the purchase and sell
 dates, which is why per-transaction detail matters.
 
 == What to output ==
 
 Output ONLY a single JSON object matching the schema below. No prose before or
-after it — put any commentary inside the "notes" field so the whole reply is
+after it. Put any commentary inside the "notes" field so the whole reply is
 one JSON block I can copy and paste back. Fill in the fields you can find from
 the document and OMIT or set to null anything the document doesn't give.
 
@@ -53,7 +53,7 @@ the document and OMIT or set to null anything the document doesn't give.
 
 - capitalGainsTransactions: one object per individual buy-and-sell transaction.
   Only include an item if you have its actual per-trade details. Use
-  DD-MMM-YYYY for dates. Give amounts as plain numbers — no ₹ sign, no commas
+  DD-MMM-YYYY for dates. Give amounts as plain numbers, with no ₹ sign and no commas
   (write 1234.5, not "₹1,234.50"). If the source has several tables (common in
   saved broker webpages), use the one with real transaction rows, not a summary
   or disclaimer table, and say which in "notes". Drop subtotal/summary rows. If
@@ -74,7 +74,15 @@ the document and OMIT or set to null anything the document doesn't give.
   PMS fees / STT / custodian or admin charges). Leave anything not stated as
   null. Plain numbers, no ₹ or commas.
 - confidence: your honest read of how complete and clear the document was.
-- notes: a short line summarizing what you read and anything worth
-  double-checking.
+- notes: one short sentence only (under 200 characters). Do not repeat yourself or
+  list every row.
+- Broken-line PDF text: a single transaction row often spans several lines. Scrip
+  name on one line, purchase and sell dates on the next lines, units and values on
+  another. Dates on following lines still belong to the SAME transaction. Match
+  dates to the units and buy/sell values that appear on the same row or within the
+  next few lines. When two dates belong to one transaction, the earlier date is the
+  purchase date and the later date is the sell date.
+- JSON hygiene: use JSON null for absent values. NEVER write the string "null".
+  Output valid JSON only. No markdown code fences around the JSON.
 
 Output the single JSON object now, and nothing else.

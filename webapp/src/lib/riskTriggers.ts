@@ -60,7 +60,7 @@ export function evaluateRiskTriggers(
       id: "capital_gains_asset_disqualifier",
       label: "Capital gains beyond listed shares/equity mutual funds",
       consequence:
-        "You told us you sold property, crypto/VDA, unlisted shares, foreign shares, or debt mutual funds — ITR-1 cannot cover these. File ITR-2 (or ITR-3 if business income also applies).",
+        "You told us you sold property, crypto/VDA, unlisted shares, foreign shares, or debt mutual funds. ITR-1 cannot cover these. File ITR-2 (or ITR-3 if business income also applies).",
       severity: "form-changing"
     });
   }
@@ -88,7 +88,7 @@ export function evaluateRiskTriggers(
   if (flags.nriTenantMissingForm16A) {
     triggers.push({
       id: "nri_rent_missing_form_16a",
-      label: "Indian rent — tenant Form 16A not confirmed",
+      label: "Indian rent: tenant Form 16A not confirmed",
       consequence:
         "Tenants should deduct TDS on rent paid to an NRI and issue Form 16A. Missing documentation can delay reconciling TDS on your return.",
       severity: "routine"
@@ -100,7 +100,7 @@ export function evaluateRiskTriggers(
       id: "foreign_assets_extended_schedule_fa",
       label: "Additional Schedule FA disclosures flagged",
       consequence:
-        "Foreign signing authority, property, trusts, or cash-value life insurance each need separate Schedule FA tables in ITR-2/ITR-3. This tool does not yet build those rows — take records to a CA.",
+        "Foreign signing authority, property, trusts, or cash-value life insurance each need separate Schedule FA tables in ITR-2/ITR-3. This tool does not yet build those rows. Take records to a CA.",
       severity: "form-changing"
     });
   }
@@ -110,7 +110,7 @@ export function evaluateRiskTriggers(
       id: "foreign_assets_schedule_fa",
       label: "Foreign assets must be disclosed in Schedule FA",
       consequence:
-        "As a resident, every foreign holding (shares, RSUs, ESPP, accounts) goes in Schedule FA of ITR-2/ITR-3 — never ITR-1 — for the calendar year, with no minimum value. Missing one carries a flat ₹10 lakh penalty under the Black Money Act.",
+        "As a resident, every foreign holding (shares, RSUs, ESPP, accounts) goes in Schedule FA of ITR-2/ITR-3, never ITR-1, for the calendar year, with no minimum value. Missing one carries a flat ₹10 lakh penalty under the Black Money Act.",
       severity: "form-changing"
     });
   }
@@ -130,7 +130,7 @@ export function evaluateRiskTriggers(
       triggers.push({
         id: "presumptive_income_itr_form",
         label: "Presumptive business or professional income",
-        consequence: `You told us you're on the presumptive scheme (Section 44AD/44ADA/44AE), which routes to ${itrForm.form}, due ${formatDate(itrForm.dueDate)}. This tool does not compute presumptive turnover — confirm eligibility with your CA.`,
+        consequence: `You told us you're on the presumptive scheme (Section 44AD/44ADA/44AE), which routes to ${itrForm.form}, due ${formatDate(itrForm.dueDate)}. This tool does not compute presumptive turnover. Confirm eligibility with your CA.`,
         severity: "form-changing"
       });
     } else {

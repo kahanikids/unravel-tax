@@ -1,0 +1,21 @@
+SYNTHETIC FIXTURE - NOT REAL DATA
+Represents a typical Annual Information Statement (AIS) extract: annual income
+totals and TDS credits, with no per-transaction capital-gains detail.
+
+---
+
+Annual Information Statement (AIS) - FY 2025-26
+PAN: XXXXX0000X (synthetic)
+Assessment Year: 2026-27
+
+Part B1 - Information relating to tax deducted or collected at source
+Interest from savings bank: Rs 4,567.00 (TDS Rs 457)
+Interest from deposits: Rs 12,000.00 (TDS Rs 1,200)
+
+Part B2 - Information relating to specified financial transactions
+Dividend income (Section 194): Rs 12,345.00 (TDS Rs 1,235)
+
+No capital gains transaction detail is included in this AIS extract.
+For STCG/LTCG classification, obtain the broker capital-gains statement.
+
+--- End of extract ---

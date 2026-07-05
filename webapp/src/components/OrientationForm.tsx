@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { InfoTooltip } from "./InfoTooltip";
 import type {
   CapitalGainsAssetType,
   HousePropertyCount,
@@ -15,6 +16,9 @@ type QuestionBase = {
   helper?: string;
   helperNri?: string;
   mobileHelper?: string;
+  /** Shown behind the "i" icon next to the prompt — not as default helper text. */
+  infoTooltip?: string;
+  infoTooltipLabel?: string;
   visible: (answers: OrientationAnswers) => boolean;
   /** Safe to leave unanswered: deriveProfileFlags() treats a skipped
    * (null) answer the same as "No", a conservative default that never
@@ -293,8 +297,9 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt:
       "Are you using presumptive taxation under Section 44AD, 44ADA, or 44AE?",
-    helper:
-      "Presumptive taxation is an optional simplified scheme for small goods businesses (Section 44AD), freelancers and professionals (44ADA), or goods transport (44AE). You declare income as a fixed percentage of turnover instead of keeping full books. Say Yes only if you actually opted for this scheme this year. Skip if you're not sure yet.",
+    infoTooltipLabel: "About presumptive taxation",
+    infoTooltip:
+      "Presumptive taxation is an optional simplified scheme for small goods businesses (Section 44AD), freelancers and professionals (44ADA), or goods transport (44AE). You declare income as a fixed percentage of turnover instead of keeping full books.",
     visible: (a) => isTaxResident(a) && a.businessIncome === true,
     skippable: true,
     value: (a) => a.presumptiveTaxation,
@@ -734,6 +739,11 @@ export function OrientationForm({
       ) : null}
       <h2 className="orientation-prompt">
         {isNri(answers) && current.promptNri ? current.promptNri : current.prompt}
+        {current.infoTooltip ? (
+          <InfoTooltip label={current.infoTooltipLabel ?? "More information"}>
+            {current.infoTooltip}
+          </InfoTooltip>
+        ) : null}
       </h2>
       {current.helper || (isNri(answers) && current.helperNri) ? (
         <p className="orientation-helper">

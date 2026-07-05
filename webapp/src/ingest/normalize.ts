@@ -289,7 +289,7 @@ export function normalizeRowsSoft(inputs: NormalizeRowInput[] | RawTransactionRo
     } catch {
       warnings.push({
         code: "invalid_date",
-        message: `Row ${rowIndex + 1}: could not compute tax class — check dates.`,
+        message: `Row ${rowIndex + 1}: could not compute tax class. Check dates.`,
         rowIndex
       });
     }

@@ -87,7 +87,7 @@ export function WelcomeScreen({
           <span className="welcome-badge-mobile">CSV/Excel/PDF</span>
         </span>
         <span className="welcome-badge">
-          <span className="welcome-badge-desktop">Stays in your browser</span>
+          <span className="welcome-badge-desktop">Your data stays on your device</span>
           <span className="welcome-badge-mobile">Browser-only</span>
         </span>
       </div>

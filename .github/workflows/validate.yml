@@ -8,6 +8,7 @@ on:
       - "webapp/**"
       - "scripts/**"
       - "fixtures/**"
+      - "spike/**"
       - ".github/workflows/validate.yml"
   pull_request:
     paths:
@@ -15,6 +16,7 @@ on:
       - "webapp/**"
       - "scripts/**"
       - "fixtures/**"
+      - "spike/**"
       - ".github/workflows/validate.yml"
 
 jobs:

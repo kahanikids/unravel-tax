@@ -69,10 +69,11 @@ FY 2025-26 filing flow, with no prior-workbook import prompt.
 
 ### PDF extraction
 
-Built today: browser-side PDF text extraction plus guided AI JSON extraction.
+Built today: browser-side PDF text extraction plus LLM Options for JSON extraction
+(in-browser Llama, OpenRouter, or copy-paste).
 
-Still pending: native PDF table extraction reliable enough to avoid the
-external AI chat copy-paste step.
+Still pending: native PDF table extraction reliable enough to reduce reliance
+on LLM Options for standardised reports.
 
 ### Advanced disclosure and planning widgets
 

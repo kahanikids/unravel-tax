@@ -19,6 +19,7 @@ import {
   type CanonicalTransactionColumn,
   type HeaderResolution
 } from "./headerMatching";
+import { postProcessExtractionRaw } from "./extractionPostProcess";
 
 type Table = string[][];
 type ExcelCell = string | number | Date | boolean | null;
@@ -168,7 +169,7 @@ function buildIngestResult(
   if (!hasInstrumentType) {
     warnings.push({
       code: "assumed_instrument_type",
-      message: "No Instrument Type column found — all rows treated as equity."
+      message: "No Instrument Type column found. All rows treated as equity."
     });
   }
 
@@ -349,7 +350,8 @@ export function parseTextSource(fileName: string, text: string, mimeType = ""): 
   return emptyResult(
     "pdf_or_freeform",
     routePdfOrFreeform(
-      "PDF/free-form table reconstruction stays in the guided AI extraction prompt path."
+      "PDF/free-form table reconstruction stays in the guided AI extraction prompt path.",
+      { extractedText: text }
     )
   );
 }
@@ -359,7 +361,7 @@ export function parseTextSource(fileName: string, text: string, mimeType = ""): 
  * free-form text: those formats route to prompts/01-extract-statement.md
  * outside this app, and the user pastes the returned table back in here.
  */
-export function parsePastedExtraction(text: string): IngestResult {
+export function parsePastedExtraction(text: string, sourceText?: string): IngestResult {
   const trimmed = text.trim();
   if (!trimmed) {
     return emptyResult("structured_text", undefined, [
@@ -372,8 +374,8 @@ export function parsePastedExtraction(text: string): IngestResult {
   // The extraction prompt now asks the AI for one standardised JSON object, so
   // that's the primary contract. A markdown/TSV table is still accepted as a
   // graceful fallback (older prompts, or a user who pastes a table by hand).
-  if (trimmed.startsWith("{")) {
-    return parseExtractionJson(trimmed);
+  if (trimmed.startsWith("{") || trimmed.startsWith("```")) {
+    return parseExtractionJson(trimmed, sourceText);
   }
   if (trimmed.includes("|")) {
     return parseMarkdownTable(trimmed);
@@ -390,12 +392,13 @@ export function parsePastedExtraction(text: string): IngestResult {
  * format, so classification is identical. Annual figures and any net-realised
  * gain are surfaced for guidance only - never fed into the tax engine here.
  */
-export function parseExtractionJson(text: string): IngestResult {
+export function parseExtractionJson(text: string, sourceText?: string): IngestResult {
   const pasteHint =
     "That doesn't look like complete JSON. Paste the whole JSON block the AI gave you, starting with { and ending with }.";
+  const normalizedText = postProcessExtractionRaw(text, sourceText);
   let data: unknown;
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(normalizedText);
   } catch {
     return emptyResult("structured_text", undefined, [{ code: "parse_error", message: pasteHint }]);
   }
@@ -438,8 +441,18 @@ export function parseExtractionJson(text: string): IngestResult {
 function jsonTransactionToRow(item: unknown): RawTransactionRow {
   const t = (typeof item === "object" && item !== null ? item : {}) as Record<string, unknown>;
   const cell = (value: unknown): string | number => {
-    if (typeof value === "number" || typeof value === "string") {
+    if (value === null || value === undefined) {
+      return "";
+    }
+    if (typeof value === "number") {
       return value;
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed.toLowerCase() === "null" || trimmed.toLowerCase() === "undefined") {
+        return "";
+      }
+      return trimmed;
     }
     return "";
   };

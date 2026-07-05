@@ -22,6 +22,7 @@ This tool exists to make that mechanical part free and repeatable, without requi
 ## 2. Who this is for
 
 Non-technical individuals and families who:
+
 - Have a handful of income sources (salary/pension, bank interest, broker capital gains, dividends, maybe rent) — not a business needing full accounting.
 - Don't have — and don't want to pay for — a CA for the data-gathering and first-pass computation, though they may still want a CA to review before filing.
 - Have never used ChatGPT, or have only the free tier.
@@ -95,37 +96,41 @@ No step requires installing anything, writing a formula, or paying for anything.
 
 ### 6.1 Tabs common to every profile
 
-| Tab | Purpose |
-|---|---|
-| `Profile` | Name, PAN, FY, residential status, which category flags apply (can be more than one) |
-| `Raw Data - <Broker/AMC name>` | One per source, pasted from the ChatGPT extraction step. Raw columns preserved as-is from the source file. |
-| `Working - <Broker/AMC name>` | Added columns: LT/ST/Intraday classification (formula off dates), computed gain (formula), applicable tax treatment, rule-change flag — same pattern as the ABML sheet built this session |
-| `Dividends` | Quarter-wise, not annual — needed for the Section 234C advance-tax interest calc in Schedule OS |
-| `Interest & Other Income` | Bank/FD/RD interest, any other "Other Sources" income |
-| `Transaction Charges` | STT vs non-STT charges, split by deductibility rule (capital gains vs speculative income) |
-| `Carry Forward Losses` | Register by AY, type, section, original amount, amount used, balance, expiry (8 AYs from the year the loss arose) |
-| `CA Summary` | Numbers only, no rules or notes — the one to hand a real CA |
-| `Detailed Summary` | Full working: tax estimate, rule flags, profile-specific advice, sources |
-| `ITR Form Guide` | Auto-suggests ITR-1/2/3 based on what's populated elsewhere (see Section 10) |
+| Tab                            | Purpose                                                                                                                                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Profile`                      | Name, PAN, FY, residential status, which category flags apply (can be more than one)                                                                                                      |
+| `Raw Data - <Broker/AMC name>` | One per source, pasted from the ChatGPT extraction step. Raw columns preserved as-is from the source file.                                                                                |
+| `Working - <Broker/AMC name>`  | Added columns: LT/ST/Intraday classification (formula off dates), computed gain (formula), applicable tax treatment, rule-change flag — same pattern as the ABML sheet built this session |
+| `Dividends`                    | Quarter-wise, not annual — needed for the Section 234C advance-tax interest calc in Schedule OS                                                                                           |
+| `Interest & Other Income`      | Bank/FD/RD interest, any other "Other Sources" income                                                                                                                                     |
+| `Transaction Charges`          | STT vs non-STT charges, split by deductibility rule (capital gains vs speculative income)                                                                                                 |
+| `Carry Forward Losses`         | Register by AY, type, section, original amount, amount used, balance, expiry (8 AYs from the year the loss arose)                                                                         |
+| `CA Summary`                   | Numbers only, no rules or notes — the one to hand a real CA                                                                                                                               |
+| `Detailed Summary`             | Full working: tax estimate, rule flags, profile-specific advice, sources                                                                                                                  |
+| `ITR Form Guide`               | Auto-suggests ITR-1/2/3 based on what's populated elsewhere (see Section 10)                                                                                                              |
 
 ### 6.2 Additional tabs by profile
 
 **NRI**
+
 - `NRE-NRO Tracker` — separate columns per account, since NRE interest/balance is exempt and NRO interest is fully taxable
 - `TDS Reconciliation` — brokers/AMCs deduct TDS on NRI capital gains at source (residents don't have this); this tab reconciles TDS actually deducted (from contract notes/AMC statements) against Form 26AS/AIS and computes the refund or shortfall
 - `DTAA & Residency` — country of residence, TRC status/expiry, Form 10F or 67 filed y/n, days-in-India count feeding the Section 6 residential status test (resident/NRI/RNOR)
 - `Repatriation Log` — NRO remittances, running total against the USD 1 million/year limit, Form 15CA/15CB status (see Section 10 for the FY2025-26/FY2026-27 forms renaming)
 
 **HUF**
+
 - `Coparceners & Members` — names, relationship, PAN
 - `Transfers Without Consideration` — assets a member put into the HUF without adequate payment; income from these clubs back to that member under Section 64(2), not taxed in the HUF's hands — easy to miss and a common error
 - `Partition Log` — if a full or partial partition has occurred, with the deed reference
 
 **Senior Citizen**
+
 - `80TTB Tracker` — interest income eligible for the ₹50,000 deduction (old regime only), separate from 80TTA which doesn't apply once someone crosses 60
 - `Regime & Advance Tax Flags` — auto-flags if the person has any business/speculative income, which (a) may disqualify the usual senior-citizen advance-tax exemption and (b) restricts regime-switching to once-in-a-lifetime instead of every year
 
 **Single Parent / Sole Guardian**
+
 - `Minor's Income (Clubbing)` — investments/accounts in a minor child's name, clubbed under Section 64(1A) with the custodial parent, feeding Schedule SPI in the ITR (see Section 10)
 - `Alimony/Maintenance Log` — periodic vs lump-sum flag, since they're taxed differently
 
@@ -216,6 +221,7 @@ These three cover the flow used in this session. A repo maintainer can add more 
 Each file: what it covers, dated to a financial year, short enough to paste into a chat message without hitting length limits.
 
 **General (every profile)**
+
 - `capital-gains-equity-FY2025-26.md` — 111A/112A rates, exemption, STT/charges deductibility, surcharge cap, 87A exclusion
 - `capital-gains-mutual-funds-FY2025-26.md` — equity-oriented vs debt/specified fund treatment (Section 50AA)
 - `dividends-FY2025-26.md` — TDS threshold, quarterly Schedule OS reporting requirement
@@ -225,6 +231,7 @@ Each file: what it covers, dated to a financial year, short enough to paste into
 - `new-act-2025-transition.md` — what changes FY2026-27 onward, what doesn't apply yet
 
 **NRI**
+
 - `nri-residential-status.md` — Section 6 day-count test, RNOR
 - `nri-nre-nro.md` — full NRE vs NRO treatment (Section 10.1)
 - `nri-tds-and-refunds.md` — broker/AMC TDS at source, Form 13 lower-deduction certificate, claiming refunds
@@ -232,14 +239,17 @@ Each file: what it covers, dated to a financial year, short enough to paste into
 - `nri-repatriation.md` — USD 1M limit, Form 15CA/15CB (now 145/146)
 
 **HUF**
+
 - `huf-basics.md` — separate-entity taxation, slabs, no 87A rebate
 - `huf-clubbing-64-2.md` — transfers without consideration
 
 **Senior Citizen**
+
 - `senior-citizen-basics.md` — exemption thresholds, 80TTB, 80D, 80DDB
 - `senior-citizen-advance-tax-and-regime.md` — the business-income caveats found this session
 
 **Single Parent / Guardian**
+
 - `single-parent-clubbing.md` — Section 64(1A), Schedule SPI
 - `single-parent-alimony.md` — periodic vs lump sum
 
@@ -251,7 +261,7 @@ This is the most complex profile and deserves more than a stub. Six things that 
 
 **9.1 NRE vs NRO are not interchangeable for tax purposes.** NRE holds foreign-sourced money; the interest is tax-exempt in India and the account isn't caught by Section 195 TDS at all, since there's no Indian-sourced income in it. NRO holds India-sourced income (rent, dividends, pension, capital gains proceeds); interest on NRO is fully taxable at slab rates with TDS deducted by the bank. Mixing these up in a data entry — say, treating NRO interest as exempt because "it's an NRI account" — is the single most common NRI filing error this tool should guard against. (Source: [ClearTax NRE vs NRO](https://cleartax.in/s/nre-nro-taxation))
 
-**9.2 TDS on capital gains is deducted at source by the broker/AMC — residents don't have this.** For a resident, no TDS applies when you sell listed shares or mutual fund units; the person self-assesses and pays via advance tax or self-assessment tax. For an NRI, the broker or AMC is required to deduct TDS at the time of sale/redemption — currently 12.5% on LTCG and 20% on STCG for STT-paid equity, up to the maximum slab rate (with cess) on debt fund gains. This means an NRI's actual liability and what's already been withheld are two different numbers from day one, and reconciling them (not just computing the "right" tax) is a core part of the workflow. (Source: [Rupeeflo — TDS Rules for NRIs FY2025-26](https://www.rupeeflo.com/resources/tds-rules-for-nris-on-interest-rent-capital-gains-(fy-2025-26)))
+**9.2 TDS on capital gains is deducted at source by the broker/AMC — residents don't have this.** For a resident, no TDS applies when you sell listed shares or mutual fund units; the person self-assesses and pays via advance tax or self-assessment tax. For an NRI, the broker or AMC is required to deduct TDS at the time of sale/redemption — currently 12.5% on LTCG and 20% on STCG for STT-paid equity, up to the maximum slab rate (with cess) on debt fund gains. This means an NRI's actual liability and what's already been withheld are two different numbers from day one, and reconciling them (not just computing the "right" tax) is a core part of the workflow. (Source: [Rupeeflo — TDS Rules for NRIs FY2025-26](<https://www.rupeeflo.com/resources/tds-rules-for-nris-on-interest-rent-capital-gains-(fy-2025-26)>))
 
 **9.3 Form 13 exists to fix over-withholding before it happens, not just after.** If an NRI's actual liability will clearly be lower than the standard TDS rate (e.g., losses elsewhere, DTAA relief, low overall income), they can apply for a lower/nil deduction certificate in advance rather than waiting a year for a refund. Worth surfacing this explicitly since most people only find out about it after they've already overpaid.
 
@@ -263,16 +273,16 @@ This is the most complex profile and deserves more than a stub. Six things that 
 
 ## 10. ITR form selection logic (for the auto-guide tab)
 
-| Condition | Form | Due date, AY2026-27 |
-|---|---|---|
-| Resident, salary/pension + up to 2 house properties + LTCG (112A) ≤ ₹1.25L and nothing else | ITR-1 | 31 Jul 2026 |
-| Resident, any capital gains beyond the ITR-1 threshold, foreign assets, RNOR status, director in a company, unlisted shares, or clubbing provisions apply | ITR-2 | 31 Jul 2026 |
-| Anyone (resident, NRI, or HUF) with business or professional income — including speculative/intraday trading — accounts not requiring audit | ITR-3 | 31 Aug 2026 |
-| Same as above, but accounts requiring a tax audit | ITR-3 | 31 Oct 2026 |
-| NRI, any income profile without business income | ITR-2 (never ITR-1/4) | 31 Jul 2026 |
-| HUF, no business income | ITR-2 | 31 Jul 2026 |
-| HUF, with business income | ITR-3 | 31 Aug 2026 (31 Oct if audited) |
-| Clubbed income present (Section 64) | ITR-2 or ITR-3, reported in Schedule SPI, never ITR-1 | per form above |
+| Condition                                                                                                                                                 | Form                                                  | Due date, AY2026-27             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------- |
+| Resident, salary/pension + up to 2 house properties + LTCG (112A) ≤ ₹1.25L and nothing else                                                               | ITR-1                                                 | 31 Jul 2026                     |
+| Resident, any capital gains beyond the ITR-1 threshold, foreign assets, RNOR status, director in a company, unlisted shares, or clubbing provisions apply | ITR-2                                                 | 31 Jul 2026                     |
+| Anyone (resident, NRI, or HUF) with business or professional income — including speculative/intraday trading — accounts not requiring audit               | ITR-3                                                 | 31 Aug 2026                     |
+| Same as above, but accounts requiring a tax audit                                                                                                         | ITR-3                                                 | 31 Oct 2026                     |
+| NRI, any income profile without business income                                                                                                           | ITR-2 (never ITR-1/4)                                 | 31 Jul 2026                     |
+| HUF, no business income                                                                                                                                   | ITR-2                                                 | 31 Jul 2026                     |
+| HUF, with business income                                                                                                                                 | ITR-3                                                 | 31 Aug 2026 (31 Oct if audited) |
+| Clubbed income present (Section 64)                                                                                                                       | ITR-2 or ITR-3, reported in Schedule SPI, never ITR-1 | per form above                  |
 
 (Sources: [TaxGuru — ITR Forms AY2026-27](https://taxguru.in/income-tax/itr-forms-ay-2026-27-form-file-key-changes.html), [ClearTax — ITR-2 Filing AY2026-27](https://cleartax.in/itr-2-filing), [Income Tax India — Schedule SPI](https://www.incometaxindia.gov.in/w/schedule_spi), [CACLubIndia — July 31 vs August 31 AY2026-27](https://www.caclubindia.com/articles/due-date-for-filing-itr-ay-202627-july-31-vs-august-31-55204.asp))
 
@@ -303,18 +313,18 @@ Everything so far is about computing correctly. This section is about the other 
 
 These should not just sit in a document — they should be active checks. The `Detailed Summary` tab and the Prompt Pack should both surface a trigger the moment its condition is met, not wait for the user to read a rules file end to end.
 
-| Trigger condition | What's at stake | Section |
-|---|---|---|
-| Wrong ITR form used (e.g. ITR-1 filed with LTCG over ₹1.25L, or with any STCG) | Return marked defective under Section 139(9) — 15 days to refile in the correct form or it's treated as never filed | 139(9) |
-| Income/TDS doesn't match AIS, Form 26AS, or Form 16 | Automated mismatch notice — the department's tools flag this without a human reviewing first | — |
-| Multiple employers in one year, TDS not reconciled | Each employer deducts TDS independently without knowing about the other salary — under-withholding surfaces as a shortfall the taxpayer has to make up, often as a surprise | — |
-| HRA claimed without landlord's PAN (where annual rent exceeds ₹1 lakh) | Claim rejected on scrutiny even if genuine, for a documentation gap not a substance one | — |
-| Capital gains or other income pushes tax liability past ₹10,000 after TDS, and advance tax wasn't paid | Interest under Sections 234B/234C, quarter by quarter — this is exactly why dividends and gains need to be dated, not just totalled (see Section 6.1, Dividends tab) | 234B/234C |
-| EPF withdrawn before 5 years of continuous service, over ₹50,000 | TDS at 10% (with PAN) or ~34.6% (without) applies at withdrawal — easy to forget this counts as taxable income for the year, not a tax-free corpus | 192A (Section 392(7) from 1-Apr-2026) |
-| Deductions claimed (80C, 80D, HRA, etc.) without retaining proof | Department's automated cross-checks flag unsupported claims for scrutiny even years later | — |
-| Filed after the applicable due date (see Section 10 — it's not always 31 July) | Section 234F penalty: ₹1,000 if total income ≤ ₹5L, up to ₹5,000 otherwise. Also forfeits the right to carry forward most losses (the exact carry-forward mechanism built in Section 6.1) and loses interest on any refund for the delay period | 234F |
-| Income underreported (missed a source, wrong figure) | Penalty of 50% of the tax on the underreported amount | 270A |
-| Income misreported (false claims, fabricated documentation, concealment) | Penalty of 200% of the tax on the misreported amount — this is a different, much harsher tier than an honest mistake | 270A |
+| Trigger condition                                                                                      | What's at stake                                                                                                                                                                                                                                 | Section                               |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Wrong ITR form used (e.g. ITR-1 filed with LTCG over ₹1.25L, or with any STCG)                         | Return marked defective under Section 139(9) — 15 days to refile in the correct form or it's treated as never filed                                                                                                                             | 139(9)                                |
+| Income/TDS doesn't match AIS, Form 26AS, or Form 16                                                    | Automated mismatch notice — the department's tools flag this without a human reviewing first                                                                                                                                                    | —                                     |
+| Multiple employers in one year, TDS not reconciled                                                     | Each employer deducts TDS independently without knowing about the other salary — under-withholding surfaces as a shortfall the taxpayer has to make up, often as a surprise                                                                     | —                                     |
+| HRA claimed without landlord's PAN (where annual rent exceeds ₹1 lakh)                                 | Claim rejected on scrutiny even if genuine, for a documentation gap not a substance one                                                                                                                                                         | —                                     |
+| Capital gains or other income pushes tax liability past ₹10,000 after TDS, and advance tax wasn't paid | Interest under Sections 234B/234C, quarter by quarter — this is exactly why dividends and gains need to be dated, not just totalled (see Section 6.1, Dividends tab)                                                                            | 234B/234C                             |
+| EPF withdrawn before 5 years of continuous service, over ₹50,000                                       | TDS at 10% (with PAN) or ~34.6% (without) applies at withdrawal — easy to forget this counts as taxable income for the year, not a tax-free corpus                                                                                              | 192A (Section 392(7) from 1-Apr-2026) |
+| Deductions claimed (80C, 80D, HRA, etc.) without retaining proof                                       | Department's automated cross-checks flag unsupported claims for scrutiny even years later                                                                                                                                                       | —                                     |
+| Filed after the applicable due date (see Section 10 — it's not always 31 July)                         | Section 234F penalty: ₹1,000 if total income ≤ ₹5L, up to ₹5,000 otherwise. Also forfeits the right to carry forward most losses (the exact carry-forward mechanism built in Section 6.1) and loses interest on any refund for the delay period | 234F                                  |
+| Income underreported (missed a source, wrong figure)                                                   | Penalty of 50% of the tax on the underreported amount                                                                                                                                                                                           | 270A                                  |
+| Income misreported (false claims, fabricated documentation, concealment)                               | Penalty of 200% of the tax on the misreported amount — this is a different, much harsher tier than an honest mistake                                                                                                                            | 270A                                  |
 
 Design implication: the `Getting Started` prompt (Section 7 of the Prompt Pack) needs to ask about job changes mid-year, HRA/rent claims, and EPF withdrawals — none of which were in the original v1 prompt draft. Fixed below (Section 7 has been updated to reflect this). This is a direct example of the gap this trigger review caught: the intake conversation was building toward "what income do you have" without asking "did anything change or get withdrawn this year," which is where several of the highest-consequence mistakes above actually originate.
 
@@ -370,17 +380,17 @@ Recommendation: a static, client-side-only web app. No backend, no database, no 
 
 ### 15.2 Recommended stack (static web app)
 
-| Layer | Choice | Why |
-|---|---|---|
-| UI framework | Vite + React + TypeScript | Common enough for contributors to onboard to; still fully static-exportable |
-| Excel read/write | A browser-based spreadsheet library (e.g. the open source `xlsx`/SheetJS package, or an equivalent — any actively maintained one that runs client-side works) | Generates both export flavours entirely in-browser, no server round-trip |
-| CSV | A standard CSV parsing library (any well-maintained one for the chosen framework — this is a solved problem, not worth hand-rolling) | Import/export, same in-browser constraint |
-| Rules engine | `rules/*.json`, one per topic/FY, paired with the human-readable `rules/*.md` from Section 8 | Updating a rate after a Budget becomes a JSON edit + PR, not an application-logic change — keeps annual maintenance approachable for a non-programmer reviewer |
-| State/persistence | Browser `localStorage` only, as a convenience for resuming a half-finished session | Not the system of record — see 15.3 |
-| Hosting | GitHub Pages (or Netlify/Vercel free tier) | Zero recurring cost, versioned alongside the code |
-| Auth | None | Removes the biggest trust and liability surface entirely |
+| Layer             | Choice                                                                                                                                                        | Why                                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI framework      | Vite + React + TypeScript                                                                                                                                     | Common enough for contributors to onboard to; still fully static-exportable                                                                                    |
+| Excel read/write  | A browser-based spreadsheet library (e.g. the open source `xlsx`/SheetJS package, or an equivalent — any actively maintained one that runs client-side works) | Generates both export flavours entirely in-browser, no server round-trip                                                                                       |
+| CSV               | A standard CSV parsing library (any well-maintained one for the chosen framework — this is a solved problem, not worth hand-rolling)                          | Import/export, same in-browser constraint                                                                                                                      |
+| Rules engine      | `rules/*.json`, one per topic/FY, paired with the human-readable `rules/*.md` from Section 8                                                                  | Updating a rate after a Budget becomes a JSON edit + PR, not an application-logic change — keeps annual maintenance approachable for a non-programmer reviewer |
+| State/persistence | Browser `localStorage` only, as a convenience for resuming a half-finished session                                                                            | Not the system of record — see 15.3                                                                                                                            |
+| Hosting           | GitHub Pages (or Netlify/Vercel free tier)                                                                                                                    | Zero recurring cost, versioned alongside the code                                                                                                              |
+| Auth              | None                                                                                                                                                          | Removes the biggest trust and liability surface entirely                                                                                                       |
 
-Where ChatGPT still fits: parsing a messy broker PDF is an LLM job, not a browser job. Flow stays: user pastes the extraction prompt into ChatGPT free, uploads one statement, gets a clean table back, pastes it into the app. Everything downstream — classification, gain formulas, tax estimate, the Section 12 risk-trigger checks — runs deterministically in the app's own code, inspectable by anyone, never passed through an LLM. An optional later mode could accept a user's own OpenAI/Anthropic/Gemini API key for a smoother in-app extraction step, but it must stay optional — required-key would reintroduce the exact cost barrier this whole design avoids.
+Where LLM Options fit: parsing a messy broker/PMS PDF is an LLM extraction job, because the reports are not standardised enough for reliable native table reconstruction. The web app can use in-browser Llama, OpenRouter with the user's API key, or a copy-paste prompt in the user's AI chat of choice. Everything downstream — classification, gain formulas, tax estimate, the Section 12 risk-trigger checks — runs deterministically in the app's own code, inspectable by anyone, never passed through an LLM for calculation. Any API-key route must stay optional — a required key would reintroduce the exact cost barrier this whole design avoids.
 
 ### 15.3 Export spec — the two output flavours
 
