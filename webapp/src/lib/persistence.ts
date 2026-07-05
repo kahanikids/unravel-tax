@@ -1,6 +1,8 @@
 import type { NormalizedTransaction } from "../ingest";
 import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type { HufAssetTransfer, HufMember } from "./hufClubbing";
 import type { InsurancePolicy } from "./insurance";
+import type { ForeignAccount } from "./scheduleFa";
 import type { PastFiling } from "./pastFilings";
 import type { TdsRow } from "./reconciliation";
 import type { RawSheet } from "./workbookExport";
@@ -46,6 +48,11 @@ export type PersistedSession = {
   pastFilings?: PastFiling[];
   /** Detailed per-policy Section 10(10D) input, optional for compatibility with sessions saved before it existed. */
   insurancePolicies?: InsurancePolicy[];
+  /** HUF member/coparcener list and Section 64(2) asset transfers, optional for compatibility with sessions saved before they existed. */
+  hufMembers?: HufMember[];
+  hufTransfers?: HufAssetTransfer[];
+  /** Schedule FA Phase 1 foreign account disclosure rows, optional for compatibility with sessions saved before it existed. */
+  foreignAccounts?: ForeignAccount[];
 };
 
 const STORAGE_KEY = "unravel-tax-session";

@@ -20,6 +20,8 @@ export type RegimeComparisonInputs = {
   /** Let-out house-property income for the new-regime side: a loss can't offset other heads, so never negative. */
   letOutIncomeNewRegime?: number;
   seniorCitizen: boolean;
+  /** 80 or older. Picks the old-regime super-senior slab instead of the 60-79 one; ignored unless seniorCitizen is also true. */
+  superSeniorCitizen?: boolean;
   /**
    * NRI only: a non-resident's dividends are taxed at a flat Section 115A/DTAA
    * rate (see lib/nriTax.ts), never at slab rate, so they're left out of both
@@ -118,7 +120,12 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
     0,
     oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome + letOutOld - Math.max(0, inputs.oldRegimeDeductions)
   );
-  const oldRegimeSlabs = inputs.seniorCitizen ? rule.values.old_regime.slabs_60_to_80 : rule.values.old_regime.slabs_below_60;
+  const oldRegimeSlabs =
+    inputs.seniorCitizen && inputs.superSeniorCitizen
+      ? rule.values.old_regime.slabs_above_80
+      : inputs.seniorCitizen
+        ? rule.values.old_regime.slabs_60_to_80
+        : rule.values.old_regime.slabs_below_60;
   let oldRegimeTax = taxFromSlabs(oldRegimeSlabIncome, oldRegimeSlabs);
   oldRegimeTax = applyRebate(oldRegimeTax, oldRegimeSlabIncome, rule.values.old_regime.rebate_87a);
   oldRegimeTax *= 1 + rule.values.cess_rate;

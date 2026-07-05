@@ -1,12 +1,13 @@
 # Design proposals: HUF partition/clubbing, NRI repatriation, Schedule FA
 
-**Status:** Design only. Nothing in this document is implemented. Each
-section ends with the specific questions that need an answer before writing
-any calculation code, per the scoping conversation that produced it — these
-were judged too large or too risky to build without a design review first,
-unlike the four features shipped alongside this document (Section 234C
-quarter precision, NRI DTAA relief, insurance-payout taxability, and
-previous-workbook import).
+**Status:** After review, section 1 (HUF) and section 2 (NRI repatriation)
+were approved and implemented at the scope proposed below. Section 3
+(Schedule FA) had its Phase 1 (foreign bank/brokerage accounts) approved
+and implemented; Phases 2-3 (RSU/ESPP, foreign property, trusts) and HUF
+partition tracking remain out of scope by design, not oversight - see
+each section's "Build note". Each section still ends with the open
+questions raised during design, kept for the record even where a
+decision has since been made.
 
 **Why these three separately:** all three would touch either genuinely
 unsettled family/property law (HUF), a compliance system outside the tax
@@ -125,6 +126,19 @@ calculator.
    partition scenario is worth modelling despite the Section 171(9)
    disallowance risk?
 
+### Build note
+
+Approved and implemented exactly at the proposed scope: a member/
+coparcener list (`webapp/src/lib/hufClubbing.ts`'s `HufMember`, reference
+only, feeds no calculation — question 1 above answered "build it, for the
+CA's reference") and an asset-transfer list computing the Section 64(2)
+clubbing note (question 2 answered: a same-year "this belongs on the
+member's own return" note, without removing the amount from the HUF's own
+CA Summary total). Partition stays calculation-free (question 3 confirmed)
+— the checklist now has a dedicated, sharper item pointing at the Section
+171 vs 171(9) distinction instead. See `HufPanel.tsx`, `rules/huf-clubbing.json`
+(now `verified_secondary_source`), and `rules/huf-clubbing.md`.
+
 ---
 
 ## 2. NRI repatriation tracking
@@ -194,6 +208,18 @@ the panel should say so explicitly (matching the LRS-TCS panel's existing
    needs a real verification pass (the ₹5 lakh CA-certificate threshold
    and the 15CA/15CB → 145/146 renaming both need a current-source check)
    before any UI reads it, regardless of which of the above is chosen.
+
+### Build note
+
+Approved and implemented at the proposed scope (question 1 answered: the
+simple cumulative-figure-plus-threshold-check, not Form 145/146
+preparation). Placed on the Results page next to the other NRI-specific
+sections, right after "NRI: DTAA relief & NRO TDS" (question 2). Question
+3's verification pass was done via secondary tax-reference sources (see
+`rules/nri-repatriation.json`'s updated `verification` block and
+`rules/nri-repatriation.md`) — not the RBI/CBDT primary text directly, so
+it's marked `verified_secondary_source` rather than fully `verified`. See
+`webapp/src/lib/nriRepatriation.ts` and `NriRepatriationPanel.tsx`.
 
 ---
 
@@ -289,3 +315,20 @@ scope is disclosure-only: producing the schedule's rows, not the tax.
    ITR and were bundled together in the original roadmap wording
    ("Schedule FA and foreign income computation") — worth confirming
    whether both are wanted or just the disclosure half.
+
+### Build note
+
+Phase 1 approved and implemented at the proposed scope (question 1:
+Phase 1 only, foreign bank/brokerage accounts). Output is a workbook
+sheet (question 2 answered: sheet, not a CA Summary row - there's no tax
+figure to summarize, only disclosure rows), matching the existing
+raw-reference-sheet pattern. Question 3 answered narrowly for this
+phase: disclosure rows only, no tax computation - the panel says so
+explicitly, and the gross-interest total is shown with a note that it
+isn't added to any tax figure automatically. Amounts are entered already
+converted to rupees by the user rather than converted by this tool,
+since there's no live exchange-rate source available (same reasoning as
+the NRI repatriation check above). Phases 2 (RSU/ESPP, foreign
+equity/debt) and 3 (trusts, other assets) remain undesigned. See
+`webapp/src/lib/scheduleFa.ts`, `ScheduleFaPanel.tsx`, and the
+`buildScheduleFaSheet` workbook export.

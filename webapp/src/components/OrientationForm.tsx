@@ -162,7 +162,18 @@ const QUESTIONS: Question[] = [
     visible: () => true,
     skippable: true,
     value: (a) => a.seniorCitizen,
-    set: (a, value) => ({ ...a, seniorCitizen: value })
+    set: (a, value) => (value ? { ...a, seniorCitizen: value } : { ...a, seniorCitizen: value, superSeniorCitizen: null })
+  },
+  {
+    id: "superSeniorCitizen",
+    kind: "yes-no",
+    prompt: "Are you 80 or older?",
+    helper: "The old regime has a higher tax-free threshold past 80. Skip if you're not sure yet.",
+    mobileHelper: "Not sure? Skip it.",
+    visible: (a) => a.seniorCitizen === true,
+    skippable: true,
+    value: (a) => a.superSeniorCitizen,
+    set: (a, value) => ({ ...a, superSeniorCitizen: value })
   },
   {
     id: "singleParent",
@@ -298,6 +309,7 @@ const SUMMARY_LABELS: Record<string, string> = {
   nriDaysInIndia: "Days in India this year",
   huf: "Income held through a family (HUF)",
   seniorCitizen: "60 or older",
+  superSeniorCitizen: "80 or older",
   singleParent: "Single parent with minor children",
   incomeSources: "Kinds of income",
   multipleEmployers: "More than one employer this year",

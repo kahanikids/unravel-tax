@@ -170,6 +170,17 @@ export type NriDtaaValues = {
   };
 };
 
+/** NRO/NRE repatriation limits and the mid-transition form renaming - see rules/nri-repatriation.json. */
+export type NriRepatriationValues = {
+  nro_annual_limit_usd: number;
+  /** null: NRE repatriation has no cap. */
+  nre_repatriation_cap: number | null;
+  nro_threshold_requiring_ca_certificate_inr: number;
+  old_forms: string[];
+  new_forms: string[];
+  separate_from_itr: boolean;
+};
+
 export type HufBasicsValues = {
   separate_tax_entity: boolean;
   requires_separate_pan: boolean;
@@ -179,6 +190,15 @@ export type HufBasicsValues = {
   same_slab_rates_as_individual: boolean;
   itr_without_business: string;
   itr_with_business: string;
+};
+
+/** Section 64(2): a member's asset transferred to the HUF without adequate consideration keeps its income taxed in the transferor's own return, not the HUF's - no rupee threshold or exemption. See rules/huf-clubbing.json. */
+export type HufClubbingValues = {
+  section: string;
+  trigger: string;
+  income_taxed_in: string;
+  not_taxed_in: string;
+  requires_transfer_log: boolean;
 };
 
 export type SingleParentClubbingValues = {
@@ -351,6 +371,8 @@ export type RegimeChoiceRule = RuleDocument<RegimeChoiceValues>;
 export type NriNreNroRule = RuleDocument<NriNreNroValues>;
 export type NriTdsAndRefundsRule = RuleDocument<NriTdsAndRefundsValues>;
 export type NriDtaaRule = RuleDocument<NriDtaaValues>;
+export type NriRepatriationRule = RuleDocument<NriRepatriationValues>;
 export type HufBasicsRule = RuleDocument<HufBasicsValues>;
+export type HufClubbingRule = RuleDocument<HufClubbingValues>;
 export type SingleParentClubbingRule = RuleDocument<SingleParentClubbingValues>;
 export type AdvanceTaxRule = RuleDocument<AdvanceTaxValues>;

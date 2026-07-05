@@ -144,15 +144,16 @@ under both regimes, the same either way, so a regime comparison in this
 tool only looks at the slab-taxed portion of your income; it doesn't
 change your capital gains tax.
 
-Two things this tool does not model yet:
+One thing this tool does not model yet:
 
 - **Surcharge**, an extra charge on top of the slab tax once your income
   passes roughly ₹50 lakh. If that applies to you, any comparison here
   won't be exact. Bring it to a CA.
-- **The 80+ super senior slab** specifically. The orientation flow only
-  asks whether you're a senior citizen (60+), not your exact age band,
-  so a comparison for someone 80 or older will use the 60-79 slab
-  instead of the correct, more generous one.
+
+The orientation flow asks whether you're a senior citizen (60+), then a
+follow-up asks whether you're 80 or older, so the comparison picks the
+correct old-regime slab set (below-60, 60-79, or 80+) rather than always
+using the 60-79 one.
 
 A 4% health and education cess applies to the tax amount after the
 Section 87A rebate, under both regimes.

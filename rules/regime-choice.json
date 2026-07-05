@@ -79,7 +79,7 @@
       "section_80ccd_2_note": "Available under BOTH regimes. It's the employer's NPS contribution, capped at a percentage of salary (14% for government employees, 10% otherwise) rather than a flat rupee amount, so no fixed limit is stored here.",
       "cross_reference": "deduction-limits.json"
     },
-    "comparison_scope_caveat": "A regime comparison only covers income taxed at slab rates: salary, dividends, bank interest, and similar. Capital gains taxed under Sections 111A/112A are the same amount either way, so they're not part of the comparison. Surcharge above Rs 50 lakh of income, and the age 80+ super senior slab, are not modelled yet.",
+    "comparison_scope_caveat": "A regime comparison only covers income taxed at slab rates: salary, dividends, bank interest, and similar. Capital gains taxed under Sections 111A/112A are the same amount either way, so they're not part of the comparison. Surcharge above Rs 50 lakh of income is not modelled yet.",
     "break_even": {
       "method": "solve_on_slabs",
       "note": "Your break-even is the exact amount of old-regime deductions (80C, 80D, 80CCD(1B), HRA, Section 24(b) home-loan interest, and the rest) at which the old regime's tax would exactly match the new regime's. Enter more than that and the old regime saves you money; enter less and the new regime, the statutory default, wins. It's solved directly on the same slab tables both regimes already use, so it accounts for the different standard deductions (old Rs 50,000, new Rs 75,000), the Section 87A rebate, and the 4% cess automatically. When your new-regime tax is already zero (for a salaried filer, up to about Rs 12.75 lakh), no amount of old-regime deductions can beat it, so there is no break-even to reach."

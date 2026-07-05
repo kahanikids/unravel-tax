@@ -259,7 +259,7 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "Old vs new tax regime comparison",
     status: "available",
-    detail: "Enter your salary and old-regime deductions to see an estimate of which regime costs less, on the slab-taxed part of your income. Doesn't include surcharge or the 80+ super senior slab yet."
+    detail: "Enter your salary and old-regime deductions to see an estimate of which regime costs less, on the slab-taxed part of your income, including the 80+ super senior slab. Doesn't include surcharge yet."
   },
   {
     label: "Year-over-year tax dashboard",
@@ -279,12 +279,12 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "NRI, HUF, and single-parent coverage",
     status: "partial",
-    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, and an NRO interest/dividend TDS-vs-treaty-rate reconciliation are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
+    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, an NRO interest/dividend TDS-vs-treaty-rate reconciliation, an NRO repatriation planning check (USD 1M cap, ₹5 lakh CA-certificate threshold, the renamed Form 145/146), and HUF Section 64(2) transfer clubbing (a member/coparcener list for the CA's reference, plus a note when a transfer without adequate consideration clubs income to the transferring member's own return) are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and HUF partition and Schedule SPI placement still need a CA."
   },
   {
     label: "Insurance payout and foreign-asset planning checks",
     status: "partial",
-    detail: "The dashboard's aggregate-premium check is a quick planning signal. For a precise answer, the Results page's per-policy insurance section takes each policy's issue date, sum assured, premium history, and this year's payout, checks both the sum-assured-ratio and aggregate-premium tests, and computes the actual taxable amount - capital gains for a taxable ULIP (folded into the CA Summary), income from other sources for a taxable traditional policy (folded into the regime comparison's other income). It doesn't yet combine a taxable ULIP's gain with your other equity LTCG under the one shared annual exemption - that's flagged, not silently assumed. Foreign-asset checks (LRS TCS by remittance purpose) remain a disclosure reminder; Schedule FA rows, foreign income, and Form 67 figures aren't built."
+    detail: "The dashboard's aggregate-premium check is a quick planning signal. For a precise answer, the Results page's per-policy insurance section takes each policy's issue date, sum assured, premium history, and this year's payout, checks both the sum-assured-ratio and aggregate-premium tests, and computes the actual taxable amount - capital gains for a taxable ULIP (folded into the CA Summary), income from other sources for a taxable traditional policy (folded into the regime comparison's other income). It doesn't yet combine a taxable ULIP's gain with your other equity LTCG under the one shared annual exemption - that's flagged, not silently assumed. Foreign-asset checks (LRS TCS by remittance purpose) remain a disclosure reminder, and Phase 1 of the Schedule FA builder produces disclosure rows for a foreign bank/brokerage account (country, institution, peak/closing balance, gross interest - a workbook sheet for your CA). RSUs, foreign property, trusts, and the foreign-income tax computation (Schedule FSI/OS) and Form 67 figures aren't built."
   },
   {
     label: "Loans, home-loan principal, and a rented-out home",
@@ -292,9 +292,9 @@ export const CAPABILITIES: Capability[] = [
     detail: "Capped old-regime interest deductions for self-occupied home, 80EEA, 80E, and 80EEB loans; home-loan principal counted inside the shared 80C ceiling; and the full let-out house-property computation (30% standard deduction, uncapped interest, the ₹2 lakh loss set-off cap old regime, no set-off new regime), all folded into the regime comparison and the CA Summary. Business-use vehicle interest and multiple let-out properties are not modelled."
   },
   {
-    label: "HUF partition/clubbing, NRI repatriation, Schedule FA builder",
+    label: "HUF partition tracking, Schedule FA Phases 2-3 (RSUs, property, trusts)",
     status: "planned",
-    detail: "The bigger remaining gaps: an HUF coparcener/member data model with Section 64(2) transfer clubbing and partition tracking, NRI repatriation-limit tracking (a FEMA/banking question more than a tax-return one), and a full Schedule FA builder (a multi-part schedule needing a per-asset data model this tool doesn't collect today). Bring these to a CA for now."
+    detail: "The remaining bigger gaps: HUF partition tracking (deliberately left uncalculated - a private partial partition is tax-invisible under Section 171(9), and this tool can't verify an Assessing Officer's total-partition order, so it's checklist-only), and the rest of the Schedule FA builder beyond Phase 1's foreign bank/brokerage accounts - RSU/ESPP holdings (A3), foreign property, foreign trusts, and the foreign-income tax computation (Schedule FSI/OS) itself. Bring these to a CA for now."
   }
 ];
 

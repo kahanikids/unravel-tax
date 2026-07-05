@@ -373,6 +373,28 @@ function checkOrientationForm() {
   assertIncludes(summaryHtml, ">Update Answers<");
 
   console.log("Validated orientation flow: blank answers start the one-question flow at residency; saved answers show an editable recap first; Start over is no longer in the card.");
+
+  // The 80+ follow-up only shows once seniorCitizen is answered Yes.
+  const notSeniorHtml = renderToString(
+    <OrientationForm
+      answers={{ ...BLANK_ORIENTATION, residency: "resident", seniorCitizen: false, incomeSources: ["salary_pension"] }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  if (notSeniorHtml.includes("80 or older")) {
+    throw new Error("The 80+ super-senior follow-up should be hidden when seniorCitizen is No.");
+  }
+  const seniorHtml = renderToString(
+    <OrientationForm
+      answers={{ ...BLANK_ORIENTATION, residency: "resident", seniorCitizen: true, incomeSources: ["salary_pension"] }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(seniorHtml, "80 or older");
+
+  console.log("Validated super-senior follow-up: hidden unless 60+ is Yes, shown and labelled once it is.");
 }
 
 function checkNriOrientationAndDtaa() {
@@ -486,6 +508,12 @@ function checkResultsStepDefaultsToSimple() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -533,6 +561,12 @@ function checkResultsStepAdvancedToggle() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -621,6 +655,12 @@ function checkResultsStepSummaryPrefill() {
     seniorCitizen: false,
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
+    hufMembers: [],
+    onChangeHufMembers: noop,
+    hufTransfers: [],
+    onChangeHufTransfers: noop,
+    foreignAccounts: [],
+    onChangeForeignAccounts: noop,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     insurancePolicies: [],
     onChangeInsurancePolicies: noop,
@@ -689,6 +729,12 @@ function checkRegimeComparisonPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -726,6 +772,12 @@ function checkRegimeComparisonPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -777,6 +829,12 @@ function resultsStepWithReconciliation(props: {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -843,6 +901,12 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -879,6 +943,12 @@ function checkAdvanceTaxPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -921,6 +991,12 @@ function checkAdvanceTaxPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -972,6 +1048,12 @@ function checkAdvanceTaxPanel() {
       seniorCitizen={false}
       regimeChoiceRule={ruleCatalog.regimeChoice}
       advanceTaxRule={ruleCatalog.advanceTax}
+      hufMembers={[]}
+      onChangeHufMembers={noop}
+      hufTransfers={[]}
+      onChangeHufTransfers={noop}
+      foreignAccounts={[]}
+      onChangeForeignAccounts={noop}
       capitalGainsTaxByInstalment={{ cumulativeByInstalment: [0, 0, 0, 40000], totalForYear: 40000 }}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -1013,6 +1095,12 @@ function checkNriHufSingleParentPartialCalculations() {
     seniorCitizen: false,
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
+    hufMembers: [],
+    onChangeHufMembers: noop,
+    hufTransfers: [],
+    onChangeHufTransfers: noop,
+    foreignAccounts: [],
+    onChangeForeignAccounts: noop,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     insurancePolicies: [],
     onChangeInsurancePolicies: noop,
@@ -1048,8 +1136,25 @@ function checkNriHufSingleParentPartialCalculations() {
   );
   assertIncludes(nriHtml, "NRE interest");
   assertIncludes(nriHtml, "NRI: DTAA relief");
-  if (defaultHtml.includes("NRI: DTAA relief")) {
-    throw new Error("The NRI DTAA/TDS panel should only render for the NRI profile.");
+  assertIncludes(nriHtml, "NRI: repatriation check");
+  if (defaultHtml.includes("NRI: DTAA relief") || defaultHtml.includes("NRI: repatriation check")) {
+    throw new Error("The NRI DTAA/TDS and repatriation panels should only render for the NRI profile.");
+  }
+
+  // Past the Rs 5 lakh CA-certificate threshold, the repatriation panel
+  // names the (renamed) forms and doesn't claim the USD cap is breached.
+  const nriRepatriationHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, nriRepatriatedThisYearUsd: 50000, nriRepatriatedThisYearInr: 600000 }}
+      nri
+    />
+  );
+  assertIncludes(nriRepatriationHtml, "Form 145");
+  assertIncludes(nriRepatriationHtml, "Form 146");
+  assertIncludes(nriRepatriationHtml, "will need");
+  if (nriRepatriationHtml.includes("talk to your bank before repatriating more")) {
+    throw new Error("The USD 1M cap warning should not show when only the Rs 5L certificate threshold is crossed.");
   }
 
   // With a UAE country and dividends entered, the panel shows the treaty rate
@@ -1078,6 +1183,86 @@ function checkNriHufSingleParentPartialCalculations() {
   assertIncludes(hufHtml, "Skip it here and get slab-tax figures");
   if (hufHtml.includes("Old regime deductions")) {
     throw new Error("HUF profile should not see the regime comparison inputs, which don't fit HUF's numbers.");
+  }
+  assertIncludes(hufHtml, "HUF: members");
+  if (defaultHtml.includes("HUF: members")) {
+    throw new Error("The HUF members/transfers panel should only render for the HUF profile.");
+  }
+
+  // A transfer without adequate consideration clubs its income to the
+  // transferring member's own return (Section 64(2)); one with adequate
+  // consideration doesn't.
+  const hufClubbedHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      huf
+      hufTransfers={[
+        {
+          id: "t1",
+          transferringMemberName: "Priya",
+          assetDescription: "Rental flat",
+          transferDate: "2020-01-01",
+          adequateConsideration: false,
+          annualIncomeFromAsset: 240000
+        }
+      ]}
+    />
+  );
+  assertIncludes(hufClubbedHtml, "Priya");
+  assertIncludes(hufClubbedHtml, "belongs on");
+  assertIncludes(hufClubbedHtml, "2,40,000");
+
+  const hufNotClubbedHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      huf
+      hufTransfers={[
+        {
+          id: "t2",
+          transferringMemberName: "Arjun",
+          assetDescription: "Fixed deposit",
+          transferDate: "2020-01-01",
+          adequateConsideration: true,
+          annualIncomeFromAsset: 50000
+        }
+      ]}
+    />
+  );
+  assertIncludes(hufNotClubbedHtml, "No adequate-consideration issue");
+  if (hufNotClubbedHtml.includes("belongs on")) {
+    throw new Error("A transfer with adequate consideration should not trigger the Section 64(2) clubbing note.");
+  }
+
+  // Schedule FA Phase 1: hidden without the foreign-assets profile flag,
+  // shown with the calendar-year framing and account totals once it's on.
+  const foreignAssetsHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      hasForeignAssets
+      foreignAccounts={[
+        {
+          id: "fa1",
+          accountType: "depository",
+          country: "United States",
+          institutionName: "Chase",
+          accountNumber: "1234",
+          openingDate: "",
+          peakBalanceInr: 500000,
+          closingBalanceInr: 300000,
+          grossInterestInr: 10000
+        }
+      ]}
+    />
+  );
+  assertIncludes(foreignAssetsHtml, "Schedule FA rows");
+  assertIncludes(foreignAssetsHtml, "calendar year");
+  assertIncludes(foreignAssetsHtml, "5,00,000");
+  assertIncludes(foreignAssetsHtml, "taxable at slab rate under income from other sources");
+  if (defaultHtml.includes("Schedule FA rows")) {
+    throw new Error("The Schedule FA panel should only render for the foreign-assets profile.");
   }
 
   const singleParentHtml = renderToString(
@@ -1122,7 +1307,7 @@ function checkNriHufSingleParentPartialCalculations() {
   }
 
   console.log(
-    "Validated NRI/HUF/single-parent partial calculations: NRE exempt line, HUF regime-comparison skip, minor's-income clubbing math."
+    "Validated NRI/HUF/single-parent partial calculations: NRE exempt line, NRI repatriation check with renamed forms, HUF regime-comparison skip, HUF Section 64(2) transfer clubbing note, Schedule FA Phase 1 panel visibility and totals, minor's-income clubbing math."
   );
 }
 
@@ -1138,6 +1323,12 @@ function checkInsurancePolicyPanel() {
     seniorCitizen: false,
     regimeChoiceRule: ruleCatalog.regimeChoice,
     advanceTaxRule: ruleCatalog.advanceTax,
+    hufMembers: [],
+    onChangeHufMembers: noop,
+    hufTransfers: [],
+    onChangeHufTransfers: noop,
+    foreignAccounts: [],
+    onChangeForeignAccounts: noop,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     aisFigures: BLANK_AIS_REPORTED_FIGURES,
     onChangeAisFigures: noop,
@@ -1241,6 +1432,7 @@ const BLANK_FLAGS: ProfileFlags = {
   nriCountry: null,
   huf: false,
   seniorCitizen: false,
+  superSeniorCitizen: false,
   singleParent: false,
   hasCapitalGains: false,
   hasDividends: false,

@@ -4,14 +4,17 @@ import type { CaSummaryRow } from "./calculations";
 import type { NormalizedTransaction } from "../ingest";
 import type { CapitalGainsEquityRule } from "../rules";
 import type { OrientationAnswers } from "../state/types";
+import type { ForeignAccount } from "./scheduleFa";
 import {
   buildBrokerSheet,
   buildDetailedSummarySheet,
   buildLinkedCaSummarySheet,
   buildOrientationSheet,
   buildRawSheet,
+  buildScheduleFaSheet,
   buildStandaloneCaSummarySheet,
   ORIENTATION_SHEET_NAME,
+  SCHEDULE_FA_SHEET_NAME,
   uniqueSheetNames,
   type BrokerSheetMeta,
   type ExportDocument,
@@ -29,6 +32,10 @@ export type ExportState = {
   assessmentYear: string;
   /** Optional: written as its own "Orientation" sheet so a later year's Unravel Tax session can read the profile back - see lib/workbookImport.ts. */
   orientation?: OrientationAnswers;
+  /** Optional: Schedule FA Phase 1 disclosure rows, written as their own sheet when there's at least one foreign account entered. */
+  foreignAccounts?: ForeignAccount[];
+  /** Calendar year the Schedule FA disclosure sheet's title should show - required alongside foreignAccounts. */
+  scheduleFaCalendarYear?: number;
 };
 
 export type ExportFile = {
@@ -168,6 +175,15 @@ export async function buildFullWorkbookExport(state: ExportState): Promise<Expor
             sheet: ORIENTATION_SHEET_NAME,
             data: buildOrientationSheet(state.orientation),
             columns: [{ width: 30 }, { width: 30 }]
+          }
+        ]
+      : []),
+    ...(state.foreignAccounts && state.foreignAccounts.length > 0
+      ? [
+          {
+            sheet: SCHEDULE_FA_SHEET_NAME,
+            data: buildScheduleFaSheet(state.foreignAccounts, state.scheduleFaCalendarYear ?? new Date().getFullYear()),
+            columns: [{ width: 22 }, { width: 20 }, { width: 24 }, { width: 20 }, { width: 18 }, { width: 22 }, { width: 22 }]
           }
         ]
       : []),

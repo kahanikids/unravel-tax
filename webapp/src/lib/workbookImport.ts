@@ -93,6 +93,7 @@ function parseOrientationSheet(data: ExcelCell[][]): Partial<OrientationAnswers>
   }
   setYesNo("HUF", "huf");
   setYesNo("Senior Citizen", "seniorCitizen");
+  setYesNo("Super Senior Citizen (80+)", "superSeniorCitizen");
   setYesNo("Single Parent Or Sole Guardian", "singleParent");
   setYesNo("Multiple Employers", "multipleEmployers");
   setYesNo("HRA Claimed", "hraClaimed");

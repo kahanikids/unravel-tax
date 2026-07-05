@@ -244,8 +244,43 @@ export async function main() {
     throw new Error("CA Summary figures should still import even without an Orientation sheet.");
   }
 
+  // Schedule FA Phase 1 sheet: present with disclosure rows when at least one
+  // foreign account is entered, absent entirely when there are none.
+  const exportWithForeignAccounts = await buildFullWorkbookExport({
+    ...exportState,
+    foreignAccounts: [
+      {
+        id: "fa1",
+        accountType: "depository",
+        country: "United States",
+        institutionName: "Chase",
+        accountNumber: "1234",
+        openingDate: "",
+        peakBalanceInr: 500000,
+        closingBalanceInr: 300000,
+        grossInterestInr: 10000
+      }
+    ],
+    scheduleFaCalendarYear: 2025
+  });
+  const foreignAccountsSheets = await readWorkbook(exportWithForeignAccounts.blob);
+  const scheduleFaSheetNames = (foreignAccountsSheets as Array<{ sheet: string }>).map((s) => s.sheet);
+  if (!scheduleFaSheetNames.includes("Schedule FA (Phase 1)")) {
+    throw new Error(`Expected a Schedule FA (Phase 1) sheet, found: ${scheduleFaSheetNames.join(", ")}`);
+  }
+  const scheduleFaSheet = sheetData(foreignAccountsSheets, "Schedule FA (Phase 1)");
+  const scheduleFaText = JSON.stringify(scheduleFaSheet);
+  if (!scheduleFaText.includes("Chase") || !scheduleFaText.includes("500000")) {
+    throw new Error(`Expected the Schedule FA sheet to include the entered account's institution and peak balance, got: ${scheduleFaText}`);
+  }
+  const exportWithoutForeignAccounts = await buildFullWorkbookExport(exportState);
+  const withoutForeignAccountsSheets = await readWorkbook(exportWithoutForeignAccounts.blob);
+  if ((withoutForeignAccountsSheets as Array<{ sheet: string }>).some((s) => s.sheet === "Schedule FA (Phase 1)")) {
+    throw new Error("A workbook with no foreign accounts entered should not have a Schedule FA sheet at all.");
+  }
+
   console.log(
-    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), multi-file sheet naming + raw reference passthrough, and the previous-workbook import round trip (orientation profile, carry-forward losses, dividends, interest, never-clobber merge, and graceful no-Orientation-sheet fallback)."
+    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), multi-file sheet naming + raw reference passthrough, the previous-workbook import round trip (orientation profile, carry-forward losses, dividends, interest, never-clobber merge, and graceful no-Orientation-sheet fallback), and the Schedule FA Phase 1 sheet (present with entered accounts, absent with none)."
   );
 }
 

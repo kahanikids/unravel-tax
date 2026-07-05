@@ -7,13 +7,15 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-05",
+    "note": "Section 64(2) is a long-standing anti-avoidance provision (not subject to yearly Budget changes) confirmed against the Income Tax Department's own explainer and secondary tax-reference summaries: a member's asset transferred/converted into HUF property without adequate consideration keeps its income taxed in the transferring member's own hands, traced through indefinitely (including income the HUF later earns by reinvesting it), never in the HUF's return. No rupee threshold or exemption applies - unlike the single-parent minor's-income clubbing, there's no partial exemption here."
   },
   "source_refs": [
     "BUILD_PLAN.md Section 15.8",
-    "SYSTEM_SPEC.md Sections 6.2, 11"
+    "SYSTEM_SPEC.md Sections 6.2, 11",
+    "https://www.incometaxindia.gov.in/w/will-any-clubbing-provision-apply-in-case-of-transfer-of-asset-to-hindu-undivided-family-huf-by-its-member-",
+    "https://callmyca.com/blog/section-64-2-of-income-tax-act-clubbing-of-income-for-hufs"
   ],
   "values": {
     "section": "64(2)",

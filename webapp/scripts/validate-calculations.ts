@@ -12,8 +12,10 @@ import {
   computeForeignRemittanceTcs,
   computeLetOutHouseProperty,
   computeNriDividendTax,
+  computeNriRepatriationCheck,
   computeNroTdsReconciliation,
   computeRegimeBreakEven,
+  summarizeForeignAccounts,
   summarizeInsurancePolicies,
   type InsurancePolicy,
   estimateAdvanceTaxInterest,
@@ -320,6 +322,30 @@ export async function main() {
     throw new Error("Senior 60-79 old-regime band should tax less than the below-60 band on the same income.");
   }
 
+  // Super senior (80+) band must actually be applied, not just seniorCitizen:
+  // the Rs 5,00,000 basic exemption (vs Rs 3,00,000 for 60-79) should make an
+  // 80+ filer's tax lower than a 60-79 filer's on the same income, and
+  // superSeniorCitizen alone (without seniorCitizen) must not trigger it.
+  const superSeniorRegime = compareRegimes(
+    { ...seniorInputs, seniorCitizen: true, superSeniorCitizen: true },
+    ruleCatalog.regimeChoice
+  );
+  // Taxable Rs 8,50,000 after the Rs 50,000 standard deduction. 80+: 20% of
+  // (8.5L-5L) = 70,000, +4% cess = 72,800.
+  if (superSeniorRegime.oldRegimeTax !== 72_800) {
+    throw new Error(`Expected Rs 72,800 old-regime tax for an 80+ filer on Rs 9L salary, got ${superSeniorRegime.oldRegimeTax}.`);
+  }
+  if (!(superSeniorRegime.oldRegimeTax < seniorRegime.oldRegimeTax)) {
+    throw new Error("Super-senior 80+ old-regime band should tax less than the 60-79 band on the same income.");
+  }
+  const superSeniorFlagIgnoredWithoutSenior = compareRegimes(
+    { ...seniorInputs, seniorCitizen: false, superSeniorCitizen: true },
+    ruleCatalog.regimeChoice
+  );
+  if (superSeniorFlagIgnoredWithoutSenior.oldRegimeTax !== nonSeniorRegime.oldRegimeTax) {
+    throw new Error("superSeniorCitizen should be ignored unless seniorCitizen is also true.");
+  }
+
   // Section 234B advance-tax interest: below the Section 208 threshold, no
   // advance tax was required at all.
   const belowThreshold = estimateAdvanceTaxInterest(
@@ -607,6 +633,56 @@ export async function main() {
     throw new Error(`Expected no recoverable NRO TDS with an unknown country, got ${unknownTdsReconciliation.totalRecoverable}.`);
   }
 
+  // NRI repatriation check: below both thresholds, no certificate required.
+  const belowRepatriationLimits = computeNriRepatriationCheck(
+    { amountUsd: 50000, amountInr: 400000 },
+    ruleCatalog.nriRepatriation
+  );
+  if (belowRepatriationLimits.overLimitUsd || belowRepatriationLimits.requiresCaCertificate) {
+    throw new Error(`Expected no limit/certificate trip below both thresholds, got ${JSON.stringify(belowRepatriationLimits)}.`);
+  }
+
+  // Past the Rs 5 lakh mark (but well under the USD 1M cap): CA certificate
+  // required, cap not breached.
+  const pastCertificateThreshold = computeNriRepatriationCheck(
+    { amountUsd: 50000, amountInr: 600000 },
+    ruleCatalog.nriRepatriation
+  );
+  if (!pastCertificateThreshold.requiresCaCertificate || pastCertificateThreshold.overLimitUsd) {
+    throw new Error(`Expected a CA-certificate requirement but no USD cap breach, got ${JSON.stringify(pastCertificateThreshold)}.`);
+  }
+  if (pastCertificateThreshold.formNames.length !== 2 || !pastCertificateThreshold.formNames[0].includes("145")) {
+    throw new Error(`Expected the renamed Form 145/146 names, got ${JSON.stringify(pastCertificateThreshold.formNames)}.`);
+  }
+
+  // Past the USD 1 million/year NRO cap.
+  const overUsdCap = computeNriRepatriationCheck({ amountUsd: 1_200_000, amountInr: 0 }, ruleCatalog.nriRepatriation);
+  if (!overUsdCap.overLimitUsd) {
+    throw new Error(`Expected the USD 1M NRO cap to be flagged as breached, got ${JSON.stringify(overUsdCap)}.`);
+  }
+
+  // Schedule FA Phase 1: totals sum across accounts, and the disclosure
+  // calendar year is the year the financial year STARTS in (FY 2025-26 -> 2025).
+  const foreignAccountsSummary = summarizeForeignAccounts(
+    [
+      { id: "a1", accountType: "depository", country: "United States", institutionName: "Chase", accountNumber: "1", openingDate: "", peakBalanceInr: 500000, closingBalanceInr: 300000, grossInterestInr: 10000 },
+      { id: "a2", accountType: "custodial", country: "United States", institutionName: "Schwab", accountNumber: "2", openingDate: "", peakBalanceInr: 200000, closingBalanceInr: 200000, grossInterestInr: 5000 }
+    ],
+    ruleCatalog.foreignInvestments
+  );
+  if (foreignAccountsSummary.totalPeakBalanceInr !== 700000) {
+    throw new Error(`Expected Rs 7,00,000 total peak balance, got ${foreignAccountsSummary.totalPeakBalanceInr}.`);
+  }
+  if (foreignAccountsSummary.totalClosingBalanceInr !== 500000) {
+    throw new Error(`Expected Rs 5,00,000 total closing balance, got ${foreignAccountsSummary.totalClosingBalanceInr}.`);
+  }
+  if (foreignAccountsSummary.totalGrossInterestInr !== 15000) {
+    throw new Error(`Expected Rs 15,000 total gross interest, got ${foreignAccountsSummary.totalGrossInterestInr}.`);
+  }
+  if (foreignAccountsSummary.disclosureCalendarYear !== 2025) {
+    throw new Error(`Expected disclosure calendar year 2025 for FY 2025-26, got ${foreignAccountsSummary.disclosureCalendarYear}.`);
+  }
+
   // Regime comparison excludes NRI dividends from slab income entirely: a Rs
   // 12L salary plus Rs 1L dividends should tax exactly the same as the known
   // Rs 12L-salary-only case (new regime zero, old regime Rs 1,63,800) once
@@ -866,7 +942,7 @@ export async function main() {
   }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, insurance-policy Section 10(10D) exemption matches the death-benefit/exempt/aggregate-cap/ratio-test/ULIP-LT/ULIP-ST known cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 and super-senior 80+ old-regime bands, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, NRI repatriation check matches the known below-threshold/CA-certificate/USD-cap-breach cases with the renamed Form 145/146, Schedule FA Phase 1 account totals sum correctly with the disclosure calendar year derived from the financial year, insurance-policy Section 10(10D) exemption matches the death-benefit/exempt/aggregate-cap/ratio-test/ULIP-LT/ULIP-ST known cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

@@ -71,15 +71,24 @@ When you remit money overseas under the Liberalised Remittance Scheme
 
 ## What this tool does with all this
 
-The tool can't compute a Schedule FA for you — it doesn't hold your
-per-asset foreign values. What it does do when you say you hold foreign
-assets: it adds foreign-asset and Form 26AS/AIS items to your document
-checklist, forces the ITR form to **ITR-2/ITR-3** (never ITR-1), raises a
-form-changing risk flag about Schedule FA and the ₹10 lakh Black Money
-penalty, and tips the "get a CA to review" recommendation on, since
-foreign holdings, DTAA, and Form 67 are exactly where a professional
-earns their fee. The actual disclosure and foreign tax credit you do in
-the portal or with your CA.
+When you say you hold foreign assets, this tool adds foreign-asset and
+Form 26AS/AIS items to your document checklist, forces the ITR form to
+**ITR-2/ITR-3** (never ITR-1), raises a form-changing risk flag about
+Schedule FA and the ₹10 lakh Black Money penalty, and tips the "get a CA
+to review" recommendation on, since foreign holdings, DTAA, and Form 67
+are exactly where a professional earns their fee.
+
+**Phase 1 of the Schedule FA builder is live**: a foreign bank or
+brokerage account (tables A1/A2 combined) gets its own entry — country,
+institution, account number, opening date, peak balance during the
+calendar year, closing balance on 31 December, and gross interest — all
+entered by you in rupees, since this tool has no live exchange-rate
+source and doesn't attempt the SBI TT-rate conversion itself. It produces
+the disclosure **rows** for your CA to place into the actual schedule; it
+does not compute Indian tax on the interest shown (that's Schedule
+FSI/OS, still a gap) and does not cover RSUs/ESPP, foreign property, or
+foreign trusts (Schedule FA tables A3, B, C — see
+`docs/DESIGN-remaining-gaps.md` for the phased plan).
 
 ## Renumbering under the new Income Tax Act, 2025
 

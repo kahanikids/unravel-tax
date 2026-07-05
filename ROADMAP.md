@@ -33,23 +33,33 @@ interest is calculated, and minor-income clubbing is calculated including the
 Section 64(1A) exclusions (minor's own work/skill, 80U disability).
 
 Built today: NRI dividend tax at the flat Section 115A/DTAA rate (whichever
-is lower), and NRO interest/dividend TDS reconciliation against the
-treaty withholding rate for 16 countries.
+is lower), NRO interest/dividend TDS reconciliation against the treaty
+withholding rate for 16 countries, and an NRO repatriation planning check
+(USD 1 million annual cap, Rs 5 lakh CA-certificate threshold, the renamed
+Form 145/146 - a banking/FEMA compliance signal, not a tax figure).
+
+Built today: HUF Section 64(2) transfer clubbing - a member/coparcener list
+for the CA's reference (feeds no calculation) and an asset-transfer list
+that flags when a transfer without adequate consideration clubs that
+asset's income to the transferring member's own return, not the HUF's.
+
+Built today: the old-regime super-senior (80+) slab, selected via a
+follow-up question once "60 or older?" is Yes, instead of always applying
+the 60-79 band.
 
 Still pending:
 
 - NRO interest taxed precisely at slab rate (currently ordinary slab
   treatment plus TDS reconciliation, without the same flat-rate precision
   dividends now have)
-- NRI repatriation tracking
-- HUF coparcener/member data model
-- HUF Section 64(2) transfer clubbing
-- HUF partition tracking
+- HUF partition tracking - proposed to stay out of scope for calculation
+  entirely, since a private partial partition is tax-invisible under
+  Section 171(9) and this tool can't verify an Assessing Officer's
+  total-partition order
 - Schedule SPI placement
 
-The HUF items and NRI repatriation tracking have design proposals in
-[docs/DESIGN-remaining-gaps.md](docs/DESIGN-remaining-gaps.md) awaiting
-sign-off before implementation.
+See [docs/DESIGN-remaining-gaps.md](docs/DESIGN-remaining-gaps.md) for the
+HUF partition reasoning and the repatriation-check build note.
 
 ### Prior-year carry-forward
 
@@ -75,14 +85,23 @@ Built today: policy-level taxable insurance payout computation, including
 the sum-assured-ratio test and the aggregate-annual-premium cap pooled
 across all policies of the same type.
 
+Built today: Schedule FA Phase 1 - a foreign bank or brokerage account
+(country, institution, account number, opening date, peak/closing
+balance, gross interest) produces the schedule's A1/A2 disclosure rows as
+a workbook sheet. Disclosure only - no Indian tax computed on the
+interest shown, and amounts are entered already converted to rupees by
+the user (this tool has no live exchange-rate source).
+
 Still pending:
 
 - Combining ULIP long-term capital gains with other equity long-term gains
   under one exemption threshold, rather than treating them separately
-- Schedule FA builder and foreign income computation
+- Schedule FA Phases 2-3 (RSU/ESPP and foreign equity/debt, then trusts
+  and other assets) and the foreign-income tax computation itself
+  (Schedule FSI/OS)
 - Form 67 foreign-tax-credit inputs
 
-Schedule FA has a design proposal in
+The remaining Schedule FA phases have a design proposal in
 [docs/DESIGN-remaining-gaps.md](docs/DESIGN-remaining-gaps.md) awaiting
 sign-off before implementation.
 

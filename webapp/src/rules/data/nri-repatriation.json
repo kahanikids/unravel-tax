@@ -7,12 +7,15 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-05",
+    "note": "The USD 1 million/year NRO repatriation cap (RBI 2012 notice, no cap on NRE), the Rs 5 lakh threshold above which a CA certificate is required, and the Form 15CA/15CB -> Form 145/146 renaming under the Income Tax Act 2025 (effective 1 April 2026) were checked against secondary tax-reference summaries, not the RBI/CBDT primary text directly - re-verify against incometaxindia.gov.in's own Form 145 FAQ or an RBI FEMA master direction before treating the exact rupee threshold as final."
   },
   "source_refs": [
-    "SYSTEM_SPEC.md Sections 9.5, 8"
+    "SYSTEM_SPEC.md Sections 9.5, 8",
+    "https://www.getpanda.money/blogs/nro-account-repatriation-usd-1-million-limit/",
+    "https://www.incometaxindia.gov.in/documents/d/guest/form-145-faqs",
+    "https://cleartax.in/s/form-145-income-tax"
   ],
   "values": {
     "nro_annual_limit_usd": 1000000,
