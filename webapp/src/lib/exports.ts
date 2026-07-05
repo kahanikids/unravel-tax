@@ -4,6 +4,7 @@ import type { CaSummaryRow } from "./calculations";
 import type { NormalizedTransaction } from "../ingest";
 import type { CapitalGainsEquityRule } from "../rules";
 import type { OrientationAnswers } from "../state/types";
+import type { ForeignEquityHolding } from "./foreignEquity";
 import type { ForeignAccount } from "./scheduleFa";
 import {
   buildBrokerSheet,
@@ -34,7 +35,9 @@ export type ExportState = {
   orientation?: OrientationAnswers;
   /** Optional: Schedule FA Phase 1 disclosure rows, written as their own sheet when there's at least one foreign account entered. */
   foreignAccounts?: ForeignAccount[];
-  /** Calendar year the Schedule FA disclosure sheet's title should show - required alongside foreignAccounts. */
+  /** Optional: Schedule FA Phase 2 foreign equity/debt (incl. RSU/ESPP) holdings, appended to the same sheet. */
+  foreignEquityHoldings?: ForeignEquityHolding[];
+  /** Calendar year the Schedule FA disclosure sheet's title should show - required alongside foreignAccounts/foreignEquityHoldings. */
   scheduleFaCalendarYear?: number;
 };
 
@@ -178,11 +181,16 @@ export async function buildFullWorkbookExport(state: ExportState): Promise<Expor
           }
         ]
       : []),
-    ...(state.foreignAccounts && state.foreignAccounts.length > 0
+    ...((state.foreignAccounts && state.foreignAccounts.length > 0) ||
+    (state.foreignEquityHoldings && state.foreignEquityHoldings.length > 0)
       ? [
           {
             sheet: SCHEDULE_FA_SHEET_NAME,
-            data: buildScheduleFaSheet(state.foreignAccounts, state.scheduleFaCalendarYear ?? new Date().getFullYear()),
+            data: buildScheduleFaSheet(
+              state.foreignAccounts ?? [],
+              state.scheduleFaCalendarYear ?? new Date().getFullYear(),
+              state.foreignEquityHoldings ?? []
+            ),
             columns: [{ width: 22 }, { width: 20 }, { width: 24 }, { width: 20 }, { width: 18 }, { width: 22 }, { width: 22 }]
           }
         ]

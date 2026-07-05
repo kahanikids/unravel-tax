@@ -88,20 +88,29 @@ across all policies of the same type.
 Built today: Schedule FA Phase 1 - a foreign bank or brokerage account
 (country, institution, account number, opening date, peak/closing
 balance, gross interest) produces the schedule's A1/A2 disclosure rows as
-a workbook sheet. Disclosure only - no Indian tax computed on the
-interest shown, and amounts are entered already converted to rupees by
-the user (this tool has no live exchange-rate source).
+a workbook sheet, and folds the interest into slab income automatically.
+Amounts are entered already converted to rupees by the user (this tool
+has no live exchange-rate source).
+
+Built today: Schedule FA Phase 2 - a foreign share or vested RSU/ESPP
+holding (table A3) computes real Indian tax on a sale: unlisted-share
+rates (24-month threshold, flat 12.5%, no indexation) for long-term,
+folded automatically into slab income for short-term. The RSU/ESPP
+vesting perquisite (Section 17(2)(vi)) folds into the salary bucket
+specifically, since it's standard-deduction-eligible unlike other income.
+A Section 90/91 foreign tax credit estimate is computed too - exact for
+long-term gains, Rule 128's average-rate method for everything else - as
+a planning estimate, not a per-country Form 67 figure.
 
 Still pending:
 
 - Combining ULIP long-term capital gains with other equity long-term gains
   under one exemption threshold, rather than treating them separately
-- Schedule FA Phases 2-3 (RSU/ESPP and foreign equity/debt, then trusts
-  and other assets) and the foreign-income tax computation itself
-  (Schedule FSI/OS)
-- Form 67 foreign-tax-credit inputs
+- Schedule FA Phase 3 (foreign trusts and other assets)
+- Precise, per-country Section 90/91 foreign tax credit computation for
+  actual Form 67/Schedule FSI/TR filing
 
-The remaining Schedule FA phases have a design proposal in
+Schedule FA Phase 3 has a design proposal in
 [docs/DESIGN-remaining-gaps.md](docs/DESIGN-remaining-gaps.md) awaiting
 sign-off before implementation.
 

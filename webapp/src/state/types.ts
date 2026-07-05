@@ -169,6 +169,8 @@ export type SupplementalFigures = {
   foreignRemittanceLrs: number;
   /** What the LRS money was for - picks the TCS rate branch (20% investment/gift, 2% education/medical, nil when funded by an education loan). */
   foreignRemittancePurpose: RemittancePurpose;
+  /** Resident only. Foreign tax paid/withheld on foreign dividends, interest, short-term foreign-share gains, and RSU/ESPP perquisite value combined - for the Section 90/91 average-rate foreign tax credit estimate. Long-term foreign-share gains have their own per-holding field instead (a flat, exact rate). */
+  foreignTaxPaidOnOtherIncomeInr: number;
 };
 
 /** The SupplementalFigures keys holding plain rupee amounts - everything except the purpose choice. Generic number-input loops iterate these. */
@@ -211,7 +213,8 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   homeLoanInterestLetOut: 0,
   insuranceAnnualPremium: 0,
   foreignRemittanceLrs: 0,
-  foreignRemittancePurpose: "investment_gift_other"
+  foreignRemittancePurpose: "investment_gift_other",
+  foreignTaxPaidOnOtherIncomeInr: 0
 };
 
 /**

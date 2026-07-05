@@ -12,15 +12,19 @@
   "assessment_year": "2026-27",
   "verification": {
     "status": "verified_secondary_source",
-    "last_verified": "2026-07-03",
-    "note": "For a Resident and Ordinarily Resident, foreign investments create obligations that a purely domestic portfolio does not. (1) Disclosure: every foreign asset held at ANY point during the calendar year ending 31-Dec-2025 must be reported in Schedule FA of ITR-2 or ITR-3 - foreign stocks, RSUs, ESPP, ETFs, foreign bank/brokerage/custodial accounts, foreign life-insurance with cash value, foreign property, even a dormant account. There is no minimum value threshold for the disclosure itself, and ITR-1/ITR-4 cannot be used. Note Schedule FA uses the calendar year (Jan-Dec), unlike capital gains which use the financial year (Apr-Mar); convert using the SBI TT buying rate. (2) Income: foreign dividends and interest are taxable in India at slab rate under income from other sources; capital gains on foreign shares go in Schedule CG (foreign shares are unlisted-in-India, so 24 months is the long-term threshold at 12.5%); RSU/ESPP vesting is a salary perquisite. (3) Foreign tax credit: tax paid abroad can be credited under Section 90/91 by filing Form 67 (before the return) plus Schedule FSI and Schedule TR. (4) TCS on remittances: from 1-Apr-2025 (Finance Act 2025) the Section 206C(1G) LRS threshold rose from Rs 7 lakh to Rs 10 lakh, TCS is 20% on most investment/gift remittances above Rs 10 lakh, education-loan-funded remittances are fully exempt, and TCS is a prepaid credit recoverable in the ITR, not a cost. (5) Penalties: non-disclosure or inaccurate disclosure of a foreign asset carries a flat Rs 10 lakh penalty per year under Section 43 of the Black Money Act (with a carve-out from 1-Oct-2024 where aggregate undisclosed movable foreign assets are Rs 20 lakh or less - the penalty is waived but the duty to disclose is not), plus 30% tax and up to 3x penalty and prosecution in serious cases. Cross-checked against incometax.gov.in Schedule FA guide, taxguru.in, vested.blog, and Finance Act 2025 summaries; confirm against incometax.gov.in before relying on this as filing advice.",
+    "last_verified": "2026-07-05",
+    "note": "For a Resident and Ordinarily Resident, foreign investments create obligations that a purely domestic portfolio does not. (1) Disclosure: every foreign asset held at ANY point during the calendar year ending 31-Dec-2025 must be reported in Schedule FA of ITR-2 or ITR-3 - foreign stocks, RSUs, ESPP, ETFs, foreign bank/brokerage/custodial accounts, foreign life-insurance with cash value, foreign property, even a dormant account. There is no minimum value threshold for the disclosure itself, and ITR-1/ITR-4 cannot be used. Note Schedule FA uses the calendar year (Jan-Dec), unlike capital gains which use the financial year (Apr-Mar); convert using the SBI TT buying rate. (2) Income: foreign dividends and interest are taxable in India at slab rate under income from other sources; capital gains on foreign shares go in Schedule CG, taxed like unlisted Indian shares - 24 months is the long-term threshold, at a flat 12.5% with no indexation (Budget 2024, effective for transfers on or after 23-Jul-2024), short-term at slab rate; RSU/ESPP vesting is a salary perquisite under Section 17(2)(vi) at the FMV on the vesting date, which then becomes the cost basis for a later sale (holding period from the vesting date, not the grant date). (3) Foreign tax credit: tax paid abroad can be credited under Section 90/91 (Rule 128) by filing Form 67 (before the return) plus Schedule FSI and Schedule TR, capped at the lower of the foreign tax paid and the Indian tax on that same income, computed separately per country and income source. (4) TCS on remittances: from 1-Apr-2025 (Finance Act 2025) the Section 206C(1G) LRS threshold rose from Rs 7 lakh to Rs 10 lakh, TCS is 20% on most investment/gift remittances above Rs 10 lakh, education-loan-funded remittances are fully exempt, and TCS is a prepaid credit recoverable in the ITR, not a cost. (5) Penalties: non-disclosure or inaccurate disclosure of a foreign asset carries a flat Rs 10 lakh penalty per year under Section 43 of the Black Money Act (with a carve-out from 1-Oct-2024 where aggregate undisclosed movable foreign assets are Rs 20 lakh or less - the penalty is waived but the duty to disclose is not), plus 30% tax and up to 3x penalty and prosecution in serious cases. Cross-checked against incometax.gov.in Schedule FA guide, taxguru.in, vested.blog, Finance Act 2025 summaries, the Budget 2024 unlisted-share capital gains change, and secondary RSU/ESPP taxation guides; confirm against incometax.gov.in before relying on this as filing advice.",
     "source_type": "secondary"
   },
   "source_refs": [
     "Black Money (Undisclosed Foreign Income and Assets) and Imposition of Tax Act, 2015, Sections 41, 42, 43",
-    "Income Tax Act, 1961, Sections 90, 91, 206C(1G), Rule 128 (Form 67)",
+    "Income Tax Act, 1961, Sections 17(2)(vi), 90, 91, 206C(1G), Rule 128 (Form 67)",
     "https://www.incometax.gov.in/iec/foportal/sites/default/files/2026-03/Step%20by%20Step%20Guide%20FA%20FSI.pdf",
-    "https://taxguru.in/income-tax/foreign-assets-rsus-foreign-bank-accounts-itr-schedule-fa-reporting-notices-penalty.html"
+    "https://taxguru.in/income-tax/foreign-assets-rsus-foreign-bank-accounts-itr-schedule-fa-reporting-notices-penalty.html",
+    "https://www.bajajfinserv.in/investments/understanding-long-term-capital-gains-tax",
+    "https://www.reymanwealth.com/post/taxing-foreign-equity-in-india-rsus-espps-overseas-stocks",
+    "https://incometaxindia.gov.in/Rules/Income-Tax%20Rules/rule128.htm",
+    "https://cleartax.in/s/form-67-claim-foreign-tax-credit"
   ],
   "values": {
     "schedule_fa_disclosure": {
@@ -42,13 +46,33 @@
     },
     "income_taxation": {
       "foreign_dividends_and_interest": "Taxable in India at slab rate under income from other sources.",
-      "capital_gains_on_foreign_shares": "Reported in Schedule CG. Foreign shares are treated like unlisted shares: long-term after 24 months at 12.5%, otherwise short-term at slab rate.",
-      "rsu_espp_vesting": "Value at vesting is a salary perquisite taxed at slab rate; a later sale is a capital gain."
+      "capital_gains_on_foreign_shares": {
+        "treated_as": "unlisted_shares",
+        "long_term_holding_period_days_gt": 730,
+        "ltcg_rate": 0.125,
+        "stcg_treatment": "slab_rate",
+        "indexation_allowed": false,
+        "effective_for_transfers_on_or_after": "2024-07-23",
+        "note": "Foreign shares are treated like unlisted Indian shares for capital gains, not like listed Indian equity: long-term after 24 months at a flat 12.5% with no indexation (Budget 2024, effective for transfers on or after 23-Jul-2024); short-term (24 months or less) is taxed at your slab rate, not a flat rate."
+      },
+      "rsu_espp_vesting": {
+        "perquisite_section": "17(2)(vi)",
+        "perquisite_value_basis": "fmv_at_vesting_minus_exercise_price",
+        "cost_basis_for_later_sale": "fmv_at_vesting",
+        "holding_period_starts_from": "vesting_date",
+        "currency_conversion": "SBI telegraphic transfer buying rate (TTBR) as on the vesting date",
+        "note": "The FMV of the shares on the vesting date (converted to rupees at the SBI TT buying rate as on that date) is a salary perquisite taxed at slab rate in the vesting year. That same FMV becomes the cost basis for a later sale, and the holding period for that sale's long/short-term classification starts from the vesting date, not the grant date. An ESPP discount is taxed the same way at purchase."
+      }
     },
     "foreign_tax_credit": {
       "sections": ["90", "91"],
+      "rule": "128",
       "forms_required": ["Form 67", "Schedule FSI", "Schedule TR"],
-      "note": "Tax paid abroad on foreign income can be credited against Indian tax on the same income. Form 67 must be filed on the e-filing portal on or before filing the return."
+      "computation_method": "lower_of_foreign_tax_paid_and_indian_tax_on_same_income",
+      "computed_separately_per": "country_and_income_source",
+      "currency_conversion": "SBI TT buying rate as on the last day of the month before the foreign tax was paid or deducted",
+      "cannot_credit_against": ["interest", "fees", "penalties"],
+      "note": "Tax paid abroad on foreign income can be credited against Indian tax on that SAME income, capped at whichever of the two is lower - never more than the foreign tax actually paid, and never more than the Indian tax the income would attract. Computed separately per country and per income source, then added together for Schedule TR. Form 67 must be filed on the e-filing portal on or before filing the return."
     },
     "tcs_on_lrs_remittances": {
       "section": "206C(1G)",

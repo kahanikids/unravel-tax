@@ -7,6 +7,8 @@ export * from "./nriTax";
 export * from "./nriRepatriation";
 export * from "./hufClubbing";
 export * from "./scheduleFa";
+export * from "./foreignEquity";
+export * from "./foreignTaxCredit";
 export * from "./insurance";
 export * from "./foreignInvestments";
 export * from "./exports";

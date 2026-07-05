@@ -165,7 +165,7 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
     );
     add(
       "Foreign tax paid proof (for Form 67 / foreign tax credit)",
-      "If tax was withheld abroad on foreign dividends or gains, you claim credit under the DTAA by filing Form 67 before your return.",
+      "If tax was withheld abroad on foreign dividends or gains, enter it in the \"Foreign shares, RSU & ESPP\" section for a credit estimate, then claim the real credit under Section 90/91 by filing Form 67 before your return.",
       "Needed"
     );
   }
@@ -299,9 +299,9 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   if (flags.hasForeignAssets) {
     caveats.push({
       id: "foreign_assets_scope",
-      label: "Foreign accounts: disclosure rows built; foreign income tax isn't",
+      label: "Foreign accounts/shares: disclosure and tax are calculated; some gaps remain",
       note:
-        "As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. The \"Foreign accounts: Schedule FA rows\" section produces the disclosure rows for a foreign bank or brokerage account (Phase 1 - RSUs, foreign property, and trusts aren't covered yet). Foreign dividends and interest are taxable at slab rate, gains on foreign shares are unlisted-share gains (long-term after 24 months at 12.5%), and foreign tax paid is credited via Form 67 - none of that tax computation is done here. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA."
+        "As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. \"Foreign accounts: Schedule FA rows\" produces disclosure rows for a foreign bank/brokerage account (Phase 1) and folds the interest into your slab income; \"Foreign shares, RSU & ESPP\" computes actual tax on a sale (unlisted-share rates: long-term after 24 months at 12.5%, short-term at slab) plus a Section 90/91 foreign tax credit estimate. Foreign property, trusts, and a per-country Form 67/Schedule FSI/TR breakdown aren't built — the credit shown here is a planning estimate, not the exact filing figure. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA."
     });
   }
 

@@ -1,5 +1,6 @@
 import type { NormalizedTransaction } from "../ingest";
 import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type { ForeignEquityHolding } from "./foreignEquity";
 import type { HufAssetTransfer, HufMember } from "./hufClubbing";
 import type { InsurancePolicy } from "./insurance";
 import type { ForeignAccount } from "./scheduleFa";
@@ -53,6 +54,8 @@ export type PersistedSession = {
   hufTransfers?: HufAssetTransfer[];
   /** Schedule FA Phase 1 foreign account disclosure rows, optional for compatibility with sessions saved before it existed. */
   foreignAccounts?: ForeignAccount[];
+  /** Schedule FA Phase 2 foreign equity/debt (incl. RSU/ESPP) holdings, optional for compatibility with sessions saved before it existed. */
+  foreignEquityHoldings?: ForeignEquityHolding[];
 };
 
 const STORAGE_KEY = "unravel-tax-session";
