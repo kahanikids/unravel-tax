@@ -14,14 +14,12 @@ export const SCOPE_AND_DISCLAIMER_NOTE =
   "For FY 2025-26 (AY 2026-27) filings. Not tax advice, and not a substitute for a CA.";
 
 /** Stage-1 welcome banner (BUILD_PLAN.md §1.4): dismissible, remembered in localStorage. */
-export const WELCOME_DISCLAIMER_BANNER =
-  "This organizes your numbers. It does not replace a CA.";
+export const WELCOME_DISCLAIMER_BANNER = "This organizes your numbers. It does not replace a CA.";
 
 export const FOOTER_NOTE =
   "Open source, so fixes and suggestions are always welcome. It can get things wrong, so check the numbers before you file and let your CA take it from there. Nothing is stored anywhere; it all runs locally, in your browser.";
 
-export const REPORT_ISSUE_URL =
-  "https://github.com/kahanikids/unravel-tax/issues/new/choose";
+export const REPORT_ISSUE_URL = "https://github.com/kahanikids/unravel-tax/issues/new/choose";
 
 export const REPO_URL = "https://github.com/kahanikids/unravel-tax";
 
@@ -56,7 +54,7 @@ export const LEGAL_SECTIONS: LegalSection[] = [
       "This tool is built for Indian income tax filings for the financial year 2025-26 (assessment year 2026-27) only. Rates, thresholds, and due dates for other years are not covered.",
       "It is an independent, open-source project. It is not a government service and is not affiliated with, endorsed by, or connected to the Income Tax Department, the Central Board of Direct Taxes (CBDT), or the Ministry of Finance.",
       "It organizes and calculates from the information you provide. It does not give tax, legal, financial, or accounting advice, and it is not a substitute for a Chartered Accountant (CA) or other qualified professional. Whether a particular treatment applies to your situation is a judgement only a professional can make for you.",
-      "Everything here is provided \"as is\", without warranties of any kind, express or implied, including accuracy, completeness, or fitness for a particular purpose. To the fullest extent permitted by law, the authors and contributors accept no liability for any loss, penalty, interest, or damage arising from using, or being unable to use, this tool. You are responsible for checking every figure and confirming it on incometax.gov.in before you file."
+      'Everything here is provided "as is", without warranties of any kind, express or implied, including accuracy, completeness, or fitness for a particular purpose. To the fullest extent permitted by law, the authors and contributors accept no liability for any loss, penalty, interest, or damage arising from using, or being unable to use, this tool. You are responsible for checking every figure and confirming it on incometax.gov.in before you file.'
     ]
   },
   {
@@ -77,7 +75,7 @@ export const LEGAL_SECTIONS: LegalSection[] = [
   {
     heading: "Privacy",
     paragraphs: [
-      "Everything runs locally in your browser. There is no account, no sign-up, no server, and no analytics or tracking. Nothing you enter is uploaded to or stored by us, because there is no \"us\" server to store it on.",
+      'Everything runs locally in your browser. There is no account, no sign-up, no server, and no analytics or tracking. Nothing you enter is uploaded to or stored by us, because there is no "us" server to store it on.',
       "Your in-progress filing is saved only in this browser's local storage as a convenience so you can resume later, and, on supported browsers, optionally to a folder you choose on your own computer for backup. Both stay on your device and you can clear them at any time.",
       "The one place your data can leave your machine is the optional AI extraction step: if you paste document contents into a third-party AI chat, that text is handled by that provider under their own privacy policy and terms, not ours. If a document is sensitive, review that provider's policy first, or use a structured format (CSV/Excel) that is parsed entirely in your browser instead."
     ]
@@ -140,15 +138,17 @@ export const WHO_ITS_FOR_EXCLUDES =
  */
 export const ITR_FORM_REASONS: Record<string, string> = {
   resident_simple:
-    "Salary, interest, or dividends only, with no capital gains or business income detected, so ITR-1 (Sahaj) fits. This assumes none of the ITR-1 disqualifiers this tool can't see from your documents apply: total income above ₹50 lakh, more than one house property, any foreign income or assets, unlisted shares, being a company director, or a loss carried forward from an earlier year. If any of those apply, file ITR-2 instead.",
+    "Salary, interest, or dividends only, with no capital gains or business income detected, so ITR-1 (Sahaj) fits. This assumes none of the remaining ITR-1 disqualifiers this tool can't prove from your uploads apply: total income above ₹50 lakh, more than one house property, foreign income or assets not disclosed in About You, unlisted shares, being a company director, or a loss carried forward from an earlier year. If any of those apply, file ITR-2 instead.",
   resident_above_itr1_limit:
     "Your total income is above the ₹50 lakh ceiling for ITR-1 (Sahaj), so ITR-2 applies even though your income is only salary, interest, or dividends.",
   resident_capital_gains_or_clubbing:
     "Capital gains from your documents, or minor's-income clubbing from your profile, need this form.",
   nri_no_business: "Your NRI status routes filing through this form, even without business income.",
-  nri_with_business: "Your NRI status plus business or speculative income from your documents need this form.",
+  nri_with_business:
+    "Your NRI status plus business or speculative income from your documents need this form.",
   huf_no_business: "Filing as a HUF routes through this form, even without business income.",
-  huf_with_business: "Filing as a HUF plus business or speculative income from your documents need this form.",
+  huf_with_business:
+    "Filing as a HUF plus business or speculative income from your documents need this form.",
   business_or_speculative_non_audit:
     "Your documents show speculative or intraday income, which counts as business income under this form."
 };
@@ -157,9 +157,18 @@ export type HowToStep = { title: string; detail: string };
 
 export const HOW_IT_WORKS: HowToStep[] = [
   { title: "About You", detail: "A few quick questions, plain language, no tax jargon." },
-  { title: "Your checklist", detail: "Exactly what documents to gather, and why each one's needed." },
-  { title: "Add Documents", detail: "Add them one at a time; confirm what we read before it's used." },
-  { title: "Your results", detail: "What you owe, what's missing, and whether to self-file or get a CA." }
+  {
+    title: "Your checklist",
+    detail: "Exactly what documents to gather, and why each one's needed."
+  },
+  {
+    title: "Add Documents",
+    detail: "Add them one at a time; confirm what we read before it's used."
+  },
+  {
+    title: "Your results",
+    detail: "What you owe, what's missing, and whether to self-file or get a CA."
+  }
 ];
 
 /**
@@ -174,7 +183,11 @@ export const TOOL_TOUR_USE_CASES: string[] = [
   "Hands you two files at the end: a short summary for your CA, and a full workbook to keep."
 ];
 
-export type Capability = { label: string; status: "available" | "partial" | "planned"; detail: string };
+export type Capability = {
+  label: string;
+  status: "available" | "partial" | "planned";
+  detail: string;
+};
 
 /**
  * Full scope list for the "What can this do?" panel: a pre-commitment
@@ -189,32 +202,38 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "Plain-language profile questions",
     status: "available",
-    detail: "A few questions about residency, HUF, senior citizen, and single-parent status work out what applies to you, no tax category picking required."
+    detail:
+      "A few questions about residency, HUF, senior citizen, and single-parent status work out what applies to you, no tax category picking required."
   },
   {
     label: "Personalized document checklist",
     status: "available",
-    detail: "Exactly what to gather for your profile, with guidance on where to get the trickier ones (broker statements, Form 26AS/AIS, and more)."
+    detail:
+      "Exactly what to gather for your profile, with guidance on where to get the trickier ones (broker statements, Form 26AS/AIS, and more)."
   },
   {
     label: "CSV, Excel, and saved-webpage ingestion",
     status: "available",
-    detail: "Broker/AMC statements in these formats are read directly in your browser. Nothing is uploaded anywhere."
+    detail:
+      "Broker/AMC statements in these formats are read directly in your browser. Nothing is uploaded anywhere."
   },
   {
     label: "Guided AI extraction for PDFs and free-form text",
     status: "available",
-    detail: "A copy-paste prompt for your own AI chat turns a messy PDF into a table you paste back in. The AI only reads documents; it never does the tax maths."
+    detail:
+      "A copy-paste prompt for your own AI chat turns a messy PDF into a table you paste back in. The AI only reads documents; it never does the tax maths."
   },
   {
     label: "Capital gains, dividends, and interest calculations",
     status: "available",
-    detail: "STCG/LTCG/intraday classification and Section 50AA debt mutual fund handling, computed from versioned rule files, not guessed."
+    detail:
+      "STCG/LTCG/intraday classification and Section 50AA debt mutual fund handling, computed from versioned rule files, not guessed."
   },
   {
     label: "Risk-trigger flags",
     status: "available",
-    detail: "Multiple employers, HRA without a landlord PAN, early EPF withdrawal, late filing, and more, flagged with their real consequence before you see any totals."
+    detail:
+      "Multiple employers, HRA without a landlord PAN, early EPF withdrawal, late filing, and more, flagged with their real consequence before you see any totals."
   },
   {
     label: "ITR form and CA-vs-self-file recommendation",
@@ -224,77 +243,92 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "CA Summary and full workbook exports",
     status: "available",
-    detail: "One file to hand your CA, one detailed workbook to keep for your own records and next year's carry-forward figures."
+    detail:
+      "One file to hand your CA, one detailed workbook to keep for your own records and next year's carry-forward figures."
   },
   {
     label: "Everything stays on your device",
     status: "available",
-    detail: "No account, no server. Your in-progress answers autosave in this browser only, and Chromium browsers can save straight to a folder you choose."
+    detail:
+      "No account, no server. Your in-progress answers autosave in this browser only, and Chromium browsers can save straight to a folder you choose."
   },
   {
     label: "Free, hosted, no install",
     status: "available",
-    detail: "Open the webapp link and start. Running it locally is still available for contributors who prefer that."
+    detail:
+      "Open the webapp link and start. Running it locally is still available for contributors who prefer that."
   },
   {
-    label: "Plain-language \"why this number?\" drilldown",
+    label: 'Plain-language "why this number?" drilldown',
     status: "available",
-    detail: "Every results row, plus the ITR form and CA/self-file call, has a short explanation of the rule or profile detail behind it."
+    detail:
+      "Every results row, plus the ITR form and CA/self-file call, has a short explanation of the rule or profile detail behind it."
   },
   {
     label: "AIS / Form 26AS / Form 16 reconciliation",
     status: "available",
-    detail: "Type in what those documents show for dividends, interest, and TDS per source, and any mismatch against your calculated figures is flagged right away."
+    detail:
+      "Type in what those documents show for dividends, interest, and TDS per source, and any mismatch against your calculated figures is flagged right away."
   },
   {
     label: "A final pre-export confidence check",
     status: "available",
-    detail: "A single \"here's what's missing, what might change your numbers, and what's safe to ignore\" summary sits right above the export buttons."
+    detail:
+      "A single \"here's what's missing, what might change your numbers, and what's safe to ignore\" summary sits right above the export buttons."
   },
   {
     label: "Editable extraction review",
     status: "available",
-    detail: "Fix a scrip name, date, or value right in the review table before it's added, or remove a single bad row, instead of discarding the whole document."
+    detail:
+      "Fix a scrip name, date, or value right in the review table before it's added, or remove a single bad row, instead of discarding the whole document."
   },
   {
     label: "Old vs new tax regime comparison",
     status: "available",
-    detail: "Enter your salary and old-regime deductions to see an estimate of which regime costs less, on the slab-taxed part of your income, including the 80+ super senior slab. Doesn't include surcharge yet."
+    detail:
+      "Enter your salary and old-regime deductions to see an estimate of which regime costs less, on the slab-taxed part of your income, including the 80+ super senior slab. Doesn't include surcharge yet."
   },
   {
     label: "Year-over-year tax dashboard",
     status: "available",
-    detail: "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
+    detail:
+      "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
   },
   {
     label: "Section 234B and 234C advance-tax interest estimator",
     status: "available",
-    detail: "Enter total tax liability, tax already paid, and what you paid in each instalment window to estimate Section 234B interest and instalment-by-instalment Section 234C interest (with the 12%/36% safe harbours). The 234C figure is a whole-year ceiling: gains or dividends that arrived mid-year make the true figure lower, and the tool says so next to the number."
+    detail:
+      "Enter total tax liability, tax already paid, and what you paid in each instalment window to estimate Section 234B interest and instalment-by-instalment Section 234C interest (with the 12%/36% safe harbours). The 234C figure is a whole-year ceiling: gains or dividends that arrived mid-year make the true figure lower, and the tool says so next to the number."
   },
   {
     label: "Carrying forward last year's filing",
     status: "available",
-    detail: "On the welcome screen, \"Import Last Year's Workbook\" reads a previously exported Unravel Tax workbook (.xlsx) and prefills this year's profile answers plus dividends, interest, and carry-forward-loss figures - never overwriting anything you've already typed. A workbook exported before this existed has no profile to prefill, but its figures still import."
+    detail:
+      "On the welcome screen, \"Import Last Year's Workbook\" reads a previously exported Unravel Tax workbook (.xlsx) and prefills this year's profile answers plus dividends, interest, and carry-forward-loss figures - never overwriting anything you've already typed. A workbook exported before this existed has no profile to prefill, but its figures still import."
   },
   {
     label: "NRI, HUF, and single-parent coverage",
     status: "partial",
-    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, an NRO interest/dividend TDS-vs-treaty-rate reconciliation, an NRO repatriation planning check (USD 1M cap, ₹5 lakh CA-certificate threshold, the renamed Form 145/146), and HUF Section 64(2) transfer clubbing (a member/coparcener list for the CA's reference, plus a note when a transfer without adequate consideration clubs income to the transferring member's own return) are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and HUF partition and Schedule SPI placement still need a CA."
+    detail:
+      "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, an NRO interest/dividend TDS-vs-treaty-rate reconciliation, an NRO repatriation planning check (USD 1M cap, ₹5 lakh CA-certificate threshold, the renamed Form 145/146), and HUF Section 64(2) transfer clubbing (a member/coparcener list for the CA's reference, plus a note when a transfer without adequate consideration clubs income to the transferring member's own return) are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and HUF partition and Schedule SPI placement still need a CA."
   },
   {
     label: "Insurance payout and foreign-asset planning checks",
     status: "partial",
-    detail: "The dashboard's aggregate-premium check is a quick planning signal. For a precise answer, the Results page's per-policy insurance section takes each policy's issue date, sum assured, premium history, and this year's payout, checks both the sum-assured-ratio and aggregate-premium tests, and computes the actual taxable amount - capital gains for a taxable ULIP (folded into the CA Summary), income from other sources for a taxable traditional policy (folded into the regime comparison's other income). It doesn't yet combine a taxable ULIP's gain with your other equity LTCG under the one shared annual exemption - that's flagged, not silently assumed. Foreign-asset checks (LRS TCS by remittance purpose) remain a disclosure reminder, and Phase 1 of the Schedule FA builder produces disclosure rows for a foreign bank/brokerage account (country, institution, peak/closing balance, gross interest - a workbook sheet for your CA). RSUs, foreign property, trusts, and the foreign-income tax computation (Schedule FSI/OS) and Form 67 figures aren't built."
+    detail:
+      "The dashboard's aggregate-premium check is a quick planning signal. For a precise answer, the Results page's per-policy insurance section takes each policy's issue date, sum assured, premium history, and this year's payout, checks both the sum-assured-ratio and aggregate-premium tests, and computes the actual taxable amount - capital gains for a taxable ULIP (folded into the CA Summary), income from other sources for a taxable traditional policy (folded into the regime comparison's other income). It doesn't yet combine a taxable ULIP's gain with your other equity LTCG under the one shared annual exemption - that's flagged, not silently assumed. Foreign-asset checks (LRS TCS by remittance purpose) remain a disclosure reminder, and Phase 1 of the Schedule FA builder produces disclosure rows for a foreign bank/brokerage account (country, institution, peak/closing balance, gross interest - a workbook sheet for your CA). RSUs, foreign property, trusts, and the foreign-income tax computation (Schedule FSI/OS) and Form 67 figures aren't built."
   },
   {
     label: "Loans, home-loan principal, and a rented-out home",
     status: "available",
-    detail: "Capped old-regime interest deductions for self-occupied home, 80EEA, 80E, and 80EEB loans; home-loan principal counted inside the shared 80C ceiling; and the full let-out house-property computation (30% standard deduction, uncapped interest, the ₹2 lakh loss set-off cap old regime, no set-off new regime), all folded into the regime comparison and the CA Summary. Business-use vehicle interest and multiple let-out properties are not modelled."
+    detail:
+      "Capped old-regime interest deductions for self-occupied home, 80EEA, 80E, and 80EEB loans; home-loan principal counted inside the shared 80C ceiling; and the full let-out house-property computation (30% standard deduction, uncapped interest, the ₹2 lakh loss set-off cap old regime, no set-off new regime), all folded into the regime comparison and the CA Summary. Business-use vehicle interest and multiple let-out properties are not modelled."
   },
   {
     label: "HUF partition tracking, Schedule FA Phases 2-3 (RSUs, property, trusts)",
     status: "planned",
-    detail: "The remaining bigger gaps: HUF partition tracking (deliberately left uncalculated - a private partial partition is tax-invisible under Section 171(9), and this tool can't verify an Assessing Officer's total-partition order, so it's checklist-only), and the rest of the Schedule FA builder beyond Phase 1's foreign bank/brokerage accounts - RSU/ESPP holdings (A3), foreign property, foreign trusts, and the foreign-income tax computation (Schedule FSI/OS) itself. Bring these to a CA for now."
+    detail:
+      "The remaining bigger gaps: HUF partition tracking (deliberately left uncalculated - a private partial partition is tax-invisible under Section 171(9), and this tool can't verify an Assessing Officer's total-partition order, so it's checklist-only), and the rest of the Schedule FA builder beyond Phase 1's foreign bank/brokerage accounts - RSU/ESPP holdings (A3), foreign property, foreign trusts, and the foreign-income tax computation (Schedule FSI/OS) itself. Bring these to a CA for now."
   }
 ];
 
@@ -312,68 +346,149 @@ export type DocumentSourceGuide = { summary: string; sources: DocumentSource[] }
  */
 export const DOCUMENT_SOURCE_GUIDE: Record<string, DocumentSourceGuide> = {
   "Broker/AMC capital gains statement": {
-    summary: "Every broker and mutual fund registrar calls this something slightly different. Look for \"Tax P&L\" or \"Capital Gains Statement\", not your regular trade/contract note.",
+    summary:
+      'Every broker and mutual fund registrar calls this something slightly different. Look for "Tax P&L" or "Capital Gains Statement", not your regular trade/contract note.',
     sources: [
-      { name: "Zerodha", steps: "console.zerodha.com -> Reports -> Tax P&L -> pick the financial year -> download." },
-      { name: "Groww", steps: "App/web -> Reports -> Tax P&L Statement -> select financial year -> download." },
-      { name: "Upstox", steps: "Upstox Pro web -> Reports -> Tax P&L Report -> select financial year -> download." },
-      { name: "ICICI Direct / HDFC Securities / Kotak Securities", steps: "Look under Portfolio or Reports for \"Capital Gains Statement\". Most full-service brokers name it exactly that." },
-      { name: "Mutual funds (any AMC)", steps: "CAMS (camsonline.com) or KFintech (mfsonline.kfintech.com) -> Statements -> Capital Gain Statement -> enter your PAN and registered email, a link is emailed to you. This covers funds across AMCs registered with that one registrar, so you may need both CAMS and KFintech." }
+      {
+        name: "Zerodha",
+        steps: "console.zerodha.com -> Reports -> Tax P&L -> pick the financial year -> download."
+      },
+      {
+        name: "Groww",
+        steps: "App/web -> Reports -> Tax P&L Statement -> select financial year -> download."
+      },
+      {
+        name: "Upstox",
+        steps: "Upstox Pro web -> Reports -> Tax P&L Report -> select financial year -> download."
+      },
+      {
+        name: "ICICI Direct / HDFC Securities / Kotak Securities",
+        steps:
+          'Look under Portfolio or Reports for "Capital Gains Statement". Most full-service brokers name it exactly that.'
+      },
+      {
+        name: "Mutual funds (any AMC)",
+        steps:
+          "CAMS (camsonline.com) or KFintech (mfsonline.kfintech.com) -> Statements -> Capital Gain Statement -> enter your PAN and registered email, a link is emailed to you. This covers funds across AMCs registered with that one registrar, so you may need both CAMS and KFintech."
+      }
     ]
   },
   "Form 26AS / Annual Information Statement (AIS)": {
     summary: "Both come from the income tax e-filing portal, not your bank or broker.",
     sources: [
-      { name: "Form 26AS", steps: "incometax.gov.in -> log in -> e-File -> Income Tax Returns -> View Form 26AS -> redirects to TRACES -> select the assessment year." },
-      { name: "AIS", steps: "incometax.gov.in -> log in -> Services -> Annual Information Statement (AIS) -> opens the AIS portal -> download the AIS or TIS PDF/JSON for the year." }
+      {
+        name: "Form 26AS",
+        steps:
+          "incometax.gov.in -> log in -> e-File -> Income Tax Returns -> View Form 26AS -> redirects to TRACES -> select the assessment year."
+      },
+      {
+        name: "AIS",
+        steps:
+          "incometax.gov.in -> log in -> Services -> Annual Information Statement (AIS) -> opens the AIS portal -> download the AIS or TIS PDF/JSON for the year."
+      }
     ]
   },
   "Dividend statement": {
     summary: "Dividends on shares and on mutual funds come from different places.",
     sources: [
-      { name: "Shares (via your demat)", steps: "Your broker's console -> Reports -> Dividend/Corporate Actions statement, or check your demat's CDSL/NSDL e-mail alerts for each payout." },
-      { name: "Mutual funds", steps: "Same CAMS/KFintech statement as capital gains covers dividend/IDCW payouts. Look for a \"Dividend/IDCW Statement\" option alongside the capital gains one." }
+      {
+        name: "Shares (via your demat)",
+        steps:
+          "Your broker's console -> Reports -> Dividend/Corporate Actions statement, or check your demat's CDSL/NSDL e-mail alerts for each payout."
+      },
+      {
+        name: "Mutual funds",
+        steps:
+          'Same CAMS/KFintech statement as capital gains covers dividend/IDCW payouts. Look for a "Dividend/IDCW Statement" option alongside the capital gains one.'
+      }
     ]
   },
   "Bank interest certificates (savings, FDs, RDs)": {
-    summary: "Every bank you hold an account with, individually. There's no single combined source.",
+    summary:
+      "Every bank you hold an account with, individually. There's no single combined source.",
     sources: [
-      { name: "Any bank (net banking)", steps: "Log in -> look for \"Interest Certificate\", \"TDS Certificate\", or \"Statement of Interest\" under Account Statements or Tax Center. Most banks let you generate this for a chosen financial year instantly." }
+      {
+        name: "Any bank (net banking)",
+        steps:
+          'Log in -> look for "Interest Certificate", "TDS Certificate", or "Statement of Interest" under Account Statements or Tax Center. Most banks let you generate this for a chosen financial year instantly.'
+      }
     ]
   },
   "Form 16 (if salaried) or pension/income summary": {
     summary: "This comes from your employer, not a government portal.",
     sources: [
-      { name: "Salaried", steps: "Ask your employer's HR/payroll system (many companies have a self-service portal that generates it directly). It's normally issued by mid-June for the prior financial year." },
-      { name: "Pensioners", steps: "Your pension-disbursing bank or authority issues an annual pension/TDS statement in a similar role. Ask their customer service if it isn't automatically emailed." }
+      {
+        name: "Salaried",
+        steps:
+          "Ask your employer's HR/payroll system (many companies have a self-service portal that generates it directly). It's normally issued by mid-June for the prior financial year."
+      },
+      {
+        name: "Pensioners",
+        steps:
+          "Your pension-disbursing bank or authority issues an annual pension/TDS statement in a similar role. Ask their customer service if it isn't automatically emailed."
+      }
     ]
   },
   "Tax Residency Certificate (TRC) and Form 10F": {
     summary: "These are two separate documents from two different places. You need both.",
     sources: [
-      { name: "TRC", steps: "Get this from the tax authority of the country you live in, proving you're a tax resident there. UAE residents apply through the UAE Federal Tax Authority (tax.gov.ae); other countries have their own equivalent. It's a certificate you request, not something India issues." },
-      { name: "Form 10F", steps: "File this yourself online on the Indian income tax portal: incometax.gov.in -> log in -> e-File -> Income Tax Forms -> File Income Tax Forms -> search \"10F\". It's a short online form where you enter your TRC details, and you download the filed copy afterwards." }
+      {
+        name: "TRC",
+        steps:
+          "Get this from the tax authority of the country you live in, proving you're a tax resident there. UAE residents apply through the UAE Federal Tax Authority (tax.gov.ae); other countries have their own equivalent. It's a certificate you request, not something India issues."
+      },
+      {
+        name: "Form 10F",
+        steps:
+          'File this yourself online on the Indian income tax portal: incometax.gov.in -> log in -> e-File -> Income Tax Forms -> File Income Tax Forms -> search "10F". It\'s a short online form where you enter your TRC details, and you download the filed copy afterwards.'
+      }
     ]
   },
   "NRE and NRO account statements, separately": {
-    summary: "From the bank(s) where you hold these accounts. Keep the NRE and the NRO statements as separate downloads. Don't merge them, because they're taxed differently.",
+    summary:
+      "From the bank(s) where you hold these accounts. Keep the NRE and the NRO statements as separate downloads. Don't merge them, because they're taxed differently.",
     sources: [
-      { name: "Net banking", steps: "Log in to each bank -> Account Statements -> generate a statement for the full financial year, once for the NRE account and once for the NRO account. Download each as its own file." },
-      { name: "Branch request", steps: "If you can't access net banking from abroad, email or call your branch and ask them to send the NRE and NRO statements for the year separately." }
+      {
+        name: "Net banking",
+        steps:
+          "Log in to each bank -> Account Statements -> generate a statement for the full financial year, once for the NRE account and once for the NRO account. Download each as its own file."
+      },
+      {
+        name: "Branch request",
+        steps:
+          "If you can't access net banking from abroad, email or call your branch and ask them to send the NRE and NRO statements for the year separately."
+      }
     ]
   },
   "Rental income details and tenant TDS certificate (Form 16A)": {
-    summary: "The rent figures come from your own records; the TDS certificate comes from your tenant.",
+    summary:
+      "The rent figures come from your own records; the TDS certificate comes from your tenant.",
     sources: [
-      { name: "Rental details", steps: "From your own lease/rent agreement and bank credits: total rent received for the year, plus any municipal tax you paid on the property." },
-      { name: "Form 16A", steps: "Ask your tenant for it. If they deducted TDS on the rent, they're required to issue you a Form 16A (they download it from the TRACES portal). You can also cross-check the amount in your own AIS/Form 26AS on incometax.gov.in." }
+      {
+        name: "Rental details",
+        steps:
+          "From your own lease/rent agreement and bank credits: total rent received for the year, plus any municipal tax you paid on the property."
+      },
+      {
+        name: "Form 16A",
+        steps:
+          "Ask your tenant for it. If they deducted TDS on the rent, they're required to issue you a Form 16A (they download it from the TRACES portal). You can also cross-check the amount in your own AIS/Form 26AS on incometax.gov.in."
+      }
     ]
   },
   "Loan interest certificate(s)": {
     summary: "From whoever gave you the loan: one certificate per loan, for the financial year.",
     sources: [
-      { name: "From your lender", steps: "Most banks and housing finance companies let you download an annual \"Interest Certificate\" (sometimes \"Provisional/Final Interest Certificate\") from their net banking or app, usually under Loans, Statements, or a Tax section. Many also email it once a year." },
-      { name: "Education / EV loans", steps: "Same idea: ask the bank or lender that issued the education or electric-vehicle loan for the yearly interest certificate if it isn't already on their portal." }
+      {
+        name: "From your lender",
+        steps:
+          'Most banks and housing finance companies let you download an annual "Interest Certificate" (sometimes "Provisional/Final Interest Certificate") from their net banking or app, usually under Loans, Statements, or a Tax section. Many also email it once a year.'
+      },
+      {
+        name: "Education / EV loans",
+        steps:
+          "Same idea: ask the bank or lender that issued the education or electric-vehicle loan for the yearly interest certificate if it isn't already on their portal."
+      }
     ]
   }
 };

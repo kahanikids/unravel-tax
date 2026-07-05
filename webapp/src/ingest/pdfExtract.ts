@@ -103,7 +103,9 @@ function pickShortLabel(value: string): string | undefined {
   if (acronym) {
     return acronym;
   }
-  const meaningful = words.find((word) => word.length > 2 && !GENERIC_METADATA_WORDS.has(word.toLowerCase()));
+  const meaningful = words.find(
+    (word) => word.length > 2 && !GENERIC_METADATA_WORDS.has(word.toLowerCase())
+  );
   return meaningful;
 }
 
@@ -126,7 +128,8 @@ function detectMergedDocumentsNote(text: string, outlineTitles: string[]): strin
   const distinctTitles = [...new Set(outlineTitles.filter(Boolean))];
 
   if (distinctTitles.length > 1) {
-    const preview = distinctTitles.slice(0, 4).join(", ") + (distinctTitles.length > 4 ? ", ..." : "");
+    const preview =
+      distinctTitles.slice(0, 4).join(", ") + (distinctTitles.length > 4 ? ", ..." : "");
     return `This PDF's bookmarks suggest it contains ${distinctTitles.length} separate documents (${preview}). If the AI extraction step misses some transactions, try splitting this into separate files first (most PDF readers have an "extract pages" option) and uploading each on its own.`;
   }
   if (pageOneMarkers.length > 1) {
@@ -201,7 +204,10 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtrac
  * context is available (e.g. under test, or an unsupported browser), since a
  * missing thumbnail should never block the actual extraction.
  */
-export async function renderPdfThumbnail(buffer: ArrayBuffer, maxWidth = 200): Promise<string | undefined> {
+export async function renderPdfThumbnail(
+  buffer: ArrayBuffer,
+  maxWidth = 200
+): Promise<string | undefined> {
   if (typeof document === "undefined") {
     return undefined;
   }
@@ -249,13 +255,19 @@ const TRANSACTION_KEYWORDS = [
   "cost of acquisition"
 ];
 
-export function diagnosePdfText(text: string, pageCount: number, mergedDocumentsNote?: string): PdfTextDiagnostic {
+export function diagnosePdfText(
+  text: string,
+  pageCount: number,
+  mergedDocumentsNote?: string
+): PdfTextDiagnostic {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const wordCount = words.length;
   const wordsPerPage = pageCount > 0 ? wordCount / pageCount : wordCount;
   const looksScanned = wordsPerPage < 20;
   const lowerText = text.toLowerCase();
-  const mentionsTransactionTerms = TRANSACTION_KEYWORDS.some((keyword) => lowerText.includes(keyword));
+  const mentionsTransactionTerms = TRANSACTION_KEYWORDS.some((keyword) =>
+    lowerText.includes(keyword)
+  );
 
   let summary: string;
   if (looksScanned) {

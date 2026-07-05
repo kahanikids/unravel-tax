@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { estimateAdvanceTaxInterest, estimateSection234cInterest, type QuarterlyCapitalGainsTax } from "../lib/advanceTax";
+import {
+  estimateAdvanceTaxInterest,
+  estimateSection234cInterest,
+  type QuarterlyCapitalGainsTax
+} from "../lib/advanceTax";
 import type { AdvanceTaxRule } from "../rules";
 import type { NumericFigureKey, SupplementalFigures } from "../state/types";
 
@@ -11,7 +15,12 @@ function formatDueDate(iso: string) {
   const date = new Date(`${iso}T00:00:00Z`);
   return Number.isNaN(date.getTime())
     ? iso
-    : date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    : date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC"
+      });
 }
 
 function todayIso() {
@@ -84,9 +93,10 @@ export function AdvanceTaxPanel({
     <section className="regime-panel">
       <h3>Advance tax: any Section 234B or 234C interest?</h3>
       <p className="step-lede">
-        Estimates interest for paying advance tax late or short: Section 234B on the year as a whole, and Section 234C
-        instalment by instalment (15% by 15 Jun, 45% by 15 Sep, 75% by 15 Dec, 100% by 15 Mar). Start from your total
-        tax liability and what's already paid through TDS or instalments.
+        Estimates interest for paying advance tax late or short: Section 234B on the year as a
+        whole, and Section 234C instalment by instalment (15% by 15 Jun, 45% by 15 Sep, 75% by 15
+        Dec, 100% by 15 Mar). Start from your total tax liability and what's already paid through
+        TDS or instalments.
       </p>
 
       <div className="supplemental-grid">
@@ -111,7 +121,11 @@ export function AdvanceTaxPanel({
         </label>
         <label className="supplemental-field">
           Estimate as of
-          <input type="date" value={asOfDate} onChange={(event) => setAsOfDate(event.target.value)} />
+          <input
+            type="date"
+            value={asOfDate}
+            onChange={(event) => setAsOfDate(event.target.value)}
+          />
         </label>
       </div>
 
@@ -122,7 +136,10 @@ export function AdvanceTaxPanel({
           </p>
           {result.interestApplies ? (
             <div className="regime-result-row">
-              <span>Estimated interest ({result.monthsElapsed} month{result.monthsElapsed === 1 ? "" : "s"})</span>
+              <span>
+                Estimated interest ({result.monthsElapsed} month
+                {result.monthsElapsed === 1 ? "" : "s"})
+              </span>
               <strong>₹{formatAmount(result.estimatedInterest)}</strong>
             </div>
           ) : null}
@@ -135,8 +152,8 @@ export function AdvanceTaxPanel({
         <>
           <h4>Section 234C: instalment-by-instalment</h4>
           <p className="step-lede">
-            Enter the advance tax you actually paid in each window (not TDS - anything left over in "tax already paid"
-            above is treated as TDS and taken off the liability first
+            Enter the advance tax you actually paid in each window (not TDS - anything left over in
+            "tax already paid" above is treated as TDS and taken off the liability first
             {result234c.tdsTreatedAsDeducted > 0
               ? `: ₹${formatAmount(result234c.tdsTreatedAsDeducted)} here`
               : ""}
@@ -144,27 +161,31 @@ export function AdvanceTaxPanel({
           </p>
           {result234c.capitalGainsTaxForYear > 0 ? (
             <p className="step-lede">
-              ₹{formatAmount(result234c.capitalGainsTaxForYear)} of that is listed-equity capital-gains tax, dated from
-              your actual transactions below - it only counts toward an instalment due after each gain was realised, not
-              spread evenly like the rest. The remaining ₹{formatAmount(result234c.ordinaryTax)} (salary, interest,
-              dividends, business, or debt-fund gains) is spread evenly across all four instalments, same as before.
+              ₹{formatAmount(result234c.capitalGainsTaxForYear)} of that is listed-equity
+              capital-gains tax, dated from your actual transactions below - it only counts toward
+              an instalment due after each gain was realised, not spread evenly like the rest. The
+              remaining ₹{formatAmount(result234c.ordinaryTax)} (salary, interest, dividends,
+              business, or debt-fund gains) is spread evenly across all four instalments, same as
+              before.
             </p>
           ) : null}
           <div className="supplemental-grid">
             {/* Slice to the four stored instalment fields: a rules file with a
                 different calendar length must not index past them. */}
-            {rule.values.section_234c.instalments.slice(0, INSTALMENT_KEYS.length).map((instalment, index) => (
-              <label key={instalment.due_date} className="supplemental-field">
-                Paid by {formatDueDate(instalment.due_date)}
-                <input
-                  type="number"
-                  min={0}
-                  value={supplementalFigures[INSTALMENT_KEYS[index]]}
-                  placeholder="₹0"
-                  onChange={(event) => changeFigure(INSTALMENT_KEYS[index], event.target.value)}
-                />
-              </label>
-            ))}
+            {rule.values.section_234c.instalments
+              .slice(0, INSTALMENT_KEYS.length)
+              .map((instalment, index) => (
+                <label key={instalment.due_date} className="supplemental-field">
+                  Paid by {formatDueDate(instalment.due_date)}
+                  <input
+                    type="number"
+                    min={0}
+                    value={supplementalFigures[INSTALMENT_KEYS[index]]}
+                    placeholder="₹0"
+                    onChange={(event) => changeFigure(INSTALMENT_KEYS[index], event.target.value)}
+                  />
+                </label>
+              ))}
           </div>
           <div className="regime-result">
             <p className="regime-verdict">
@@ -177,8 +198,9 @@ export function AdvanceTaxPanel({
                   .map((instalment) => (
                     <div className="regime-result-row" key={instalment.dueDate}>
                       <span>
-                        By {formatDueDate(instalment.dueDate)}: needed ₹{formatAmount(instalment.requiredCumulative)},
-                        paid ₹{formatAmount(instalment.paidCumulative)}
+                        By {formatDueDate(instalment.dueDate)}: needed ₹
+                        {formatAmount(instalment.requiredCumulative)}, paid ₹
+                        {formatAmount(instalment.paidCumulative)}
                         {instalment.safeHarborApplied ? " (cleared by the safe harbour)" : ""}
                       </span>
                       <strong>

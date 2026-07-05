@@ -13,7 +13,12 @@ import { HelpPanel } from "../src/components/HelpPanel";
 import { CapabilitiesPanel } from "../src/components/CapabilitiesPanel";
 import { ToolTour } from "../src/components/ToolTour";
 import { UploadStep } from "../src/components/UploadStep";
-import { BLANK_AIS_REPORTED_FIGURES, BLANK_ORIENTATION, BLANK_SUPPLEMENTAL_FIGURES, STEP_ORDER } from "../src/state/types";
+import {
+  BLANK_AIS_REPORTED_FIGURES,
+  BLANK_ORIENTATION,
+  BLANK_SUPPLEMENTAL_FIGURES,
+  STEP_ORDER
+} from "../src/state/types";
 import {
   CAPABILITIES,
   DISCLAIMER_FULL,
@@ -25,7 +30,12 @@ import {
   WHO_ITS_FOR,
   WHO_ITS_FOR_EXCLUDES
 } from "../src/lib/copy";
-import { clubbedMinorIncome, deriveProfileFlags, profileScopeCaveats, selectItrForm } from "../src/lib/profile";
+import {
+  clubbedMinorIncome,
+  deriveProfileFlags,
+  profileScopeCaveats,
+  selectItrForm
+} from "../src/lib/profile";
 import { applySummaryFiguresToSupplemental } from "../src/lib/summaryFigures";
 import type { ProfileFlags } from "../src/state/types";
 import { saveSession } from "../src/lib/persistence";
@@ -67,7 +77,12 @@ const SAMPLE_ROWS: CaSummaryRow[] = [
   { head: "Short-Term Capital Gains", ruleSection: "111A", amount: -500, notes: "" },
   { head: "Long-Term Capital Gains", ruleSection: "112A", amount: 5500, notes: "" },
   { head: "Recommended ITR form", ruleSection: "", amount: "ITR-3", notes: "" },
-  { head: "CA review recommendation", ruleSection: "", amount: "Get a CA to review this before filing", notes: "" }
+  {
+    head: "CA review recommendation",
+    ruleSection: "",
+    amount: "Get a CA to review this before filing",
+    notes: ""
+  }
 ];
 
 const SAMPLE_RECOMMENDATION: CaRecommendation = {
@@ -102,13 +117,17 @@ function checkWelcomeScreen() {
   assertIncludes(html, 'class="entry-path-cards"');
   const entryPathCardCount = html.split('class="entry-path-card"').length - 1;
   if (entryPathCardCount !== 3) {
-    throw new Error(`Expected exactly 3 entry-path cards on the welcome screen, found ${entryPathCardCount}.`);
+    throw new Error(
+      `Expected exactly 3 entry-path cards on the welcome screen, found ${entryPathCardCount}.`
+    );
   }
 
   // The standalone sample-data link is gone - it's now step 3 of the
   // "Get to know the tool" tour, so it's not a second, redundant entry point.
   if (html.includes("See with Sample Data")) {
-    throw new Error("The standalone 'See with Sample Data' link should be removed; sample data is reachable via the tour instead.");
+    throw new Error(
+      "The standalone 'See with Sample Data' link should be removed; sample data is reachable via the tour instead."
+    );
   }
   assertIncludes(html, "Unravel Tax");
   // The crisp FY-scope-and-CA line lives once, in the footer, shown on every
@@ -116,18 +135,31 @@ function checkWelcomeScreen() {
   // the rest of the legal detail live only in the linked full disclaimer
   // (LEGAL_SECTIONS), also rendered on the welcome screen, not in this line.
   assertIncludes(html, "For FY 2025-26 (AY 2026-27) filings.");
-  assertIncludes(html, "not affiliated with, endorsed by, or connected to the Income Tax Department");
+  assertIncludes(
+    html,
+    "not affiliated with, endorsed by, or connected to the Income Tax Department"
+  );
   assertIncludes(html, 'class="app-footer"');
 
-  for (const jargon of ["Milestone readiness", "Static Constraints", "Next Slices", "M4E", "Working plan"]) {
+  for (const jargon of [
+    "Milestone readiness",
+    "Static Constraints",
+    "Next Slices",
+    "M4E",
+    "Working plan"
+  ]) {
     if (html.includes(jargon)) {
-      throw new Error(`End-user welcome screen must not contain developer/milestone jargon: "${jargon}"`);
+      throw new Error(
+        `End-user welcome screen must not contain developer/milestone jargon: "${jargon}"`
+      );
     }
   }
 
   assertIncludes(html, 'aria-label="How this works');
   if (html.includes("Who it's for") || html.includes(DISCLAIMER_FULL.slice(0, 20))) {
-    throw new Error("Help panel content should be closed by default, not present in the initial render.");
+    throw new Error(
+      "Help panel content should be closed by default, not present in the initial render."
+    );
   }
 
   // "Tools Features" is a small corner trigger on the welcome
@@ -136,13 +168,17 @@ function checkWelcomeScreen() {
   assertIncludes(html, "Tools Features");
   assertIncludes(html, 'class="welcome-card-header"');
   if (html.includes("Available now") || html.includes(CAPABILITIES[0].detail.slice(0, 20))) {
-    throw new Error("Capabilities panel content should be closed by default, not present in the initial render.");
+    throw new Error(
+      "Capabilities panel content should be closed by default, not present in the initial render."
+    );
   }
 
   // The entry-path cards are icon-led now, not paragraph-heavy: one short
   // supporting line each, no separate "arrow" call-to-action line.
   if (html.includes('class="entry-path-cta"')) {
-    throw new Error("Entry-path cards should no longer have a separate CTA line; the icon+heading+one-line format replaced it.");
+    throw new Error(
+      "Entry-path cards should no longer have a separate CTA line; the icon+heading+one-line format replaced it."
+    );
   }
   assertIncludes(html, 'class="entry-path-icon"');
 
@@ -158,7 +194,9 @@ function checkWelcomeScreen() {
   // the always-available utility buttons (Help/Features/Tour/Legal) also reuse
   // side-nav-step for layout but are not steps and are fine to be clickable.
   if (html.includes('<button type="button" class="side-nav-step side-nav-step-')) {
-    throw new Error("No step should be a clickable button before the user has reached any of them.");
+    throw new Error(
+      "No step should be a clickable button before the user has reached any of them."
+    );
   }
 
   // The header logo is a non-destructive way back to welcome from anywhere.
@@ -169,10 +207,14 @@ function checkWelcomeScreen() {
   // it should be absent here - and it's confirmed present in the saved-session
   // render inside checkSideNavReflectsResumedSession().
   if (html.includes("Start Over")) {
-    throw new Error("'Start Over' should only render on the welcome screen when a saved session exists.");
+    throw new Error(
+      "'Start Over' should only render on the welcome screen when a saved session exists."
+    );
   }
 
-  console.log("Validated welcome screen: 3 entry-path cards (Checklist / Add documents / Get to know the tool), no dev/milestone jargon leaking into the UI.");
+  console.log(
+    "Validated welcome screen: 3 entry-path cards (Checklist / Add documents / Get to know the tool), no dev/milestone jargon leaking into the UI."
+  );
 }
 
 /**
@@ -194,18 +236,30 @@ function checkComputationFirstPathIsReachable() {
   const documentsIndex = STEP_ORDER.indexOf("documents");
   const orientationIndex = STEP_ORDER.indexOf("orientation");
   if (!(documentsIndex > orientationIndex)) {
-    throw new Error("STEP_ORDER must keep 'documents' after 'orientation' for the computation-first jump to leave it reachable.");
+    throw new Error(
+      "STEP_ORDER must keep 'documents' after 'orientation' for the computation-first jump to leave it reachable."
+    );
   }
 
   // deriveProfileFlags() must treat every still-null orientation answer as a
   // safe "No"/baseline default, since the computation-first path can reach
   // documents/results with orientation left exactly at BLANK_ORIENTATION.
   const flags = deriveProfileFlags(BLANK_ORIENTATION);
-  if (flags.nri || flags.huf || flags.seniorCitizen || flags.singleParent || flags.hasCapitalGains) {
-    throw new Error("Blank orientation answers must resolve to the resident/no-special-circumstances default, or the computation-first shortcut isn't safe.");
+  if (
+    flags.nri ||
+    flags.huf ||
+    flags.seniorCitizen ||
+    flags.singleParent ||
+    flags.hasCapitalGains
+  ) {
+    throw new Error(
+      "Blank orientation answers must resolve to the resident/no-special-circumstances default, or the computation-first shortcut isn't safe."
+    );
   }
 
-  console.log("Validated 'Add documents' jump: documents step stays reachable back to orientation, and blank orientation resolves to a safe default profile.");
+  console.log(
+    "Validated 'Add documents' jump: documents step stays reachable back to orientation, and blank orientation resolves to a safe default profile."
+  );
 }
 
 /**
@@ -241,7 +295,8 @@ function checkSideNavReflectsResumedSession() {
 
     // ...but orientation/documents are already clickable in the side nav,
     // since they're all <= the saved furthestStepIndex.
-    const reachableStepCount = html.split('<button type="button" class="side-nav-step side-nav-step-').length - 1;
+    const reachableStepCount =
+      html.split('<button type="button" class="side-nav-step side-nav-step-').length - 1;
     if (reachableStepCount !== 2) {
       throw new Error(
         `Expected 2 reachable side-nav steps (orientation/documents) from the saved session, found ${reachableStepCount}.`
@@ -275,7 +330,9 @@ function checkToolTour() {
     throw new Error("Every tool tour use case needs non-empty copy.");
   }
 
-  console.log("Validated tool tour: closed by default, step 1 renders use cases and step dots, reuses HOW_IT_WORKS copy.");
+  console.log(
+    "Validated tool tour: closed by default, step 1 renders use cases and step dots, reuses HOW_IT_WORKS copy."
+  );
 }
 
 function checkHelpPanel() {
@@ -286,7 +343,10 @@ function checkHelpPanel() {
   assertIncludes(html, "Report It On GitHub");
   assertIncludes(html, REPORT_ISSUE_URL);
 
-  if (HOW_IT_WORKS.length === 0 || HOW_IT_WORKS.some((step) => !step.title.trim() || !step.detail.trim())) {
+  if (
+    HOW_IT_WORKS.length === 0 ||
+    HOW_IT_WORKS.some((step) => !step.title.trim() || !step.detail.trim())
+  ) {
     throw new Error("Every How It Works step needs a non-empty title and detail.");
   }
   if (WHO_ITS_FOR.length === 0 || WHO_ITS_FOR.some((reason) => !reason.trim())) {
@@ -297,13 +357,20 @@ function checkHelpPanel() {
       throw new Error(`"Who it's for" exclusion copy should mention "${term}".`);
     }
   }
-  for (const term of ["Chartered Accountant", "browser", "not affiliated", "Income Tax Department"]) {
+  for (const term of [
+    "Chartered Accountant",
+    "browser",
+    "not affiliated",
+    "Income Tax Department"
+  ]) {
     if (!DISCLAIMER_FULL.includes(term)) {
       throw new Error(`Full disclaimer copy should mention "${term}".`);
     }
   }
 
-  console.log("Validated help panel: closed by default, How It Works/Who It's For/disclaimer copy all present.");
+  console.log(
+    "Validated help panel: closed by default, How It Works/Who It's For/disclaimer copy all present."
+  );
 }
 
 function checkCapabilitiesPanel() {
@@ -349,10 +416,14 @@ function checkOrientationForm() {
   assertIncludes(html, "Question 1 of");
   assertIncludes(html, "Are you living in India right now");
   if (html.includes("Start Over")) {
-    throw new Error("'Start Over' no longer belongs in the orientation card; it moved to the welcome resume-banner.");
+    throw new Error(
+      "'Start Over' no longer belongs in the orientation card; it moved to the welcome resume-banner."
+    );
   }
   if (html.includes(">Skip<")) {
-    throw new Error("Residency decides the whole checklist/rules branch and should not be skippable.");
+    throw new Error(
+      "Residency decides the whole checklist/rules branch and should not be skippable."
+    );
   }
 
   // Returning to "About you" with answers already saved shows a scannable
@@ -360,7 +431,12 @@ function checkOrientationForm() {
   // don't feel like they're redoing questions they already answered.
   const summaryHtml = renderToString(
     <OrientationForm
-      answers={{ ...BLANK_ORIENTATION, residency: "resident", seniorCitizen: false, incomeSources: ["salary_pension"] }}
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        seniorCitizen: false,
+        incomeSources: ["salary_pension"]
+      }}
       onChange={noop as never}
       onComplete={noop}
     />
@@ -372,12 +448,19 @@ function checkOrientationForm() {
   assertIncludes(summaryHtml, ">Continue<");
   assertIncludes(summaryHtml, ">Update Answers<");
 
-  console.log("Validated orientation flow: blank answers start the one-question flow at residency; saved answers show an editable recap first; Start over is no longer in the card.");
+  console.log(
+    "Validated orientation flow: blank answers start the one-question flow at residency; saved answers show an editable recap first; Start over is no longer in the card."
+  );
 
   // The 80+ follow-up only shows once seniorCitizen is answered Yes.
   const notSeniorHtml = renderToString(
     <OrientationForm
-      answers={{ ...BLANK_ORIENTATION, residency: "resident", seniorCitizen: false, incomeSources: ["salary_pension"] }}
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        seniorCitizen: false,
+        incomeSources: ["salary_pension"]
+      }}
       onChange={noop as never}
       onComplete={noop}
     />
@@ -387,19 +470,30 @@ function checkOrientationForm() {
   }
   const seniorHtml = renderToString(
     <OrientationForm
-      answers={{ ...BLANK_ORIENTATION, residency: "resident", seniorCitizen: true, incomeSources: ["salary_pension"] }}
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        seniorCitizen: true,
+        incomeSources: ["salary_pension"]
+      }}
       onChange={noop as never}
       onComplete={noop}
     />
   );
   assertIncludes(seniorHtml, "80 or older");
 
-  console.log("Validated super-senior follow-up: hidden unless 60+ is Yes, shown and labelled once it is.");
+  console.log(
+    "Validated super-senior follow-up: hidden unless 60+ is Yes, shown and labelled once it is."
+  );
 }
 
 function checkNriOrientationAndDtaa() {
   const nriFlowHtml = renderToString(
-    <OrientationForm answers={{ ...BLANK_ORIENTATION, residency: "nri" }} onChange={noop as never} onComplete={noop} />
+    <OrientationForm
+      answers={{ ...BLANK_ORIENTATION, residency: "nri" }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
   );
   // Saved NRI residency shows the recap first; country and days-in-India are dedicated follow-up rows.
   assertIncludes(nriFlowHtml, "Country of tax residence");
@@ -409,7 +503,11 @@ function checkNriOrientationAndDtaa() {
   }
 
   const residentHtml = renderToString(
-    <OrientationForm answers={{ ...BLANK_ORIENTATION, residency: "resident" }} onChange={noop as never} onComplete={noop} />
+    <OrientationForm
+      answers={{ ...BLANK_ORIENTATION, residency: "resident" }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
   );
   if (residentHtml.includes("Days in India this year")) {
     throw new Error("Days-in-India question should only show for the NRI profile.");
@@ -435,7 +533,9 @@ function checkNriOrientationAndDtaa() {
     throw new Error("US NRI with MF gains should surface the taxable-in-India DTAA caveat.");
   }
 
-  console.log("Validated NRI orientation branch: country-of-residence question, resident-only questions hidden, DTAA MF caveats by country.");
+  console.log(
+    "Validated NRI orientation branch: country-of-residence question, resident-only questions hidden, DTAA MF caveats by country."
+  );
 }
 
 function checkUploadStep() {
@@ -455,16 +555,25 @@ function checkUploadStep() {
   assertIncludes(html, "Choose Files");
   assertIncludes(html, "broker-statement.csv");
   if (html.includes("Here's what we read from")) {
-    throw new Error("The extraction review modal should be closed until a document is actually parsed.");
+    throw new Error(
+      "The extraction review modal should be closed until a document is actually parsed."
+    );
   }
-  console.log("Validated upload step: multi-file upload action, previously added documents listed, review modal closed by default.");
+  console.log(
+    "Validated upload step: multi-file upload action, previously added documents listed, review modal closed by default."
+  );
 }
 
 function checkChecklistPanel() {
   const html = renderToString(
     <ChecklistPanel
       checklistItems={[
-        { document: "Broker/AMC capital gains statement", needed: "Yes", status: "Needed", whyNeeded: "Needed to classify gains." }
+        {
+          document: "Broker/AMC capital gains statement",
+          needed: "Yes",
+          status: "Needed",
+          whyNeeded: "Needed to classify gains."
+        }
       ]}
       riskTriggers={[
         {
@@ -541,10 +650,14 @@ function checkResultsStepDefaultsToSimple() {
   assertIncludes(html, "Download full workbook");
 
   if (html.includes("Show Simple View")) {
-    throw new Error("First-time default view should be simple; advanced detail must require the explicit toggle.");
+    throw new Error(
+      "First-time default view should be simple; advanced detail must require the explicit toggle."
+    );
   }
 
-  console.log("Validated results step: simple view is the default, recommendation and exports both present.");
+  console.log(
+    "Validated results step: simple view is the default, recommendation and exports both present."
+  );
 }
 
 function checkResultsStepAdvancedToggle() {
@@ -589,7 +702,9 @@ function checkResultsStepAdvancedToggle() {
   );
   assertIncludes(html, "Show Simple View");
   assertIncludes(html, "sample.csv");
-  console.log("Validated results step: advanced toggle reveals full detail and the documents ledger.");
+  console.log(
+    "Validated results step: advanced toggle reveals full detail and the documents ledger."
+  );
 }
 
 /**
@@ -609,31 +724,51 @@ function checkSummaryFiguresPopulateFields() {
     netRealisedGainNoDetail: 99999
   });
   if (next.dividends !== 123456.78 || next.interestOtherIncome !== 4459.5) {
-    throw new Error(`Dividend/interest figures did not route into their fields: ${JSON.stringify(next)}`);
+    throw new Error(
+      `Dividend/interest figures did not route into their fields: ${JSON.stringify(next)}`
+    );
   }
   if (next.deductibleTransactionCharges !== 137827.48) {
-    throw new Error(`deductibleCharges did not route into deductibleTransactionCharges: ${next.deductibleTransactionCharges}`);
+    throw new Error(
+      `deductibleCharges did not route into deductibleTransactionCharges: ${next.deductibleTransactionCharges}`
+    );
   }
   if (next.advanceTaxPaid !== 83493.85) {
     throw new Error(`tdsDeducted did not route into advanceTaxPaid: ${next.advanceTaxPaid}`);
   }
-  const expectedApplied = ["dividends", "interestOtherIncome", "deductibleTransactionCharges", "advanceTaxPaid"];
+  const expectedApplied = [
+    "dividends",
+    "interestOtherIncome",
+    "deductibleTransactionCharges",
+    "advanceTaxPaid"
+  ];
   if (JSON.stringify([...applied].sort()) !== JSON.stringify([...expectedApplied].sort())) {
-    throw new Error(`Prefilled keys should be exactly the four mapped fields, got ${JSON.stringify(applied)}.`);
+    throw new Error(
+      `Prefilled keys should be exactly the four mapped fields, got ${JSON.stringify(applied)}.`
+    );
   }
   // netRealisedGainNoDetail is a gap, never a figure - it must not become a field.
   if (JSON.stringify(next).includes("99999")) {
-    throw new Error("A net realised gain with no detail must not be written into any supplemental field.");
+    throw new Error(
+      "A net realised gain with no detail must not be written into any supplemental field."
+    );
   }
 
   // Merge rule: a field the user already typed is never clobbered or doubled.
   const typed = { ...BLANK_SUPPLEMENTAL_FIGURES, dividends: 5000 };
-  const merged = applySummaryFiguresToSupplemental(typed, { dividendIncome: 123456.78, interestIncome: 4459.5 });
+  const merged = applySummaryFiguresToSupplemental(typed, {
+    dividendIncome: 123456.78,
+    interestIncome: 4459.5
+  });
   if (merged.next.dividends !== 5000) {
-    throw new Error(`A user's typed dividends (5000) must not be overwritten, got ${merged.next.dividends}.`);
+    throw new Error(
+      `A user's typed dividends (5000) must not be overwritten, got ${merged.next.dividends}.`
+    );
   }
   if (merged.next.interestOtherIncome !== 4459.5 || merged.applied.includes("dividends")) {
-    throw new Error("Only the still-zero fields should be filled, and only those should be reported as prefilled.");
+    throw new Error(
+      "Only the still-zero fields should be filled, and only those should be reported as prefilled."
+    );
   }
 
   console.log(
@@ -688,10 +823,14 @@ function checkResultsStepSummaryPrefill() {
   );
   assertIncludes(plainHtml, "A few more numbers");
   if (plainHtml.includes("Add more numbers to refine")) {
-    throw new Error("The refine panel should be renamed to 'A few more numbers' to match copy used elsewhere.");
+    throw new Error(
+      "The refine panel should be renamed to 'A few more numbers' to match copy used elsewhere."
+    );
   }
   if (plainHtml.includes("please check them")) {
-    throw new Error("The prefill banner should not show when nothing was auto-filled from a statement.");
+    throw new Error(
+      "The prefill banner should not show when nothing was auto-filled from a statement."
+    );
   }
   if (plainHtml.includes("Still needed:")) {
     throw new Error("The still-needed note should not show without a net-gain-only situation.");
@@ -700,12 +839,19 @@ function checkResultsStepSummaryPrefill() {
   const prefilledHtml = renderToString(
     <ResultsStep
       {...baseProps}
-      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, dividends: 12000, advanceTaxPaid: 3400 }}
+      supplementalFigures={{
+        ...BLANK_SUPPLEMENTAL_FIGURES,
+        dividends: 12000,
+        advanceTaxPaid: 3400
+      }}
       prefilledFigureKeys={["dividends", "advanceTaxPaid"]}
       netGainMissingDetail
     />
   );
-  assertIncludes(prefilledHtml, "Some of these were filled in from your statement. Please check them.");
+  assertIncludes(
+    prefilledHtml,
+    "Some of these were filled in from your statement. Please check them."
+  );
   assertIncludes(prefilledHtml, "Still needed:");
   // Auto-fill/missing-detail forces the panel open so it isn't left undiscovered.
   assertIncludes(prefilledHtml, 'class="refine-panel" open');
@@ -808,7 +954,9 @@ function checkRegimeComparisonPanel() {
   assertIncludes(withSalaryHtml, "Break-even deductions");
   assertIncludes(withSalaryHtml, "no amount of old-regime deductions can beat");
 
-  console.log("Validated regime comparison panel: scope caveat always shown, estimate appears only once salary is entered.");
+  console.log(
+    "Validated regime comparison panel: scope caveat always shown, estimate appears only once salary is entered."
+  );
 }
 
 function resultsStepWithReconciliation(props: {
@@ -865,7 +1013,9 @@ function checkReconciliationPanel() {
   assertIncludes(emptyHtml, "Check against your AIS, Form 26AS, or Form 16");
   assertIncludes(emptyHtml, "Add a figure or a TDS row above to check for mismatches.");
   if (emptyHtml.includes("No mismatches found")) {
-    throw new Error("Reconciliation panel should not claim a clean match before anything is entered.");
+    throw new Error(
+      "Reconciliation panel should not claim a clean match before anything is entered."
+    );
   }
 
   const matchedHtml = resultsStepWithReconciliation({
@@ -881,10 +1031,14 @@ function checkReconciliationPanel() {
   assertIncludes(mismatchedHtml, "Dividends");
   assertIncludes(mismatchedHtml, "Sample Bank");
   if (mismatchedHtml.includes("Everything you've entered matches")) {
-    throw new Error("Reconciliation panel should surface a planted mismatch, not report a clean match.");
+    throw new Error(
+      "Reconciliation panel should surface a planted mismatch, not report a clean match."
+    );
   }
 
-  console.log("Validated reconciliation panel: blank/matched/mismatched AIS and TDS states all render correctly.");
+  console.log(
+    "Validated reconciliation panel: blank/matched/mismatched AIS and TDS states all render correctly."
+  );
 }
 
 function resultsStepWithConfidence(report: ConfidenceReport) {
@@ -975,7 +1129,9 @@ function checkAdvanceTaxPanel() {
   // The 234C instalment inputs only appear once there's a liability to
   // estimate from - a blank panel stays skip-friendly.
   if (html.includes("instalment-by-instalment")) {
-    throw new Error("The 234C instalment section should stay hidden until a tax liability is entered.");
+    throw new Error(
+      "The 234C instalment section should stay hidden until a tax liability is entered."
+    );
   }
 
   const withLiabilityHtml = renderToString(
@@ -1026,11 +1182,16 @@ function checkAdvanceTaxPanel() {
   assertIncludes(withLiabilityHtml, "15 Jun 2025");
   assertIncludes(withLiabilityHtml, "15 Mar 2026");
   assertIncludes(withLiabilityHtml, "Estimated Section 234C interest, total");
-  assertIncludes(withLiabilityHtml, "so their tax is still spread evenly across all four instalments");
+  assertIncludes(
+    withLiabilityHtml,
+    "so their tax is still spread evenly across all four instalments"
+  );
   // No dated capital-gains tax in this fixture, so the ordinary/capital-gains
   // split note (only shown once there's something to split) must stay hidden.
   if (withLiabilityHtml.includes("dated from your actual transactions below")) {
-    throw new Error("The capital-gains split note should only render when capitalGainsTaxByInstalment has a nonzero total.");
+    throw new Error(
+      "The capital-gains split note should only render when capitalGainsTaxByInstalment has a nonzero total."
+    );
   }
 
   // With dated capital-gains tax supplied, the split note must render and
@@ -1054,7 +1215,10 @@ function checkAdvanceTaxPanel() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
-      capitalGainsTaxByInstalment={{ cumulativeByInstalment: [0, 0, 0, 40000], totalForYear: 40000 }}
+      capitalGainsTaxByInstalment={{
+        cumulativeByInstalment: [0, 0, 0, 40000],
+        totalForYear: 40000
+      }}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
       aisFigures={BLANK_AIS_REPORTED_FIGURES}
@@ -1138,7 +1302,9 @@ function checkNriHufSingleParentPartialCalculations() {
   assertIncludes(nriHtml, "NRI: DTAA relief");
   assertIncludes(nriHtml, "NRI: repatriation check");
   if (defaultHtml.includes("NRI: DTAA relief") || defaultHtml.includes("NRI: repatriation check")) {
-    throw new Error("The NRI DTAA/TDS and repatriation panels should only render for the NRI profile.");
+    throw new Error(
+      "The NRI DTAA/TDS and repatriation panels should only render for the NRI profile."
+    );
   }
 
   // Past the Rs 5 lakh CA-certificate threshold, the repatriation panel
@@ -1146,7 +1312,11 @@ function checkNriHufSingleParentPartialCalculations() {
   const nriRepatriationHtml = renderToString(
     <ResultsStep
       {...baseProps}
-      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, nriRepatriatedThisYearUsd: 50000, nriRepatriatedThisYearInr: 600000 }}
+      supplementalFigures={{
+        ...BLANK_SUPPLEMENTAL_FIGURES,
+        nriRepatriatedThisYearUsd: 50000,
+        nriRepatriatedThisYearInr: 600000
+      }}
       nri
     />
   );
@@ -1154,7 +1324,9 @@ function checkNriHufSingleParentPartialCalculations() {
   assertIncludes(nriRepatriationHtml, "Form 146");
   assertIncludes(nriRepatriationHtml, "will need");
   if (nriRepatriationHtml.includes("talk to your bank before repatriating more")) {
-    throw new Error("The USD 1M cap warning should not show when only the Rs 5L certificate threshold is crossed.");
+    throw new Error(
+      "The USD 1M cap warning should not show when only the Rs 5L certificate threshold is crossed."
+    );
   }
 
   // With a UAE country and dividends entered, the panel shows the treaty rate
@@ -1182,7 +1354,9 @@ function checkNriHufSingleParentPartialCalculations() {
   );
   assertIncludes(hufHtml, "Skip it here and get slab-tax figures");
   if (hufHtml.includes("Old regime deductions")) {
-    throw new Error("HUF profile should not see the regime comparison inputs, which don't fit HUF's numbers.");
+    throw new Error(
+      "HUF profile should not see the regime comparison inputs, which don't fit HUF's numbers."
+    );
   }
   assertIncludes(hufHtml, "HUF: members");
   if (defaultHtml.includes("HUF: members")) {
@@ -1232,7 +1406,9 @@ function checkNriHufSingleParentPartialCalculations() {
   );
   assertIncludes(hufNotClubbedHtml, "No adequate-consideration issue");
   if (hufNotClubbedHtml.includes("belongs on")) {
-    throw new Error("A transfer with adequate consideration should not trigger the Section 64(2) clubbing note.");
+    throw new Error(
+      "A transfer with adequate consideration should not trigger the Section 64(2) clubbing note."
+    );
   }
 
   // Schedule FA Phase 1: hidden without the foreign-assets profile flag,
@@ -1295,15 +1471,21 @@ function checkNriHufSingleParentPartialCalculations() {
 
   const clubbed = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing);
   if (clubbed !== 7000) {
-    throw new Error(`Expected clubbedMinorIncome(10000, 2, rule) to be 7000 (10000 - 2x1500), got ${clubbed}.`);
+    throw new Error(
+      `Expected clubbedMinorIncome(10000, 2, rule) to be 7000 (10000 - 2x1500), got ${clubbed}.`
+    );
   }
   const clubbedCapped = clubbedMinorIncome(10000, 5, ruleCatalog.singleParentClubbing);
   if (clubbedCapped !== clubbed) {
-    throw new Error(`Expected clubbedMinorIncome to cap the exemption at max_children_for_exemption, got ${clubbedCapped}.`);
+    throw new Error(
+      `Expected clubbedMinorIncome to cap the exemption at max_children_for_exemption, got ${clubbedCapped}.`
+    );
   }
   const clubbedFloor = clubbedMinorIncome(1000, 1, ruleCatalog.singleParentClubbing);
   if (clubbedFloor !== 0) {
-    throw new Error(`Expected clubbedMinorIncome to floor at zero when income is below the exemption, got ${clubbedFloor}.`);
+    throw new Error(
+      `Expected clubbedMinorIncome to floor at zero when income is below the exemption, got ${clubbedFloor}.`
+    );
   }
 
   console.log(
@@ -1356,7 +1538,9 @@ function checkInsurancePolicyPanel() {
     />
   );
   if (withoutFlagHtml.includes("is it actually taxable?")) {
-    throw new Error("The insurance policy panel should only render for the hasInsurancePayout profile.");
+    throw new Error(
+      "The insurance policy panel should only render for the hasInsurancePayout profile."
+    );
   }
 
   const withFlagNoPoliciesHtml = renderToString(
@@ -1405,7 +1589,12 @@ function checkInsurancePolicyPanel() {
 }
 
 function checkConfidenceReportPanel() {
-  const cleanHtml = resultsStepWithConfidence({ missing: [], mayChange: [], safeToIgnore: [], ready: true });
+  const cleanHtml = resultsStepWithConfidence({
+    missing: [],
+    mayChange: [],
+    safeToIgnore: [],
+    ready: true
+  });
   assertIncludes(cleanHtml, "Before you export");
   if (cleanHtml.includes("Still missing") || cleanHtml.includes("May change your numbers")) {
     throw new Error("Confidence report should not show empty groups when nothing is flagged.");
@@ -1414,7 +1603,9 @@ function checkConfidenceReportPanel() {
   const flaggedHtml = resultsStepWithConfidence({
     missing: [{ label: "Form 16", detail: "Shows salary and TDS already deducted." }],
     mayChange: [{ label: "Speculative income detected", detail: "Moves your filing to ITR-3." }],
-    safeToIgnore: [{ label: "More than one employer this year", detail: "Worth mentioning to your CA." }],
+    safeToIgnore: [
+      { label: "More than one employer this year", detail: "Worth mentioning to your CA." }
+    ],
     ready: false
   });
   assertIncludes(flaggedHtml, "Still missing");
@@ -1424,7 +1615,9 @@ function checkConfidenceReportPanel() {
   assertIncludes(flaggedHtml, "Flagged, but safe to export as-is");
   assertIncludes(flaggedHtml, "More than one employer this year");
 
-  console.log("Validated confidence report panel: clean and flagged states both render the right groups.");
+  console.log(
+    "Validated confidence report panel: clean and flagged states both render the right groups."
+  );
 }
 
 const BLANK_FLAGS: ProfileFlags = {
@@ -1466,15 +1659,64 @@ function checkItrFormSelection() {
     }
   };
 
-  expect("resident, only salary/interest, under the cap", BLANK_FLAGS, false, cap - 1, "ITR-1", "resident_simple");
+  expect(
+    "resident, only salary/interest, under the cap",
+    BLANK_FLAGS,
+    false,
+    cap - 1,
+    "ITR-1",
+    "resident_simple"
+  );
   // The Rs 50 lakh ceiling: the same simple profile above the cap must move to ITR-2, not stay on ITR-1.
-  expect("resident, only salary/interest, above the cap", BLANK_FLAGS, false, cap + 1, "ITR-2", "resident_above_itr1_limit");
-  expect("resident with capital gains", { ...BLANK_FLAGS, hasCapitalGains: true }, false, 100000, "ITR-2", "resident_capital_gains_or_clubbing");
-  expect("single parent (clubbing)", { ...BLANK_FLAGS, singleParent: true }, false, 100000, "ITR-2", "resident_capital_gains_or_clubbing");
+  expect(
+    "resident, only salary/interest, above the cap",
+    BLANK_FLAGS,
+    false,
+    cap + 1,
+    "ITR-2",
+    "resident_above_itr1_limit"
+  );
+  expect(
+    "resident with capital gains",
+    { ...BLANK_FLAGS, hasCapitalGains: true },
+    false,
+    100000,
+    "ITR-2",
+    "resident_capital_gains_or_clubbing"
+  );
+  expect(
+    "single parent (clubbing)",
+    { ...BLANK_FLAGS, singleParent: true },
+    false,
+    100000,
+    "ITR-2",
+    "resident_capital_gains_or_clubbing"
+  );
   // Intraday is speculative business income - it must win even above the income cap.
-  expect("resident with intraday/business income", BLANK_FLAGS, true, cap + 1, "ITR-3", "business_or_speculative_non_audit");
-  expect("NRI without business", { ...BLANK_FLAGS, nri: true }, false, 100000, "ITR-2", "nri_no_business");
-  expect("HUF without business", { ...BLANK_FLAGS, huf: true }, false, 100000, "ITR-2", "huf_no_business");
+  expect(
+    "resident with intraday/business income",
+    BLANK_FLAGS,
+    true,
+    cap + 1,
+    "ITR-3",
+    "business_or_speculative_non_audit"
+  );
+  expect(
+    "NRI without business",
+    { ...BLANK_FLAGS, nri: true },
+    false,
+    100000,
+    "ITR-2",
+    "nri_no_business"
+  );
+  expect(
+    "HUF without business",
+    { ...BLANK_FLAGS, huf: true },
+    false,
+    100000,
+    "ITR-2",
+    "huf_no_business"
+  );
   // Unknown income (0) must never trip the ceiling - the safe direction.
   expect("resident, income not yet known", BLANK_FLAGS, false, 0, "ITR-1", "resident_simple");
 
@@ -1482,7 +1724,9 @@ function checkItrFormSelection() {
   const itr1Reason = ITR_FORM_REASONS.resident_simple;
   for (const phrase of ["50 lakh", "foreign", "director"]) {
     if (!itr1Reason.toLowerCase().includes(phrase)) {
-      throw new Error(`ITR-1 recommendation note should caveat "${phrase}" but doesn't: ${itr1Reason}`);
+      throw new Error(
+        `ITR-1 recommendation note should caveat "${phrase}" but doesn't: ${itr1Reason}`
+      );
     }
   }
 
@@ -1530,7 +1774,13 @@ const SAMPLE_THIS_YEAR: ThisYearSnapshot = {
   itrForm: "ITR-3",
   itrDueDate: "2026-08-31",
   regimeNote: "New regime by default",
-  capitalGains: { stcg: -500, ltcg: 90000, debtMf: 12000, intraday: 4000, ltcgExemptionLimit: 125000 },
+  capitalGains: {
+    stcg: -500,
+    ltcg: 90000,
+    debtMf: 12000,
+    intraday: 4000,
+    ltcgExemptionLimit: 125000
+  },
   estimatedCapitalGainsTax: 0,
   regime: {
     comparable: true,
@@ -1543,9 +1793,27 @@ const SAMPLE_THIS_YEAR: ThisYearSnapshot = {
     newAlwaysWins: false
   },
   deductions: [
-    { key: "deduction80C", section: "80C", label: "Section 80C investments", used: 90000, limit: 150000 },
-    { key: "deduction80D", section: "80D", label: "Section 80D health cover", used: 12000, limit: 25000 },
-    { key: "deductionNps80ccd1b", section: "80CCD(1B)", label: "NPS extra deduction", used: 50000, limit: 50000 }
+    {
+      key: "deduction80C",
+      section: "80C",
+      label: "Section 80C investments",
+      used: 90000,
+      limit: 150000
+    },
+    {
+      key: "deduction80D",
+      section: "80D",
+      label: "Section 80D health cover",
+      used: 12000,
+      limit: 25000
+    },
+    {
+      key: "deductionNps80ccd1b",
+      section: "80CCD(1B)",
+      label: "NPS extra deduction",
+      used: 50000,
+      limit: 50000
+    }
   ],
   insurance: {
     applies: false,
@@ -1614,7 +1882,12 @@ function checkDashboardDestination() {
         ...SAMPLE_THIS_YEAR,
         deductions: SAMPLE_THIS_YEAR.deductions.map((deduction) =>
           deduction.key === "deduction80C"
-            ? { ...deduction, extra: 80000, extraNote: "Includes ₹80,000 of home-loan principal from the Loans section - it counts inside this ceiling, not on top." }
+            ? {
+                ...deduction,
+                extra: 80000,
+                extraNote:
+                  "Includes ₹80,000 of home-loan principal from the Loans section - it counts inside this ceiling, not on top."
+              }
             : deduction
         )
       }}
@@ -1636,7 +1909,9 @@ function checkDashboardDestination() {
   assertIncludes(simpleHtml, "conic-gradient");
   // The old plain-number restatements of Results must be gone from here.
   if (simpleHtml.includes("Recommended ITR form") || simpleHtml.includes("Gains this year")) {
-    throw new Error("Dashboard should no longer duplicate the Results-style plain stat grid ('Recommended ITR form'/'Gains this year').");
+    throw new Error(
+      "Dashboard should no longer duplicate the Results-style plain stat grid ('Recommended ITR form'/'Gains this year')."
+    );
   }
   assertIncludes(simpleHtml, "Your filing history");
   // Year-over-year history table renders both synthetic years and their heads.
@@ -1650,10 +1925,14 @@ function checkDashboardDestination() {
   assertIncludes(simpleHtml, "+20%");
   assertIncludes(simpleHtml, "Show Full Detail");
   if (simpleHtml.includes("Show Simple View")) {
-    throw new Error("Dashboard should default to the simple view; advanced detail must require the explicit toggle.");
+    throw new Error(
+      "Dashboard should default to the simple view; advanced detail must require the explicit toggle."
+    );
   }
   if (simpleHtml.includes(">Effective rate<")) {
-    throw new Error("The per-year effective-rate column is advanced detail and should be hidden in the simple view.");
+    throw new Error(
+      "The per-year effective-rate column is advanced detail and should be hidden in the simple view."
+    );
   }
 
   const advancedHtml = renderToString(
@@ -1759,7 +2038,9 @@ function checkItrJsonParsing() {
     throw new Error(`Expected ITR-2 form, got ${parsed.fields.itrForm}.`);
   }
   if (parsed.fields.grossTotalIncome !== 1_200_000) {
-    throw new Error(`Expected gross total income 1,200,000, got ${parsed.fields.grossTotalIncome}.`);
+    throw new Error(
+      `Expected gross total income 1,200,000, got ${parsed.fields.grossTotalIncome}.`
+    );
   }
   if (parsed.fields.totalTaxPaid !== 90_000) {
     throw new Error(`Expected total tax paid 90,000, got ${parsed.fields.totalTaxPaid}.`);
@@ -1768,12 +2049,16 @@ function checkItrJsonParsing() {
     throw new Error(`Expected a 5,000 refund, got ${parsed.fields.refundOrPayable}.`);
   }
   if (parsed.fields.regime !== "old") {
-    throw new Error(`OptOutNewTaxRegime "Y" should read as the old regime, got ${parsed.fields.regime}.`);
+    throw new Error(
+      `OptOutNewTaxRegime "Y" should read as the old regime, got ${parsed.fields.regime}.`
+    );
   }
   // Tolerant fallback: unreadable input never throws, routes to manual entry.
   const garbage = parseItrJson("not json at all {");
   if (garbage.ok || garbage.readFields.length !== 0) {
-    throw new Error("Unreadable input should come back ok:false with no auto-read fields, for manual entry.");
+    throw new Error(
+      "Unreadable input should come back ok:false with no auto-read fields, for manual entry."
+    );
   }
   if (normalizeAssessmentYear("AY2025-2026") !== "2025-26") {
     throw new Error("normalizeAssessmentYear should tidy 'AY2025-2026' to '2025-26'.");
@@ -1781,7 +2066,9 @@ function checkItrJsonParsing() {
 
   const insights = deriveHistoryInsights(SAMPLE_PAST_FILINGS);
   if (insights.incomeGrowthPct === null || Math.round(insights.incomeGrowthPct) !== 20) {
-    throw new Error(`Expected +20% income growth across the sample years, got ${insights.incomeGrowthPct}.`);
+    throw new Error(
+      `Expected +20% income growth across the sample years, got ${insights.incomeGrowthPct}.`
+    );
   }
   if (!insights.regimeSwitched) {
     throw new Error("Sample filings switch old -> new regime; regimeSwitched should be true.");
@@ -1814,10 +2101,14 @@ function checkItrVTextParsing() {
     throw new Error(`Expected AY 2024-25 from the ITR-V, got ${parsed.fields.assessmentYear}.`);
   }
   if (parsed.fields.itrForm !== "ITR-2") {
-    throw new Error(`Expected ITR-2 (not the "ITR-V" label) from the acknowledgement, got ${parsed.fields.itrForm}.`);
+    throw new Error(
+      `Expected ITR-2 (not the "ITR-V" label) from the acknowledgement, got ${parsed.fields.itrForm}.`
+    );
   }
   if (parsed.fields.grossTotalIncome !== 1_200_000) {
-    throw new Error(`Expected gross total income 1,200,000 from "12,00,000", got ${parsed.fields.grossTotalIncome}.`);
+    throw new Error(
+      `Expected gross total income 1,200,000 from "12,00,000", got ${parsed.fields.grossTotalIncome}.`
+    );
   }
   if (parsed.fields.totalTaxPaid !== 90_000) {
     throw new Error(`Expected total taxes paid 90,000, got ${parsed.fields.totalTaxPaid}.`);
@@ -1826,7 +2117,9 @@ function checkItrVTextParsing() {
     throw new Error(`Expected a 5,000 refund, got ${parsed.fields.refundOrPayable}.`);
   }
   if (parsed.fields.regime !== "old") {
-    throw new Error(`"new tax regime ... No" should read as the old regime, got ${parsed.fields.regime}.`);
+    throw new Error(
+      `"new tax regime ... No" should read as the old regime, got ${parsed.fields.regime}.`
+    );
   }
 
   // A payable (not refund) ITR-V: negative refundOrPayable, and regime read
@@ -1835,20 +2128,30 @@ function checkItrVTextParsing() {
     "Assessment Year 2023-24 ITR-1 Opting for section 115BAC Yes Gross Total Income 800000 Net Tax Payable 12500"
   );
   if (payableItrV.fields.refundOrPayable !== -12_500) {
-    throw new Error(`Expected -12,500 (payable) from the ITR-V, got ${payableItrV.fields.refundOrPayable}.`);
+    throw new Error(
+      `Expected -12,500 (payable) from the ITR-V, got ${payableItrV.fields.refundOrPayable}.`
+    );
   }
   if (payableItrV.fields.regime !== "new") {
-    throw new Error(`"115BAC ... Yes" should read as the new regime, got ${payableItrV.fields.regime}.`);
+    throw new Error(
+      `"115BAC ... Yes" should read as the new regime, got ${payableItrV.fields.regime}.`
+    );
   }
 
   // Tolerant fallback: unreadable text never throws, routes to manual entry.
-  const unreadable = parseItrVText("just some scanned image text with no recognisable ITR figures at all");
+  const unreadable = parseItrVText(
+    "just some scanned image text with no recognisable ITR figures at all"
+  );
   if (unreadable.ok || unreadable.readFields.length !== 0) {
-    throw new Error("Unreadable ITR-V text should come back ok:false with no auto-read fields, for manual entry.");
+    throw new Error(
+      "Unreadable ITR-V text should come back ok:false with no auto-read fields, for manual entry."
+    );
   }
   const empty = parseItrVText("   ");
   if (empty.ok) {
-    throw new Error("Empty ITR-V text (e.g. an image-only scan) should not report a successful read.");
+    throw new Error(
+      "Empty ITR-V text (e.g. an image-only scan) should not report a successful read."
+    );
   }
 
   console.log(
@@ -1874,7 +2177,9 @@ function checkWelcomeDisclaimerBanner() {
   assertIncludes(html, WELCOME_DISCLAIMER_BANNER);
   assertIncludes(html, 'class="welcome-disclaimer-banner"');
   assertIncludes(html, "Got It");
-  console.log("Validated welcome disclaimer banner: Stage-1 dismissible CA line renders on first visit.");
+  console.log(
+    "Validated welcome disclaimer banner: Stage-1 dismissible CA line renders on first visit."
+  );
 }
 
 function checkErrorBoundaryRecovery() {
@@ -1884,7 +2189,10 @@ function checkErrorBoundaryRecovery() {
     </ErrorBoundary>
   );
   assertIncludes(html, "App content");
-  const source = readFileSync(resolve(import.meta.dirname, "../src/components/ErrorBoundary.tsx"), "utf8");
+  const source = readFileSync(
+    resolve(import.meta.dirname, "../src/components/ErrorBoundary.tsx"),
+    "utf8"
+  );
   for (const phrase of [
     "Something went wrong",
     "Your filing may still be saved in this browser",
@@ -1895,7 +2203,9 @@ function checkErrorBoundaryRecovery() {
       throw new Error(`ErrorBoundary is missing recovery copy: ${phrase}`);
     }
   }
-  console.log("Validated error boundary: wraps app content and ships recovery copy for uncaught render errors.");
+  console.log(
+    "Validated error boundary: wraps app content and ships recovery copy for uncaught render errors."
+  );
 }
 
 function assertIncludes(value: string, expected: string) {

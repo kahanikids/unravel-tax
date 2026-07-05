@@ -83,7 +83,9 @@ export const ruleCatalog = {
 export function ruleVerificationSummary(rules: RuleDocument[]) {
   return {
     total: rules.length,
-    pendingCurrentSource: rules.filter((rule) => rule.verification.status === "pending_current_source").length,
+    pendingCurrentSource: rules.filter(
+      (rule) => rule.verification.status === "pending_current_source"
+    ).length,
     financialYears: Array.from(new Set(rules.map((rule) => rule.financial_year))).sort(),
     assessmentYears: Array.from(new Set(rules.map((rule) => rule.assessment_year))).sort()
   };

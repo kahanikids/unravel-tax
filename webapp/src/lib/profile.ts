@@ -32,9 +32,17 @@ export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
  * needed=false are shown for transparency but never count as an open gap -
  * see lib/reconciliation.ts#isRequired.
  */
-export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: boolean): ChecklistItem[] {
+export function buildChecklist(
+  flags: ProfileFlags,
+  capitalGainsDocumentLoaded: boolean
+): ChecklistItem[] {
   const items: ChecklistItem[] = [];
-  const add = (document: string, whyNeeded: string, status: string, needed: string | boolean = "Yes") => {
+  const add = (
+    document: string,
+    whyNeeded: string,
+    status: string,
+    needed: string | boolean = "Yes"
+  ) => {
     items.push({ document, needed, status, whyNeeded });
   };
 
@@ -211,21 +219,17 @@ function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCavea
     return {
       id: "nri_mf_dtaa_unknown_country",
       label: "MF capital gains — DTAA depends on where you live",
-      note:
-        "A 2025 ITAT ruling held that mutual fund units are not company shares, so gains may be exempt in India if your country's DTAA has a residual clause (Singapore, UAE, etc.). Tell us your country of residence in About You so we can flag the right treaty. The tax figures below still use Indian domestic rates until a CA applies the exemption."
+      note: "A 2025 ITAT ruling held that mutual fund units are not company shares, so gains may be exempt in India if your country's DTAA has a residual clause (Singapore, UAE, etc.). Tell us your country of residence in About You so we can flag the right treaty. The tax figures below still use Indian domestic rates until a CA applies the exemption."
     };
   }
   if (flags.nriCountry === "Other") {
     return {
       id: "nri_mf_dtaa_other_country",
       label: "MF capital gains — check your specific DTAA",
-      note:
-        "India has DTAAs with 90+ countries and article numbers differ. Mutual fund units may fall under a residual clause (exempt in India) or be taxed here. This tool cannot look up an unlisted country — bring your TRC and treaty text to a CA. Figures below use Indian domestic rates."
+      note: "India has DTAAs with 90+ countries and article numbers differ. Mutual fund units may fall under a residual clause (exempt in India) or be taxed here. This tool cannot look up an unlisted country — bring your TRC and treaty text to a CA. Figures below use Indian domestic rates."
     };
   }
-  const entry =
-    rule.values.mutual_fund_capital_gains.countries[flags.nriCountry] ??
-    null;
+  const entry = rule.values.mutual_fund_capital_gains.countries[flags.nriCountry] ?? null;
   if (!entry) {
     return null;
   }
@@ -264,8 +268,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "nri_scope",
       label: "Some NRI-specific numbers are calculated; others still need a CA",
-      note:
-        "NRE interest can be entered as its own exempt line, and the \"NRI: DTAA relief & NRO TDS\" section computes your actual dividend tax (Section 115A, the lower of the 20% domestic rate and your treaty's rate) and checks NRO interest/dividend TDS withheld against the treaty rate for a possible refund. The \"NRI: repatriation check\" section is a planning-only check against the USD 1 million NRO cap and the ₹5 lakh CA-certificate threshold - it's a banking/FEMA compliance step, not part of the return, so it never changes a tax figure. This tool still taxes NRO interest at your ordinary slab rate rather than a precise treaty-capped figure. Bring your NRO TDS certificates and DTAA paperwork to a CA."
+      note: 'NRE interest can be entered as its own exempt line, and the "NRI: DTAA relief & NRO TDS" section computes your actual dividend tax (Section 115A, the lower of the 20% domestic rate and your treaty\'s rate) and checks NRO interest/dividend TDS withheld against the treaty rate for a possible refund. The "NRI: repatriation check" section is a planning-only check against the USD 1 million NRO cap and the ₹5 lakh CA-certificate threshold - it\'s a banking/FEMA compliance step, not part of the return, so it never changes a tax figure. This tool still taxes NRO interest at your ordinary slab rate rather than a precise treaty-capped figure. Bring your NRO TDS certificates and DTAA paperwork to a CA.'
     });
   }
 
@@ -273,8 +276,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "huf_scope",
       label: "Some HUF-specific numbers are calculated; partition still needs a CA",
-      note:
-        "The \"HUF: members & Section 64(2) transfers\" section computes clubbing for any asset a member transferred into the HUF without adequate consideration - that income belongs on the transferring member's own return, not the HUF's. The figures elsewhere only cover capital gains, dividends, and interest, which apply to an HUF the same flat way they do to an individual. Partition (total or partial) isn't computed at all - see the checklist for why. The old-vs-new regime comparison tool doesn't fit an HUF's numbers at all (no salary income, no standard deduction, no Section 87A rebate), so it's hidden for this profile."
+      note: "The \"HUF: members & Section 64(2) transfers\" section computes clubbing for any asset a member transferred into the HUF without adequate consideration - that income belongs on the transferring member's own return, not the HUF's. The figures elsewhere only cover capital gains, dividends, and interest, which apply to an HUF the same flat way they do to an individual. Partition (total or partial) isn't computed at all - see the checklist for why. The old-vs-new regime comparison tool doesn't fit an HUF's numbers at all (no salary income, no standard deduction, no Section 87A rebate), so it's hidden for this profile."
     });
   }
 
@@ -282,17 +284,15 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "single_parent_scope",
       label: "Minor's-income clubbing: check the exceptions yourself",
-      note:
-        "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
+      note: "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
     });
   }
 
   if (flags.hasInsurancePayout) {
     caveats.push({
       id: "insurance_payout_scope",
-      label: "Whether your insurance payout is taxable isn't computed here",
-      note:
-        "A life-insurance maturity is tax-free under Section 10(10D) unless the premium crossed ₹2.5 lakh a year (ULIP issued on/after 1-Feb-2021) or ₹5 lakh a year (traditional policy issued on/after 1-Apr-2023), or exceeded 10% of the sum assured. Whether yours breaches those depends on your policy's issue date and premium history, which this tool doesn't hold, so it isn't added to the figures below. If it does breach, a ULIP gain is taxed as capital gains and a traditional payout as income from other sources — check the exact figure with a CA. Death benefits stay fully exempt."
+      label: "Insurance payout taxability is computed from the policy details you enter",
+      note: "The per-policy insurance section checks the issue date, sum assured, premium history, and payout you enter. It treats death benefits as exempt, flags high-premium ULIPs or traditional policies that lose Section 10(10D) exemption, and feeds taxable traditional-policy income into the regime comparison. A taxable ULIP gain is still flagged for CA review because this tool does not yet combine it with your other equity LTCG under one shared annual exemption."
     });
   }
 
@@ -300,8 +300,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "foreign_assets_scope",
       label: "Foreign accounts: disclosure rows built; foreign income tax isn't",
-      note:
-        "As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. The \"Foreign accounts: Schedule FA rows\" section produces the disclosure rows for a foreign bank or brokerage account (Phase 1 - RSUs, foreign property, and trusts aren't covered yet). Foreign dividends and interest are taxable at slab rate, gains on foreign shares are unlisted-share gains (long-term after 24 months at 12.5%), and foreign tax paid is credited via Form 67 - none of that tax computation is done here. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA."
+      note: 'As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. The "Foreign accounts: Schedule FA rows" section produces the disclosure rows for a foreign bank or brokerage account (Phase 1 - RSUs, foreign property, and trusts aren\'t covered yet). Foreign dividends and interest are taxable at slab rate, gains on foreign shares are unlisted-share gains (long-term after 24 months at 12.5%), and foreign tax paid is credited via Form 67 - none of that tax computation is done here. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA.'
     });
   }
 
@@ -324,7 +323,10 @@ export function clubbedMinorIncome(
   exemptFromClubbing = 0
 ): number {
   const clubbable = Math.max(0, minorIncomeToClub - Math.max(0, exemptFromClubbing));
-  const eligibleChildren = Math.min(Math.max(0, numberOfMinors), rule.values.max_children_for_exemption);
+  const eligibleChildren = Math.min(
+    Math.max(0, numberOfMinors),
+    rule.values.max_children_for_exemption
+  );
   const exemption = eligibleChildren * rule.values.per_child_exemption_inr;
   return Math.max(0, clubbable - exemption);
 }
@@ -342,9 +344,10 @@ export type ItrFormChoice = {
  * only salary/interest/dividends but total income above that cap files ITR-2,
  * not ITR-1. Pass 0 for totalIncome when it isn't known yet - the ceiling
  * then simply never trips, which is the safe direction. Disqualifiers this
- * tool can't observe (foreign assets, unlisted shares, directorship, a second
- * house property, carried-forward losses) are surfaced as a caveat on the
- * ITR-1 recommendation rather than silently ignored - see ITR_FORM_REASONS.
+ * tool can't observe from uploads alone (unlisted shares, directorship, a
+ * second house property, carried-forward losses) are surfaced as a caveat on
+ * the ITR-1 recommendation rather than silently ignored - see ITR_FORM_REASONS.
+ * Foreign assets are asked in the orientation flow and route away from ITR-1.
  */
 export function selectItrForm(
   flags: ProfileFlags,
@@ -369,6 +372,7 @@ export function selectItrForm(
             ? "resident_above_itr1_limit"
             : "resident_simple";
 
-  const entry = itrFormRule.values.forms[key] ?? itrFormRule.values.forms.resident_capital_gains_or_clubbing;
+  const entry =
+    itrFormRule.values.forms[key] ?? itrFormRule.values.forms.resident_capital_gains_or_clubbing;
   return { form: entry.form, dueDate: entry.due_date, key };
 }

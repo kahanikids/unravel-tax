@@ -29,7 +29,10 @@ export type LocalFolderHandle = {
 };
 
 type WindowWithDirectoryPicker = Window & {
-  showDirectoryPicker(options?: { mode?: "read" | "readwrite"; id?: string }): Promise<LocalFolderHandle>;
+  showDirectoryPicker(options?: {
+    mode?: "read" | "readwrite";
+    id?: string;
+  }): Promise<LocalFolderHandle>;
 };
 
 export function isLocalFolderSupported(): boolean {
@@ -54,14 +57,21 @@ export async function chooseLocalFolder(): Promise<LocalFolderHandle | null> {
   }
 }
 
-export async function writeFileToFolder(directory: LocalFolderHandle, filename: string, blob: Blob): Promise<void> {
+export async function writeFileToFolder(
+  directory: LocalFolderHandle,
+  filename: string,
+  blob: Blob
+): Promise<void> {
   const fileHandle = await directory.getFileHandle(filename, { create: true });
   const writable = await fileHandle.createWritable();
   await writable.write(blob);
   await writable.close();
 }
 
-export async function saveExportToFolder(directory: LocalFolderHandle, file: ExportFile): Promise<void> {
+export async function saveExportToFolder(
+  directory: LocalFolderHandle,
+  file: ExportFile
+): Promise<void> {
   await writeFileToFolder(directory, file.filename, file.blob);
 }
 
@@ -72,11 +82,18 @@ export async function saveDocumentCopyToFolder(
 ): Promise<void> {
   const safeName = fileName.replace(/[\\/:*?"<>|]/g, "_");
   const targetName = safeName.toLowerCase().endsWith(".csv") ? safeName : `${safeName}.csv`;
-  await writeFileToFolder(directory, `submitted - ${targetName}`, new Blob([csvText], { type: "text/csv;charset=utf-8" }));
+  await writeFileToFolder(
+    directory,
+    `submitted - ${targetName}`,
+    new Blob([csvText], { type: "text/csv;charset=utf-8" })
+  );
 }
 
 /** Returns the file's text, or null if it isn't in the folder. */
-export async function readTextFromFolder(directory: LocalFolderHandle, filename: string): Promise<string | null> {
+export async function readTextFromFolder(
+  directory: LocalFolderHandle,
+  filename: string
+): Promise<string | null> {
   try {
     const fileHandle = await directory.getFileHandle(filename);
     const file = await fileHandle.getFile();

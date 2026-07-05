@@ -18,7 +18,11 @@ export function DocumentSourceHint({ document }: { document: string }) {
 
   return (
     <div className="source-hint">
-      <button type="button" className="text-button source-hint-toggle" onClick={() => setOpen((value) => !value)}>
+      <button
+        type="button"
+        className="text-button source-hint-toggle"
+        onClick={() => setOpen((value) => !value)}
+      >
         {open ? "Hide Where To Get This" : "Where Do I Get This?"}
       </button>
       {open ? (

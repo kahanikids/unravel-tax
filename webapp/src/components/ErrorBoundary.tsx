@@ -29,14 +29,23 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="error-boundary">
           <h1>Something went wrong</h1>
           <p>
-            Your filing may still be saved in this browser. Reload the page to try again, or start fresh from the
-            welcome screen.
+            Your filing may still be saved in this browser. Reload the page to try again, or start
+            fresh from the welcome screen.
           </p>
           <div className="error-boundary-actions">
-            <button type="button" className="primary-button" onClick={() => window.location.reload()}>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => window.location.reload()}
+            >
               Reload This Page
             </button>
-            <a className="secondary-button" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+            <a
+              className="secondary-button"
+              href={REPORT_ISSUE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Report An Issue
             </a>
             <a className="text-button" href={REPO_URL} target="_blank" rel="noopener noreferrer">

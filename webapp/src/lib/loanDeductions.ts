@@ -45,7 +45,10 @@ export function computeLoanDeductions(
       label: "Home loan interest (self-occupied)",
       entered: figures.homeLoanInterestSelfOccupied,
       limit: values.home_loan.self_occupied_interest_24b.limit_inr,
-      allowed: cap(figures.homeLoanInterestSelfOccupied, values.home_loan.self_occupied_interest_24b.limit_inr)
+      allowed: cap(
+        figures.homeLoanInterestSelfOccupied,
+        values.home_loan.self_occupied_interest_24b.limit_inr
+      )
     },
     {
       key: "homeLoanInterest80eea",
@@ -53,7 +56,10 @@ export function computeLoanDeductions(
       label: "First-time-buyer home loan interest (top-up)",
       entered: figures.homeLoanInterest80eea,
       limit: values.home_loan.additional_interest_80eea.limit_inr,
-      allowed: cap(figures.homeLoanInterest80eea, values.home_loan.additional_interest_80eea.limit_inr)
+      allowed: cap(
+        figures.homeLoanInterest80eea,
+        values.home_loan.additional_interest_80eea.limit_inr
+      )
     },
     {
       key: "educationLoanInterest80e",
@@ -112,7 +118,9 @@ export function computeLetOutHouseProperty(
   const rentReceived = Math.max(0, figures.letOutRentReceived);
   const municipalTaxes = Math.min(Math.max(0, figures.letOutMunicipalTaxes), rentReceived);
   const netAnnualValue = rentReceived - municipalTaxes;
-  const standardDeduction = Math.round(netAnnualValue * letOutRule.net_annual_value_standard_deduction_rate);
+  const standardDeduction = Math.round(
+    netAnnualValue * letOutRule.net_annual_value_standard_deduction_rate
+  );
   const interest = Math.max(0, figures.homeLoanInterestLetOut);
   const netIncome = netAnnualValue - standardDeduction - interest;
   const setOffCap = letOutRule.house_property_loss_setoff_cap_against_other_heads_inr;
@@ -150,7 +158,10 @@ export type Combined80cUsage = {
  * the principal and the dashboard's 80C investments figure are capped
  * together, not separately.
  */
-export function combined80cUsage(figures: SupplementalFigures, deductionLimits: DeductionLimitsRule): Combined80cUsage {
+export function combined80cUsage(
+  figures: SupplementalFigures,
+  deductionLimits: DeductionLimitsRule
+): Combined80cUsage {
   const investments = Math.max(0, figures.deduction80C);
   const homeLoanPrincipal = Math.max(0, figures.homeLoanPrincipal80c);
   const combined = investments + homeLoanPrincipal;

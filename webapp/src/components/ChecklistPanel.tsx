@@ -56,12 +56,22 @@ export function ChecklistPanel({
         >
           {collapsed ? "Show" : "Hide"}
           <svg className="checklist-toggle-icon" viewBox="0 0 16 16" aria-hidden="true">
-            <path d={collapsed ? "M4 6l4 4 4-4" : "M4 10l4-4 4 4"} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d={collapsed ? "M4 6l4 4 4-4" : "M4 10l4-4 4 4"}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>
 
-      <div id="checklist-panel-body" className={collapsed ? "checklist-panel-body is-collapsed" : "checklist-panel-body"}>
+      <div
+        id="checklist-panel-body"
+        className={collapsed ? "checklist-panel-body is-collapsed" : "checklist-panel-body"}
+      >
         {profileScopeCaveats.length > 0 ? (
           <div className="checklist-group">
             <h3>Heads up: this tool has limits</h3>
@@ -80,7 +90,11 @@ export function ChecklistPanel({
             {riskTriggers.map((trigger) => (
               <article
                 key={trigger.id}
-                className={trigger.severity === "form-changing" ? "checklist-item checklist-item-flag" : "checklist-item"}
+                className={
+                  trigger.severity === "form-changing"
+                    ? "checklist-item checklist-item-flag"
+                    : "checklist-item"
+                }
               >
                 <strong>{trigger.label}</strong>
                 <ChecklistParagraph text={trigger.consequence} />

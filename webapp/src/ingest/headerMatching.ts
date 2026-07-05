@@ -1,8 +1,7 @@
 import { EXPECTED_TRANSACTION_COLUMNS, OPTIONAL_INSTRUMENT_TYPE_COLUMN } from "./types";
 
 export type CanonicalTransactionColumn =
-  | (typeof EXPECTED_TRANSACTION_COLUMNS)[number]
-  | typeof OPTIONAL_INSTRUMENT_TYPE_COLUMN;
+  (typeof EXPECTED_TRANSACTION_COLUMNS)[number] | typeof OPTIONAL_INSTRUMENT_TYPE_COLUMN;
 
 /**
  * Real broker/AMC exports rarely use this exact wording. Each list covers the
@@ -37,7 +36,14 @@ const HEADER_SYNONYMS: Record<CanonicalTransactionColumn, string[]> = {
     "purchased on",
     "trade date buy"
   ],
-  "Sell Date": ["sell date", "sale date", "date of sale", "date of sell", "sold on", "trade date sell"],
+  "Sell Date": [
+    "sell date",
+    "sale date",
+    "date of sale",
+    "date of sell",
+    "sold on",
+    "trade date sell"
+  ],
   Units: ["units", "quantity", "qty", "no of units", "number of units", "shares", "no of shares"],
   "Buy Value": [
     "buy value",
@@ -60,12 +66,38 @@ const HEADER_SYNONYMS: Record<CanonicalTransactionColumn, string[]> = {
     "selling value",
     "sale consideration"
   ],
-  "Buy Price": ["buy price", "purchase price", "purchase rate", "buy rate", "cost price", "buy nav", "buy rate per unit"],
-  "Sell Price": ["sell price", "sale price", "sale rate", "sell rate", "selling price", "sell nav", "sell rate per unit"],
-  "Instrument Type": ["instrument type", "asset type", "security type", "fund type", "category", "type"]
+  "Buy Price": [
+    "buy price",
+    "purchase price",
+    "purchase rate",
+    "buy rate",
+    "cost price",
+    "buy nav",
+    "buy rate per unit"
+  ],
+  "Sell Price": [
+    "sell price",
+    "sale price",
+    "sale rate",
+    "sell rate",
+    "selling price",
+    "sell nav",
+    "sell rate per unit"
+  ],
+  "Instrument Type": [
+    "instrument type",
+    "asset type",
+    "security type",
+    "fund type",
+    "category",
+    "type"
+  ]
 };
 
-const ALL_COLUMNS: CanonicalTransactionColumn[] = [...EXPECTED_TRANSACTION_COLUMNS, OPTIONAL_INSTRUMENT_TYPE_COLUMN];
+const ALL_COLUMNS: CanonicalTransactionColumn[] = [
+  ...EXPECTED_TRANSACTION_COLUMNS,
+  OPTIONAL_INSTRUMENT_TYPE_COLUMN
+];
 
 const MIN_SUBSTRING_SYNONYM_LENGTH = 4;
 
@@ -81,7 +113,10 @@ function normalizeHeaderText(value: string): string {
 function levenshteinDistance(a: string, b: string): number {
   const rows = a.length + 1;
   const cols = b.length + 1;
-  const distances: number[][] = Array.from({ length: rows }, (_, i) => [i, ...Array(cols - 1).fill(0)]);
+  const distances: number[][] = Array.from({ length: rows }, (_, i) => [
+    i,
+    ...Array(cols - 1).fill(0)
+  ]);
   for (let col = 1; col < cols; col += 1) {
     distances[0][col] = col;
   }
@@ -154,7 +189,9 @@ export function resolveTransactionHeaders(rawHeaders: string[]): HeaderResolutio
 
   for (const raw of unmatchedHeaders()) {
     const normalized = normalizeHeaderText(raw);
-    const column = ALL_COLUMNS.find((candidate) => !matchedColumns.has(candidate) && candidatesFor(candidate).includes(normalized));
+    const column = ALL_COLUMNS.find(
+      (candidate) => !matchedColumns.has(candidate) && candidatesFor(candidate).includes(normalized)
+    );
     if (column) {
       headerMap[raw] = column;
       matchedColumns.add(column);
@@ -209,7 +246,10 @@ export function missingColumnsMessage(missing: CanonicalTransactionColumn[]): st
 }
 
 /** Renames each key in a raw record from its original header text to the matched canonical column, dropping unmatched columns. */
-export function remapRecordKeys<T>(record: Record<string, T>, headerMap: Record<string, CanonicalTransactionColumn>): Record<string, T> {
+export function remapRecordKeys<T>(
+  record: Record<string, T>,
+  headerMap: Record<string, CanonicalTransactionColumn>
+): Record<string, T> {
   const result: Record<string, T> = {};
   for (const [rawKey, value] of Object.entries(record)) {
     const canonical = headerMap[rawKey];
@@ -226,7 +266,10 @@ export function buildHeaderMapFromAssignments(
   assignments: Partial<Record<CanonicalTransactionColumn, string>>
 ): Record<string, CanonicalTransactionColumn> {
   const headerMap: Record<string, CanonicalTransactionColumn> = {};
-  for (const [canonical, raw] of Object.entries(assignments) as [CanonicalTransactionColumn, string][]) {
+  for (const [canonical, raw] of Object.entries(assignments) as [
+    CanonicalTransactionColumn,
+    string
+  ][]) {
     if (raw && sourceHeaders.includes(raw)) {
       headerMap[raw] = canonical;
     }

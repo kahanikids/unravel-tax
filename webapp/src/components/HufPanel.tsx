@@ -50,7 +50,9 @@ export function HufPanel({
   }
 
   function updateTransfer(id: string, patch: Partial<HufAssetTransfer>) {
-    onChangeTransfers(transfers.map((transfer) => (transfer.id === id ? { ...transfer, ...patch } : transfer)));
+    onChangeTransfers(
+      transfers.map((transfer) => (transfer.id === id ? { ...transfer, ...patch } : transfer))
+    );
   }
   function removeTransfer(id: string) {
     onChangeTransfers(transfers.filter((transfer) => transfer.id !== id));
@@ -63,8 +65,8 @@ export function HufPanel({
     <section className="supplemental-form">
       <h4>Members and coparceners</h4>
       <p className="step-lede">
-        For your CA's reference only - this list doesn't feed any calculation, since coparcener status can turn on
-        family-specific facts this tool can't verify.
+        For your CA's reference only - this list doesn't feed any calculation, since coparcener
+        status can turn on family-specific facts this tool can't verify.
       </p>
       {members.length === 0 ? (
         <p className="checklist-empty">No members added yet.</p>
@@ -85,7 +87,9 @@ export function HufPanel({
                 <input
                   type="checkbox"
                   checked={member.isCoparcener}
-                  onChange={(event) => updateMember(member.id, { isCoparcener: event.target.checked })}
+                  onChange={(event) =>
+                    updateMember(member.id, { isCoparcener: event.target.checked })
+                  }
                 />{" "}
                 Coparcener (by birth, or a daughter under the 2005 amendment)
               </label>
@@ -102,9 +106,9 @@ export function HufPanel({
 
       <h4>Asset transfers into the HUF</h4>
       <p className="step-lede">
-        {hufClubbingSectionLabel(rule)}: if the HUF didn't pay a fair price for an asset a member transferred in, that
-        asset's income stays taxed on the transferring member's own return, not the HUF's, for as long as the HUF
-        holds it. <RuleSourceLink refs={rule.source_refs} />
+        {hufClubbingSectionLabel(rule)}: if the HUF didn't pay a fair price for an asset a member
+        transferred in, that asset's income stays taxed on the transferring member's own return, not
+        the HUF's, for as long as the HUF holds it. <RuleSourceLink refs={rule.source_refs} />
       </p>
       {transfers.length === 0 ? (
         <p className="checklist-empty">No transfers added yet.</p>
@@ -117,7 +121,9 @@ export function HufPanel({
                 <input
                   type="text"
                   value={transfer.transferringMemberName}
-                  onChange={(event) => updateTransfer(transfer.id, { transferringMemberName: event.target.value })}
+                  onChange={(event) =>
+                    updateTransfer(transfer.id, { transferringMemberName: event.target.value })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -126,7 +132,9 @@ export function HufPanel({
                   type="text"
                   value={transfer.assetDescription}
                   placeholder="e.g. Flat in Pune, TCS shares"
-                  onChange={(event) => updateTransfer(transfer.id, { assetDescription: event.target.value })}
+                  onChange={(event) =>
+                    updateTransfer(transfer.id, { assetDescription: event.target.value })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -134,14 +142,18 @@ export function HufPanel({
                 <input
                   type="date"
                   value={transfer.transferDate}
-                  onChange={(event) => updateTransfer(transfer.id, { transferDate: event.target.value })}
+                  onChange={(event) =>
+                    updateTransfer(transfer.id, { transferDate: event.target.value })
+                  }
                 />
               </label>
               <label className="supplemental-field">
                 <input
                   type="checkbox"
                   checked={transfer.adequateConsideration}
-                  onChange={(event) => updateTransfer(transfer.id, { adequateConsideration: event.target.checked })}
+                  onChange={(event) =>
+                    updateTransfer(transfer.id, { adequateConsideration: event.target.checked })
+                  }
                 />{" "}
                 The HUF paid a fair price for this asset (adequate consideration)
               </label>
@@ -152,7 +164,11 @@ export function HufPanel({
                   min={0}
                   value={transfer.annualIncomeFromAsset}
                   placeholder="₹0"
-                  onChange={(event) => updateTransfer(transfer.id, { annualIncomeFromAsset: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateTransfer(transfer.id, {
+                      annualIncomeFromAsset: Number(event.target.value) || 0
+                    })
+                  }
                 />
               </label>
             </div>
@@ -160,12 +176,18 @@ export function HufPanel({
               <p className="regime-verdict">
                 {clubbed
                   ? `₹${formatAmount(transfer.annualIncomeFromAsset)} of this year's income belongs on ${
-                      transfer.transferringMemberName ? `${transfer.transferringMemberName}'s` : "the transferring member's"
+                      transfer.transferringMemberName
+                        ? `${transfer.transferringMemberName}'s`
+                        : "the transferring member's"
                     } own return, not the HUF's - it's still included in the HUF figures above since this tool only computes the HUF's return.`
                   : "No adequate-consideration issue - income from this asset stays with the HUF."}
               </p>
             </div>
-            <button type="button" className="text-button" onClick={() => removeTransfer(transfer.id)}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => removeTransfer(transfer.id)}
+            >
               Remove This Transfer
             </button>
           </div>
@@ -177,8 +199,9 @@ export function HufPanel({
 
       {summary.totalClubbedToMembers > 0 ? (
         <p className="step-lede">
-          Total clubbed to members' own returns: <strong>₹{formatAmount(summary.totalClubbedToMembers)}</strong>. Not
-          subtracted from the HUF figures above - bring this to a CA to place it on the right member's return.
+          Total clubbed to members' own returns:{" "}
+          <strong>₹{formatAmount(summary.totalClubbedToMembers)}</strong>. Not subtracted from the
+          HUF figures above - bring this to a CA to place it on the right member's return.
         </p>
       ) : null}
     </section>

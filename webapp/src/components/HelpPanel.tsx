@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { DISCLAIMER_FULL, HOW_IT_WORKS, REPORT_ISSUE_URL, WHO_ITS_FOR, WHO_ITS_FOR_EXCLUDES, WHO_ITS_FOR_TAGLINE } from "../lib/copy";
+import { useCallback, useEffect, useState } from "react";
+import {
+  DISCLAIMER_FULL,
+  HOW_IT_WORKS,
+  REPORT_ISSUE_URL,
+  WHO_ITS_FOR,
+  WHO_ITS_FOR_EXCLUDES,
+  WHO_ITS_FOR_TAGLINE
+} from "../lib/copy";
 
 type HelpPanelProps = {
   /** Test-only: render the dialog open on first paint (validate-guided-ui). */
@@ -21,16 +28,23 @@ type HelpPanelProps = {
  * Unlike the confirm/risk-trigger modals, this one is informational, not a
  * decision to make - closes on backdrop click, Escape, or the button.
  */
-export function HelpPanel({ initialOpen = false, open: controlledOpen, onOpenChange }: HelpPanelProps) {
+export function HelpPanel({
+  initialOpen = false,
+  open: controlledOpen,
+  onOpenChange
+}: HelpPanelProps) {
   const [internalOpen, setInternalOpen] = useState(initialOpen);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = (value: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(value);
-    }
-    onOpenChange?.(value);
-  };
+  const setOpen = useCallback(
+    (value: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(value);
+      }
+      onOpenChange?.(value);
+    },
+    [isControlled, onOpenChange]
+  );
 
   useEffect(() => {
     if (!open) {
@@ -43,7 +57,7 @@ export function HelpPanel({ initialOpen = false, open: controlledOpen, onOpenCha
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, [open, setOpen]);
 
   return (
     <>

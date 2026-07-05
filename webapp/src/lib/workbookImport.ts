@@ -15,7 +15,14 @@ export type PreviousWorkbookImport = {
   warnings: string[];
 };
 
-const INCOME_SOURCE_VALUES: IncomeSource[] = ["salary_pension", "bank_interest", "capital_gains", "dividends", "rent", "other"];
+const INCOME_SOURCE_VALUES: IncomeSource[] = [
+  "salary_pension",
+  "bank_interest",
+  "capital_gains",
+  "dividends",
+  "rent",
+  "other"
+];
 
 function toYesNo(value: string): boolean | null {
   const normalized = value.trim().toLowerCase();
@@ -86,7 +93,9 @@ function parseOrientationSheet(data: ExcelCell[][]): Partial<OrientationAnswers>
     const sources = incomeSourcesText
       .split(",")
       .map((source) => source.trim())
-      .filter((source): source is IncomeSource => (INCOME_SOURCE_VALUES as string[]).includes(source));
+      .filter((source): source is IncomeSource =>
+        (INCOME_SOURCE_VALUES as string[]).includes(source)
+      );
     if (sources.length > 0) {
       orientation.incomeSources = sources;
     }
@@ -153,7 +162,9 @@ export async function parsePreviousWorkbook(buffer: ArrayBuffer): Promise<Previo
       dividends: null,
       interestOtherIncome: null,
       foundAnything: false,
-      warnings: ["Couldn't read this file as an Excel workbook. Make sure it's the .xlsx file Unravel Tax exported."]
+      warnings: [
+        "Couldn't read this file as an Excel workbook. Make sure it's the .xlsx file Unravel Tax exported."
+      ]
     };
   }
 
@@ -170,7 +181,7 @@ export async function parsePreviousWorkbook(buffer: ArrayBuffer): Promise<Previo
     ? parseCaSummaryFigures(caSummarySheet.data)
     : { carryForwardLossesAvailable: null, dividends: null, interestOtherIncome: null };
   if (!caSummarySheet) {
-    warnings.push("No \"CA Summary\" sheet found, so no figures could be read from this file.");
+    warnings.push('No "CA Summary" sheet found, so no figures could be read from this file.');
   }
 
   const foundAnything =
@@ -199,7 +210,8 @@ export function applyPreviousWorkbookToOrientation(
   const next = { ...current };
   for (const key of Object.keys(imported) as (keyof OrientationAnswers)[]) {
     const currentValue = current[key];
-    const isBlank = currentValue === null || (Array.isArray(currentValue) && currentValue.length === 0);
+    const isBlank =
+      currentValue === null || (Array.isArray(currentValue) && currentValue.length === 0);
     if (isBlank) {
       (next as Record<string, unknown>)[key] = imported[key];
     }

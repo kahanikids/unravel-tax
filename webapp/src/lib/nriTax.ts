@@ -30,7 +30,9 @@ export function computeNriDividendTax(
 ): NriDividendTax {
   const amount = Math.max(0, dividends);
   const domesticRate = tdsRule.values.nro_dividend_tds_rate;
-  const treatyRate = (nriCountry && dtaaRule.values.nro_withholding_rates.countries[nriCountry]?.dividend_rate) ?? null;
+  const treatyRate =
+    (nriCountry && dtaaRule.values.nro_withholding_rates.countries[nriCountry]?.dividend_rate) ??
+    null;
   const effectiveRate = treatyRate !== null ? Math.min(domesticRate, treatyRate) : domesticRate;
   return {
     dividends: amount,
@@ -72,7 +74,8 @@ function checkOneNroTds(
     expectedAtDomesticRate: Math.round(clampedAmount * domesticRate),
     expectedAtTreatyRate,
     actualWithheld: clampedWithheld,
-    recoverableIfTreatyApplies: expectedAtTreatyRate !== null ? Math.max(0, clampedWithheld - expectedAtTreatyRate) : 0
+    recoverableIfTreatyApplies:
+      expectedAtTreatyRate !== null ? Math.max(0, clampedWithheld - expectedAtTreatyRate) : 0
   };
 }
 
@@ -103,7 +106,9 @@ export function computeNroTdsReconciliation(
   dtaaRule: NriDtaaRule,
   tdsRule: NriTdsAndRefundsRule
 ): NroTdsReconciliation {
-  const countryRates = inputs.nriCountry ? dtaaRule.values.nro_withholding_rates.countries[inputs.nriCountry] : undefined;
+  const countryRates = inputs.nriCountry
+    ? dtaaRule.values.nro_withholding_rates.countries[inputs.nriCountry]
+    : undefined;
   const interest = checkOneNroTds(
     "NRO interest",
     inputs.nroInterest,
@@ -118,5 +123,9 @@ export function computeNroTdsReconciliation(
     tdsRule.values.nro_dividend_tds_rate,
     countryRates?.dividend_rate ?? null
   );
-  return { interest, dividends, totalRecoverable: interest.recoverableIfTreatyApplies + dividends.recoverableIfTreatyApplies };
+  return {
+    interest,
+    dividends,
+    totalRecoverable: interest.recoverableIfTreatyApplies + dividends.recoverableIfTreatyApplies
+  };
 }

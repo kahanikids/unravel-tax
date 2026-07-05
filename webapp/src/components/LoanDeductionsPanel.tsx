@@ -1,4 +1,8 @@
-import { combined80cUsage, computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
+import {
+  combined80cUsage,
+  computeLetOutHouseProperty,
+  computeLoanDeductions
+} from "../lib/loanDeductions";
 import { ruleCatalog, type DeductionLimitsRule, type LoanTreatmentRule } from "../rules";
 import type { NumericFigureKey, SupplementalFigures } from "../state/types";
 import { RuleSourceLink } from "./RuleSourceLink";
@@ -42,9 +46,10 @@ export function LoanDeductionsPanel({
   return (
     <section className="supplemental-form">
       <p className="step-lede">
-        Enter the interest you paid on each loan this year. These lower your tax under the old regime only (a
-        rented-out home is the one exception, covered just below). Each is capped at its legal limit and folded into
-        the old-regime side of the comparison below. <RuleSourceLink refs={rule.source_refs} />
+        Enter the interest you paid on each loan this year. These lower your tax under the old
+        regime only (a rented-out home is the one exception, covered just below). Each is capped at
+        its legal limit and folded into the old-regime side of the comparison below.{" "}
+        <RuleSourceLink refs={rule.source_refs} />
       </p>
       <div className="supplemental-grid">
         {lines.map((line) => (
@@ -59,12 +64,15 @@ export function LoanDeductionsPanel({
               onChange={(event) => changeFigure(line.key, event.target.value)}
             />
             {line.limit !== null && line.entered > line.limit ? (
-              <span className="field-note">Capped at ₹{formatAmount(line.limit)} for this section.</span>
+              <span className="field-note">
+                Capped at ₹{formatAmount(line.limit)} for this section.
+              </span>
             ) : null}
           </label>
         ))}
         <label className="supplemental-field">
-          Home-loan principal repaid (Section 80C), inside the ₹{formatAmount(usage80c.limit)} ceiling
+          Home-loan principal repaid (Section 80C), inside the ₹{formatAmount(usage80c.limit)}{" "}
+          ceiling
           <input
             type="number"
             min={0}
@@ -74,12 +82,14 @@ export function LoanDeductionsPanel({
           />
           {usage80c.combined > usage80c.limit ? (
             <span className="field-note">
-              With your other 80C investments (₹{formatAmount(usage80c.investments)}), this passes the shared ₹
-              {formatAmount(usage80c.limit)} ceiling - only ₹{formatAmount(usage80c.allowed)} counts in total.
+              With your other 80C investments (₹{formatAmount(usage80c.investments)}), this passes
+              the shared ₹{formatAmount(usage80c.limit)} ceiling - only ₹
+              {formatAmount(usage80c.allowed)} counts in total.
             </span>
           ) : (
             <span className="field-note">
-              Shares the single 80C ceiling with your other 80C investments - it doesn't come on top. Old regime only.
+              Shares the single 80C ceiling with your other 80C investments - it doesn't come on
+              top. Old regime only.
             </span>
           )}
         </label>
@@ -90,9 +100,12 @@ export function LoanDeductionsPanel({
 
       <h4>Rented-out home (both regimes)</h4>
       <p className="step-lede">
-        If a home you have a loan on is rented out, the full interest nets against the rent instead of hitting the
-        caps above. A resulting loss offsets your other income only up to ₹
-        {formatAmount(rule.values.home_loan.let_out_interest_24b.house_property_loss_setoff_cap_against_other_heads_inr)}{" "}
+        If a home you have a loan on is rented out, the full interest nets against the rent instead
+        of hitting the caps above. A resulting loss offsets your other income only up to ₹
+        {formatAmount(
+          rule.values.home_loan.let_out_interest_24b
+            .house_property_loss_setoff_cap_against_other_heads_inr
+        )}{" "}
         under the old regime (rest carried forward), and not at all under the new regime.
       </p>
       <div className="supplemental-grid">
@@ -113,11 +126,14 @@ export function LoanDeductionsPanel({
         <div className="regime-result">
           <div className="regime-result-row">
             <span>
-              Rent ₹{formatAmount(letOut.rentReceived)} − municipal taxes ₹{formatAmount(letOut.municipalTaxes)} − 30%
-              standard deduction ₹{formatAmount(letOut.standardDeduction)} − interest ₹{formatAmount(letOut.interest)}
+              Rent ₹{formatAmount(letOut.rentReceived)} − municipal taxes ₹
+              {formatAmount(letOut.municipalTaxes)} − 30% standard deduction ₹
+              {formatAmount(letOut.standardDeduction)} − interest ₹{formatAmount(letOut.interest)}
             </span>
             <strong>
-              {letOut.netIncome < 0 ? `−₹${formatAmount(-letOut.netIncome)} loss` : `₹${formatAmount(letOut.netIncome)}`}
+              {letOut.netIncome < 0
+                ? `−₹${formatAmount(-letOut.netIncome)} loss`
+                : `₹${formatAmount(letOut.netIncome)}`}
             </strong>
           </div>
           <p className="regime-verdict">

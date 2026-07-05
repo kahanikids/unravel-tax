@@ -39,7 +39,8 @@ export function evaluateRiskTriggers(
     triggers.push({
       id: "hra_over_threshold_without_landlord_pan",
       label: "HRA claimed above ~₹1 lakh/year without a landlord PAN",
-      consequence: "The claim can be rejected on a documentation technicality even if it's genuine.",
+      consequence:
+        "The claim can be rejected on a documentation technicality even if it's genuine.",
       severity: "routine"
     });
   }
@@ -88,7 +89,8 @@ export function evaluateRiskTriggers(
     triggers.push({
       id: "late_filing",
       label: `Past the ${formatDate(itrForm.dueDate)} due date for ${itrForm.form}`,
-      consequence: "A late fee applies (Section 234F), and the right to carry forward most losses is forfeited.",
+      consequence:
+        "A late fee applies (Section 234F), and the right to carry forward most losses is forfeited.",
       severity: "form-changing"
     });
   }
@@ -108,13 +110,19 @@ export function caOrSelfFileRecommendation(
   hasBusinessIncome: boolean
 ): CaRecommendation {
   const formChangingTriggers = triggers.filter((trigger) => trigger.severity === "form-changing");
-  const recommendCa = flags.nri || flags.huf || flags.singleParent || hasBusinessIncome || formChangingTriggers.length > 0;
+  const recommendCa =
+    flags.nri ||
+    flags.huf ||
+    flags.singleParent ||
+    hasBusinessIncome ||
+    formChangingTriggers.length > 0;
 
   if (!recommendCa) {
     return {
       recommendCa: false,
       headline: "Self-filing may be reasonable here",
-      reason: "Nothing in your profile or documents points to added complexity, but it's still worth a final sanity check on the numbers before filing."
+      reason:
+        "Nothing in your profile or documents points to added complexity, but it's still worth a final sanity check on the numbers before filing."
     };
   }
 

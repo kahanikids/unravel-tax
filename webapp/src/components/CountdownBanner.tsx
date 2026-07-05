@@ -26,10 +26,20 @@ export function CountdownBanner({ variant }: { variant?: "header" } = {}) {
   }, []);
 
   const msLeft = DEADLINE - now;
-  const dueLabel = new Date(DEADLINE).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const dueLabel = new Date(DEADLINE).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
 
   return (
-    <div className={variant === "header" ? "countdown-banner countdown-banner-header" : "countdown-banner"} role="timer" aria-live="off">
+    <div
+      className={
+        variant === "header" ? "countdown-banner countdown-banner-header" : "countdown-banner"
+      }
+      role="timer"
+      aria-live="off"
+    >
       <div className="countdown-lede">
         <IconHourglass className="countdown-icon" />
         <span className="countdown-title">ITR Filing Deadline</span>
@@ -44,7 +54,9 @@ export function CountdownBanner({ variant }: { variant?: "header" } = {}) {
           ))}
         </div>
       ) : (
-        <span className="countdown-closed">Closed on {dueLabel}. A late return may still be possible.</span>
+        <span className="countdown-closed">
+          Closed on {dueLabel}. A late return may still be possible.
+        </span>
       )}
     </div>
   );

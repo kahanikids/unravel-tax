@@ -1,4 +1,5 @@
-export type IncomeSource = "salary_pension" | "bank_interest" | "capital_gains" | "dividends" | "rent" | "other";
+export type IncomeSource =
+  "salary_pension" | "bank_interest" | "capital_gains" | "dividends" | "rent" | "other";
 
 /** Country of tax residence when residency is "nri". Drives DTAA MF treatment lookup in rules/nri-dtaa.json. */
 export type NriCountry =
@@ -104,7 +105,8 @@ export const STEP_LABELS: Record<AppStep, string> = {
  * medical 2%, and an education-loan-funded remittance collects nothing.
  * Rates and threshold read from rules/foreign-investments.json.
  */
-export type RemittancePurpose = "investment_gift_other" | "education_medical" | "education_loan_funded";
+export type RemittancePurpose =
+  "investment_gift_other" | "education_medical" | "education_loan_funded";
 
 export type SupplementalFigures = {
   dividends: number;

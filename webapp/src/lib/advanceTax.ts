@@ -41,7 +41,11 @@ export function allocateCapitalGainsTaxByInstalment(
       continue;
     }
     try {
-      dated.push({ taxClass, gain: transaction.sellValue - transaction.buyValue, sellDate: parseFixtureDate(transaction.sellDate) });
+      dated.push({
+        taxClass,
+        gain: transaction.sellValue - transaction.buyValue,
+        sellDate: parseFixtureDate(transaction.sellDate)
+      });
     } catch {
       // Unparseable date: excluded from date-based allocation, same as
       // elsewhere in ingest - this gain still shows up in the app's other
@@ -50,16 +54,22 @@ export function allocateCapitalGainsTaxByInstalment(
   }
 
   const taxOnGains = (rows: DatedGain[]): number => {
-    const stcg = rows.filter((row) => row.taxClass === "ST").reduce((sum, row) => sum + row.gain, 0);
-    const ltcg = rows.filter((row) => row.taxClass === "LT").reduce((sum, row) => sum + row.gain, 0);
+    const stcg = rows
+      .filter((row) => row.taxClass === "ST")
+      .reduce((sum, row) => sum + row.gain, 0);
+    const ltcg = rows
+      .filter((row) => row.taxClass === "LT")
+      .reduce((sum, row) => sum + row.gain, 0);
     const ltcgTaxable = Math.max(0, ltcg - listedEquity.ltcg_exemption_inr);
     return Math.max(0, stcg) * listedEquity.stcg_rate + ltcgTaxable * listedEquity.ltcg_rate;
   };
 
-  const cumulativeByInstalment = advanceTaxRule.values.section_234c.instalments.map((instalment) => {
-    const dueDate = new Date(`${instalment.due_date}T00:00:00Z`);
-    return Math.round(taxOnGains(dated.filter((row) => row.sellDate <= dueDate)));
-  });
+  const cumulativeByInstalment = advanceTaxRule.values.section_234c.instalments.map(
+    (instalment) => {
+      const dueDate = new Date(`${instalment.due_date}T00:00:00Z`);
+      return Math.round(taxOnGains(dated.filter((row) => row.sellDate <= dueDate)));
+    }
+  );
 
   return { cumulativeByInstalment, totalForYear: Math.round(taxOnGains(dated)) };
 }
@@ -140,11 +150,17 @@ function monthsElapsedFromAyStart(asOfIso: string, ayStartIso: string): number {
   if (Number.isNaN(asOf.getTime()) || asOf <= start) {
     return 0;
   }
-  const months = (asOf.getUTCFullYear() - start.getUTCFullYear()) * 12 + (asOf.getUTCMonth() - start.getUTCMonth()) + 1;
+  const months =
+    (asOf.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (asOf.getUTCMonth() - start.getUTCMonth()) +
+    1;
   return Math.max(0, months);
 }
 
-export function estimateAdvanceTaxInterest(inputs: AdvanceTaxInputs, rule: AdvanceTaxRule): AdvanceTaxResult {
+export function estimateAdvanceTaxInterest(
+  inputs: AdvanceTaxInputs,
+  rule: AdvanceTaxRule
+): AdvanceTaxResult {
   const none = { shortfall: 0, monthsElapsed: 0, estimatedInterest: 0 };
   const thresholdInr = rule.values.advance_tax_required_above_inr;
   const dueAfterPayments = inputs.totalTaxLiability - inputs.taxAlreadyPaid;
@@ -162,7 +178,8 @@ export function estimateAdvanceTaxInterest(inputs: AdvanceTaxInputs, rule: Advan
     return {
       required: false,
       interestApplies: false,
-      reason: "Resident senior citizens with no business or professional income are exempt from advance tax (Section 207(2)).",
+      reason:
+        "Resident senior citizens with no business or professional income are exempt from advance tax (Section 207(2)).",
       ...none
     };
   }
@@ -179,8 +196,13 @@ export function estimateAdvanceTaxInterest(inputs: AdvanceTaxInputs, rule: Advan
   }
 
   const shortfall = Math.max(0, inputs.totalTaxLiability - inputs.taxAlreadyPaid);
-  const monthsElapsed = monthsElapsedFromAyStart(inputs.asOfDate, rule.values.assessment_year_start_date);
-  const estimatedInterest = Math.round(shortfall * rule.values.section_234b.interest_rate_per_month * monthsElapsed);
+  const monthsElapsed = monthsElapsedFromAyStart(
+    inputs.asOfDate,
+    rule.values.assessment_year_start_date
+  );
+  const estimatedInterest = Math.round(
+    shortfall * rule.values.section_234b.interest_rate_per_month * monthsElapsed
+  );
 
   return {
     required: true,
@@ -213,16 +235,24 @@ export function estimateAdvanceTaxInterest(inputs: AdvanceTaxInputs, rule: Advan
  * that remainder keeps this a ceiling rather than the exact bill. See
  * rules/advance-tax.md.
  */
-export function estimateSection234cInterest(inputs: Section234cInputs, rule: AdvanceTaxRule): Section234cResult {
+export function estimateSection234cInterest(
+  inputs: Section234cInputs,
+  rule: AdvanceTaxRule
+): Section234cResult {
   const ruleValues = rule.values.section_234c;
-  const instalmentsPaid = ruleValues.instalments.map((_, index) => Math.max(0, inputs.instalmentsPaid[index] ?? 0));
+  const instalmentsPaid = ruleValues.instalments.map((_, index) =>
+    Math.max(0, inputs.instalmentsPaid[index] ?? 0)
+  );
   const instalmentsTotal = instalmentsPaid.reduce((sum, paid) => sum + paid, 0);
   const tdsTreatedAsDeducted = Math.max(0, inputs.taxAlreadyPaid - instalmentsTotal);
   const assessedTax = Math.max(0, inputs.totalTaxLiability - tdsTreatedAsDeducted);
   // Capped at assessedTax: a capital-gains figure larger than the entered
   // total tax liability means the two inputs disagree, and the cumulative
   // targets below must never exceed the year's actual assessed tax.
-  const capitalGainsTaxForYear = Math.min(assessedTax, Math.max(0, inputs.capitalGainsTax?.totalForYear ?? 0));
+  const capitalGainsTaxForYear = Math.min(
+    assessedTax,
+    Math.max(0, inputs.capitalGainsTax?.totalForYear ?? 0)
+  );
   const ordinaryTax = Math.max(0, assessedTax - capitalGainsTaxForYear);
   const none = {
     assessedTax,
@@ -246,7 +276,8 @@ export function estimateSection234cInterest(inputs: Section234cInputs, rule: Adv
     return {
       required: false,
       interestApplies: false,
-      reason: "Resident senior citizens with no business or professional income are exempt from advance tax (Section 207(2)), so no Section 234C interest applies.",
+      reason:
+        "Resident senior citizens with no business or professional income are exempt from advance tax (Section 207(2)), so no Section 234C interest applies.",
       ...none
     };
   }
@@ -254,7 +285,10 @@ export function estimateSection234cInterest(inputs: Section234cInputs, rule: Adv
   let paidCumulative = 0;
   const instalments: Section234cInstalment[] = ruleValues.instalments.map((instalment, index) => {
     paidCumulative += instalmentsPaid[index];
-    const capitalGainsCumulative = Math.max(0, inputs.capitalGainsTax?.cumulativeByInstalment[index] ?? 0);
+    const capitalGainsCumulative = Math.max(
+      0,
+      inputs.capitalGainsTax?.cumulativeByInstalment[index] ?? 0
+    );
     const requiredCumulative = Math.min(
       assessedTax,
       ordinaryTax * instalment.cumulative_fraction_due + capitalGainsCumulative

@@ -8,8 +8,24 @@ import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDe
 import { summarizeInsurancePolicies, type InsurancePolicy } from "../lib/insurance";
 import type { HufAssetTransfer, HufMember } from "../lib/hufClubbing";
 import type { ForeignAccount } from "../lib/scheduleFa";
-import { ruleCatalog, type AdvanceTaxRule, type ForeignInvestmentsRule, type HufClubbingRule, type InsuranceRule, type LoanTreatmentRule, type NriDtaaRule, type NriRepatriationRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
-import type { AisReportedFigures, NriCountry, NumericFigureKey, SupplementalFigures } from "../state/types";
+import {
+  ruleCatalog,
+  type AdvanceTaxRule,
+  type ForeignInvestmentsRule,
+  type HufClubbingRule,
+  type InsuranceRule,
+  type LoanTreatmentRule,
+  type NriDtaaRule,
+  type NriRepatriationRule,
+  type NriTdsAndRefundsRule,
+  type RegimeChoiceRule
+} from "../rules";
+import type {
+  AisReportedFigures,
+  NriCountry,
+  NumericFigureKey,
+  SupplementalFigures
+} from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
@@ -29,7 +45,17 @@ function formatAmount(value: number) {
 }
 
 const DownloadIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="7 10 12 15 17 10" />
     <line x1="12" y1="3" x2="12" y2="15" />
@@ -56,7 +82,10 @@ const SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "interestOtherIncome", label: "Bank interest & other income" },
   { key: "eligibleInterestDeduction", label: "Interest deduction (savings/FD, Section 80TTA/B)" },
   { key: "deductibleTransactionCharges", label: "Brokerage/STT charges you can deduct" },
-  { key: "carryForwardLossesAvailable", label: "Losses you're carrying forward from a previous year" }
+  {
+    key: "carryForwardLossesAvailable",
+    label: "Losses you're carrying forward from a previous year"
+  }
 ];
 
 /** NRI only: kept out of the general list above so it only shows for that profile. */
@@ -196,10 +225,20 @@ export function ResultsStep({
   const letOut = computeLetOutHouseProperty(supplementalFigures, loanTreatmentRule);
   // Insurance policies from the Insurance section - shared by that panel and
   // the regime comparison's "other income" addend so both show the same figure.
-  const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, insuranceRule, ruleCatalog.capitalGainsEquity);
+  const insuranceSummary = summarizeInsurancePolicies(
+    insurancePolicies,
+    insuranceRule,
+    ruleCatalog.capitalGainsEquity
+  );
   return (
     <div className="step-card">
-      <div className={caRecommendation.recommendCa ? "recommendation-banner recommendation-ca" : "recommendation-banner"}>
+      <div
+        className={
+          caRecommendation.recommendCa
+            ? "recommendation-banner recommendation-ca"
+            : "recommendation-banner"
+        }
+      >
         <h2>{caRecommendation.headline}</h2>
         <p>{caRecommendation.reason}</p>
       </div>
@@ -215,13 +254,18 @@ export function ResultsStep({
         <div className="summary-rows">
           {/* Simple view: the five income heads. The sale/cost totals rows
               (ruleSection "Totals") are supporting detail, shown in full view. */}
-          {(showAdvanced ? rows : rows.filter((row) => row.ruleSection !== "Totals").slice(0, 5)).map((row) => {
+          {(showAdvanced
+            ? rows
+            : rows.filter((row) => row.ruleSection !== "Totals").slice(0, 5)
+          ).map((row) => {
             const sourceRefs = sourceRefsForRow(row);
             return (
               <article className="summary-row" key={row.head}>
                 <div className="summary-row-main">
                   <span>{row.head}</span>
-                  <strong>{typeof row.amount === "number" ? formatAmount(row.amount) : row.amount}</strong>
+                  <strong>
+                    {typeof row.amount === "number" ? formatAmount(row.amount) : row.amount}
+                  </strong>
                 </div>
                 {row.notes ? (
                   <details className="summary-row-why">
@@ -257,8 +301,8 @@ export function ResultsStep({
               {brokerCheck ? (
                 <>
                   <p className="broker-check-lede">
-                    Your statement has its own "{brokerCheck.columnName}" column. Computed gain (sale − cost) vs that
-                    column, per bucket:
+                    Your statement has its own "{brokerCheck.columnName}" column. Computed gain
+                    (sale − cost) vs that column, per bucket:
                   </p>
                   <dl>
                     {brokerCheck.perClass
@@ -268,21 +312,25 @@ export function ResultsStep({
                         return (
                           <div className="fact-row" key={entry.label}>
                             <dt>{entry.label}</dt>
-                            <dd className={matches ? "broker-check-match" : "broker-check-mismatch"}>
-                              {formatAmount(entry.computed)} vs {formatAmount(entry.broker)} {matches ? "✓" : "✗"}
+                            <dd
+                              className={matches ? "broker-check-match" : "broker-check-mismatch"}
+                            >
+                              {formatAmount(entry.computed)} vs {formatAmount(entry.broker)}{" "}
+                              {matches ? "✓" : "✗"}
                             </dd>
                           </div>
                         );
                       })}
                   </dl>
                   <p className="broker-check-note">
-                    A difference usually means the broker netted charges we kept gross. Mismatches are also counted in
-                    the open-issues total above.
+                    A difference usually means the broker netted charges we kept gross. Mismatches
+                    are also counted in the open-issues total above.
                   </p>
                 </>
               ) : (
                 <p className="checklist-empty">
-                  No document carried its own gain/taxable column, so there's no broker figure to check against.
+                  No document carried its own gain/taxable column, so there's no broker figure to
+                  check against.
                 </p>
               )}
             </div>
@@ -290,50 +338,56 @@ export function ResultsStep({
         ) : null}
       </section>
 
-      <details className="refine-panel" open={refineOpen} onToggle={(event) => setRefineOpen(event.currentTarget.open)}>
+      <details
+        className="refine-panel"
+        open={refineOpen}
+        onToggle={(event) => setRefineOpen(event.currentTarget.open)}
+      >
         <summary>A few more numbers</summary>
         <details className="refine-section" open>
           <summary>Income you type in</summary>
           <section className="supplemental-form">
-          {hasPrefilled ? (
-            <p className="defaults-banner">
-              Some of these were filled in from your statement. Please check them.
+            {hasPrefilled ? (
+              <p className="defaults-banner">
+                Some of these were filled in from your statement. Please check them.
+              </p>
+            ) : null}
+            {netGainMissingDetail ? (
+              <p className="inline-error">
+                <strong>Still needed:</strong> your detailed per-transaction capital-gains
+                statement. Your document only gave a net realised gain, which can't be split into
+                short-term and long-term, so it isn't used in any calculation here. Get the
+                per-transaction statement from your broker/AMC/PMS, or enter the
+                short-term/long-term split yourself.
+              </p>
+            ) : null}
+            <p className="step-lede">
+              These don't come from an uploaded document. Enter them yourself, or leave at zero to
+              skip.
             </p>
-          ) : null}
-          {netGainMissingDetail ? (
-            <p className="inline-error">
-              <strong>Still needed:</strong> your detailed per-transaction capital-gains statement. Your document only
-              gave a net realised gain, which can't be split into short-term and long-term, so it isn't used in any
-              calculation here. Get the per-transaction statement from your broker/AMC/PMS, or enter the
-              short-term/long-term split yourself.
-            </p>
-          ) : null}
-          <p className="step-lede">
-            These don't come from an uploaded document. Enter them yourself, or leave at zero to skip.
-          </p>
-          <div className="supplemental-grid">
-            {[
-              ...SUPPLEMENTAL_FIELDS,
-              ...(nri ? NRI_SUPPLEMENTAL_FIELDS : []),
-              ...(singleParent ? SINGLE_PARENT_SUPPLEMENTAL_FIELDS : [])
-            ].map((field) => (
-              <label key={field.key} className="supplemental-field">
-                {field.label}
-                <input
-                  type="number"
-                  min={0}
-                  value={supplementalFigures[field.key]}
-                  placeholder="₹0"
-                  onChange={(event) =>
-                    onChangeSupplementalFigures({
-                      ...supplementalFigures,
-                      [field.key]: Number(event.target.value) || 0
-                    })
-                  }
-                />
-              </label>
-            ))}
-          </div>
+            <div className="supplemental-grid">
+              {[
+                ...SUPPLEMENTAL_FIELDS,
+                ...(nri ? NRI_SUPPLEMENTAL_FIELDS : []),
+                ...(singleParent ? SINGLE_PARENT_SUPPLEMENTAL_FIELDS : [])
+              ].map((field) => (
+                <label key={field.key} className="supplemental-field">
+                  {field.label}
+                  <input
+                    type="number"
+                    min={0}
+                    value={supplementalFigures[field.key]}
+                    placeholder="₹0"
+                    onChange={(event) =>
+                      onChangeSupplementalFigures({
+                        ...supplementalFigures,
+                        [field.key]: Number(event.target.value) || 0
+                      })
+                    }
+                  />
+                </label>
+              ))}
+            </div>
           </section>
         </details>
 
@@ -412,11 +466,11 @@ export function ResultsStep({
           <summary>Old vs new regime</summary>
           {huf ? (
             <section className="regime-panel">
-            <p className="step-lede">
-              This comparison assumes salary income and a standard deduction, neither of which apply to an HUF return,
-              and it doesn't allow for the missing Section 87A rebate either. Skip it here and get slab-tax figures
-              from a CA instead.
-            </p>
+              <p className="step-lede">
+                This comparison assumes salary income and a standard deduction, neither of which
+                apply to an HUF return, and it doesn't allow for the missing Section 87A rebate
+                either. Skip it here and get slab-tax figures from a CA instead.
+              </p>
             </section>
           ) : (
             <RegimeComparisonPanel
@@ -427,7 +481,9 @@ export function ResultsStep({
               seniorCitizen={seniorCitizen}
               superSeniorCitizen={superSeniorCitizen}
               nri={nri}
-              loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
+              loanDeductionsTotal={
+                computeLoanDeductions(supplementalFigures, loanTreatmentRule).total
+              }
               letOutIncomeOldRegime={letOut.oldRegimeIncome}
               letOutIncomeNewRegime={letOut.newRegimeIncome}
               additionalOtherSlabIncome={insuranceSummary.totalOtherSourcesSlabIncome}
@@ -472,8 +528,8 @@ export function ResultsStep({
             </InfoTooltip>
           </h3>
           <p className="step-lede">
-            Give the CA Summary to your CA. Keep the Full Workbook for your own records, especially for carrying
-            forward any losses next year.
+            Give the CA Summary to your CA. Keep the Full Workbook for your own records, especially
+            for carrying forward any losses next year.
           </p>
           <p>
             {openIssueCount === 0
@@ -488,7 +544,13 @@ export function ResultsStep({
             onClick={onExportXlsx}
             aria-label={localFolderName ? undefined : "Download CA Summary XLSX"}
           >
-            {localFolderName ? "Save CA Summary XLSX" : <><DownloadIcon /> CA Summary XLSX</>}
+            {localFolderName ? (
+              "Save CA Summary XLSX"
+            ) : (
+              <>
+                <DownloadIcon /> CA Summary XLSX
+              </>
+            )}
           </button>
           <button
             type="button"
@@ -496,7 +558,13 @@ export function ResultsStep({
             onClick={onExportFullWorkbook}
             aria-label={localFolderName ? undefined : "Download full workbook"}
           >
-            {localFolderName ? "Save Full Workbook" : <><DownloadIcon /> Full Workbook</>}
+            {localFolderName ? (
+              "Save Full Workbook"
+            ) : (
+              <>
+                <DownloadIcon /> Full Workbook
+              </>
+            )}
           </button>
           <details className="other-format">
             <summary>Other format</summary>
@@ -506,14 +574,23 @@ export function ResultsStep({
               onClick={onExportCsv}
               aria-label={localFolderName ? undefined : "Download CA Summary CSV"}
             >
-              {localFolderName ? "Save CA Summary CSV" : <><DownloadIcon /> CA Summary CSV</>}
+              {localFolderName ? (
+                "Save CA Summary CSV"
+              ) : (
+                <>
+                  <DownloadIcon /> CA Summary CSV
+                </>
+              )}
             </button>
           </details>
         </div>
         {localFolderSupported ? (
           <p className="folder-status">
             {localFolderName ? (
-              <>Saving to <strong>{localFolderName}</strong> on your computer instead of your Downloads folder.</>
+              <>
+                Saving to <strong>{localFolderName}</strong> on your computer instead of your
+                Downloads folder.
+              </>
             ) : (
               <button type="button" className="text-button" onClick={onChooseLocalFolder}>
                 Alternate Option: Save To Local Folder
@@ -521,7 +598,13 @@ export function ResultsStep({
             )}
           </p>
         ) : null}
-        <p className={exportMessage.startsWith("✓") ? "export-message export-message-success" : "export-message"}>
+        <p
+          className={
+            exportMessage.startsWith("✓")
+              ? "export-message export-message-success"
+              : "export-message"
+          }
+        >
           {exportMessage}
         </p>
       </section>

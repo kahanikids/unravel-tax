@@ -184,15 +184,36 @@ export function Dashboard({
   const num = (value: number) => (Number.isFinite(value) ? value : 0);
   const refundTrend = insights.sorted.map((filing) => num(filing.refundOrPayable));
   const outcomeSeries: ChartSeries[] = [
-    { label: "Capital gains / losses", color: "#2bb673", values: insights.sorted.map((f) => num(f.capitalGains)) },
-    { label: "Total tax paid", color: "#147a47", values: insights.sorted.map((f) => num(f.totalTaxPaid)) },
-    { label: "Losses carried forward", color: "#9361e2", values: insights.sorted.map((f) => num(f.carryForwardLosses)) }
+    {
+      label: "Capital gains / losses",
+      color: "#2bb673",
+      values: insights.sorted.map((f) => num(f.capitalGains))
+    },
+    {
+      label: "Total tax paid",
+      color: "#147a47",
+      values: insights.sorted.map((f) => num(f.totalTaxPaid))
+    },
+    {
+      label: "Losses carried forward",
+      color: "#9361e2",
+      values: insights.sorted.map((f) => num(f.carryForwardLosses))
+    }
   ];
   const loanSeries: ChartSeries[] = [
-    { label: "Principal repaid", color: "#2b7fff", values: insights.sorted.map((f) => num(f.loanPrincipal)) },
-    { label: "Interest paid", color: "#e0982f", values: insights.sorted.map((f) => num(f.loanInterest)) }
+    {
+      label: "Principal repaid",
+      color: "#2b7fff",
+      values: insights.sorted.map((f) => num(f.loanPrincipal))
+    },
+    {
+      label: "Interest paid",
+      color: "#e0982f",
+      values: insights.sorted.map((f) => num(f.loanInterest))
+    }
   ];
-  const hasAny = (series: ChartSeries[]) => series.some((line) => line.values.some((value) => value !== 0));
+  const hasAny = (series: ChartSeries[]) =>
+    series.some((line) => line.values.some((value) => value !== 0));
   const hasOutcomeData = hasAny(outcomeSeries);
   const hasLoanData = hasAny(loanSeries);
   const hasRefundData = refundTrend.some((value) => value !== 0);
@@ -240,7 +261,8 @@ export function Dashboard({
         <div>
           <h2>Your tax dashboard</h2>
           <p className="step-lede">
-            This year at a glance, and how your filings compare year over year. Everything runs in this browser.
+            This year at a glance, and how your filings compare year over year. Everything runs in
+            this browser.
           </p>
         </div>
         <button type="button" className="view-toggle" onClick={onToggleAdvanced}>
@@ -272,7 +294,9 @@ export function Dashboard({
                 </li>
                 <li className="tax-timeline-step tax-timeline-step-due">
                   <span className="tax-timeline-dot" aria-hidden="true" />
-                  <span className="tax-timeline-title">Due {formatDueDate(thisYear.itrDueDate)}</span>
+                  <span className="tax-timeline-title">
+                    Due {formatDueDate(thisYear.itrDueDate)}
+                  </span>
                   <span className="tax-timeline-note">{thisYear.regimeNote}</span>
                 </li>
               </ol>
@@ -285,13 +309,29 @@ export function Dashboard({
                 {thisYear.regime.comparable ? (
                   <>
                     <div className="regime-cards">
-                      <div className={thisYear.regime.cheaper === "new" ? "regime-card regime-card-win" : "regime-card"}>
+                      <div
+                        className={
+                          thisYear.regime.cheaper === "new"
+                            ? "regime-card regime-card-win"
+                            : "regime-card"
+                        }
+                      >
                         <span className="regime-card-label">New</span>
-                        <strong className="regime-card-value">{formatCompactInr(thisYear.regime.newRegimeTax)}</strong>
+                        <strong className="regime-card-value">
+                          {formatCompactInr(thisYear.regime.newRegimeTax)}
+                        </strong>
                       </div>
-                      <div className={thisYear.regime.cheaper === "old" ? "regime-card regime-card-win" : "regime-card"}>
+                      <div
+                        className={
+                          thisYear.regime.cheaper === "old"
+                            ? "regime-card regime-card-win"
+                            : "regime-card"
+                        }
+                      >
                         <span className="regime-card-label">Old</span>
-                        <strong className="regime-card-value">{formatCompactInr(thisYear.regime.oldRegimeTax)}</strong>
+                        <strong className="regime-card-value">
+                          {formatCompactInr(thisYear.regime.oldRegimeTax)}
+                        </strong>
                       </div>
                     </div>
                     <p className="widget-note">
@@ -302,11 +342,14 @@ export function Dashboard({
                           )}. Slab income only.`}
                     </p>
                     {thisYear.regime.newAlwaysWins ? (
-                      <p className="widget-note">New regime is already zero-tax here, so there's no break-even to beat.</p>
+                      <p className="widget-note">
+                        New regime is already zero-tax here, so there's no break-even to beat.
+                      </p>
                     ) : (
                       <>
                         <p className="widget-note">
-                          Break-even deductions <strong>{formatCompactInr(thisYear.regime.breakEvenDeductions)}</strong>
+                          Break-even deductions{" "}
+                          <strong>{formatCompactInr(thisYear.regime.breakEvenDeductions)}</strong>
                         </p>
                         <Meter
                           used={thisYear.regime.actualDeductions}
@@ -391,7 +434,9 @@ export function Dashboard({
                     </p>
                   </>
                 ) : (
-                  <p className="widget-empty">Enter your AIS/26AS figures in Results to check for mismatches.</p>
+                  <p className="widget-empty">
+                    Enter your AIS/26AS figures in Results to check for mismatches.
+                  </p>
                 )}
               </article>
 
@@ -406,7 +451,9 @@ export function Dashboard({
                       min={0}
                       value={insurance.annualPremium}
                       placeholder="₹0"
-                      onChange={(event) => onChangeFigure("insuranceAnnualPremium", Number(event.target.value) || 0)}
+                      onChange={(event) =>
+                        onChangeFigure("insuranceAnnualPremium", Number(event.target.value) || 0)
+                      }
                     />
                   </label>
                   <Meter
@@ -417,9 +464,9 @@ export function Dashboard({
                   />
                   <p className="widget-note">{insuranceStatus}</p>
                   <p className="widget-note">
-                    The exact taxable figure still needs the policy&apos;s issue date and premium-to-sum-assured history,
-                    which this tool doesn&apos;t hold. Death benefits stay fully exempt.{" "}
-                    <RuleSourceLink refs={insurance.sourceRefs} />
+                    The exact taxable figure still needs the policy&apos;s issue date and
+                    premium-to-sum-assured history, which this tool doesn&apos;t hold. Death
+                    benefits stay fully exempt. <RuleSourceLink refs={insurance.sourceRefs} />
                   </p>
                 </article>
               ) : null}
@@ -429,10 +476,14 @@ export function Dashboard({
                 <article className="dashboard-widget" aria-labelledby="widget-foreign">
                   <h4 id="widget-foreign">Foreign assets &amp; LRS remittances</h4>
                   <p className="widget-note">
-                    Every foreign asset held at any point in the calendar year goes in Schedule FA, with{" "}
-                    {foreign.scheduleFaMinValueInr === 0 ? "no minimum value" : `a floor of ${formatCompactInr(foreign.scheduleFaMinValueInr)}`}, and it
-                    needs {foreign.requiresItrForms.join(" or ")} (never ITR-1). Missing one risks a{" "}
-                    {formatCompactInr(foreign.blackMoneyPenaltyInr)} Black Money Act penalty.
+                    Every foreign asset held at any point in the calendar year goes in Schedule FA,
+                    with{" "}
+                    {foreign.scheduleFaMinValueInr === 0
+                      ? "no minimum value"
+                      : `a floor of ${formatCompactInr(foreign.scheduleFaMinValueInr)}`}
+                    , and it needs {foreign.requiresItrForms.join(" or ")} (never ITR-1). Missing
+                    one risks a {formatCompactInr(foreign.blackMoneyPenaltyInr)} Black Money Act
+                    penalty.
                   </p>
                   <label className="deduction-bar-input">
                     <span className="visually-hidden">LRS money sent abroad this year</span>
@@ -441,20 +492,26 @@ export function Dashboard({
                       min={0}
                       value={foreign.remittance}
                       placeholder="₹0"
-                      onChange={(event) => onChangeFigure("foreignRemittanceLrs", Number(event.target.value) || 0)}
+                      onChange={(event) =>
+                        onChangeFigure("foreignRemittanceLrs", Number(event.target.value) || 0)
+                      }
                     />
                   </label>
                   <label className="deduction-bar-input">
                     <span className="visually-hidden">What the money was for</span>
                     <select
                       value={foreign.purpose}
-                      onChange={(event) => onChangeRemittancePurpose(event.target.value as RemittancePurpose)}
+                      onChange={(event) =>
+                        onChangeRemittancePurpose(event.target.value as RemittancePurpose)
+                      }
                     >
-                      {(Object.keys(REMITTANCE_PURPOSE_LABELS) as RemittancePurpose[]).map((purpose) => (
-                        <option key={purpose} value={purpose}>
-                          {REMITTANCE_PURPOSE_LABELS[purpose]}
-                        </option>
-                      ))}
+                      {(Object.keys(REMITTANCE_PURPOSE_LABELS) as RemittancePurpose[]).map(
+                        (purpose) => (
+                          <option key={purpose} value={purpose}>
+                            {REMITTANCE_PURPOSE_LABELS[purpose]}
+                          </option>
+                        )
+                      )}
                     </select>
                   </label>
                   <Meter
@@ -477,7 +534,8 @@ export function Dashboard({
                             foreign.estimatedTcs
                           )} TCS is a prepaid credit shown in your AIS/26AS, recoverable in the return, not an added cost.`
                       : "TCS applies only above the threshold, and even then it's a prepaid credit, not a cost."}{" "}
-                    Foreign tax paid abroad is credited via Form 67. <RuleSourceLink refs={foreign.sourceRefs} />
+                    Foreign tax paid abroad is credited via Form 67.{" "}
+                    <RuleSourceLink refs={foreign.sourceRefs} />
                   </p>
                 </article>
               ) : null}
@@ -534,7 +592,9 @@ export function Dashboard({
 
             {hasLoanData ? (
               <div className="dashboard-chart-card">
-                <p className="dashboard-bars-caption">Loan principal and interest, year over year</p>
+                <p className="dashboard-bars-caption">
+                  Loan principal and interest, year over year
+                </p>
                 <TrendChart
                   labels={years}
                   series={loanSeries}
@@ -553,38 +613,61 @@ export function Dashboard({
                 <strong>
                   {insights.incomeGrowthPct === null
                     ? "—"
-                    : `${insights.incomeGrowthPct >= 0 ? "+" : ""}${insights.incomeGrowthPct.toLocaleString("en-IN", {
-                        maximumFractionDigits: 1
-                      })}%`}
+                    : `${insights.incomeGrowthPct >= 0 ? "+" : ""}${insights.incomeGrowthPct.toLocaleString(
+                        "en-IN",
+                        {
+                          maximumFractionDigits: 1
+                        }
+                      )}%`}
                 </strong>
                 <span className="dashboard-stat-note">Gross total income vs the year before.</span>
               </article>
               <article className="dashboard-insight">
                 <span className="dashboard-stat-label">Effective tax rate (latest)</span>
-                <strong>{insights.latestEffectiveRate === null ? "—" : formatPercent(insights.latestEffectiveRate)}</strong>
+                <strong>
+                  {insights.latestEffectiveRate === null
+                    ? "—"
+                    : formatPercent(insights.latestEffectiveRate)}
+                </strong>
                 <span className="dashboard-stat-note">Total tax paid ÷ gross total income.</span>
               </article>
               <article className="dashboard-insight">
                 <span className="dashboard-stat-label">Regime</span>
-                <strong>{insights.regimeSwitched ? "Switched" : insights.regimesUsed[0] ? REGIME_LABELS[insights.regimesUsed[0]] : "Not recorded"}</strong>
+                <strong>
+                  {insights.regimeSwitched
+                    ? "Switched"
+                    : insights.regimesUsed[0]
+                      ? REGIME_LABELS[insights.regimesUsed[0]]
+                      : "Not recorded"}
+                </strong>
                 <span className="dashboard-stat-note">
-                  {insights.regimeSwitched ? "You've used more than one regime. Worth confirming you can still switch." : "Across your recorded years."}
+                  {insights.regimeSwitched
+                    ? "You've used more than one regime. Worth confirming you can still switch."
+                    : "Across your recorded years."}
                 </span>
               </article>
             </div>
 
             {/* Dependency-free CSS bars: gross total income per year. */}
-            <div className="dashboard-bars" role="img" aria-label="Gross total income by assessment year">
+            <div
+              className="dashboard-bars"
+              role="img"
+              aria-label="Gross total income by assessment year"
+            >
               {insights.sorted.map((filing) => (
                 <div className="dashboard-bar-row" key={filing.id}>
                   <span className="dashboard-bar-label">{filing.assessmentYear}</span>
                   <span className="dashboard-bar-track">
                     <span
                       className="dashboard-bar-fill"
-                      style={{ width: `${Math.round((filing.grossTotalIncome / maxIncome) * 100)}%` }}
+                      style={{
+                        width: `${Math.round((filing.grossTotalIncome / maxIncome) * 100)}%`
+                      }}
                     />
                   </span>
-                  <span className="dashboard-bar-value">₹{formatAmount(filing.grossTotalIncome)}</span>
+                  <span className="dashboard-bar-value">
+                    ₹{formatAmount(filing.grossTotalIncome)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -606,23 +689,40 @@ export function Dashboard({
                 </thead>
                 <tbody>
                   {insights.sorted.map((filing) => {
-                    const rate = filing.grossTotalIncome > 0 ? filing.totalTaxPaid / filing.grossTotalIncome : 0;
+                    const rate =
+                      filing.grossTotalIncome > 0
+                        ? filing.totalTaxPaid / filing.grossTotalIncome
+                        : 0;
                     return (
                       <tr key={filing.id}>
                         <td data-label="Assessment year">{filing.assessmentYear}</td>
                         <td data-label="ITR form">{filing.itrForm || "—"}</td>
-                        <td data-label="Gross total income">₹{formatAmount(filing.grossTotalIncome)}</td>
+                        <td data-label="Gross total income">
+                          ₹{formatAmount(filing.grossTotalIncome)}
+                        </td>
                         <td data-label="Total tax paid">₹{formatAmount(filing.totalTaxPaid)}</td>
-                        <td data-label="Refund / payable">{formatSignedInr(filing.refundOrPayable)}</td>
+                        <td data-label="Refund / payable">
+                          {formatSignedInr(filing.refundOrPayable)}
+                        </td>
                         <td data-label="Regime">{REGIME_LABELS[filing.regime]}</td>
-                        {showAdvanced ? <td data-label="Effective rate">{formatPercent(rate)}</td> : null}
+                        {showAdvanced ? (
+                          <td data-label="Effective rate">{formatPercent(rate)}</td>
+                        ) : null}
                         <td data-label="Source">
-                          <span className={filing.source === "manual" ? "pill pill-neutral" : "pill pill-ready"}>
+                          <span
+                            className={
+                              filing.source === "manual" ? "pill pill-neutral" : "pill pill-ready"
+                            }
+                          >
                             {FILING_SOURCE_LABELS[filing.source]}
                           </span>
                         </td>
                         <td data-label="Action">
-                          <button type="button" className="text-button" onClick={() => onRemovePastFiling(filing.id)}>
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => onRemovePastFiling(filing.id)}
+                          >
                             Remove
                           </button>
                         </td>
@@ -634,7 +734,11 @@ export function Dashboard({
             </div>
 
             {showAdvanced ? (
-              <div className="dashboard-bars" role="img" aria-label="Effective tax rate by assessment year">
+              <div
+                className="dashboard-bars"
+                role="img"
+                aria-label="Effective tax rate by assessment year"
+              >
                 <p className="dashboard-bars-caption">Effective tax rate over time</p>
                 {insights.effectiveRates.map((point) => (
                   <div className="dashboard-bar-row" key={point.assessmentYear}>
@@ -652,14 +756,16 @@ export function Dashboard({
             ) : null}
 
             <p className="dashboard-reminder">
-              Carry-forward capital losses stay usable for 8 assessment years, and only if each year&apos;s return was
-              filed on time. Advance tax for {thisYear.assessmentYear} is due in quarterly instalments if your tax after
-              TDS will cross ₹10,000. Worth checking early.
+              Carry-forward capital losses stay usable for 8 assessment years, and only if each
+              year&apos;s return was filed on time. Advance tax for {thisYear.assessmentYear} is due
+              in quarterly instalments if your tax after TDS will cross ₹10,000. Worth checking
+              early.
             </p>
           </>
         ) : (
           <p className="dashboard-empty-note">
-            No past years yet. Add a previous filing below to start seeing your income and tax trends year over year.
+            No past years yet. Add a previous filing below to start seeing your income and tax
+            trends year over year.
           </p>
         )}
 
@@ -712,7 +818,10 @@ function AddPastFilingForm({
     const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
     try {
       const parsed = isPdf
-        ? parseItrVText((await (await import("../ingest/pdfExtract")).extractPdfText(await file.arrayBuffer())).text)
+        ? parseItrVText(
+            (await (await import("../ingest/pdfExtract")).extractPdfText(await file.arrayBuffer()))
+              .text
+          )
         : parseItrJson(await file.text());
       setFields({ ...BLANK_PAST_FILING_FIELDS, ...parsed.fields });
       setAutoRead(new Set(parsed.readFields));
@@ -761,8 +870,9 @@ function AddPastFilingForm({
       <summary>
         Add a past year
         <InfoTooltip label="About adding a past year" className="dashboard-add-tip align-right">
-          Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement PDF, to prefill
-          these, or just type them in. Whatever a file doesn&apos;t give us, fill in by hand below.
+          Upload the ITR JSON you downloaded from the income-tax portal, or an ITR-V acknowledgement
+          PDF, to prefill these, or just type them in. Whatever a file doesn&apos;t give us, fill in
+          by hand below.
         </InfoTooltip>
       </summary>
       <div className="dashboard-add-body">
@@ -798,7 +908,10 @@ function AddPastFilingForm({
           </label>
           <label className="supplemental-field">
             Regime{autoTag("regime")}
-            <select value={fields.regime} onChange={(event) => set("regime", event.target.value as FilingRegime)}>
+            <select
+              value={fields.regime}
+              onChange={(event) => set("regime", event.target.value as FilingRegime)}
+            >
               {REGIME_OPTIONS.map((option) => (
                 <option key={option} value={option}>
                   {REGIME_LABELS[option]}

@@ -39,14 +39,21 @@ function comparableRows(result: IngestResult): string[] {
 }
 
 export async function main() {
-  const csv = parseCsvText(await readFile(resolve(fixturesDir, "sample-broker-statement.csv"), "utf8"));
+  const csv = parseCsvText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement.csv"), "utf8")
+  );
   const structuredText = parseStructuredText(
     await readFile(resolve(fixturesDir, "sample-broker-statement.tsv"), "utf8")
   );
-  const html = parseHtmlText(await readFile(resolve(fixturesDir, "sample-broker-statement.html"), "utf8"));
+  const html = parseHtmlText(
+    await readFile(resolve(fixturesDir, "sample-broker-statement.html"), "utf8")
+  );
   const excelBuffer = await readFile(resolve(fixturesDir, "sample-broker-statement.xlsx"));
   const excel = await parseExcelBuffer(
-    excelBuffer.buffer.slice(excelBuffer.byteOffset, excelBuffer.byteOffset + excelBuffer.byteLength)
+    excelBuffer.buffer.slice(
+      excelBuffer.byteOffset,
+      excelBuffer.byteOffset + excelBuffer.byteLength
+    )
   );
 
   const baseline = comparableRows(csv);
@@ -61,14 +68,18 @@ export async function main() {
     await readFile(resolve(fixturesDir, "sample-broker-statement-fuzzy-headers.csv"), "utf8")
   );
   if (JSON.stringify(comparableRows(fuzzyHeaders)) !== JSON.stringify(baseline)) {
-    throw new Error("Fuzzy-header CSV fixture did not resolve to the same transactions as the exact-header baseline.");
+    throw new Error(
+      "Fuzzy-header CSV fixture did not resolve to the same transactions as the exact-header baseline."
+    );
   }
 
   const altDates = parseCsvText(
     await readFile(resolve(fixturesDir, "sample-broker-statement-alt-dates.csv"), "utf8")
   );
   if (JSON.stringify(comparableRows(altDates)) !== JSON.stringify(baseline)) {
-    throw new Error("DD/MM/YYYY date fixture did not resolve to the same transactions as the baseline.");
+    throw new Error(
+      "DD/MM/YYYY date fixture did not resolve to the same transactions as the baseline."
+    );
   }
 
   // CMOTS/ABML-style HTML: group-banner header row above the real column names,
@@ -84,12 +95,19 @@ export async function main() {
 
   // Multi-sheet workbook: sheet 1 is a summary/disclaimer page; the real
   // transaction table lives on sheet 2 and must still be found.
-  const multiSheetBuffer = await readFile(resolve(fixturesDir, "sample-broker-statement-multi-sheet.xlsx"));
+  const multiSheetBuffer = await readFile(
+    resolve(fixturesDir, "sample-broker-statement-multi-sheet.xlsx")
+  );
   const multiSheet = await parseExcelBuffer(
-    multiSheetBuffer.buffer.slice(multiSheetBuffer.byteOffset, multiSheetBuffer.byteOffset + multiSheetBuffer.byteLength)
+    multiSheetBuffer.buffer.slice(
+      multiSheetBuffer.byteOffset,
+      multiSheetBuffer.byteOffset + multiSheetBuffer.byteLength
+    )
   );
   if (JSON.stringify(comparableRows(multiSheet)) !== JSON.stringify(baseline)) {
-    throw new Error("Multi-sheet Excel fixture did not resolve to the baseline transactions from its Equity sheet.");
+    throw new Error(
+      "Multi-sheet Excel fixture did not resolve to the baseline transactions from its Equity sheet."
+    );
   }
   if (!multiSheet.warnings.some((warning) => warning.message.includes('read "Equity"'))) {
     throw new Error("Multi-sheet Excel fixture should note which sheet was read.");
@@ -99,12 +117,18 @@ export async function main() {
     await readFile(resolve(fixturesDir, "sample-broker-statement-missing-column.csv"), "utf8")
   );
   if (missingColumn.transactions.length !== 0) {
-    throw new Error("Missing-column fixture should not produce transactions until columns are mapped.");
+    throw new Error(
+      "Missing-column fixture should not produce transactions until columns are mapped."
+    );
   }
   if (!missingColumn.promptRoute || missingColumn.promptRoute.route !== "guided_prompt") {
     throw new Error("Missing-column fixture should route to the guided extraction prompt.");
   }
-  if (!missingColumn.warnings.some((warning) => warning.code === "missing_column" && warning.message.includes("Sell Price"))) {
+  if (
+    !missingColumn.warnings.some(
+      (warning) => warning.code === "missing_column" && warning.message.includes("Sell Price")
+    )
+  ) {
     throw new Error('Missing-column fixture should warn about "Sell Price".');
   }
   if (missingColumn.sourceHeaders.length === 0) {
@@ -123,10 +147,14 @@ export async function main() {
     throw new Error("PDF/free-form fixture did not route to the guided extraction prompt.");
   }
 
-  const excelRows = (await readSheet(new Blob([excelBuffer]))) as (string | number | Date | boolean | null)[][];
+  const excelRows = (await readSheet(new Blob([excelBuffer]))) as (
+    string | number | Date | boolean | null
+  )[][];
   const headerIndex = findHeaderRowIndex(excelRows);
   if (headerIndex !== 0) {
-    throw new Error(`Expected Excel header row at index 0 for the baseline fixture, got ${headerIndex}.`);
+    throw new Error(
+      `Expected Excel header row at index 0 for the baseline fixture, got ${headerIndex}.`
+    );
   }
 
   // The extraction prompt now returns one standardised JSON object. A JSON paste
@@ -153,10 +181,16 @@ export async function main() {
     })
   );
   if (jsonWithTransactions.transactions.length !== 1) {
-    throw new Error("JSON paste with one transaction should map to exactly one NormalizedTransaction.");
+    throw new Error(
+      "JSON paste with one transaction should map to exactly one NormalizedTransaction."
+    );
   }
   const jsonTx = jsonWithTransactions.transactions[0];
-  if (jsonTx.scripName !== "Dummy Equity Ltd" || jsonTx.gainLoss !== 1110 || jsonTx.taxClass !== "ST") {
+  if (
+    jsonTx.scripName !== "Dummy Equity Ltd" ||
+    jsonTx.gainLoss !== 1110 ||
+    jsonTx.taxClass !== "ST"
+  ) {
     throw new Error(`JSON transaction did not normalize as expected: ${JSON.stringify(jsonTx)}`);
   }
   if (jsonWithTransactions.documentType !== "broker capital gains statement") {
@@ -190,7 +224,12 @@ export async function main() {
   if (!sf) {
     throw new Error("Summary-only JSON paste should recognise annualFigures.");
   }
-  if (sf.dividendIncome !== 1111 || sf.tdsDeducted !== 222 || sf.deductibleCharges !== 333 || sf.netRealisedGainNoDetail !== 4444) {
+  if (
+    sf.dividendIncome !== 1111 ||
+    sf.tdsDeducted !== 222 ||
+    sf.deductibleCharges !== 333 ||
+    sf.netRealisedGainNoDetail !== 4444
+  ) {
     throw new Error(`Unexpected recognised summary figures: ${JSON.stringify(sf)}`);
   }
   if (sf.interestIncome !== undefined) {
@@ -229,13 +268,18 @@ export async function main() {
     throw new Error(`"₹83,493.85" should parse to 83493.85, got ${grouped.tdsDeducted}.`);
   }
   if (grouped.deductibleCharges !== 137827.48) {
-    throw new Error(`"₹1,37,827.48" should parse to 137827.48 (not truncated at the first comma), got ${grouped.deductibleCharges}.`);
+    throw new Error(
+      `"₹1,37,827.48" should parse to 137827.48 (not truncated at the first comma), got ${grouped.deductibleCharges}.`
+    );
   }
 
   // Invalid JSON must not dead-end silently: it comes back with a plain-language
   // parse_error telling the user to paste the whole JSON block.
   const brokenJson = parsePastedExtraction("{ not valid json");
-  if (brokenJson.transactions.length !== 0 || !brokenJson.warnings.some((w) => w.code === "parse_error")) {
+  if (
+    brokenJson.transactions.length !== 0 ||
+    !brokenJson.warnings.some((w) => w.code === "parse_error")
+  ) {
     throw new Error("Invalid JSON paste should surface a parse_error, not transactions.");
   }
 
@@ -247,16 +291,31 @@ export async function main() {
     ].join("\n")
   );
   if (tableFallback.transactions.length !== 1 || tableFallback.transactions[0].gainLoss !== 1110) {
-    throw new Error("Markdown-table fallback should still parse a pasted table into one transaction.");
+    throw new Error(
+      "Markdown-table fallback should still parse a pasted table into one transaction."
+    );
   }
 
-  const promptTxt = await readFile(resolve(import.meta.dirname, "..", "public", "extraction-prompt.txt"), "utf8");
-  const canonicalPrompt = await readFile(resolve(repoRoot, "prompts", "01-extract-statement.md"), "utf8");
+  const promptTxt = await readFile(
+    resolve(import.meta.dirname, "..", "public", "extraction-prompt.txt"),
+    "utf8"
+  );
+  const canonicalPrompt = await readFile(
+    resolve(repoRoot, "prompts", "01-extract-statement.md"),
+    "utf8"
+  );
   if (promptTxt.trim() !== canonicalPrompt.trim()) {
-    throw new Error("webapp/public/extraction-prompt.txt is out of sync with prompts/01-extract-statement.md.");
+    throw new Error(
+      "webapp/public/extraction-prompt.txt is out of sync with prompts/01-extract-statement.md."
+    );
   }
 
-  if (csv.summary.rows !== 5 || csv.summary.intradayGain !== 800 || csv.summary.stcg !== -500 || csv.summary.ltcg !== 5500) {
+  if (
+    csv.summary.rows !== 5 ||
+    csv.summary.intradayGain !== 800 ||
+    csv.summary.stcg !== -500 ||
+    csv.summary.ltcg !== 5500
+  ) {
     throw new Error(`Unexpected CSV summary: ${JSON.stringify(csv.summary)}`);
   }
 
@@ -267,7 +326,9 @@ export async function main() {
   }
   const correctedValues = deriveComputedFields({ ...original, buyValue: 1000, sellValue: 1500 });
   if (correctedValues.gainLoss !== 500) {
-    throw new Error("Editing buy/sell value should recompute gain/loss, not keep the original figure.");
+    throw new Error(
+      "Editing buy/sell value should recompute gain/loss, not keep the original figure."
+    );
   }
 
   console.log(
@@ -284,14 +345,19 @@ export async function main() {
   // purpose. The fix groups text by y-position and sorts by x within each
   // line before handing it to parseItrVText.
   const itrVBuffer = await readFile(resolve(fixturesDir, "sample-itr-v.pdf"));
-  const itrVArrayBuffer = itrVBuffer.buffer.slice(itrVBuffer.byteOffset, itrVBuffer.byteOffset + itrVBuffer.byteLength);
+  const itrVArrayBuffer = itrVBuffer.buffer.slice(
+    itrVBuffer.byteOffset,
+    itrVBuffer.byteOffset + itrVBuffer.byteLength
+  );
   const { text: itrVText } = await extractPdfText(itrVArrayBuffer);
   const itrV = parseItrVText(itrVText);
   if (!itrV.ok) {
     throw new Error(`Expected sample-itr-v.pdf to parse, got: ${itrV.message}`);
   }
   if (itrV.fields.assessmentYear !== "2024-25") {
-    throw new Error(`Expected AY 2024-25 from sample-itr-v.pdf, got ${itrV.fields.assessmentYear}.`);
+    throw new Error(
+      `Expected AY 2024-25 from sample-itr-v.pdf, got ${itrV.fields.assessmentYear}.`
+    );
   }
   if (itrV.fields.itrForm !== "ITR-2") {
     throw new Error(`Expected ITR-2 from sample-itr-v.pdf, got ${itrV.fields.itrForm}.`);
@@ -302,10 +368,14 @@ export async function main() {
     );
   }
   if (itrV.fields.totalTaxPaid !== 180_000) {
-    throw new Error(`Expected total taxes paid 180,000 from sample-itr-v.pdf, got ${itrV.fields.totalTaxPaid}.`);
+    throw new Error(
+      `Expected total taxes paid 180,000 from sample-itr-v.pdf, got ${itrV.fields.totalTaxPaid}.`
+    );
   }
   if (itrV.fields.refundOrPayable !== 5_000) {
-    throw new Error(`Expected a 5,000 refund from sample-itr-v.pdf, got ${itrV.fields.refundOrPayable}.`);
+    throw new Error(
+      `Expected a 5,000 refund from sample-itr-v.pdf, got ${itrV.fields.refundOrPayable}.`
+    );
   }
   if (itrV.fields.regime !== "new") {
     throw new Error(`Expected the new regime from sample-itr-v.pdf, got ${itrV.fields.regime}.`);

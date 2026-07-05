@@ -8,7 +8,13 @@ const URL_PATTERN = /^https?:\/\//i;
  * SYSTEM_SPEC.md) or bare Act sections, so those stay link-free rather than
  * showing a dead anchor.
  */
-export function RuleSourceLink({ refs, label = "Source" }: { refs: readonly string[]; label?: string }) {
+export function RuleSourceLink({
+  refs,
+  label = "Source"
+}: {
+  refs: readonly string[];
+  label?: string;
+}) {
   const url = refs.find((ref) => URL_PATTERN.test(ref));
   if (!url) {
     return null;

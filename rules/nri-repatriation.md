@@ -1,7 +1,7 @@
 # NRI — repatriation
 
 **Applies to:** NRI profile
-**Last verified:** 2026-07-05 (secondary sources — see below)
+**Last verified:** 2026-07-05 (Income Tax Department Form 145 FAQ for Forms 145/146 and the Rs 5 lakh certificate threshold; secondary sources for the RBI/FEMA repatriation cap)
 
 ## What this covers
 
@@ -59,7 +59,7 @@ desk before the transfer.
 - [Income Tax Department — Form 145 FAQs](https://www.incometaxindia.gov.in/documents/d/guest/form-145-faqs)
 - [ClearTax — Form 145 Income Tax 2025](https://cleartax.in/s/form-145-income-tax)
 
-These are secondary tax-reference summaries, not the RBI FEMA master
-direction or CBDT notification text directly — treat the ₹5 lakh
-threshold and the 1 April 2026 renaming date as directionally right, and
-confirm with your bank/CA before relying on the exact figure.
+The Income Tax Department Form 145 FAQ verifies the Form 145/146 workflow
+and the Rs 5 lakh threshold for Part C/Form 146. The USD 1 million NRO
+cap is still carried from RBI/FEMA summaries here, so confirm the exact
+remittance paperwork with your bank/CA before money moves.

@@ -106,7 +106,9 @@ function App() {
   const [step, setStep] = useState<AppStep>("welcome");
   const [orientation, setOrientation] = useState<OrientationAnswers>(BLANK_ORIENTATION);
   const [documents, setDocuments] = useState<DocumentEntry[]>([]);
-  const [supplementalFigures, setSupplementalFigures] = useState<SupplementalFigures>(BLANK_SUPPLEMENTAL_FIGURES);
+  const [supplementalFigures, setSupplementalFigures] = useState<SupplementalFigures>(
+    BLANK_SUPPLEMENTAL_FIGURES
+  );
   // Which "A few more numbers" fields were auto-filled from a pasted statement
   // (drives the check-these banner on the results screen). Ephemeral UI hint:
   // not persisted, so a resumed session keeps the values but drops the banner.
@@ -122,7 +124,8 @@ function App() {
   const [foreignAccounts, setForeignAccounts] = useState<ForeignAccount[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(
-    () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
+    () =>
+      typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
   );
   // Footer disclaimer collapses on mobile only (see styles.css); mirrors the
   // ChecklistPanel pattern - starts collapsed at the mobile/tablet breakpoint,
@@ -131,7 +134,9 @@ function App() {
   const [footerCollapsed, setFooterCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 860
   );
-  const [exportMessage, setExportMessage] = useState("Exports are generated in this browser. Nothing is uploaded anywhere.");
+  const [exportMessage, setExportMessage] = useState(
+    "Exports are generated in this browser. Nothing is uploaded anywhere."
+  );
   const [acknowledgedTriggerIds, setAcknowledgedTriggerIds] = useState<string[]>([]);
   // Read once on mount and shared below, so a saved session isn't parsed
   // out of localStorage twice on first render.
@@ -139,7 +144,9 @@ function App() {
   const [hasSavedSession, setHasSavedSession] = useState(() => initialSession !== null);
   // Year-over-year filing history for the dashboard. Seeded from any saved
   // session on mount so history survives a reload without a Resume click.
-  const [pastFilings, setPastFilings] = useState<PastFiling[]>(() => initialSession?.pastFilings ?? []);
+  const [pastFilings, setPastFilings] = useState<PastFiling[]>(
+    () => initialSession?.pastFilings ?? []
+  );
   // The dashboard is a standalone destination outside STEP_ORDER (see
   // SideNav): a separate toggle rather than an AppStep, so opening it never
   // disturbs the linear guided flow's step pointer or its single next action.
@@ -183,7 +190,9 @@ function App() {
   // 0, so the side nav shows real progress on the welcome screen even
   // before "Resume" is clicked (e.g. after a reload/crash lands back there).
   const [furthestStepIndex, setFurthestStepIndex] = useState(() =>
-    initialSession ? initialSession.furthestStepIndex ?? STEP_ORDER.indexOf(initialSession.step) : 0
+    initialSession
+      ? (initialSession.furthestStepIndex ?? STEP_ORDER.indexOf(initialSession.step))
+      : 0
   );
 
   useEffect(() => {
@@ -254,21 +263,34 @@ function App() {
     folderHandle
   ]);
 
-  const transactions = useMemo(() => documents.flatMap((document) => document.transactions), [documents]);
+  const transactions = useMemo(
+    () => documents.flatMap((document) => document.transactions),
+    [documents]
+  );
   const flags = useMemo(() => deriveProfileFlags(orientation), [orientation]);
   const hasBusinessIncome = useMemo(
     () => transactions.some((transaction) => transaction.taxClass === "Intraday"),
     [transactions]
   );
   const rulesSummary = useMemo(
-    () => summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
+    () =>
+      summarizeWithRules(
+        transactions,
+        ruleCatalog.capitalGainsEquity,
+        ruleCatalog.itrFormSelection
+      ),
     [transactions]
   );
   // Section 234C quarter precision: listed-equity STCG/LTCG tax dated by real
   // transaction sell dates, so it counts toward an instalment only once each
   // gain actually happened - see lib/advanceTax.ts.
   const capitalGainsTaxByInstalment = useMemo(
-    () => allocateCapitalGainsTaxByInstalment(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.advanceTax),
+    () =>
+      allocateCapitalGainsTaxByInstalment(
+        transactions,
+        ruleCatalog.capitalGainsEquity,
+        ruleCatalog.advanceTax
+      ),
     [transactions]
   );
   // Total income for the ITR-1 Rs 50 lakh ceiling: the figures the app
@@ -281,7 +303,12 @@ function App() {
       Math.max(0, rulesSummary.ltcg) +
       Math.max(0, rulesSummary.intradayGain) +
       Math.max(0, rulesSummary.debtMfShortTermDeemedGain);
-    return supplementalFigures.salaryIncome + supplementalFigures.dividends + supplementalFigures.interestOtherIncome + gains;
+    return (
+      supplementalFigures.salaryIncome +
+      supplementalFigures.dividends +
+      supplementalFigures.interestOtherIncome +
+      gains
+    );
   }, [rulesSummary, supplementalFigures]);
   const itrForm = useMemo(
     () => selectItrForm(flags, hasBusinessIncome, ruleCatalog.itrFormSelection, totalIncomeForItr),
@@ -307,23 +334,35 @@ function App() {
   // such trigger appears; acknowledging it dismisses only that trigger, so a later,
   // newly-fired one still stops the user again.
   const unacknowledgedFormChangingTriggers = riskTriggers.filter(
-    (trigger) => trigger.severity === "form-changing" && !acknowledgedTriggerIds.includes(trigger.id)
+    (trigger) =>
+      trigger.severity === "form-changing" && !acknowledgedTriggerIds.includes(trigger.id)
   );
 
   // NRI dividends are taxed at a flat Section 115A/DTAA rate, not slab -
   // computed once here so both the CA Summary override and the new row below
   // use the same figure.
   const nriDividendTax = flags.nri
-    ? computeNriDividendTax(supplementalFigures.dividends, flags.nriCountry, ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds)
+    ? computeNriDividendTax(
+        supplementalFigures.dividends,
+        flags.nriCountry,
+        ruleCatalog.nriDtaa,
+        ruleCatalog.nriTdsAndRefunds
+      )
     : null;
 
-  const baseRows = caSummaryRows(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection, supplementalFigures);
+  const baseRows = caSummaryRows(
+    transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.itrFormSelection,
+    supplementalFigures
+  );
   const rows = baseRows.map((row) => {
     if (row.head === "Recommended ITR form") {
       return {
         ...row,
         amount: itrForm.form,
-        notes: ITR_FORM_REASONS[itrForm.key] ?? "Personalized to your NRI/HUF/business-income profile."
+        notes:
+          ITR_FORM_REASONS[itrForm.key] ?? "Personalized to your NRI/HUF/business-income profile."
       };
     }
     if (row.head === "CA review recommendation") {
@@ -333,7 +372,7 @@ function App() {
       return {
         ...row,
         notes:
-          "Entered by you under \"A few more numbers\" on the Current Filing page, not read from an uploaded document. As a non-resident this is taxed at a flat Section 115A/DTAA rate, not your slab rate - see the \"Dividend tax\" row below."
+          'Entered by you under "A few more numbers" on the Current Filing page, not read from an uploaded document. As a non-resident this is taxed at a flat Section 115A/DTAA rate, not your slab rate - see the "Dividend tax" row below.'
       };
     }
     return row;
@@ -348,7 +387,7 @@ function App() {
       ruleSection: "10(4)(ii)",
       amount: supplementalFigures.nreExemptInterest,
       notes:
-        "Entered by you under \"A few more numbers\" on the Current Filing page. NRE account interest is exempt from Indian income tax entirely, so it's kept separate here rather than folded into the taxable \"Interest & other income\" row above."
+        'Entered by you under "A few more numbers" on the Current Filing page. NRE account interest is exempt from Indian income tax entirely, so it\'s kept separate here rather than folded into the taxable "Interest & other income" row above.'
     });
   }
   if (flags.nri && nriDividendTax) {
@@ -386,7 +425,10 @@ function App() {
   // Rented-out home with a loan (Section 24): computed from the Loans section's
   // figures. Shown as its own CA Summary row so the CA sees the same
   // house-property figure the regime comparison uses.
-  const letOutHouseProperty = computeLetOutHouseProperty(supplementalFigures, ruleCatalog.loanTreatment);
+  const letOutHouseProperty = computeLetOutHouseProperty(
+    supplementalFigures,
+    ruleCatalog.loanTreatment
+  );
   if (letOutHouseProperty.hasInputs) {
     const setOffCap =
       ruleCatalog.loanTreatment.values.home_loan.let_out_interest_24b
@@ -403,15 +445,22 @@ function App() {
   // entered under "Insurance" on the Current Filing page. Only shown once at
   // least one policy has lost its exemption - an all-exempt policy list adds
   // no new tax, so it stays out of the summary.
-  const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, ruleCatalog.insurance, ruleCatalog.capitalGainsEquity);
-  const foreignAccountsSummary = summarizeForeignAccounts(foreignAccounts, ruleCatalog.foreignInvestments);
+  const insuranceSummary = summarizeInsurancePolicies(
+    insurancePolicies,
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const foreignAccountsSummary = summarizeForeignAccounts(
+    foreignAccounts,
+    ruleCatalog.foreignInvestments
+  );
   if (insuranceSummary.totalOtherSourcesSlabIncome > 0) {
     rows.push({
       head: "Insurance payout (traditional, taxable)",
       ruleSection: "10(10D)",
       amount: insuranceSummary.totalOtherSourcesSlabIncome,
       notes:
-        "Entered by you under \"Insurance\" on the Current Filing page: one or more traditional policies lost their Section 10(10D) exemption, so (payout minus premiums paid) is taxable as income from other sources. Already added to the \"other income\" side of the old-vs-new regime comparison, at your slab rate."
+        'Entered by you under "Insurance" on the Current Filing page: one or more traditional policies lost their Section 10(10D) exemption, so (payout minus premiums paid) is taxable as income from other sources. Already added to the "other income" side of the old-vs-new regime comparison, at your slab rate.'
     });
   }
   if (insuranceSummary.totalUlipCapitalGainsTax > 0) {
@@ -420,7 +469,7 @@ function App() {
       ruleSection: "10(10D)",
       amount: insuranceSummary.totalUlipCapitalGainsTax,
       notes:
-        "Entered by you under \"Insurance\" on the Current Filing page: one or more ULIPs lost their Section 10(10D) exemption, so their maturity gain is taxed as capital gains at listed-equity rates. Each policy's tax here uses the full annual LTCG exemption on its own; if you also have other equity long-term gains this year, the two share one exemption combined, so ask a CA to combine both before filing."
+        'Entered by you under "Insurance" on the Current Filing page: one or more ULIPs lost their Section 10(10D) exemption, so their maturity gain is taxed as capital gains at listed-equity rates. Each policy\'s tax here uses the full annual LTCG exemption on its own; if you also have other equity long-term gains this year, the two share one exemption combined, so ask a CA to combine both before filing.'
     });
   }
 
@@ -430,7 +479,10 @@ function App() {
     caReviewRecommendation: caRecommendation.headline
   };
 
-  const displayDocuments: UploadedDocument[] = documents.map(({ fileName, rowCount }) => ({ fileName, rowCount }));
+  const displayDocuments: UploadedDocument[] = documents.map(({ fileName, rowCount }) => ({
+    fileName,
+    rowCount
+  }));
 
   // BUILD_PLAN.md Section 4: reconciliation runs on every dashboard view, not
   // only on request, so any AIS/26AS/Form 16 figure the user has typed in
@@ -469,7 +521,12 @@ function App() {
   const reconciliationMismatches = [
     ...figureMismatches(aisExpectedFigures, aisReportedFiguresPresent, "AIS/Form 26AS"),
     ...(brokerCheck
-      ? figureMismatches(brokerExpectedFigures, brokerReportedFigures, `Broker's own "${brokerCheck.columnName}" column`, 1)
+      ? figureMismatches(
+          brokerExpectedFigures,
+          brokerReportedFigures,
+          `Broker's own "${brokerCheck.columnName}" column`,
+          1
+        )
       : []),
     ...tdsMismatches(tdsRows)
   ];
@@ -482,15 +539,23 @@ function App() {
   const varianceCheckCount =
     Object.keys(aisExpectedFigures).length +
     tdsRows.length +
-    (brokerCheck ? brokerCheck.perClass.filter((entry) => entry.computed !== 0 || entry.broker !== 0).length : 0);
-  const varianceTotalAbs = reconciliationMismatches.reduce((sum, mismatch) => sum + Math.abs(mismatch.difference), 0);
+    (brokerCheck
+      ? brokerCheck.perClass.filter((entry) => entry.computed !== 0 || entry.broker !== 0).length
+      : 0);
+  const varianceTotalAbs = reconciliationMismatches.reduce(
+    (sum, mismatch) => sum + Math.abs(mismatch.difference),
+    0
+  );
 
   // Old vs new regime, computed the same way the Results panel does - only
   // when there's a salary to compare and it fits the profile (not an HUF).
   const regimeComparable = supplementalFigures.salaryIncome > 0 && !flags.huf;
   // Loan-interest deductions (capped per rules/loan-treatment.json) add to the
   // old-regime side of the comparison, the same way the Results panel does it.
-  const loanDeductionsTotal = computeLoanDeductions(supplementalFigures, ruleCatalog.loanTreatment).total;
+  const loanDeductionsTotal = computeLoanDeductions(
+    supplementalFigures,
+    ruleCatalog.loanTreatment
+  ).total;
   const regimeInputs = {
     salaryIncome: supplementalFigures.salaryIncome,
     dividends: supplementalFigures.dividends,
@@ -512,8 +577,12 @@ function App() {
     seniorCitizen: flags.seniorCitizen,
     superSeniorCitizen: flags.superSeniorCitizen
   };
-  const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
-  const regimeBreakEven = regimeComparable ? computeRegimeBreakEven(regimeInputs, ruleCatalog.regimeChoice) : null;
+  const regimeResult = regimeComparable
+    ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice)
+    : null;
+  const regimeBreakEven = regimeComparable
+    ? computeRegimeBreakEven(regimeInputs, ruleCatalog.regimeChoice)
+    : null;
 
   // Deduction ceilings come from rules/deduction-limits.json, never hardcoded
   // here (CLAUDE.md). The 80D limit steps up when a senior citizen is covered.
@@ -522,8 +591,14 @@ function App() {
   // Insurance-payout (10(10D)) premium-cap check and foreign LRS-TCS check,
   // both computed off the same figures the dashboard owns, with every rupee
   // limit read from the rule JSON (rules/insurance.json, rules/foreign-investments.json).
-  const insurancePayoutCheck = computeInsurancePayoutCheck(supplementalFigures, ruleCatalog.insurance);
-  const foreignRemittanceTcs = computeForeignRemittanceTcs(supplementalFigures, ruleCatalog.foreignInvestments);
+  const insurancePayoutCheck = computeInsurancePayoutCheck(
+    supplementalFigures,
+    ruleCatalog.insurance
+  );
+  const foreignRemittanceTcs = computeForeignRemittanceTcs(
+    supplementalFigures,
+    ruleCatalog.foreignInvestments
+  );
   const foreignScheduleFa = ruleCatalog.foreignInvestments.values.schedule_fa_disclosure;
 
   // Everything the dashboard's "this year at a glance" shows, computed
@@ -598,7 +673,8 @@ function App() {
       applies: flags.hasForeignAssets,
       scheduleFaMinValueInr: foreignScheduleFa.minimum_value_threshold_inr,
       requiresItrForms: foreignScheduleFa.requires_itr_form,
-      blackMoneyPenaltyInr: ruleCatalog.foreignInvestments.values.black_money_act_penalties.non_disclosure_penalty_inr,
+      blackMoneyPenaltyInr:
+        ruleCatalog.foreignInvestments.values.black_money_act_penalties.non_disclosure_penalty_inr,
       sourceRefs: ruleCatalog.foreignInvestments.source_refs
     },
     variance: {
@@ -683,12 +759,18 @@ function App() {
     setStep("results");
   }
 
-  function commitDocument(newTransactions: NormalizedTransaction[], fileName: string, sheetNameHint?: string) {
+  function commitDocument(
+    newTransactions: NormalizedTransaction[],
+    fileName: string,
+    sheetNameHint?: string
+  ) {
     // A real document added while viewing sample data starts a real filing:
     // drop the demo transactions instead of mixing them into real numbers.
     if (sampleMode) {
       clearSampleData();
-      setDocuments([{ fileName, rowCount: newTransactions.length, transactions: newTransactions, sheetNameHint }]);
+      setDocuments([
+        { fileName, rowCount: newTransactions.length, transactions: newTransactions, sheetNameHint }
+      ]);
     } else {
       setDocuments((prev) => [
         ...prev,
@@ -696,9 +778,13 @@ function App() {
       ]);
     }
     if (folderHandle) {
-      saveDocumentCopyToFolder(folderHandle, fileName, transactionsCsv(newTransactions)).catch(() => {
-        setExportMessage(`Could not save a copy of ${fileName} to your chosen folder. It's still added to your filing.`);
-      });
+      saveDocumentCopyToFolder(folderHandle, fileName, transactionsCsv(newTransactions)).catch(
+        () => {
+          setExportMessage(
+            `Could not save a copy of ${fileName} to your chosen folder. It's still added to your filing.`
+          );
+        }
+      );
     }
   }
 
@@ -706,7 +792,13 @@ function App() {
   // dividends, MF holdings). Kept with no transactions so it never affects the
   // tax numbers, but its rows ride along as a reference sheet in the workbook.
   function commitReferenceDocument(fileName: string, rawSheet: RawSheet, sheetNameHint?: string) {
-    const entry: DocumentEntry = { fileName, rowCount: rawSheet.records.length, transactions: [], rawSheet, sheetNameHint };
+    const entry: DocumentEntry = {
+      fileName,
+      rowCount: rawSheet.records.length,
+      transactions: [],
+      rawSheet,
+      sheetNameHint
+    };
     if (sampleMode) {
       clearSampleData();
       setDocuments([entry]);
@@ -823,7 +915,10 @@ function App() {
   // The dashboard's deduction-progress widget writes each figure straight back
   // to the shared session state (it owns this planning input the same way it
   // owns past-filing entry), so it persists and stays a single source of truth.
-  function changeDeduction(key: "deduction80C" | "deduction80D" | "deductionNps80ccd1b", value: number) {
+  function changeDeduction(
+    key: "deduction80C" | "deduction80D" | "deductionNps80ccd1b",
+    value: number
+  ) {
     setSupplementalFigures((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -882,7 +977,9 @@ function App() {
     setFolderHandle(handle);
     const session = parseSession(await readTextFromFolder(handle, SESSION_BACKUP_FILENAME));
     if (!session) {
-      setExportMessage(`No saved filing found in "${handle.name}". New documents will be saved there from now on.`);
+      setExportMessage(
+        `No saved filing found in "${handle.name}". New documents will be saved there from now on.`
+      );
       return;
     }
     hydrateSession(session);
@@ -908,7 +1005,8 @@ function App() {
         prev.carryForwardLossesAvailable === 0 && imported.carryForwardLossesAvailable !== null
           ? imported.carryForwardLossesAvailable
           : prev.carryForwardLossesAvailable,
-      dividends: prev.dividends === 0 && imported.dividends !== null ? imported.dividends : prev.dividends,
+      dividends:
+        prev.dividends === 0 && imported.dividends !== null ? imported.dividends : prev.dividends,
       interestOtherIncome:
         prev.interestOtherIncome === 0 && imported.interestOtherIncome !== null
           ? imported.interestOtherIncome
@@ -952,12 +1050,14 @@ function App() {
     const cgRule = ruleCatalog.capitalGainsEquity;
     await deliverExport(
       await buildFullWorkbookExport({
-        documents: documents.map(({ fileName, transactions: docTxns, rawSheet, sheetNameHint }) => ({
-          name: fileName,
-          transactions: docTxns,
-          rawSheet,
-          sheetNameHint
-        })),
+        documents: documents.map(
+          ({ fileName, transactions: docTxns, rawSheet, sheetNameHint }) => ({
+            name: fileName,
+            transactions: docTxns,
+            rawSheet,
+            sheetNameHint
+          })
+        ),
         caSummaryRows: rows,
         rateInputs: rateInputsFromRule(cgRule),
         financialYear: `FY${cgRule.financial_year}`,
@@ -984,264 +1084,294 @@ function App() {
         onShowLegal={() => goToStep("welcome")}
       />
       <main className="app-shell">
-      <header className="app-header">
-        <button
-          type="button"
-          className="brand-mark-button"
-          onClick={goHome}
-          aria-label="Back to home"
-        >
-          <img
-            src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
-            alt="Unravel Tax"
-            className="brand-mark"
-          />
-        </button>
-        {/* Same destination as the brand mark - sitting right next to the
+        <header className="app-header">
+          <button
+            type="button"
+            className="brand-mark-button"
+            onClick={goHome}
+            aria-label="Back to home"
+          >
+            <img
+              src={`${import.meta.env?.BASE_URL ?? "/"}unravel-tax-logo.png`}
+              alt="Unravel Tax"
+              className="brand-mark"
+            />
+          </button>
+          {/* Same destination as the brand mark - sitting right next to the
             logo on laptop/tablet puts it at the same eye level instead of
             down the side rail. The side rail keeps its own Home button for
             the mobile bottom bar (see SideNav.tsx). */}
-        <button
-          type="button"
-          className="header-home-button"
-          onClick={goHome}
-        >
-          <IconHome className="header-home-icon" />
-          Home
-        </button>
-        {!showDashboard && step === "welcome" ? <CountdownBanner variant="header" /> : null}
-        <HelpPanel open={showHelp} onOpenChange={setShowHelp} />
-      </header>
+          <button type="button" className="header-home-button" onClick={goHome}>
+            <IconHome className="header-home-icon" />
+            Home
+          </button>
+          {!showDashboard && step === "welcome" ? <CountdownBanner variant="header" /> : null}
+          <HelpPanel open={showHelp} onOpenChange={setShowHelp} />
+        </header>
 
-      <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />
-      <ToolTour open={showTour} onClose={() => setShowTour(false)} onTrySample={trySampleData} />
-      {showConfirmClear ? (
-        <ConfirmModal
-          message="Clear everything you've entered in this browser and start over?"
-          confirmLabel="Clear And Start Over"
-          onConfirm={clearAllProgress}
-          onCancel={() => setShowConfirmClear(false)}
-        />
-      ) : null}
-
-      {showDashboard ? (
-        <div className="stage-single">
-          <Dashboard
-            thisYear={thisYear}
-            pastFilings={pastFilings}
-            onAddPastFiling={addPastFiling}
-            onRemovePastFiling={removePastFiling}
-            onGoToFiling={goToFilingFromDashboard}
-            onChangeDeduction={changeDeduction}
-            onChangeFigure={changeFigure}
-            onChangeRemittancePurpose={changeRemittancePurpose}
-            showAdvanced={showAdvanced}
-            onToggleAdvanced={() => setShowAdvanced((value) => !value)}
+        <CapabilitiesPanel open={showCapabilities} onClose={() => setShowCapabilities(false)} />
+        <ToolTour open={showTour} onClose={() => setShowTour(false)} onTrySample={trySampleData} />
+        {showConfirmClear ? (
+          <ConfirmModal
+            message="Clear everything you've entered in this browser and start over?"
+            confirmLabel="Clear And Start Over"
+            onConfirm={clearAllProgress}
+            onCancel={() => setShowConfirmClear(false)}
           />
-        </div>
-      ) : null}
+        ) : null}
 
-      {!showDashboard && step === "welcome" ? (
-        <div className="stage-single">
-          <WelcomeScreen
-            onStart={startOrientation}
-            onStartComputationFirst={startComputationFirst}
-            onResume={resumeSession}
-            onStartOver={startFresh}
-            hasSavedSession={hasSavedSession}
-            onShowCapabilities={() => setShowCapabilities(true)}
-            onShowTour={() => setShowTour(true)}
-            localFolderSupported={isLocalFolderSupported()}
-            onRestoreFromFolder={restoreFromFolder}
-            onImportPreviousWorkbook={importPreviousWorkbook}
-          />
-        </div>
-      ) : null}
-
-      {!showDashboard && step === "orientation" ? (
-        <div className="stage-single">
-          {importWorkbookMessage ? <p className="defaults-banner">{importWorkbookMessage}</p> : null}
-          <OrientationForm
-            answers={orientation}
-            onChange={setOrientation}
-            onComplete={() => {
-              setImportWorkbookMessage(null);
-              setStep("documents");
-            }}
-          />
-        </div>
-      ) : null}
-
-      {!showDashboard &&
-      (step === "documents" || step === "results") &&
-      unacknowledgedFormChangingTriggers.length > 0 ? (
-        <div className="modal-backdrop">
-          <div className="modal-card" role="alertdialog" aria-labelledby="form-changing-title">
-            <h3 id="form-changing-title">This changes what you need to file</h3>
-            <p>Worth stopping for. These change your ITR form or your self-file/CA recommendation, not just a routine note:</p>
-            <ul className="trigger-list">
-              {unacknowledgedFormChangingTriggers.map((trigger) => (
-                <li key={trigger.id}>
-                  <strong>{trigger.label}</strong>
-                  <p>{trigger.consequence}</p>
-                </li>
-              ))}
-            </ul>
-            <div className="modal-actions">
-              <button type="button" className="primary-button" onClick={acknowledgeFormChangingTriggers}>
-                I Understand, Continue
-              </button>
-            </div>
+        {showDashboard ? (
+          <div className="stage-single">
+            <Dashboard
+              thisYear={thisYear}
+              pastFilings={pastFilings}
+              onAddPastFiling={addPastFiling}
+              onRemovePastFiling={removePastFiling}
+              onGoToFiling={goToFilingFromDashboard}
+              onChangeDeduction={changeDeduction}
+              onChangeFigure={changeFigure}
+              onChangeRemittancePurpose={changeRemittancePurpose}
+              showAdvanced={showAdvanced}
+              onToggleAdvanced={() => setShowAdvanced((value) => !value)}
+            />
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {!showDashboard && (step === "documents" || step === "results") ? (
-        <div
-          className="stage-with-sidebar"
-          style={{ "--panel-width": `${panelWidth}px` } as CSSProperties}
-        >
-          <ChecklistPanel
-            checklistItems={checklistItems}
-            riskTriggers={riskTriggers}
-            profileScopeCaveats={scopeCaveats}
-          />
+        {!showDashboard && step === "welcome" ? (
+          <div className="stage-single">
+            <WelcomeScreen
+              onStart={startOrientation}
+              onStartComputationFirst={startComputationFirst}
+              onResume={resumeSession}
+              onStartOver={startFresh}
+              hasSavedSession={hasSavedSession}
+              onShowCapabilities={() => setShowCapabilities(true)}
+              onShowTour={() => setShowTour(true)}
+              localFolderSupported={isLocalFolderSupported()}
+              onRestoreFromFolder={restoreFromFolder}
+              onImportPreviousWorkbook={importPreviousWorkbook}
+            />
+          </div>
+        ) : null}
 
-          <div
-            className="stage-resizer"
-            role="separator"
-            aria-orientation="vertical"
-            onPointerDown={startPanelResize}
-          />
+        {!showDashboard && step === "orientation" ? (
+          <div className="stage-single">
+            {importWorkbookMessage ? (
+              <p className="defaults-banner">{importWorkbookMessage}</p>
+            ) : null}
+            <OrientationForm
+              answers={orientation}
+              onChange={setOrientation}
+              onComplete={() => {
+                setImportWorkbookMessage(null);
+                setStep("documents");
+              }}
+            />
+          </div>
+        ) : null}
 
-          <div className="stage-main">
-            {sampleMode ? <p className="sample-banner">You're viewing sample data. Nothing here is real.</p> : null}
-
-            {!sampleMode && orientation.residency === null ? (
-              <p className="defaults-banner">
-                You skipped the questions, so this checklist and recommendation use default assumptions: resident,
-                no special circumstances.{" "}
-                <button type="button" className="text-button" onClick={() => setStep("orientation")}>
-                  Answer Them Now
-                </button>{" "}
-                for a more accurate one.
+        {!showDashboard &&
+        (step === "documents" || step === "results") &&
+        unacknowledgedFormChangingTriggers.length > 0 ? (
+          <div className="modal-backdrop">
+            <div className="modal-card" role="alertdialog" aria-labelledby="form-changing-title">
+              <h3 id="form-changing-title">This changes what you need to file</h3>
+              <p>
+                Worth stopping for. These change your ITR form or your self-file/CA recommendation,
+                not just a routine note:
               </p>
-            ) : null}
-
-            {step === "documents" ? (
-              <UploadStep
-                documents={displayDocuments}
-                onCommit={commitDocument}
-                onCommitReference={commitReferenceDocument}
-                onApplySummaryFigures={applySummaryFigures}
-                onRemove={removeDocument}
-                onContinue={() => setStep("results")}
-                localFolderSupported={isLocalFolderSupported()}
-                localFolderName={folderHandle?.name ?? null}
-                onChooseLocalFolder={handleChooseFolder}
-              />
-            ) : null}
-
-            {step === "results" ? (
-              <ResultsStep
-                rows={rows}
-                documents={displayDocuments}
-                openIssueCount={openIssueCount}
-                caRecommendation={caRecommendation}
-                supplementalFigures={supplementalFigures}
-                onChangeSupplementalFigures={setSupplementalFigures}
-                prefilledFigureKeys={prefilledFigureKeys}
-                netGainMissingDetail={netGainMissingDetail}
-                debtMfShortTermDeemedGain={calculationSummary.debtMfShortTermDeemedGain}
-                intradayGain={calculationSummary.intradayGain}
-                seniorCitizen={flags.seniorCitizen}
-                superSeniorCitizen={flags.superSeniorCitizen}
-                nri={flags.nri}
-                nriCountry={flags.nriCountry}
-                huf={flags.huf}
-                singleParent={flags.singleParent}
-                hasLoans={flags.hasLoans}
-                hasInsurancePayout={flags.hasInsurancePayout}
-                hasForeignAssets={flags.hasForeignAssets}
-                insurancePolicies={insurancePolicies}
-                onChangeInsurancePolicies={setInsurancePolicies}
-                insuranceRule={ruleCatalog.insurance}
-                hufMembers={hufMembers}
-                onChangeHufMembers={setHufMembers}
-                hufTransfers={hufTransfers}
-                onChangeHufTransfers={setHufTransfers}
-                hufClubbingRule={ruleCatalog.hufClubbing}
-                foreignAccounts={foreignAccounts}
-                onChangeForeignAccounts={setForeignAccounts}
-                foreignInvestmentsRule={ruleCatalog.foreignInvestments}
-                regimeChoiceRule={ruleCatalog.regimeChoice}
-                loanTreatmentRule={ruleCatalog.loanTreatment}
-                nriDtaaRule={ruleCatalog.nriDtaa}
-                nriTdsRule={ruleCatalog.nriTdsAndRefunds}
-                nriRepatriationRule={ruleCatalog.nriRepatriation}
-                advanceTaxRule={ruleCatalog.advanceTax}
-                capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
-                aisFigures={aisFigures}
-                onChangeAisFigures={setAisFigures}
-                tdsRows={tdsRows}
-                onChangeTdsRows={setTdsRows}
-                brokerCheck={brokerCheck}
-                confidenceReport={confidenceReport}
-                showAdvanced={showAdvanced}
-                onToggleAdvanced={() => setShowAdvanced((value) => !value)}
-                exportMessage={exportMessage}
-                onExportCsv={exportCaSummaryCsv}
-                onExportXlsx={exportCaSummaryWorkbook}
-                onExportFullWorkbook={exportFullWorkbook}
-                localFolderSupported={isLocalFolderSupported()}
-                localFolderName={folderHandle?.name ?? null}
-                onChooseLocalFolder={handleChooseFolder}
-              />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      <footer className="app-footer">
-        <button
-          type="button"
-          className="footer-disclaimer-toggle"
-          aria-expanded={!footerCollapsed}
-          aria-controls="footer-disclaimer-body"
-          onClick={() => setFooterCollapsed((value) => !value)}
-        >
-          Disclaimer
-          <svg className="checklist-toggle-icon" viewBox="0 0 16 16" aria-hidden="true">
-            <path d={footerCollapsed ? "M4 6l4 4 4-4" : "M4 10l4-4 4 4"} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div
-          id="footer-disclaimer-body"
-          className={footerCollapsed ? "footer-collapsible is-collapsed" : "footer-collapsible"}
-        >
-          <div className="footer-inner">
-            <div className="footer-meta">
-              <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
-              <p className="footer-privacy">Runs locally in your browser; nothing is uploaded.</p>
-            </div>
-            <nav className="footer-links" aria-label="Project and legal links">
-              <div className="footer-disclaimer-link">
-                <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
-                  Full Disclaimer, AI Use &amp; Privacy
+              <ul className="trigger-list">
+                {unacknowledgedFormChangingTriggers.map((trigger) => (
+                  <li key={trigger.id}>
+                    <strong>{trigger.label}</strong>
+                    <p>{trigger.consequence}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={acknowledgeFormChangingTriggers}
+                >
+                  I Understand, Continue
                 </button>
-                <span className="footer-disclaimer-hint">Please read before you blindly rely on this tool</span>
               </div>
-              <a className="footer-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
-                Source On GitHub
-              </a>
-              <a className="footer-link" href={REPORT_ISSUE_URL} target="_blank" rel="noopener noreferrer">
-                Report An Issue
-              </a>
-            </nav>
+            </div>
           </div>
-          <p className="footer-baseline">Free and open source, MIT licensed.</p>
-        </div>
-      </footer>
+        ) : null}
+
+        {!showDashboard && (step === "documents" || step === "results") ? (
+          <div
+            className="stage-with-sidebar"
+            style={{ "--panel-width": `${panelWidth}px` } as CSSProperties}
+          >
+            <ChecklistPanel
+              checklistItems={checklistItems}
+              riskTriggers={riskTriggers}
+              profileScopeCaveats={scopeCaveats}
+            />
+
+            <div
+              className="stage-resizer"
+              role="separator"
+              aria-orientation="vertical"
+              onPointerDown={startPanelResize}
+            />
+
+            <div className="stage-main">
+              {sampleMode ? (
+                <p className="sample-banner">You're viewing sample data. Nothing here is real.</p>
+              ) : null}
+
+              {!sampleMode && orientation.residency === null ? (
+                <p className="defaults-banner">
+                  You skipped the questions, so this checklist and recommendation use default
+                  assumptions: resident, no special circumstances.{" "}
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setStep("orientation")}
+                  >
+                    Answer Them Now
+                  </button>{" "}
+                  for a more accurate one.
+                </p>
+              ) : null}
+
+              {step === "documents" ? (
+                <UploadStep
+                  documents={displayDocuments}
+                  onCommit={commitDocument}
+                  onCommitReference={commitReferenceDocument}
+                  onApplySummaryFigures={applySummaryFigures}
+                  onRemove={removeDocument}
+                  onContinue={() => setStep("results")}
+                  localFolderSupported={isLocalFolderSupported()}
+                  localFolderName={folderHandle?.name ?? null}
+                  onChooseLocalFolder={handleChooseFolder}
+                />
+              ) : null}
+
+              {step === "results" ? (
+                <ResultsStep
+                  rows={rows}
+                  documents={displayDocuments}
+                  openIssueCount={openIssueCount}
+                  caRecommendation={caRecommendation}
+                  supplementalFigures={supplementalFigures}
+                  onChangeSupplementalFigures={setSupplementalFigures}
+                  prefilledFigureKeys={prefilledFigureKeys}
+                  netGainMissingDetail={netGainMissingDetail}
+                  debtMfShortTermDeemedGain={calculationSummary.debtMfShortTermDeemedGain}
+                  intradayGain={calculationSummary.intradayGain}
+                  seniorCitizen={flags.seniorCitizen}
+                  superSeniorCitizen={flags.superSeniorCitizen}
+                  nri={flags.nri}
+                  nriCountry={flags.nriCountry}
+                  huf={flags.huf}
+                  singleParent={flags.singleParent}
+                  hasLoans={flags.hasLoans}
+                  hasInsurancePayout={flags.hasInsurancePayout}
+                  hasForeignAssets={flags.hasForeignAssets}
+                  insurancePolicies={insurancePolicies}
+                  onChangeInsurancePolicies={setInsurancePolicies}
+                  insuranceRule={ruleCatalog.insurance}
+                  hufMembers={hufMembers}
+                  onChangeHufMembers={setHufMembers}
+                  hufTransfers={hufTransfers}
+                  onChangeHufTransfers={setHufTransfers}
+                  hufClubbingRule={ruleCatalog.hufClubbing}
+                  foreignAccounts={foreignAccounts}
+                  onChangeForeignAccounts={setForeignAccounts}
+                  foreignInvestmentsRule={ruleCatalog.foreignInvestments}
+                  regimeChoiceRule={ruleCatalog.regimeChoice}
+                  loanTreatmentRule={ruleCatalog.loanTreatment}
+                  nriDtaaRule={ruleCatalog.nriDtaa}
+                  nriTdsRule={ruleCatalog.nriTdsAndRefunds}
+                  nriRepatriationRule={ruleCatalog.nriRepatriation}
+                  advanceTaxRule={ruleCatalog.advanceTax}
+                  capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
+                  aisFigures={aisFigures}
+                  onChangeAisFigures={setAisFigures}
+                  tdsRows={tdsRows}
+                  onChangeTdsRows={setTdsRows}
+                  brokerCheck={brokerCheck}
+                  confidenceReport={confidenceReport}
+                  showAdvanced={showAdvanced}
+                  onToggleAdvanced={() => setShowAdvanced((value) => !value)}
+                  exportMessage={exportMessage}
+                  onExportCsv={exportCaSummaryCsv}
+                  onExportXlsx={exportCaSummaryWorkbook}
+                  onExportFullWorkbook={exportFullWorkbook}
+                  localFolderSupported={isLocalFolderSupported()}
+                  localFolderName={folderHandle?.name ?? null}
+                  onChooseLocalFolder={handleChooseFolder}
+                />
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <footer className="app-footer">
+          <button
+            type="button"
+            className="footer-disclaimer-toggle"
+            aria-expanded={!footerCollapsed}
+            aria-controls="footer-disclaimer-body"
+            onClick={() => setFooterCollapsed((value) => !value)}
+          >
+            Disclaimer
+            <svg className="checklist-toggle-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d={footerCollapsed ? "M4 6l4 4 4-4" : "M4 10l4-4 4 4"}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <div
+            id="footer-disclaimer-body"
+            className={footerCollapsed ? "footer-collapsible is-collapsed" : "footer-collapsible"}
+          >
+            <div className="footer-inner">
+              <div className="footer-meta">
+                <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
+                <p className="footer-privacy">Runs locally in your browser; nothing is uploaded.</p>
+              </div>
+              <nav className="footer-links" aria-label="Project and legal links">
+                <div className="footer-disclaimer-link">
+                  <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
+                    Full Disclaimer, AI Use &amp; Privacy
+                  </button>
+                  <span className="footer-disclaimer-hint">
+                    Please read before you blindly rely on this tool
+                  </span>
+                </div>
+                <a
+                  className="footer-link"
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Source On GitHub
+                </a>
+                <a
+                  className="footer-link"
+                  href={REPORT_ISSUE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Report An Issue
+                </a>
+              </nav>
+            </div>
+            <p className="footer-baseline">Free and open source, MIT licensed.</p>
+          </div>
+        </footer>
       </main>
     </div>
   );

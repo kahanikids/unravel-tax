@@ -11,13 +11,15 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "verified_secondary_source",
-    "last_verified": "2026-07-03",
-    "note": "Form applicability (who can/cannot use ITR-1/2/3/4) cross-checked against ClearTax 'Which ITR to File in FY 2025-26 (AY 2026-27)' and the CBDT ITR-form notifications for AY 2026-27. Secondary source: confirm against the official instructions on incometax.gov.in before relying on it as filing advice. Due dates below are carried over from the earlier draft and are still pending verification against the CBDT due-date source (they are a separate concern from form choice)."
+    "status": "verified_current_sources",
+    "last_verified": "2026-07-05",
+    "note": "Form applicability (who can/cannot use ITR-1/2/3/4) cross-checked against current AY 2026-27 ITR-form reporting and the CBDT-notified form changes. ITR-1 now allows Section 112A LTCG up to Rs 1.25 lakh when no capital loss is carried forward, but this tool conservatively routes detected capital-gains uploads to ITR-2 because broker uploads can include disqualifying STCG/loss details. Due dates are separated by profile: most non-audit individual/ITR-2 paths use 31-Jul-2026; non-audit business/professional ITR-3 paths use 31-Aug-2026; audit paths use 31-Oct-2026. Confirm against the e-filing portal before filing."
   },
   "source_refs": [
     "https://cleartax.in/s/which-itr-to-file",
-    "CBDT ITR form notifications for AY 2026-27 (Official Gazette)",
+    "https://m.economictimes.com/wealth/tax/made-less-than-rs-1-25-lakh-ltcg-from-equities-this-year-do-you-need-to-file-itr/articleshow/132135264.cms",
+    "https://m.economictimes.com/wealth/tax/will-the-itr-filing-deadline-for-ay-2026-27-be-extended-heres-what-taxpayers-need-to-know/articleshow/131964799.cms",
+    "https://m.economictimes.com/wealth/tax/is-extended-august-31-itr-deadline-applicable-to-all-taxpayers-or-only-select-categories/articleshow/127855824.cms",
     "BUILD_PLAN.md Section 15.6",
     "SYSTEM_SPEC.md Section 10"
   ],

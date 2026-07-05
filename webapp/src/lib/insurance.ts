@@ -120,7 +120,10 @@ export function computeInsurancePolicies(
     if (policy.isDeathBenefit) {
       continue;
     }
-    const cutoff = policy.policyType === "ulip" ? rules.ulip.issued_on_or_after : rules.traditional_non_ulip.issued_on_or_after;
+    const cutoff =
+      policy.policyType === "ulip"
+        ? rules.ulip.issued_on_or_after
+        : rules.traditional_non_ulip.issued_on_or_after;
     if (policy.issueDate && policy.issueDate >= cutoff) {
       aggregateByType[policy.policyType] += Math.max(0, policy.annualPremium);
     }
@@ -148,21 +151,27 @@ export function computeInsurancePolicies(
           ? ratioRule.issued_2003_04_01_to_2012_03_31_premium_max_pct_of_sum_assured
           : null;
     const failsRatioTest =
-      ratioPct !== null && policy.sumAssured > 0 && policy.annualPremium / policy.sumAssured > ratioPct / 100;
+      ratioPct !== null &&
+      policy.sumAssured > 0 &&
+      policy.annualPremium / policy.sumAssured > ratioPct / 100;
 
     const typeRule = policy.policyType === "ulip" ? rules.ulip : rules.traditional_non_ulip;
     const cap =
       policy.policyType === "ulip"
         ? rules.ulip.aggregate_annual_premium_exemption_cap_inr
         : rules.traditional_non_ulip.aggregate_annual_premium_exemption_cap_inr;
-    const failsAggregateTest = Boolean(policy.issueDate) && policy.issueDate >= typeRule.issued_on_or_after && aggregateByType[policy.policyType] > cap;
+    const failsAggregateTest =
+      Boolean(policy.issueDate) &&
+      policy.issueDate >= typeRule.issued_on_or_after &&
+      aggregateByType[policy.policyType] > cap;
 
     const exempt = !failsRatioTest && !failsAggregateTest;
     if (exempt) {
       return {
         policy,
         exempt: true,
-        reason: "Within the sum-assured-ratio and aggregate-premium limits, so the payout stays exempt.",
+        reason:
+          "Within the sum-assured-ratio and aggregate-premium limits, so the payout stays exempt.",
         failsRatioTest,
         failsAggregateTest,
         taxableAmount: 0,
@@ -171,7 +180,10 @@ export function computeInsurancePolicies(
       };
     }
 
-    const taxableAmount = Math.max(0, policy.maturityPayoutThisYear - policy.totalPremiumsPaidToDate);
+    const taxableAmount = Math.max(
+      0,
+      policy.maturityPayoutThisYear - policy.totalPremiumsPaidToDate
+    );
     const reason = failsAggregateTest
       ? `Your aggregate ${policy.policyType === "ulip" ? "ULIP" : "traditional-policy"} premium this year is over the exemption line, so this payout loses its Section 10(10D) exemption.`
       : "Premium is over the sum-assured-ratio limit, so this payout loses its Section 10(10D) exemption.";
@@ -196,11 +208,15 @@ export function computeInsurancePolicies(
       const issue = new Date(`${policy.issueDate}T00:00:00Z`);
       const now = new Date();
       const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
-      holdPeriodDays = Math.round((new Date(`${today}T00:00:00Z`).getTime() - issue.getTime()) / 86_400_000);
+      holdPeriodDays = Math.round(
+        (new Date(`${today}T00:00:00Z`).getTime() - issue.getTime()) / 86_400_000
+      );
     }
     const isLongTerm = holdPeriodDays > listedEquity.long_term_holding_period_days_gt;
     const estimatedTax = isLongTerm
-      ? Math.round(Math.max(0, taxableAmount - listedEquity.ltcg_exemption_inr) * listedEquity.ltcg_rate)
+      ? Math.round(
+          Math.max(0, taxableAmount - listedEquity.ltcg_exemption_inr) * listedEquity.ltcg_rate
+        )
       : Math.round(taxableAmount * listedEquity.stcg_rate);
 
     return {
