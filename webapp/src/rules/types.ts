@@ -121,6 +121,20 @@ export type NriNreNroValues = {
   common_error: string;
 };
 
+/** Domestic (no-treaty) Section 195/115A TDS defaults - see rules/nri-tds-and-refunds.json. */
+export type NriTdsAndRefundsValues = {
+  capital_gains_tds_at_source: boolean;
+  resident_capital_gains_tds_at_source: boolean;
+  stt_paid_equity_ltcg_tds_rate: number;
+  stt_paid_equity_stcg_tds_rate: number;
+  nro_interest_tds_rate: number;
+  nro_dividend_tds_rate: number;
+  nro_dividend_tds_section: string;
+  nro_interest_tds_section: string;
+  form_13_lower_or_nil_deduction_certificate: boolean;
+  requires_tds_reconciliation: boolean;
+};
+
 export type NriDtaaMfTreatment =
   | "country_of_residence_only"
   | "taxable_in_india"
@@ -130,6 +144,13 @@ export type NriDtaaCountryEntry = {
   treatment: NriDtaaMfTreatment;
   dtaa_article: string;
   note: string;
+};
+
+/** Treaty withholding-rate caps for one country's NRO interest/dividends - null means this tool has no corroborated figure, so the domestic default applies. */
+export type NriDtaaWithholdingEntry = {
+  interest_rate: number | null;
+  dividend_rate: number | null;
+  dtaa_articles: string;
 };
 
 export type NriDtaaValues = {
@@ -142,6 +163,10 @@ export type NriDtaaValues = {
   mutual_fund_capital_gains: {
     default_treatment: string;
     countries: Record<string, NriDtaaCountryEntry>;
+  };
+  nro_withholding_rates: {
+    default_note: string;
+    countries: Record<string, NriDtaaWithholdingEntry>;
   };
 };
 
@@ -162,10 +187,24 @@ export type SingleParentClubbingValues = {
   per_child_exemption_inr: number;
   max_children_for_exemption: number;
   reported_in_schedule: string;
+  /** Income kinds Section 64(1A) never clubs: the minor's own manual work, own skill/talent, or an 80U disability. */
+  excluded_from_clubbing: string[];
+};
+
+export type AdvanceTaxInstalmentRule = {
+  due_date: string;
+  /** Fraction of assessed tax (liability minus TDS) due cumulatively by this date, e.g. 0.15. */
+  cumulative_fraction_due: number;
+  /** How many months of 1%/month interest a shortfall in this instalment is charged. */
+  months_charged: number;
+  /** Paying at least this cumulative fraction clears the instalment even below the due fraction (null = no safe harbour). */
+  safe_harbor_cumulative_fraction: number | null;
 };
 
 export type AdvanceTaxValues = {
   advance_tax_required_above_inr: number;
+  /** Start of the financial year the instalment due dates fall in (e.g. "2025-04-01") - the lower bound of the first 234C window. */
+  financial_year_start_date: string;
   assessment_year_start_date: string;
   section_234b: {
     minimum_paid_fraction_to_avoid_interest: number;
@@ -173,8 +212,13 @@ export type AdvanceTaxValues = {
     part_month_counts_as_full_month: boolean;
   };
   senior_citizen_exempt_without_business_income: boolean;
-  section_234c_status: string;
-  section_234c_reason: string;
+  section_234c: {
+    interest_rate_per_month: number;
+    no_interest_if_net_liability_below_inr: number;
+    instalments: AdvanceTaxInstalmentRule[];
+    /** Shown with every 234C estimate: later-arriving gains/dividends make the true figure lower. */
+    later_income_caveat: string;
+  };
 };
 
 export type DeductionLimitsValues = {
@@ -196,6 +240,8 @@ export type LoanTreatmentValues = {
     let_out_interest_24b: {
       limit_inr: number | null;
       regime: string;
+      /** Section 24(a): flat standard deduction on the net annual value (rent minus municipal taxes). */
+      net_annual_value_standard_deduction_rate: number;
       house_property_loss_setoff_cap_against_other_heads_inr: number;
       old_regime_loss_carry_forward_years: number;
       new_regime_no_setoff_against_other_heads: boolean;
@@ -248,6 +294,7 @@ export type LoanTreatmentValues = {
 export type InsuranceValues = {
   payouts_section_10_10d: {
     death_benefit_always_exempt: boolean;
+    death_benefit_exception: string;
     ulip: {
       issued_on_or_after: string;
       aggregate_annual_premium_exemption_cap_inr: number;
@@ -257,6 +304,12 @@ export type InsuranceValues = {
       issued_on_or_after: string;
       aggregate_annual_premium_exemption_cap_inr: number;
       taxed_as_if_breached: string;
+      taxable_amount_basis: string;
+    };
+    sum_assured_ratio_rule: {
+      issued_on_or_after_2012_04_01_premium_max_pct_of_sum_assured: number;
+      issued_2003_04_01_to_2012_03_31_premium_max_pct_of_sum_assured: number;
+      note: string;
     };
     tds_section_194da: {
       rate: number;
@@ -276,6 +329,10 @@ export type ForeignInvestmentsValues = {
     section: string;
     threshold_inr: number;
     rate_investment_gift_other: number;
+    /** Remittances for education or medical treatment above the threshold. */
+    rate_education_medical: number;
+    /** Remittances funded by a Section 80E education loan collect no TCS at all. */
+    education_loan_funded: string;
   };
   black_money_act_penalties: {
     non_disclosure_penalty_inr: number;
@@ -292,6 +349,7 @@ export type ItrFormSelectionRule = RuleDocument<ItrFormSelectionValues>;
 export type FilingMistakesRule = RuleDocument<FilingMistakesValues>;
 export type RegimeChoiceRule = RuleDocument<RegimeChoiceValues>;
 export type NriNreNroRule = RuleDocument<NriNreNroValues>;
+export type NriTdsAndRefundsRule = RuleDocument<NriTdsAndRefundsValues>;
 export type NriDtaaRule = RuleDocument<NriDtaaValues>;
 export type HufBasicsRule = RuleDocument<HufBasicsValues>;
 export type SingleParentClubbingRule = RuleDocument<SingleParentClubbingValues>;

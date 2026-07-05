@@ -4,6 +4,7 @@ import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
   buildFullWorkbookExport,
+  allocateCapitalGainsTaxByInstalment,
   brokerGainCheck,
   rateInputsFromRule,
   buildChecklist,
@@ -16,8 +17,14 @@ import {
   buildConfidenceReport,
   clearSession,
   clubbedMinorIncome,
+  combined80cUsage,
   computeForeignRemittanceTcs,
+  computeLetOutHouseProperty,
   computeInsurancePayoutCheck,
+  computeNriDividendTax,
+  summarizeInsurancePolicies,
+  applyPreviousWorkbookToOrientation,
+  parsePreviousWorkbook,
   computeLoanDeductions,
   deriveProfileFlags,
   downloadExport,
@@ -47,6 +54,7 @@ import {
   type ChecklistItem,
   type ExportFile,
   type FilingSource,
+  type InsurancePolicy,
   type LocalFolderHandle,
   type PastFiling,
   type PastFilingFields,
@@ -63,7 +71,9 @@ import {
   STEP_ORDER,
   type AisReportedFigures,
   type AppStep,
+  type NumericFigureKey,
   type OrientationAnswers,
+  type RemittancePurpose,
   type SupplementalFigures
 } from "./state/types";
 import { fixtureTransactions } from "./demo/sampleState";
@@ -96,12 +106,13 @@ function App() {
   // Which "A few more numbers" fields were auto-filled from a pasted statement
   // (drives the check-these banner on the results screen). Ephemeral UI hint:
   // not persisted, so a resumed session keeps the values but drops the banner.
-  const [prefilledFigureKeys, setPrefilledFigureKeys] = useState<(keyof SupplementalFigures)[]>([]);
+  const [prefilledFigureKeys, setPrefilledFigureKeys] = useState<NumericFigureKey[]>([]);
   // A pasted statement gave a net realised gain with no per-transaction detail:
   // flagged so the results screen can say the detailed statement is still needed.
   const [netGainMissingDetail, setNetGainMissingDetail] = useState(false);
   const [aisFigures, setAisFigures] = useState<AisReportedFigures>(BLANK_AIS_REPORTED_FIGURES);
   const [tdsRows, setTdsRows] = useState<TdsRow[]>([]);
+  const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
@@ -131,6 +142,9 @@ function App() {
   const [showTour, setShowTour] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
+  // Feedback banner shown on the orientation step right after importing a
+  // previous year's workbook - not persisted, cleared on the next import.
+  const [importWorkbookMessage, setImportWorkbookMessage] = useState<string | null>(null);
   // Width (px) of the left checklist column on the documents/results stage.
   // Driven by dragging the vertical handle between the two cards; clamped in
   // startPanelResize. A CSS var carries it so the mobile media query can
@@ -195,7 +209,8 @@ function App() {
         acknowledgedTriggerIds,
         aisFigures,
         tdsRows,
-        pastFilings
+        pastFilings,
+        insurancePolicies
       };
       saveSession(input);
       // The folder is a disk-durable backup: write the same session there so
@@ -221,6 +236,7 @@ function App() {
     aisFigures,
     tdsRows,
     pastFilings,
+    insurancePolicies,
     sampleMode,
     folderHandle
   ]);
@@ -233,6 +249,13 @@ function App() {
   );
   const rulesSummary = useMemo(
     () => summarizeWithRules(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection),
+    [transactions]
+  );
+  // Section 234C quarter precision: listed-equity STCG/LTCG tax dated by real
+  // transaction sell dates, so it counts toward an instalment only once each
+  // gain actually happened - see lib/advanceTax.ts.
+  const capitalGainsTaxByInstalment = useMemo(
+    () => allocateCapitalGainsTaxByInstalment(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.advanceTax),
     [transactions]
   );
   // Total income for the ITR-1 Rs 50 lakh ceiling: the figures the app
@@ -274,6 +297,13 @@ function App() {
     (trigger) => trigger.severity === "form-changing" && !acknowledgedTriggerIds.includes(trigger.id)
   );
 
+  // NRI dividends are taxed at a flat Section 115A/DTAA rate, not slab -
+  // computed once here so both the CA Summary override and the new row below
+  // use the same figure.
+  const nriDividendTax = flags.nri
+    ? computeNriDividendTax(supplementalFigures.dividends, flags.nriCountry, ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds)
+    : null;
+
   const baseRows = caSummaryRows(transactions, ruleCatalog.capitalGainsEquity, ruleCatalog.itrFormSelection, supplementalFigures);
   const rows = baseRows.map((row) => {
     if (row.head === "Recommended ITR form") {
@@ -285,6 +315,13 @@ function App() {
     }
     if (row.head === "CA review recommendation") {
       return { ...row, amount: caRecommendation.headline, notes: caRecommendation.reason };
+    }
+    if (row.head === "Dividends" && nriDividendTax) {
+      return {
+        ...row,
+        notes:
+          "Entered by you under \"A few more numbers\" on the Current Filing page, not read from an uploaded document. As a non-resident this is taxed at a flat Section 115A/DTAA rate, not your slab rate - see the \"Dividend tax\" row below."
+      };
     }
     return row;
   });
@@ -301,17 +338,75 @@ function App() {
         "Entered by you under \"A few more numbers\" on the Current Filing page. NRE account interest is exempt from Indian income tax entirely, so it's kept separate here rather than folded into the taxable \"Interest & other income\" row above."
     });
   }
+  if (flags.nri && nriDividendTax) {
+    rows.push({
+      head: "Dividend tax (Section 115A/DTAA)",
+      ruleSection: "115A",
+      amount: nriDividendTax.tax,
+      notes: `Dividends taxed at a flat ${(nriDividendTax.effectiveRate * 100).toLocaleString("en-IN")}%${
+        nriDividendTax.treatyApplied
+          ? ` (the lower ${flags.nriCountry} treaty rate)`
+          : ` (the 20% domestic Section 115A rate${flags.nriCountry ? " - the treaty here isn't lower, or isn't known" : ""})`
+      }, not slab rate. This is the final tax on the "Dividends" row above, and it's excluded from the old-vs-new regime comparison since it doesn't depend on regime.`
+    });
+  }
   if (flags.singleParent) {
     const perChild = ruleCatalog.singleParentClubbing.values.per_child_exemption_inr;
+    const exemptFromClubbing = supplementalFigures.minorIncomeExemptFromClubbing;
     rows.push({
       head: "Minor's income clubbed",
       ruleSection: "64(1A)",
       amount: clubbedMinorIncome(
         supplementalFigures.minorIncomeToClub,
         supplementalFigures.numberOfMinors,
-        ruleCatalog.singleParentClubbing
+        ruleCatalog.singleParentClubbing,
+        exemptFromClubbing
       ),
-      notes: `Entered by you under "A few more numbers" on the Current Filing page. The minor's income minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
+      notes: `Entered by you under "A few more numbers" on the Current Filing page. The minor's income${
+        exemptFromClubbing > 0
+          ? `, minus the ₹${exemptFromClubbing.toLocaleString("en-IN")} you marked as never clubbed (the minor's own work/skill or an 80U disability - keep the evidence for a CA)`
+          : ""
+      }, minus a ₹${perChild.toLocaleString("en-IN")} exemption per child (Section 10(32)), added to your income under Section 64(1A). Goes in Schedule SPI, not as an income row of its own.`
+    });
+  }
+
+  // Rented-out home with a loan (Section 24): computed from the Loans section's
+  // figures. Shown as its own CA Summary row so the CA sees the same
+  // house-property figure the regime comparison uses.
+  const letOutHouseProperty = computeLetOutHouseProperty(supplementalFigures, ruleCatalog.loanTreatment);
+  if (letOutHouseProperty.hasInputs) {
+    const setOffCap =
+      ruleCatalog.loanTreatment.values.home_loan.let_out_interest_24b
+        .house_property_loss_setoff_cap_against_other_heads_inr;
+    rows.push({
+      head: "House property (let-out) income/(loss)",
+      ruleSection: "24(a)/(b)",
+      amount: letOutHouseProperty.netIncome,
+      notes: `Entered by you under "Loans" on the Current Filing page: rent ₹${letOutHouseProperty.rentReceived.toLocaleString("en-IN")} minus municipal taxes ₹${letOutHouseProperty.municipalTaxes.toLocaleString("en-IN")}, minus the 30% standard deduction (Section 24(a)) ₹${letOutHouseProperty.standardDeduction.toLocaleString("en-IN")}, minus uncapped home-loan interest (Section 24(b)) ₹${letOutHouseProperty.interest.toLocaleString("en-IN")}. A loss offsets other income only up to ₹${setOffCap.toLocaleString("en-IN")} a year under the old regime (₹${letOutHouseProperty.lossCarriedForward.toLocaleString("en-IN")} carried forward here), and not at all under the new regime.`
+    });
+  }
+
+  // Insurance payouts (Section 10(10D)): computed from the per-policy detail
+  // entered under "Insurance" on the Current Filing page. Only shown once at
+  // least one policy has lost its exemption - an all-exempt policy list adds
+  // no new tax, so it stays out of the summary.
+  const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, ruleCatalog.insurance, ruleCatalog.capitalGainsEquity);
+  if (insuranceSummary.totalOtherSourcesSlabIncome > 0) {
+    rows.push({
+      head: "Insurance payout (traditional, taxable)",
+      ruleSection: "10(10D)",
+      amount: insuranceSummary.totalOtherSourcesSlabIncome,
+      notes:
+        "Entered by you under \"Insurance\" on the Current Filing page: one or more traditional policies lost their Section 10(10D) exemption, so (payout minus premiums paid) is taxable as income from other sources. Already added to the \"other income\" side of the old-vs-new regime comparison, at your slab rate."
+    });
+  }
+  if (insuranceSummary.totalUlipCapitalGainsTax > 0) {
+    rows.push({
+      head: "Insurance payout (ULIP, capital gains)",
+      ruleSection: "10(10D)",
+      amount: insuranceSummary.totalUlipCapitalGainsTax,
+      notes:
+        "Entered by you under \"Insurance\" on the Current Filing page: one or more ULIPs lost their Section 10(10D) exemption, so their maturity gain is taxed as capital gains at listed-equity rates. Each policy's tax here uses the full annual LTCG exemption on its own; if you also have other equity long-term gains this year, the two share one exemption combined, so ask a CA to combine both before filing."
     });
   }
 
@@ -390,6 +485,16 @@ function App() {
     debtMfShortTermDeemedGain: rulesSummary.debtMfShortTermDeemedGain,
     intradayGain: rulesSummary.intradayGain,
     oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + loanDeductionsTotal,
+    // Let-out house property from the Loans section: income on both sides, a
+    // loss only on the old-regime side (pre-capped per rules/loan-treatment.json).
+    letOutIncomeOldRegime: letOutHouseProperty.oldRegimeIncome,
+    letOutIncomeNewRegime: letOutHouseProperty.newRegimeIncome,
+    // NRI dividends are taxed flat under Section 115A/DTAA, never at slab -
+    // see the "Dividend tax" CA Summary row and lib/nriTax.ts.
+    excludeDividendsFromSlab: flags.nri,
+    // A taxable traditional-insurance-policy payout, folded into the same
+    // "other income" bucket the Insurance panel's own note explains.
+    additionalOtherSlabIncome: insuranceSummary.totalOtherSourcesSlabIncome,
     seniorCitizen: flags.seniorCitizen
   };
   const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
@@ -442,7 +547,14 @@ function App() {
         section: "80C",
         label: "Section 80C investments",
         used: supplementalFigures.deduction80C,
-        limit: deductionLimits.section_80c.limit_inr
+        limit: deductionLimits.section_80c.limit_inr,
+        // Home-loan principal (entered in the Loans section) shares this
+        // ceiling, so the bar counts it without letting this input edit it.
+        extra: combined80cUsage(supplementalFigures, ruleCatalog.deductionLimits).homeLoanPrincipal,
+        extraNote:
+          supplementalFigures.homeLoanPrincipal80c > 0
+            ? `Includes ₹${supplementalFigures.homeLoanPrincipal80c.toLocaleString("en-IN")} of home-loan principal from the Loans section - it counts inside this ceiling, not on top.`
+            : undefined
       },
       {
         key: "deduction80D",
@@ -508,6 +620,7 @@ function App() {
     setAcknowledgedTriggerIds([]);
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
+    setInsurancePolicies([]);
   }
 
   function startOrientation() {
@@ -622,6 +735,7 @@ function App() {
     setAisFigures(session.aisFigures ?? BLANK_AIS_REPORTED_FIGURES);
     setTdsRows(session.tdsRows ?? []);
     setPastFilings(session.pastFilings ?? []);
+    setInsurancePolicies(session.insurancePolicies ?? []);
     setSampleMode(false);
   }
 
@@ -652,6 +766,8 @@ function App() {
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
     setPastFilings([]);
+    setInsurancePolicies([]);
+    setImportWorkbookMessage(null);
     setSampleMode(false);
     setShowDashboard(false);
     setFurthestStepIndex(0);
@@ -691,6 +807,12 @@ function App() {
   // premium-cap and foreign LRS-TCS planning figures the dashboard now owns.
   function changeFigure(key: "insuranceAnnualPremium" | "foreignRemittanceLrs", value: number) {
     setSupplementalFigures((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // The LRS remittance purpose picks the Section 206C(1G) TCS rate branch
+  // (20% investment/gift, 2% education/medical, nil when education-loan funded).
+  function changeRemittancePurpose(purpose: RemittancePurpose) {
+    setSupplementalFigures((prev) => ({ ...prev, foreignRemittancePurpose: purpose }));
   }
 
   /** Only ever jumps to a step the user has already reached - never a way to skip ahead. */
@@ -744,6 +866,39 @@ function App() {
     setStep(session.step);
   }
 
+  // Reads a previously exported Unravel Tax workbook (.xlsx) to prefill this
+  // year's profile answers and carry-forward-loss figure, then drops the
+  // user on the orientation step to review what was filled in - it never
+  // starts the filing itself or overwrites an answer already given.
+  async function importPreviousWorkbook(file: File) {
+    clearSampleData();
+    setSampleMode(false);
+    const buffer = await file.arrayBuffer();
+    const imported = await parsePreviousWorkbook(buffer);
+    if (imported.orientation) {
+      setOrientation((prev) => applyPreviousWorkbookToOrientation(prev, imported.orientation));
+    }
+    setSupplementalFigures((prev) => ({
+      ...prev,
+      carryForwardLossesAvailable:
+        prev.carryForwardLossesAvailable === 0 && imported.carryForwardLossesAvailable !== null
+          ? imported.carryForwardLossesAvailable
+          : prev.carryForwardLossesAvailable,
+      dividends: prev.dividends === 0 && imported.dividends !== null ? imported.dividends : prev.dividends,
+      interestOtherIncome:
+        prev.interestOtherIncome === 0 && imported.interestOtherIncome !== null
+          ? imported.interestOtherIncome
+          : prev.interestOtherIncome
+    }));
+    setImportWorkbookMessage(
+      imported.foundAnything
+        ? `Imported from "${file.name}". Check the answers below, then continue - some may still need updating for this year.`
+        : `Couldn't find anything to import in "${file.name}". ${imported.warnings.join(" ")}`
+    );
+    setFurthestStepIndex((prev) => Math.max(prev, STEP_ORDER.indexOf("orientation")));
+    setStep("orientation");
+  }
+
   async function deliverExport(file: ExportFile) {
     if (folderHandle) {
       await saveExportToFolder(folderHandle, file);
@@ -782,7 +937,8 @@ function App() {
         caSummaryRows: rows,
         rateInputs: rateInputsFromRule(cgRule),
         financialYear: `FY${cgRule.financial_year}`,
-        assessmentYear: `AY${cgRule.assessment_year}`
+        assessmentYear: `AY${cgRule.assessment_year}`,
+        orientation
       })
     );
   }
@@ -852,6 +1008,7 @@ function App() {
             onGoToFiling={goToFilingFromDashboard}
             onChangeDeduction={changeDeduction}
             onChangeFigure={changeFigure}
+            onChangeRemittancePurpose={changeRemittancePurpose}
             showAdvanced={showAdvanced}
             onToggleAdvanced={() => setShowAdvanced((value) => !value)}
           />
@@ -870,16 +1027,21 @@ function App() {
             onShowTour={() => setShowTour(true)}
             localFolderSupported={isLocalFolderSupported()}
             onRestoreFromFolder={restoreFromFolder}
+            onImportPreviousWorkbook={importPreviousWorkbook}
           />
         </div>
       ) : null}
 
       {!showDashboard && step === "orientation" ? (
         <div className="stage-single">
+          {importWorkbookMessage ? <p className="defaults-banner">{importWorkbookMessage}</p> : null}
           <OrientationForm
             answers={orientation}
             onChange={setOrientation}
-            onComplete={() => setStep("documents")}
+            onComplete={() => {
+              setImportWorkbookMessage(null);
+              setStep("documents");
+            }}
           />
         </div>
       ) : null}
@@ -968,12 +1130,20 @@ function App() {
                 intradayGain={calculationSummary.intradayGain}
                 seniorCitizen={flags.seniorCitizen}
                 nri={flags.nri}
+                nriCountry={flags.nriCountry}
                 huf={flags.huf}
                 singleParent={flags.singleParent}
                 hasLoans={flags.hasLoans}
+                hasInsurancePayout={flags.hasInsurancePayout}
+                insurancePolicies={insurancePolicies}
+                onChangeInsurancePolicies={setInsurancePolicies}
+                insuranceRule={ruleCatalog.insurance}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
                 loanTreatmentRule={ruleCatalog.loanTreatment}
+                nriDtaaRule={ruleCatalog.nriDtaa}
+                nriTdsRule={ruleCatalog.nriTdsAndRefunds}
                 advanceTaxRule={ruleCatalog.advanceTax}
+                capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
                 aisFigures={aisFigures}
                 onChangeAisFigures={setAisFigures}
                 tdsRows={tdsRows}

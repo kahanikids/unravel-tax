@@ -1,7 +1,7 @@
-# NRI — DTAA relief and mutual fund capital gains
+# NRI — DTAA relief, mutual fund capital gains, and NRO withholding
 
 **Applies to:** NRI profile  
-**Last verified:** 2026-07-03
+**Last verified:** 2026-07-04
 
 ## What this covers
 
@@ -67,3 +67,38 @@ Even when gains are exempt in India:
 - Assuming "I live abroad so I owe nothing" without filing.
 - Treating NRO interest as exempt (only **NRE** interest is exempt under
   Section 10(4)(ii); NRO is fully taxable in India).
+
+## NRO interest and dividend withholding rates by treaty
+
+Separately from the mutual fund question above, most DTAAs also cap the
+rate India can withhold (and, for dividends, the rate India can
+ultimately tax at) on **NRO interest and dividends** — see
+`nro_withholding_rates` in the paired JSON. Two different mechanics
+apply depending on the income type:
+
+- **NRO interest:** the treaty rate is a **cap on what India can
+  charge**, but only actually helps if it's lower than what slab-rate
+  taxation would otherwise produce — many NRIs' slab tax on modest
+  interest income already comes in under the treaty cap, so the treaty
+  makes no practical difference for them. This tool checks the treaty
+  rate against what was **withheld** (for a refund/shortfall estimate)
+  but doesn't attempt to recompute interest at a precise marginal slab
+  rate — see `rules/nri-tds-and-refunds.md`.
+- **Dividends:** Section 115A already sets a flat 20% rate for a
+  non-resident, and the law is explicit that the taxpayer gets
+  **whichever is lower — 20% or the treaty rate** — never the higher
+  one. Some treaties' individual/portfolio-investor dividend rate (US
+  25%, Canada 25%, Italy 25% for a holding under 10%) is actually
+  *above* 20%, in which case the 20% domestic rate wins and the treaty
+  gives no benefit at all. This tool applies that lower-of comparison
+  directly to your dividend figure.
+
+A `null` rate below means this tool could not corroborate a specific
+number for that country from the sources it checked (a genuine gap, not
+a zero-rate claim) — the domestic 30%/20% default from
+`rules/nri-tds-and-refunds.json` is used instead, and you should confirm
+the real treaty rate with a CA if it's material. Every figure here is
+sourced from multiple current filing/withholding guides, not the
+primary treaty text of each country — treat the whole table as a
+starting point, not a substitute for a CA checking your specific
+treaty's Article 10/11 wording.

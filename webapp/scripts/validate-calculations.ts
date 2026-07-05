@@ -3,15 +3,25 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Papa from "papaparse";
 import {
+  allocateCapitalGainsTaxByInstalment,
   brokerGainCheck,
   caSummaryAmountMap,
   caSummaryRows,
+  combined80cUsage,
   compareRegimes,
+  computeForeignRemittanceTcs,
+  computeLetOutHouseProperty,
+  computeNriDividendTax,
+  computeNroTdsReconciliation,
   computeRegimeBreakEven,
+  summarizeInsurancePolicies,
+  type InsurancePolicy,
   estimateAdvanceTaxInterest,
+  estimateSection234cInterest,
   summarizeWithRules
 } from "../src/lib";
 import { clubbedMinorIncome } from "../src/lib/profile";
+import { BLANK_SUPPLEMENTAL_FIGURES } from "../src/state/types";
 import { parseCsvText, parseHtmlText } from "../src/ingest";
 import { ruleCatalog } from "../src/rules";
 
@@ -361,9 +371,502 @@ export async function main() {
   if (clubbedCappedAtTwo !== clubbedTwoChildren) {
     throw new Error("Minor's-income exemption should cap at max_children_for_exemption even with more children entered.");
   }
+  // Section 64(1A) exceptions (the minor's own work/skill or an 80U
+  // disability) come off before the Rs 1,500-per-child exemption:
+  // 10,000 - 4,000 excluded - 3,000 exemption = 3,000.
+  const clubbedWithExclusion = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing, 4000);
+  if (clubbedWithExclusion !== 3000) {
+    throw new Error(`Expected Rs 3,000 clubbed after a Rs 4,000 exclusion and two exemptions, got ${clubbedWithExclusion}.`);
+  }
+  // Excluding everything (or more than the income) clubs nothing, never negative.
+  if (clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing, 12000) !== 0) {
+    throw new Error("Excluding more than the minor's income should club zero, not go negative.");
+  }
+
+  // Section 234C: an assessed tax of Rs 100,000 with nothing paid at all owes
+  // interest on every instalment's full cumulative target -
+  // (15,000 + 45,000 + 75,000) x 1% x 3 months + 100,000 x 1% x 1 month = Rs 5,050.
+  const c234Nothing = estimateSection234cInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 0, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (c234Nothing.totalInterest !== 5050) {
+    throw new Error(`Expected Rs 5,050 total 234C interest on a full Rs 100,000 default, got ${c234Nothing.totalInterest}.`);
+  }
+  if (c234Nothing.instalments.map((instalment) => instalment.interest).join(",") !== "450,1350,2250,1000") {
+    throw new Error(`Unexpected per-instalment 234C interest: ${JSON.stringify(c234Nothing.instalments)}.`);
+  }
+
+  // Safe harbours: 12% paid by 15 June clears the first instalment despite the
+  // 15% target; 36% by 15 September clears the second despite 45%. Third and
+  // fourth targets met exactly leave nothing due.
+  const c234SafeHarbor = estimateSection234cInterest(
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 100000,
+      instalmentsPaid: [12000, 24000, 39000, 25000],
+      seniorCitizenExempt: false
+    },
+    ruleCatalog.advanceTax
+  );
+  if (c234SafeHarbor.totalInterest !== 0 || c234SafeHarbor.interestApplies) {
+    throw new Error(`Expected the 12%/36% safe harbours + met targets to owe no 234C interest, got ${c234SafeHarbor.totalInterest}.`);
+  }
+  if (!c234SafeHarbor.instalments[0].safeHarborApplied || !c234SafeHarbor.instalments[1].safeHarborApplied) {
+    throw new Error("The first two instalments should be cleared by the 12%/36% safe harbours.");
+  }
+
+  // Just under a safe harbour, interest is charged on the shortfall from the
+  // real target, not from the safe-harbour line: paid 11% by 15 June means
+  // (15,000 - 11,000) x 1% x 3 = Rs 120 for the first instalment.
+  const c234UnderHarbor = estimateSection234cInterest(
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 100000,
+      instalmentsPaid: [11000, 34000, 30000, 25000],
+      seniorCitizenExempt: false
+    },
+    ruleCatalog.advanceTax
+  );
+  if (c234UnderHarbor.instalments[0].interest !== 120) {
+    throw new Error(`Expected Rs 120 first-instalment 234C interest at 11% paid, got ${c234UnderHarbor.instalments[0].interest}.`);
+  }
+  if (c234UnderHarbor.totalInterest !== 120) {
+    throw new Error(`Expected only the first instalment to owe (45%/75%/100% met), got ${c234UnderHarbor.totalInterest}.`);
+  }
+
+  // TDS is whatever part of taxAlreadyPaid exceeds the entered instalments,
+  // and comes off the liability before the targets: liability Rs 100,000 with
+  // Rs 95,000 of pure TDS leaves assessed tax Rs 5,000 - under the Rs 10,000
+  // floor, so no 234C at all.
+  const c234TdsOnly = estimateSection234cInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 95000, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: false },
+    ruleCatalog.advanceTax
+  );
+  if (c234TdsOnly.required || c234TdsOnly.interestApplies || c234TdsOnly.assessedTax !== 5000) {
+    throw new Error(`TDS above the floor should leave no 234C: ${JSON.stringify(c234TdsOnly)}.`);
+  }
+
+  // Senior citizens without business income owe no 234C either (Section 207(2)).
+  const c234Senior = estimateSection234cInterest(
+    { totalTaxLiability: 100000, taxAlreadyPaid: 0, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: true },
+    ruleCatalog.advanceTax
+  );
+  if (c234Senior.required || c234Senior.interestApplies) {
+    throw new Error("Senior citizens without business income should be exempt from 234C (Section 207(2)).");
+  }
+
+  // Section 234C quarter precision: a Rs 5,00,000 STCG sold 20-Feb-2026 (inside
+  // the last instalment window only) generates Rs 1,00,000 tax at the flat 20%
+  // rate (Section 111A). allocateCapitalGainsTaxByInstalment must attribute
+  // that tax only to the instalment due after the sale (15 Mar), not any
+  // earlier one.
+  const lateGainCsv = [
+    "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
+    "Late Gain Ltd,01-Feb-2026,20-Feb-2026,1000,0,500000,0,500"
+  ].join("\n");
+  const lateGainAllocation = allocateCapitalGainsTaxByInstalment(
+    parseCsvText(lateGainCsv).transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.advanceTax
+  );
+  if (lateGainAllocation.cumulativeByInstalment.join(",") !== "0,0,0,100000") {
+    throw new Error(`Expected the late STCG's tax to land only in the last instalment, got ${JSON.stringify(lateGainAllocation.cumulativeByInstalment)}.`);
+  }
+  if (lateGainAllocation.totalForYear !== 100000) {
+    throw new Error(`Expected Rs 1,00,000 total STCG tax for the year, got ${lateGainAllocation.totalForYear}.`);
+  }
+
+  // Feeding that allocation into estimateSection234cInterest with nothing paid:
+  // the first three instalments owe nothing (the gain hadn't happened yet), and
+  // only the last instalment's Rs 1,00,000 shortfall for one month draws
+  // interest - Rs 1,000, versus Rs 5,050 if the same total tax were naively
+  // spread evenly across the year (the c234Nothing case above). Quarter
+  // precision must produce the lower, legally correct figure.
+  const c234LateGain = estimateSection234cInterest(
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 0,
+      instalmentsPaid: [0, 0, 0, 0],
+      seniorCitizenExempt: false,
+      capitalGainsTax: lateGainAllocation
+    },
+    ruleCatalog.advanceTax
+  );
+  if (c234LateGain.instalments.slice(0, 3).some((instalment) => instalment.interest !== 0)) {
+    throw new Error(`Expected no interest on the first three instalments before the gain arose, got ${JSON.stringify(c234LateGain.instalments)}.`);
+  }
+  if (c234LateGain.totalInterest !== 1000) {
+    throw new Error(`Expected Rs 1,000 total 234C interest with quarter precision on an all-late gain, got ${c234LateGain.totalInterest}.`);
+  }
+  if (c234LateGain.ordinaryTax !== 0 || c234LateGain.capitalGainsTaxForYear !== 100000) {
+    throw new Error(`Expected the full Rs 1,00,000 to be attributed to capital gains, got ordinaryTax=${c234LateGain.ordinaryTax}, capitalGainsTaxForYear=${c234LateGain.capitalGainsTaxForYear}.`);
+  }
+
+  // An early gain is the mirror case: tax on a gain that already happened by
+  // the first due date must count in full toward that instalment, even though
+  // the naive whole-year spread would only ask for 15% of it. A Rs 2,00,000
+  // STCG sold 10-Apr-2025 (Rs 40,000 tax) plus the same late Rs 3,00,000 STCG
+  // sold 20-Feb-2026 (Rs 60,000 tax, in the last window only) gives cumulative
+  // targets of Rs 40,000/40,000/40,000/1,00,000 - the first instalment owes
+  // the full Rs 40,000, not just Rs 6,000 (15% of Rs 40,000).
+  const mixedGainsCsv = [
+    "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
+    "Early Gain Ltd,01-Apr-2025,10-Apr-2025,1000,0,200000,0,200",
+    "Late Gain Ltd,01-Feb-2026,20-Feb-2026,1000,0,300000,0,300"
+  ].join("\n");
+  const mixedGainsAllocation = allocateCapitalGainsTaxByInstalment(
+    parseCsvText(mixedGainsCsv).transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.advanceTax
+  );
+  if (mixedGainsAllocation.cumulativeByInstalment.join(",") !== "40000,40000,40000,100000") {
+    throw new Error(`Unexpected mixed-timing cumulative allocation: ${JSON.stringify(mixedGainsAllocation.cumulativeByInstalment)}.`);
+  }
+
+  // Long-term exemption is applied cumulatively, so it's used up by the
+  // earliest gains first: a Rs 1,00,000 LTCG sold 10-May-2025 (window 1) stays
+  // fully under the Rs 1,25,000 annual exemption (zero tax), and a further Rs
+  // 1,00,000 LTCG sold 01-Nov-2025 (window 3) pushes the cumulative to Rs
+  // 2,00,000, taxing only the Rs 75,000 above the exemption at 12.5% = Rs
+  // 9,375 - not a fresh per-transaction exemption.
+  const ltcgExemptionCsv = [
+    "Scrip Name,Purchase Date,Sell Date,Units,Buy Value,Sell Value,Buy Price,Sell Price",
+    "Old Holding Ltd,01-Jan-2023,10-May-2025,1000,0,100000,0,100",
+    "Older Holding Ltd,01-Jan-2022,01-Nov-2025,1000,0,100000,0,100"
+  ].join("\n");
+  const ltcgExemptionAllocation = allocateCapitalGainsTaxByInstalment(
+    parseCsvText(ltcgExemptionCsv).transactions,
+    ruleCatalog.capitalGainsEquity,
+    ruleCatalog.advanceTax
+  );
+  if (ltcgExemptionAllocation.cumulativeByInstalment.join(",") !== "0,0,9375,9375") {
+    throw new Error(`Unexpected cumulative LTCG-exemption allocation: ${JSON.stringify(ltcgExemptionAllocation.cumulativeByInstalment)}.`);
+  }
+  if (ltcgExemptionAllocation.totalForYear !== 9375) {
+    throw new Error(`Expected Rs 9,375 total LTCG tax after the cumulative exemption, got ${ltcgExemptionAllocation.totalForYear}.`);
+  }
+
+  // NRI dividend tax (Section 115A/DTAA): UAE's 10% treaty rate beats the 20%
+  // domestic rate, so it applies - Rs 1,00,000 dividends -> Rs 10,000 tax.
+  const uaeDividendTax = computeNriDividendTax(100000, "United Arab Emirates", ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  if (uaeDividendTax.tax !== 10000 || !uaeDividendTax.treatyApplied || uaeDividendTax.effectiveRate !== 0.1) {
+    throw new Error(`Expected Rs 10,000 UAE dividend tax at the 10% treaty rate, got ${JSON.stringify(uaeDividendTax)}.`);
+  }
+
+  // The US treaty's individual/portfolio dividend rate (25%) is actually
+  // higher than the 20% domestic Section 115A rate, so the domestic rate
+  // wins and the treaty gives no benefit - Rs 1,00,000 -> Rs 20,000 tax, not
+  // Rs 25,000.
+  const usDividendTax = computeNriDividendTax(100000, "United States", ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  if (usDividendTax.tax !== 20000 || usDividendTax.treatyApplied || usDividendTax.effectiveRate !== 0.2) {
+    throw new Error(`Expected Rs 20,000 US dividend tax at the 20% domestic rate (25% treaty rate is higher), got ${JSON.stringify(usDividendTax)}.`);
+  }
+
+  // No known country (or no corroborated treaty rate): falls back to the 20%
+  // domestic rate, same as the US case above.
+  const unknownDividendTax = computeNriDividendTax(100000, null, ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  if (unknownDividendTax.tax !== 20000 || unknownDividendTax.treatyApplied) {
+    throw new Error(`Expected Rs 20,000 dividend tax with no known country, got ${JSON.stringify(unknownDividendTax)}.`);
+  }
+
+  // NRO TDS reconciliation (UAE): Rs 2,00,000 NRO interest withheld at the
+  // domestic 30% (Rs 60,000) vs the treaty's 12.5% cap (Rs 25,000) leaves a
+  // Rs 35,000 recoverable gap; Rs 1,00,000 dividends withheld at the domestic
+  // 20% (Rs 20,000) vs the treaty's 10% cap (Rs 10,000) leaves Rs 10,000 more
+  // - Rs 45,000 total.
+  const uaeTdsReconciliation = computeNroTdsReconciliation(
+    {
+      nroInterest: 200000,
+      dividends: 100000,
+      interestTdsWithheld: 60000,
+      dividendTdsWithheld: 20000,
+      nriCountry: "United Arab Emirates"
+    },
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
+  if (uaeTdsReconciliation.interest.recoverableIfTreatyApplies !== 35000) {
+    throw new Error(`Expected Rs 35,000 recoverable NRO interest TDS, got ${uaeTdsReconciliation.interest.recoverableIfTreatyApplies}.`);
+  }
+  if (uaeTdsReconciliation.dividends.recoverableIfTreatyApplies !== 10000) {
+    throw new Error(`Expected Rs 10,000 recoverable dividend TDS, got ${uaeTdsReconciliation.dividends.recoverableIfTreatyApplies}.`);
+  }
+  if (uaeTdsReconciliation.totalRecoverable !== 45000) {
+    throw new Error(`Expected Rs 45,000 total recoverable NRO TDS, got ${uaeTdsReconciliation.totalRecoverable}.`);
+  }
+
+  // With no known treaty rate for the country, there's nothing to compare
+  // against, so the reconciliation must never invent a recoverable amount.
+  const unknownTdsReconciliation = computeNroTdsReconciliation(
+    { nroInterest: 200000, dividends: 100000, interestTdsWithheld: 60000, dividendTdsWithheld: 20000, nriCountry: null },
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
+  if (unknownTdsReconciliation.totalRecoverable !== 0) {
+    throw new Error(`Expected no recoverable NRO TDS with an unknown country, got ${unknownTdsReconciliation.totalRecoverable}.`);
+  }
+
+  // Regime comparison excludes NRI dividends from slab income entirely: a Rs
+  // 12L salary plus Rs 1L dividends should tax exactly the same as the known
+  // Rs 12L-salary-only case (new regime zero, old regime Rs 1,63,800) once
+  // excludeDividendsFromSlab is set.
+  const nriRegimeResult = compareRegimes(
+    {
+      salaryIncome: 1_200_000,
+      dividends: 100_000,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      excludeDividendsFromSlab: true,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  if (nriRegimeResult.newRegimeTax !== 0 || nriRegimeResult.oldRegimeTax !== 163800) {
+    throw new Error(`Expected NRI dividends to be fully excluded from slab income, got ${JSON.stringify(nriRegimeResult)}.`);
+  }
+
+  // Insurance payouts (Section 10(10D)), computed per policy:
+  const blankPolicy: InsurancePolicy = {
+    id: "test",
+    policyType: "traditional",
+    isDeathBenefit: false,
+    issueDate: "",
+    sumAssured: 0,
+    annualPremium: 0,
+    totalPremiumsPaidToDate: 0,
+    maturityPayoutThisYear: 0
+  };
+
+  // A death benefit is exempt regardless of premium or payout size.
+  const deathBenefitSummary = summarizeInsurancePolicies(
+    [{ ...blankPolicy, isDeathBenefit: true, annualPremium: 900000, maturityPayoutThisYear: 10000000 }],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  if (!deathBenefitSummary.results[0].exempt || deathBenefitSummary.totalOtherSourcesSlabIncome !== 0) {
+    throw new Error(`Expected a death benefit to stay exempt, got ${JSON.stringify(deathBenefitSummary.results[0])}.`);
+  }
+
+  // A modest traditional policy within both the sum-assured ratio (5%) and
+  // the aggregate cap stays exempt.
+  const exemptTraditionalSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        issueDate: "2024-01-01",
+        sumAssured: 1000000,
+        annualPremium: 50000,
+        totalPremiumsPaidToDate: 150000,
+        maturityPayoutThisYear: 200000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  if (!exemptTraditionalSummary.results[0].exempt) {
+    throw new Error(`Expected a modest traditional policy to stay exempt, got ${JSON.stringify(exemptTraditionalSummary.results[0])}.`);
+  }
+
+  // A traditional policy breaching the Rs 5,00,000 aggregate cap loses its
+  // exemption; taxable amount = payout minus premiums paid = Rs 10,00,000.
+  const aggregateTraditionalSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        issueDate: "2024-01-01",
+        sumAssured: 10000000,
+        annualPremium: 600000,
+        totalPremiumsPaidToDate: 2000000,
+        maturityPayoutThisYear: 3000000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const aggregateResult = aggregateTraditionalSummary.results[0];
+  if (aggregateResult.exempt || !aggregateResult.failsAggregateTest || aggregateResult.taxableAmount !== 1000000) {
+    throw new Error(`Expected the aggregate-cap traditional policy to owe tax on Rs 10,00,000, got ${JSON.stringify(aggregateResult)}.`);
+  }
+  if (aggregateTraditionalSummary.totalOtherSourcesSlabIncome !== 1000000) {
+    throw new Error(`Expected Rs 10,00,000 total other-sources slab income, got ${aggregateTraditionalSummary.totalOtherSourcesSlabIncome}.`);
+  }
+
+  // A policy can lose its exemption purely on the sum-assured ratio even
+  // when nowhere near the aggregate cap: Rs 20,000 premium on a Rs 1,00,000
+  // sum assured is 20%, over the 10% limit for policies issued after
+  // 1-Apr-2012.
+  const ratioTraditionalSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        issueDate: "2024-01-01",
+        sumAssured: 100000,
+        annualPremium: 20000,
+        totalPremiumsPaidToDate: 40000,
+        maturityPayoutThisYear: 60000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const ratioResult = ratioTraditionalSummary.results[0];
+  if (ratioResult.exempt || !ratioResult.failsRatioTest || ratioResult.failsAggregateTest) {
+    throw new Error(`Expected the sum-assured-ratio test alone to disqualify this policy, got ${JSON.stringify(ratioResult)}.`);
+  }
+
+  // A ULIP breaching its Rs 2,50,000 aggregate cap, issued long enough ago to
+  // be long-term: taxable amount Rs 15,00,000, LTCG tax after the Rs 1,25,000
+  // exemption = (15,00,000 - 1,25,000) x 12.5% = Rs 1,71,875.
+  const ulipLtSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        policyType: "ulip",
+        issueDate: "2023-01-01",
+        sumAssured: 10000000,
+        annualPremium: 300000,
+        totalPremiumsPaidToDate: 1000000,
+        maturityPayoutThisYear: 2500000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const ulipLtResult = ulipLtSummary.results[0];
+  if (ulipLtResult.taxTreatment !== "capital_gains_lt" || ulipLtResult.estimatedTax !== 171875) {
+    throw new Error(`Expected Rs 1,71,875 long-term ULIP capital-gains tax, got ${JSON.stringify(ulipLtResult)}.`);
+  }
+  if (ulipLtSummary.totalUlipCapitalGainsTax !== 171875 || ulipLtSummary.totalOtherSourcesSlabIncome !== 0) {
+    throw new Error(`Expected the ULIP tax to stay out of other-sources slab income, got ${JSON.stringify(ulipLtSummary)}.`);
+  }
+
+  // A recently-issued ULIP failing the sum-assured ratio test (15% > 10%
+  // limit) is short-term: taxable amount Rs 35,000, STCG tax at 20% = Rs 7,000.
+  const ulipStSummary = summarizeInsurancePolicies(
+    [
+      {
+        ...blankPolicy,
+        policyType: "ulip",
+        issueDate: "2026-01-01",
+        sumAssured: 100000,
+        annualPremium: 15000,
+        totalPremiumsPaidToDate: 15000,
+        maturityPayoutThisYear: 50000
+      }
+    ],
+    ruleCatalog.insurance,
+    ruleCatalog.capitalGainsEquity
+  );
+  const ulipStResult = ulipStSummary.results[0];
+  if (ulipStResult.taxTreatment !== "capital_gains_st" || ulipStResult.estimatedTax !== 7000) {
+    throw new Error(`Expected Rs 7,000 short-term ULIP capital-gains tax, got ${JSON.stringify(ulipStResult)}.`);
+  }
+
+  // Let-out house property: rent Rs 2,40,000 minus Rs 40,000 municipal taxes
+  // = NAV Rs 2,00,000; minus 30% (Rs 60,000) and Rs 3,00,000 interest =
+  // Rs 1,60,000 loss. Old regime takes the full loss (under the Rs 2L cap);
+  // new regime takes none of it.
+  const letOutFigures = {
+    ...BLANK_SUPPLEMENTAL_FIGURES,
+    letOutRentReceived: 240000,
+    letOutMunicipalTaxes: 40000,
+    homeLoanInterestLetOut: 300000
+  };
+  const letOutLoss = computeLetOutHouseProperty(letOutFigures, ruleCatalog.loanTreatment);
+  if (letOutLoss.netIncome !== -160000 || letOutLoss.oldRegimeIncome !== -160000 || letOutLoss.newRegimeIncome !== 0) {
+    throw new Error(`Unexpected let-out loss case: ${JSON.stringify(letOutLoss)}.`);
+  }
+  if (letOutLoss.lossCarriedForward !== 0) {
+    throw new Error("A loss inside the Rs 2L set-off cap should carry nothing forward.");
+  }
+  // A bigger loss caps old-regime set-off at Rs 2,00,000 and carries the rest.
+  const letOutBigLoss = computeLetOutHouseProperty(
+    { ...letOutFigures, homeLoanInterestLetOut: 500000 },
+    ruleCatalog.loanTreatment
+  );
+  if (letOutBigLoss.netIncome !== -360000 || letOutBigLoss.oldRegimeIncome !== -200000 || letOutBigLoss.lossCarriedForward !== 160000) {
+    throw new Error(`Unexpected capped let-out loss case: ${JSON.stringify(letOutBigLoss)}.`);
+  }
+  // Positive house-property income lands on both regimes' slab income:
+  // rent Rs 3,00,000, no municipal taxes, Rs 50,000 interest ->
+  // 3,00,000 x 70% - 50,000 = Rs 1,60,000.
+  const letOutIncome = computeLetOutHouseProperty(
+    { ...letOutFigures, letOutRentReceived: 300000, letOutMunicipalTaxes: 0, homeLoanInterestLetOut: 50000 },
+    ruleCatalog.loanTreatment
+  );
+  if (letOutIncome.netIncome !== 160000 || letOutIncome.oldRegimeIncome !== 160000 || letOutIncome.newRegimeIncome !== 160000) {
+    throw new Error(`Unexpected let-out income case: ${JSON.stringify(letOutIncome)}.`);
+  }
+
+  // The regime comparison actually uses the let-out figures per regime: adding
+  // a Rs 1,60,000 old-regime-only loss to the Rs 12L salary case leaves the
+  // new regime at zero and cuts the old regime's tax below its no-loss figure.
+  const regimeWithLetOutLoss = compareRegimes(
+    {
+      salaryIncome: 1_200_000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      letOutIncomeOldRegime: -160_000,
+      letOutIncomeNewRegime: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  // Old-regime taxable falls from Rs 11.5L to Rs 9.9L: 12,500 + 100,000 +
+  // 30% of 4.9L = Rs 2,59,500, x1.04 cess = Rs 2,69,880... recomputed:
+  // 5% of 2.5L (12,500) + 20% of 5L (100,000) + 30% of 4.9L-10L band.
+  // 9.9L - 10L threshold: 9.9L is below 10L, so 12,500 + 20% of (9.9L-5L)
+  // = 12,500 + 98,000 = 110,500, x1.04 = 114,920.
+  if (regimeWithLetOutLoss.newRegimeTax !== 0) {
+    throw new Error(`A let-out loss must not change the zero new-regime tax on Rs 12L salary, got ${regimeWithLetOutLoss.newRegimeTax}.`);
+  }
+  if (regimeWithLetOutLoss.oldRegimeTax !== 114920) {
+    throw new Error(`Expected Rs 1,14,920 old-regime tax with a Rs 1.6L house-property loss, got ${regimeWithLetOutLoss.oldRegimeTax}.`);
+  }
+
+  // Home-loan principal shares the single 80C ceiling: Rs 1,00,000 of
+  // investments + Rs 80,000 of principal counts Rs 1,50,000, not Rs 1,80,000.
+  const usage80c = combined80cUsage(
+    { ...BLANK_SUPPLEMENTAL_FIGURES, deduction80C: 100000, homeLoanPrincipal80c: 80000 },
+    ruleCatalog.deductionLimits
+  );
+  if (usage80c.combined !== 180000 || usage80c.allowed !== 150000 || usage80c.limit !== 150000) {
+    throw new Error(`Unexpected combined 80C usage: ${JSON.stringify(usage80c)}.`);
+  }
+
+  // LRS TCS rate branches (Section 206C(1G)): Rs 15L remitted is Rs 5L over
+  // the Rs 10L threshold - 20% (Rs 1,00,000) for investment/gift, 2%
+  // (Rs 10,000) for education/medical, and nothing when education-loan funded.
+  const lrsBase = { ...BLANK_SUPPLEMENTAL_FIGURES, foreignRemittanceLrs: 1_500_000 };
+  const lrsInvestment = computeForeignRemittanceTcs(lrsBase, ruleCatalog.foreignInvestments);
+  if (lrsInvestment.estimatedTcs !== 100000 || lrsInvestment.rate !== 0.2) {
+    throw new Error(`Expected Rs 1,00,000 TCS at 20% on the investment branch, got ${JSON.stringify(lrsInvestment)}.`);
+  }
+  const lrsEducation = computeForeignRemittanceTcs(
+    { ...lrsBase, foreignRemittancePurpose: "education_medical" },
+    ruleCatalog.foreignInvestments
+  );
+  if (lrsEducation.estimatedTcs !== 10000 || lrsEducation.rate !== 0.02) {
+    throw new Error(`Expected Rs 10,000 TCS at 2% on the education/medical branch, got ${JSON.stringify(lrsEducation)}.`);
+  }
+  const lrsLoanFunded = computeForeignRemittanceTcs(
+    { ...lrsBase, foreignRemittancePurpose: "education_loan_funded" },
+    ruleCatalog.foreignInvestments
+  );
+  if (lrsLoanFunded.estimatedTcs !== 0 || lrsLoanFunded.rate !== 0) {
+    throw new Error(`Expected no TCS on an education-loan-funded remittance, got ${JSON.stringify(lrsLoanFunded)}.`);
+  }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, and minor's-income clubbing matches the known two-child case."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 old-regime band, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, insurance-policy Section 10(10D) exemption matches the death-benefit/exempt/aggregate-cap/ratio-test/ULIP-LT/ULIP-ST known cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

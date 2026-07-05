@@ -7,14 +7,17 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "verified",
-    "last_verified": "2026-07-03",
-    "note": "MF capital-gains country map checked against ITAT Mumbai Anushaka Sanjay Shah (ITA No. 174/MUM/2025, 26 Mar 2025) and current NRI filing guides. Treaty article numbers are indicative — confirm the exact article in your country's DTAA before filing."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-04",
+    "note": "MF capital-gains country map checked against ITAT Mumbai Anushaka Sanjay Shah (ITA No. 174/MUM/2025, 26 Mar 2025) and current NRI filing guides. Treaty article numbers are indicative — confirm the exact article in your country's DTAA before filing. nro_withholding_rates is cross-checked against multiple current NRI filing/withholding-tax guides rather than the primary treaty text of every country, since several of these treaties don't have a single canonical rate table published in an easily verifiable form; a null rate means this tool could not corroborate a specific figure and defaults to the domestic Section 195/115A rate rather than guessing. Confirm the exact treaty article with a CA before relying on any of these as the withheld rate.",
+    "source_type": "secondary"
   },
   "source_refs": [
     "https://itatonline.org/digest/verdicts/anushaka-sanjay-shah-ms-v-ito-it-itat-mumbai/",
     "https://economictimes.indiatimes.com/nri/invest/cap-gains-of-nris-on-mutual-fund-units-cant-be-taxed-in-india-itat/articleshow/120253938.cms",
     "Income Tax Act, 1961, Section 90 (DTAA relief)",
+    "Income Tax Act, 1961, Section 115A (dividend tax on a non-resident, lower of domestic rate or treaty rate)",
+    "rules/nri-tds-and-refunds.json (domestic Section 195/115A default rates)",
     "SYSTEM_SPEC.md Section 9.4"
   ],
   "values": {
@@ -114,6 +117,27 @@
           "dtaa_article": "14",
           "note": "Taxable in India despite Hong Kong's territorial tax system."
         }
+      }
+    },
+    "nro_withholding_rates": {
+      "default_note": "Domestic Section 195/195A rates (see rules/nri-tds-and-refunds.json) apply when a country has no entry here, or a rate is null - never a guessed treaty figure.",
+      "countries": {
+        "Singapore": { "interest_rate": 0.15, "dividend_rate": 0.15, "dtaa_articles": "11, 10" },
+        "United Arab Emirates": { "interest_rate": 0.125, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
+        "United States": { "interest_rate": 0.15, "dividend_rate": 0.25, "dtaa_articles": "11, 10" },
+        "United Kingdom": { "interest_rate": 0.15, "dividend_rate": 0.15, "dtaa_articles": "12, 11" },
+        "Canada": { "interest_rate": 0.15, "dividend_rate": 0.25, "dtaa_articles": "11, 10" },
+        "Australia": { "interest_rate": 0.15, "dividend_rate": 0.15, "dtaa_articles": "11, 10" },
+        "Saudi Arabia": { "interest_rate": 0.1, "dividend_rate": 0.05, "dtaa_articles": "11, 10" },
+        "Germany": { "interest_rate": 0.1, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
+        "Malaysia": { "interest_rate": 0.1, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
+        "Kuwait": { "interest_rate": 0.1, "dividend_rate": null, "dtaa_articles": "11, check treaty" },
+        "Oman": { "interest_rate": null, "dividend_rate": null, "dtaa_articles": "check treaty" },
+        "Qatar": { "interest_rate": 0.1, "dividend_rate": 0.1, "dtaa_articles": "11, 10" },
+        "Italy": { "interest_rate": 0.15, "dividend_rate": 0.25, "dtaa_articles": "12, 10" },
+        "Nepal": { "interest_rate": null, "dividend_rate": null, "dtaa_articles": "check treaty" },
+        "Philippines": { "interest_rate": 0.1, "dividend_rate": null, "dtaa_articles": "11, check treaty" },
+        "Hong Kong": { "interest_rate": 0.1, "dividend_rate": 0.05, "dtaa_articles": "11, 10" }
       }
     }
   }

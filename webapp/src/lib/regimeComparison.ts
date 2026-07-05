@@ -11,7 +11,30 @@ export type RegimeComparisonInputs = {
   intradayGain: number;
   /** A single lump sum for 80C, 80D, HRA, home loan interest, and similar - old regime only. */
   oldRegimeDeductions: number;
+  /**
+   * Let-out house-property income for the old-regime side, from
+   * computeLetOutHouseProperty: may be negative (a loss), already capped at
+   * the Section 71(3A) set-off limit. Defaults to 0 when there's no let-out home.
+   */
+  letOutIncomeOldRegime?: number;
+  /** Let-out house-property income for the new-regime side: a loss can't offset other heads, so never negative. */
+  letOutIncomeNewRegime?: number;
   seniorCitizen: boolean;
+  /**
+   * NRI only: a non-resident's dividends are taxed at a flat Section 115A/DTAA
+   * rate (see lib/nriTax.ts), never at slab rate, so they're left out of both
+   * regimes' slab income entirely when this is true. Defaults to false
+   * (resident behaviour: dividends are ordinary slab income).
+   */
+  excludeDividendsFromSlab?: boolean;
+  /**
+   * Extra ordinary slab income from elsewhere in the tool (currently: a
+   * taxable traditional-insurance-policy payout, see lib/insurance.ts),
+   * folded into the same "other income" bucket as interestOtherIncome -
+   * including sharing its 80TTA/80TTB deduction on the old-regime side,
+   * the same blended-bucket approximation interestOtherIncome already makes.
+   */
+  additionalOtherSlabIncome?: number;
 };
 
 export type RegimeComparisonResult = {
@@ -54,13 +77,23 @@ function applyRebate(tax: number, taxableIncome: number, rebate: RegimeRebate87a
  */
 export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoiceRule): RegimeComparisonResult {
   const otherSlabIncome =
-    Math.max(0, inputs.dividends) +
+    (inputs.excludeDividendsFromSlab ? 0 : Math.max(0, inputs.dividends)) +
     Math.max(0, inputs.interestOtherIncome) +
     Math.max(0, inputs.debtMfShortTermDeemedGain) +
-    Math.max(0, inputs.intradayGain);
+    Math.max(0, inputs.intradayGain) +
+    Math.max(0, inputs.additionalOtherSlabIncome ?? 0);
   const salary = Math.max(0, inputs.salaryIncome);
+  // House property is the one head that can go negative here: the let-out
+  // figures arrive pre-capped per regime (loss floored at zero for new,
+  // capped at the set-off limit for old), so they're added as-is rather than
+  // clamped like the other components.
+  const letOutNew = Math.max(0, inputs.letOutIncomeNewRegime ?? 0);
+  const letOutOld = inputs.letOutIncomeOldRegime ?? 0;
 
-  const newRegimeSlabIncome = Math.max(0, salary - rule.values.new_regime.standard_deduction_inr) + otherSlabIncome;
+  const newRegimeSlabIncome = Math.max(
+    0,
+    Math.max(0, salary - rule.values.new_regime.standard_deduction_inr) + otherSlabIncome + letOutNew
+  );
   // The new regime doesn't have separate age-based slabs, unlike the old one.
   let newRegimeTax = taxFromSlabs(newRegimeSlabIncome, rule.values.new_regime.slabs);
   newRegimeTax = applyRebate(newRegimeTax, newRegimeSlabIncome, rule.values.new_regime.rebate_87a);
@@ -83,7 +116,7 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
   const oldRegimeSalaryAfterStandardDeduction = Math.max(0, salary - rule.values.old_regime.standard_deduction_inr);
   const oldRegimeSlabIncome = Math.max(
     0,
-    oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome - Math.max(0, inputs.oldRegimeDeductions)
+    oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome + letOutOld - Math.max(0, inputs.oldRegimeDeductions)
   );
   const oldRegimeSlabs = inputs.seniorCitizen ? rule.values.old_regime.slabs_60_to_80 : rule.values.old_regime.slabs_below_60;
   let oldRegimeTax = taxFromSlabs(oldRegimeSlabIncome, oldRegimeSlabs);

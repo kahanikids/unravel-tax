@@ -94,6 +94,14 @@ export const STEP_LABELS: Record<AppStep, string> = {
   results: "Current Filing"
 };
 
+/**
+ * Why the money went abroad, for the Section 206C(1G) TCS rate branch:
+ * investment/gift/other collects 20% above the threshold, education or
+ * medical 2%, and an education-loan-funded remittance collects nothing.
+ * Rates and threshold read from rules/foreign-investments.json.
+ */
+export type RemittancePurpose = "investment_gift_other" | "education_medical" | "education_loan_funded";
+
 export type SupplementalFigures = {
   dividends: number;
   interestOtherIncome: number;
@@ -106,14 +114,25 @@ export type SupplementalFigures = {
   oldRegimeDeductions: number;
   /** NRI only. Interest on an NRE account, exempt under Section 10(4)(ii), kept out of interestOtherIncome above. */
   nreExemptInterest: number;
+  /** NRI only. TDS actually withheld on the NRO interest in interestOtherIncome (Section 195), for the treaty-rate reconciliation. */
+  nriNroInterestTdsWithheld: number;
+  /** NRI only. TDS actually withheld on the dividends figure above (Section 115A), for the treaty-rate reconciliation. */
+  nriDividendTdsWithheld: number;
   /** Single parent/guardian only. Minor's income before the Section 10(32) per-child exemption. */
   minorIncomeToClub: number;
+  /** Single parent/guardian only. Portion of the minor's income Section 64(1A) never clubs (their own manual work, own skill/talent, or an 80U disability), left out before the exemption. */
+  minorIncomeExemptFromClubbing: number;
   /** Single parent/guardian only. Number of minor children with income to club (exemption caps out at 2). */
   numberOfMinors: number;
-  /** Only used for the optional Section 234B advance-tax interest estimate. */
+  /** Only used for the optional Section 234B/234C advance-tax interest estimates. */
   advanceTaxLiability: number;
-  /** Only used for the optional Section 234B advance-tax interest estimate: TDS + instalments already paid. */
+  /** Only used for the optional Section 234B/234C advance-tax interest estimates: TDS + instalments already paid. */
   advanceTaxPaid: number;
+  /** Advance tax actually paid in each Section 234C instalment window (by 15 Jun / 15 Sep / 15 Dec / 15 Mar), excluding TDS. */
+  advanceTaxInstalment1: number;
+  advanceTaxInstalment2: number;
+  advanceTaxInstalment3: number;
+  advanceTaxInstalment4: number;
   /** Old-regime only. Amount claimed under Section 80C (limit read from rules/deduction-limits.json). Drives the dashboard 80C progress bar. */
   deduction80C: number;
   /** Old-regime only. Amount claimed under Section 80D health insurance. Drives the dashboard 80D progress bar. */
@@ -128,11 +147,26 @@ export type SupplementalFigures = {
   educationLoanInterest80e: number;
   /** Old-regime only. Electric-vehicle-loan interest (Section 80EEB, capped). */
   evLoanInterest80eeb: number;
+  /** Old-regime only. Home-loan principal repaid this year: counts inside the shared Section 80C ceiling alongside deduction80C, never on top of it. */
+  homeLoanPrincipal80c: number;
+  /** Rented-out home: rent received this year. Drives the Section 24 house-property computation in both regimes. */
+  letOutRentReceived: number;
+  /** Rented-out home: municipal/property taxes actually paid this year, subtracted before the 30% standard deduction. */
+  letOutMunicipalTaxes: number;
+  /** Rented-out home: full home-loan interest on that property (Section 24(b), no cap; loss set-off capped per rules/loan-treatment.json). */
+  homeLoanInterestLetOut: number;
   /** Aggregate annual life-insurance premium across policies, checked against the Section 10(10D) exemption caps (ULIP ₹2.5L / traditional ₹5L, read from rules/insurance.json). Planning figure only - not folded into taxable income, since the exact payout taxability needs the policy's issue date and sum-assured history. */
   insuranceAnnualPremium: number;
   /** Resident only. Total money sent abroad this year under the LRS, checked against the Section 206C(1G) TCS threshold (read from rules/foreign-investments.json). Planning figure only; the TCS is a prepaid credit, not a cost. */
   foreignRemittanceLrs: number;
+  /** What the LRS money was for - picks the TCS rate branch (20% investment/gift, 2% education/medical, nil when funded by an education loan). */
+  foreignRemittancePurpose: RemittancePurpose;
 };
+
+/** The SupplementalFigures keys holding plain rupee amounts - everything except the purpose choice. Generic number-input loops iterate these. */
+export type NumericFigureKey = {
+  [K in keyof SupplementalFigures]: SupplementalFigures[K] extends number ? K : never;
+}[keyof SupplementalFigures];
 
 export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   dividends: 0,
@@ -143,10 +177,17 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   salaryIncome: 0,
   oldRegimeDeductions: 0,
   nreExemptInterest: 0,
+  nriNroInterestTdsWithheld: 0,
+  nriDividendTdsWithheld: 0,
   minorIncomeToClub: 0,
+  minorIncomeExemptFromClubbing: 0,
   numberOfMinors: 0,
   advanceTaxLiability: 0,
   advanceTaxPaid: 0,
+  advanceTaxInstalment1: 0,
+  advanceTaxInstalment2: 0,
+  advanceTaxInstalment3: 0,
+  advanceTaxInstalment4: 0,
   deduction80C: 0,
   deduction80D: 0,
   deductionNps80ccd1b: 0,
@@ -154,8 +195,13 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   homeLoanInterest80eea: 0,
   educationLoanInterest80e: 0,
   evLoanInterest80eeb: 0,
+  homeLoanPrincipal80c: 0,
+  letOutRentReceived: 0,
+  letOutMunicipalTaxes: 0,
+  homeLoanInterestLetOut: 0,
   insuranceAnnualPremium: 0,
-  foreignRemittanceLrs: 0
+  foreignRemittanceLrs: 0,
+  foreignRemittancePurpose: "investment_gift_other"
 };
 
 /**

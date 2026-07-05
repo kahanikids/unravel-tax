@@ -42,7 +42,41 @@ infer scope from the roadmap or implementation notes.
 - Final "Before you export" confidence check that groups missing documents,
   mismatches, form-changing triggers, routine flags, and profile caveats.
 - Old-vs-new regime comparison for slab-taxed income, with break-even
-  deductions and loan-interest deductions folded into the old-regime side.
+  deductions, loan-interest deductions, and let-out house-property
+  income/loss (per regime) folded into the right sides.
+- Section 234B and Section 234C advance-tax interest estimates. 234C works
+  instalment by instalment from what was paid in each window, applies the
+  12%/36% safe harbours and the Rs 10,000 floor. Listed-equity capital
+  gains are dated from real transaction dates so their tax counts toward
+  the right instalment automatically; the remaining ordinary income
+  (dividends, intraday, debt-MF) is still spread evenly, with that
+  narrower caveat always shown.
+- Let-out house-property computation (rent, municipal taxes, 30% standard
+  deduction, uncapped interest), with the Rs 2 lakh loss set-off cap on the
+  old-regime side, no set-off on the new-regime side, carry-forward noted,
+  and its own CA Summary row.
+- Home-loan principal counted inside the shared Section 80C ceiling,
+  capped together with the dashboard's 80C investments figure.
+- LRS TCS estimate using the remittance purpose's rate branch: 20%
+  investment/gift/other, 2% education/medical, nil when education-loan
+  funded.
+- Minor's-income clubbing with the Section 10(32) per-child exemption and a
+  field for income Section 64(1A) never clubs (the minor's own work/skill
+  or an 80U disability), excluded before the exemption.
+- NRI dividend tax at the actual Section 115A/DTAA flat rate (the lower of
+  the 20% domestic rate and the country's treaty rate), excluded from the
+  regime comparison's slab income since it isn't slab income for a
+  non-resident. An NRO interest/dividend TDS-vs-treaty-rate reconciliation
+  surfaces a possible recoverable refund, for the 16 countries this tool
+  has treaty rates for.
+- Per-policy Section 10(10D) computation: sum-assured-ratio and
+  aggregate-premium-cap tests per policy, the taxable amount when a policy
+  loses its exemption, capital-gains tax for a taxable ULIP (its own CA
+  Summary row) and slab-taxed other-sources income for a taxable
+  traditional policy (folded into the regime comparison).
+- Import a previous year's Unravel Tax workbook (.xlsx) to prefill this
+  year's profile answers and carry-forward-loss/dividend/interest figures,
+  never overwriting an answer already given.
 - Year-over-year dashboard with current-year widgets, past-filing history,
   ITR JSON import, ITR-V PDF text read, manual past-year entry, trends, and
   simple charts.
@@ -60,9 +94,12 @@ infer scope from the roadmap or implementation notes.
 - PDF support extracts text locally, but transaction-table reconstruction still
   depends on the user's external AI chat and copy-paste JSON. Scanned/image PDFs
   may fail.
-- Advance-tax support estimates only Section 234B from total tax liability,
-  tax already paid, and an as-of date. Section 234C quarterly instalment
-  interest is not calculated.
+- Section 234C is precise for listed-equity capital gains (dated from real
+  transaction sell dates) but still a whole-year ceiling for the rest:
+  dividends, intraday income, and debt-mutual-fund gains aren't dated the
+  same way, so their tax is still spread evenly, and the true figure can
+  be somewhat lower than shown if a meaningful share of those arrived
+  mid-year or later. The caveat is displayed with every estimate.
 - Regime comparison covers slab-taxed income only. It excludes surcharge above
   Rs 50 lakh, the age 80+ super-senior slab, and capital gains taxed the same
   under both regimes. It is hidden for HUF.
@@ -71,29 +108,43 @@ infer scope from the roadmap or implementation notes.
   income details, or carried-forward losses unless the user enters enough
   related information.
 - NRI support orients the user, builds the checklist, routes to ITR-2/ITR-3,
-  flags DTAA mutual fund caveats for known countries, and keeps NRE interest as
-  a separate exempt entry. It does not apply DTAA relief to the tax numbers,
-  compute NRO TDS precision, track repatriation limits, or calculate refund
-  claims.
+  flags DTAA mutual fund caveats for known countries, keeps NRE interest as a
+  separate exempt entry, applies Section 115A/DTAA dividend tax, and
+  reconciles NRO interest/dividend TDS against the treaty rate. NRO interest
+  itself still uses ordinary slab tax rather than a precise treaty-capped
+  final rate (that needs marginal-rate context this tool doesn't have), and
+  it does not track repatriation limits or calculate refund claims beyond
+  the TDS reconciliation. See docs/DESIGN-remaining-gaps.md for the
+  repatriation-tracking design.
 - HUF support orients the user, builds the checklist, routes to ITR-2/ITR-3,
   and skips the regime comparison. It does not calculate coparcener/member
-  detail, Section 64(2) transfer clubbing, or partition effects.
+  detail, Section 64(2) transfer clubbing, or partition effects. See
+  docs/DESIGN-remaining-gaps.md for the proposed scope (partition tracking
+  is proposed to stay calculation-free even in a future build).
 - Single-parent support orients the user, builds the checklist, and computes
-  minor-income clubbing after the Section 10(32) per-child exemption. It does
-  not check exceptions for the minor's own skill/manual work or Section 80U,
-  and it does not place values into Schedule SPI.
-- Loan deductions cover common old-regime interest lines: self-occupied home
-  loan interest, 80EEA, 80E, and 80EEB. Let-out property treatment, 80C home
-  loan principal, and business-use vehicle interest are not modelled.
-- Insurance payout support checks annual premium against major 10(10D) caps,
-  but does not compute taxable payout amounts because it does not hold issue
-  dates, policy type history, sum-assured ratios, or premium-by-policy detail.
-- Foreign-asset support is a disclosure reminder and LRS TCS estimate. It does
-  not build Schedule FA, compute foreign dividends/interest/gains, or prepare
-  Form 67 foreign-tax-credit inputs.
-- Past-filing import is a dashboard history feature. It reads a handful of ITR
-  JSON or ITR-V PDF fields when it can, but it does not import the previous
-  Unravel Tax workbook to prefill this year's filing or carry forward losses.
+  minor-income clubbing after the Section 64(1A) exclusions and the Section
+  10(32) per-child exemption. It cannot verify an exclusion genuinely
+  applies, and it does not place values into Schedule SPI.
+- Loan deductions cover the old-regime interest lines (self-occupied home
+  loan, 80EEA, 80E, 80EEB), the let-out house-property computation, and 80C
+  home-loan principal. Business-use vehicle interest, multiple let-out
+  properties, and pre-construction interest spreading are not modelled.
+- Insurance payout support has two tiers: a dashboard aggregate-premium
+  check against the major 10(10D) caps (a quick planning signal), and a
+  per-policy computation on the Results page that takes each policy's
+  issue date, sum assured, premium history, and payout to compute the
+  actual taxable amount. A taxable ULIP's capital-gains tax doesn't yet
+  combine with other equity LTCG under the one shared annual exemption -
+  each taxable ULIP uses the full exemption on its own, flagged rather
+  than silently assumed.
+- Foreign-asset support is a disclosure reminder and a purpose-aware LRS TCS
+  estimate. It does not build Schedule FA, compute foreign
+  dividends/interest/gains, or prepare Form 67 foreign-tax-credit inputs.
+  See docs/DESIGN-remaining-gaps.md for a phased Schedule FA design.
+- Past-filing import is a dashboard history feature that reads a handful of
+  ITR JSON or ITR-V PDF fields when it can. Importing a previous Unravel Tax
+  workbook is a separate, now-built feature (see Built above) that prefills
+  the live current-year filing, not this dashboard history.
 - TDS auto-fill from AI-extracted annual figures is lean: it lands in the
   existing tax-paid field and still needs user review against AIS/26AS.
 - Local-folder save is Chromium-only because it uses the File System Access API.
@@ -103,20 +154,23 @@ infer scope from the roadmap or implementation notes.
 
 ## Pending
 
-- Section 234C quarterly advance-tax interest.
-- Import a previous Unravel Tax full workbook to reuse profile answers and
-  carry-forward loss figures.
-- Full NRI calculation path: NRE/NRO separation throughout, NRO TDS-rate
-  precision, DTAA relief applied to calculations, refund reconciliation, and
-  repatriation tracking.
-- Full HUF calculation path: coparceners/members, Section 64(2) transfer
-  clubbing, and partition tracking.
-- Full single-parent path: clubbing exceptions and Schedule SPI placement.
-- Schedule FA and foreign income computation for resident foreign assets.
-- Full insurance payout tax computation from policy-level premium and issue
-  data.
-- Let-out house-property loan treatment, home-loan principal, and broader loan
-  edge cases.
+- Section 234C precision for dividends/intraday/debt-MF income dated by
+  quarter (listed-equity capital gains are already precise).
+- NRI: repatriation-limit tracking (design proposed,
+  docs/DESIGN-remaining-gaps.md), NRO TDS-rate precision applied as a final
+  slab-tax figure (not just the TDS reconciliation already built), and
+  refund reconciliation beyond TDS.
+- HUF: coparcener/member data model and Section 64(2) transfer clubbing
+  (design proposed, docs/DESIGN-remaining-gaps.md); partition tracking is
+  proposed to stay out of scope for calculation entirely.
+- Single-parent Schedule SPI placement.
+- Schedule FA builder and foreign income computation for resident foreign
+  assets (phased design proposed, docs/DESIGN-remaining-gaps.md).
+- Combining a taxable ULIP's capital gains with other equity LTCG under the
+  one shared annual exemption, instead of each source using it
+  independently.
+- Business-use vehicle interest, multiple let-out properties, and
+  pre-construction interest spreading.
 - Native PDF table extraction reliable enough to avoid the external AI
   copy-paste step.
 - Published Google Sheets master template.

@@ -13,7 +13,8 @@ import {
   type PastFilingFields
 } from "../lib/pastFilings";
 import type { InsurancePayoutCheck } from "../lib/insurance";
-import type { ForeignRemittanceTcs } from "../lib/foreignInvestments";
+import { REMITTANCE_PURPOSE_LABELS, type ForeignRemittanceTcs } from "../lib/foreignInvestments";
+import type { RemittancePurpose } from "../state/types";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { InfoTooltip } from "./InfoTooltip";
 import {
@@ -96,6 +97,10 @@ export type DeductionProgress = {
   label: string;
   used: number;
   limit: number;
+  /** Amount counted toward the same ceiling from elsewhere (e.g. home-loan principal inside 80C): shown in the meter, not editable here. */
+  extra?: number;
+  /** One line explaining where `extra` comes from. */
+  extraNote?: string;
 };
 
 /** Section 10(10D) insurance-payout premium-cap check (see lib/insurance.ts).
@@ -153,6 +158,7 @@ export function Dashboard({
   onGoToFiling,
   onChangeDeduction,
   onChangeFigure,
+  onChangeRemittancePurpose,
   showAdvanced,
   onToggleAdvanced
 }: {
@@ -163,6 +169,7 @@ export function Dashboard({
   onGoToFiling: () => void;
   onChangeDeduction: (key: DeductionProgress["key"], value: number) => void;
   onChangeFigure: (key: "insuranceAnnualPremium" | "foreignRemittanceLrs", value: number) => void;
+  onChangeRemittancePurpose: (purpose: RemittancePurpose) => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
 }) {
@@ -361,6 +368,8 @@ export function Dashboard({
                       section={deduction.section}
                       used={deduction.used}
                       limit={deduction.limit}
+                      extra={deduction.extra}
+                      extraNote={deduction.extraNote}
                       onChange={(value) => onChangeDeduction(deduction.key, value)}
                     />
                   ))}
@@ -435,19 +444,38 @@ export function Dashboard({
                       onChange={(event) => onChangeFigure("foreignRemittanceLrs", Number(event.target.value) || 0)}
                     />
                   </label>
+                  <label className="deduction-bar-input">
+                    <span className="visually-hidden">What the money was for</span>
+                    <select
+                      value={foreign.purpose}
+                      onChange={(event) => onChangeRemittancePurpose(event.target.value as RemittancePurpose)}
+                    >
+                      {(Object.keys(REMITTANCE_PURPOSE_LABELS) as RemittancePurpose[]).map((purpose) => (
+                        <option key={purpose} value={purpose}>
+                          {REMITTANCE_PURPOSE_LABELS[purpose]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <Meter
                     used={foreign.remittance}
                     limit={foreign.threshold}
                     caption={`LRS money sent abroad vs the ${formatCompactInr(foreign.threshold)} yearly TCS-free limit.`}
-                    overLabel={`Over ${formatCompactInr(foreign.threshold)}: about ${formatCompactInr(
-                      foreign.estimatedTcs
-                    )} TCS is collected at ${formatPercent(foreign.rate)} on the excess.`}
+                    overLabel={
+                      foreign.purpose === "education_loan_funded"
+                        ? `Over ${formatCompactInr(foreign.threshold)}, but an education-loan-funded remittance collects no TCS at all.`
+                        : `Over ${formatCompactInr(foreign.threshold)}: about ${formatCompactInr(
+                            foreign.estimatedTcs
+                          )} TCS is collected at ${formatPercent(foreign.rate)} on the excess.`
+                    }
                   />
                   <p className="widget-note">
                     {foreign.overThreshold
-                      ? `That ${formatCompactInr(
-                          foreign.estimatedTcs
-                        )} TCS is a prepaid credit shown in your AIS/26AS, recoverable in the return, not an added cost.`
+                      ? foreign.purpose === "education_loan_funded"
+                        ? "Remittances funded by a Section 80E education loan are fully exempt from LRS TCS, whatever the amount."
+                        : `That ${formatCompactInr(
+                            foreign.estimatedTcs
+                          )} TCS is a prepaid credit shown in your AIS/26AS, recoverable in the return, not an added cost.`
                       : "TCS applies only above the threshold, and even then it's a prepaid credit, not a cost."}{" "}
                     Foreign tax paid abroad is credited via Form 67. <RuleSourceLink refs={foreign.sourceRefs} />
                   </p>

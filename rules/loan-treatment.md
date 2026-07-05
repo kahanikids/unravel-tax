@@ -4,7 +4,7 @@
 anything, they can claim for it. Almost everything here works **only
 under the old regime**, with one exception (let-out home-loan interest),
 so it mainly matters if you are on, or comparing against, the old regime.
-**Last verified:** 2026-07-03, against multiple current FY 2025-26 filing
+**Last verified:** 2026-07-04, against multiple current FY 2025-26 filing
 guides (see `source_refs` in the paired JSON).
 
 ## The one thing to understand first
@@ -25,8 +25,11 @@ are you on?
   interest deduction on a home you live in.
 - **Interest, rented-out home (Section 24(b)) no cap.** If the home is let
   out, the **full** interest is deductible against the rent, under
-  **both** regimes. The catch is the loss: if interest exceeds the rent,
-  the resulting "loss from house property" can be set off against your
+  **both** regimes. The taxable figure is worked out in three steps: rent
+  received minus municipal taxes you paid (the "net annual value"), minus
+  a flat 30% standard deduction on that value (Section 24(a)), minus the
+  interest. The catch is the loss: if that comes out negative, the
+  resulting "loss from house property" can be set off against your
   other income only up to ₹2,00,000 a year (old regime), with the rest
   carried forward 8 years. Under the **new** regime that loss cannot be
   set off against other income at all and cannot be carried forward, so
@@ -87,16 +90,31 @@ is treated very differently from a transfer without consideration. See
 
 ## What this tool does with all this
 
-On the results screen, under "Add more numbers to refine", you can enter
-the interest you paid on a home loan (self-occupied), a first-time-buyer
+On the results screen, under "A few more numbers", you can enter the
+interest you paid on a home loan (self-occupied), a first-time-buyer
 80EEA top-up, an education loan, and an electric-vehicle loan. The tool
 caps each one at the limit above (read from the paired JSON, never
 hardcoded) and folds the total into the **old-regime** side of the old
 vs new regime comparison, so you can see whether your loans actually make
-the old regime cheaper for you. It does **not** try to model the let-out
-house-property loss set-off, the 80C principal (that rides inside the 80C
-figure you enter separately), or business-use vehicle interest. For those,
-or for anything ambiguous, check with a CA.
+the old regime cheaper for you.
+
+For a **rented-out home**, you can also enter the rent received, the
+municipal taxes paid, and the interest on that home's loan. The tool
+works out the house-property income or loss (30% standard deduction and
+uncapped interest, per Section 24(a)/(b)), applies the ₹2,00,000
+loss set-off cap on the old-regime side, drops the loss entirely on the
+new-regime side, and notes any loss beyond the cap as carry-forward. The
+figure also appears as its own line in the CA Summary.
+
+**Home-loan principal** has its own field too: it counts *inside* the
+single ₹1,50,000 Section 80C ceiling (limit read from
+`deduction-limits.json`), shared with the 80C investments you enter on
+the dashboard — the tool caps the combined total rather than counting
+the principal on top.
+
+It does **not** model business-use vehicle interest, multiple let-out
+properties, or pre-construction interest spreading. For those, or for
+anything ambiguous, check with a CA.
 
 ## Renumbering under the new Income Tax Act, 2025
 

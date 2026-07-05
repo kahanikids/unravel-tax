@@ -1,7 +1,7 @@
 # Single parent / guardian — minor's income clubbing
 
 **Applies to:** Single Parent/Sole Guardian profile
-**Last verified:** 2026-07-03, against Income Tax Department case law text and
+**Last verified:** 2026-07-04, against Income Tax Department case law text and
 current filing guides (see `source_refs` in the paired JSON).
 
 ## What this covers
@@ -34,7 +34,10 @@ your income.
 
 This tool computes the clubbed amount after the per-child exemption, from
 the minor's income and child count you enter, and adds it as its own line
-in your results. It does not track which specific income source is exempt
-from clubbing (manual work, disability), and it doesn't place the figure
-into Schedule SPI itself. Bring the breakdown to a CA if any of those
-exceptions might apply to your situation.
+in your results. If part of the minor's income falls under the exceptions
+above (their own manual work, their own skill or talent, or a Section 80U
+disability), you can enter that part separately and the tool leaves it
+out of the clubbed amount before applying the exemption. It doesn't place
+the figure into Schedule SPI itself, and it can't verify that an
+exception genuinely applies — keep the evidence (the source of the
+minor's earnings, or the 80U certificate) and have a CA confirm it.

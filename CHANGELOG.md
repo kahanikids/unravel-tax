@@ -4,6 +4,112 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-04 (remaining gaps: 234C quarter precision, NRI DTAA/TDS, insurance per-policy, workbook carry-forward import; design doc for HUF/repatriation/Schedule FA)
+
+- **Section 234C now dates listed-equity capital gains to the instalment they
+  actually arose in**, instead of spreading all income evenly across the
+  year. `rules/advance-tax.json` gains `financial_year_start_date` so
+  transaction dates can be mapped to instalment windows, and the
+  `later_income_caveat` is rewritten to say equity gains are now precise
+  while dividends/intraday/debt-MF gains remain a whole-year ceiling (source:
+  Income Tax Act, 1961, Section 234C proviso — unchanged provision, no rate
+  or threshold change). `allocateCapitalGainsTaxByInstalment` in
+  `webapp/src/lib/advanceTax.ts` walks each transaction's date to compute a
+  cumulative capital-gains tax figure per instalment; `estimateSection234cInterest`
+  now requires `ordinaryTax * fraction + capitalGainsCumulative` instead of
+  `assessedTax * fraction`, so an instalment isn't penalised for gains that
+  hadn't happened yet.
+- **NRI dividend tax and NRO TDS reconciliation are now calculated.**
+  `rules/nri-dtaa.json` gains `nro_withholding_rates.countries` — treaty
+  interest/dividend withholding rates for 16 countries (Singapore, UAE, US,
+  UK, Canada, Australia, Saudi Arabia, Germany, Malaysia, Kuwait, Oman,
+  Qatar, Italy, Nepal, Philippines, Hong Kong; source: respective India DTAA
+  texts via secondary tax-reference summaries — marked
+  `verified_secondary_source`, not primary-text-verified). `rules/nri-tds-and-refunds.json`
+  is rewritten from a pending stub to `verified_secondary_source` with the
+  30%/20% domestic TDS rates on NRO interest/dividends (Section 195). New
+  `webapp/src/lib/nriTax.ts` computes dividend tax at Section 115A's flat
+  rate or the treaty rate, whichever is lower, and reconciles TDS actually
+  withheld against what was owed on both interest and dividends. Dividends
+  are now excluded from the NRI's slab-income total in the regime comparison
+  (they're taxed flat, not at slab rates) via a new `excludeDividendsFromSlab`
+  input. New `NriDtaaPanel` component surfaces the computation and TDS input
+  fields.
+- **Insurance payout tax is now computed per policy**, not as a single
+  disclosure reminder. `webapp/src/lib/insurance.ts` adds a per-policy model
+  (type, issue date, sum assured, premiums, payout) and applies both
+  Section 10(10D) tests independently: the sum-assured ratio test
+  (10%/20% depending on issue date) and the aggregate-annual-premium cap
+  (₹2.5L ULIP / ₹5L traditional), pooling premium across *all* policies of
+  the same type issued on/after that type's cutoff — so one policy's premium
+  can push a different policy of the same type over the cap, as the law
+  requires. Failing either test makes the payout taxable (slab rate for
+  traditional policies, capital-gains rate for ULIPs). No rule value change;
+  `rules/insurance.json`'s existing fields are now read by new TypeScript
+  types instead of being display-only. New `InsurancePolicyPanel` component
+  for adding/removing policies.
+- **A previous year's Unravel Tax full workbook can now be imported** from
+  the welcome screen, prefilling orientation answers and carry-forward loss
+  figures. New `webapp/src/lib/workbookImport.ts` reads the Orientation and
+  CA Summary sheets back out of the exported XLSX (only the literal-value
+  cells — capital-gains and Totals rows that hold live formulas are left
+  alone, since a formula's cached value isn't reliable to read back).
+- **Design proposals for the three largest remaining gaps** — HUF
+  coparcener/partition modelling, NRI repatriation tracking, and a
+  Schedule FA builder — are written up in the new
+  `docs/DESIGN-remaining-gaps.md`, each with a data-model sketch, risk
+  analysis, and open questions. None of the three are implemented yet;
+  per the maintainer's explicit instruction, they're parked for review and
+  sign-off before any code is written.
+- Validators extended with known-figure cases for all four shipped items:
+  234C quarter-precision (3 cases), NRI dividend tax (3 cases), NRO TDS
+  reconciliation (2 cases), regime comparison with dividend exclusion,
+  insurance policies across all four disqualification/exemption combinations
+  (6 cases), and a full workbook import/export round trip using synthetic
+  data. FEATURE_COVERAGE.md and ROADMAP.md updated to match.
+
+## 2026-07-04 (four pending features built: 234C, let-out home + 80C principal, LRS rate branches, clubbing exceptions)
+
+- **Section 234C instalment interest is now estimated** (was: 234B only).
+  `rules/advance-tax.json` gains a `section_234c` block — the instalment
+  calendar (15%/45%/75%/100% by 15 Jun/15 Sep/15 Dec/15 Mar), the 12%/36%
+  safe harbours for the first two instalments, the 3/3/3/1-month interest
+  periods, the ₹10,000 floor, and a `later_income_caveat` that the UI must
+  always show (source: Income Tax Act, 1961, Section 234C — long-standing,
+  unchanged provisions). `estimateSection234cInterest` in
+  `webapp/src/lib/advanceTax.ts` computes per-instalment shortfall interest
+  from what the user paid in each window; whatever part of "tax already paid"
+  exceeds the entered instalments is treated as TDS and subtracted from the
+  liability first. The advance-tax panel shows the per-instalment breakdown,
+  the safe-harbour outcomes, and the whole-year-ceiling caveat next to the
+  number every time. `rules/advance-tax.md` rewritten accordingly.
+- **Let-out house property and home-loan principal are now modelled**
+  (`rules/loan-treatment.json` gains the Section 24(a) 30%
+  `net_annual_value_standard_deduction_rate`). The Loans panel takes rent
+  received, municipal taxes, and uncapped let-out interest; computes the
+  house-property income/loss; caps a loss's set-off at ₹2,00,000 on the
+  old-regime side of the regime comparison (rest reported as carry-forward)
+  and drops it on the new-regime side; and adds the figure as its own CA
+  Summary row. Home-loan principal gets its own field that counts *inside*
+  the shared Section 80C ceiling (capped together with the dashboard's 80C
+  investments figure, shown on the same progress bar), never on top.
+- **LRS TCS now uses the remittance purpose's rate branch**: the dashboard's
+  foreign widget gains a purpose selector — 20% investment/gift/other, 2%
+  education/medical, and nil when funded by a Section 80E education loan (all
+  three already recorded in `rules/foreign-investments.json`; no rule change).
+- **Minor's-income clubbing exceptions**: a new field for the portion of the
+  minor's income Section 64(1A) never clubs (their own manual work, own
+  skill/talent, or an 80U disability, per `excluded_from_clubbing` in
+  `rules/single-parent-clubbing.json`), subtracted before the ₹1,500
+  per-child exemption. The scope caveat now says the tool can't verify the
+  exception applies, rather than that it ignores exceptions entirely.
+- Validators extended with known-figure cases for all four:
+  234C full-default (₹5,050 on a ₹1,00,000 default), safe-harbour and
+  TDS-floor cases; let-out loss-cap/carry-forward/income cases including the
+  per-regime feed into the comparison; combined 80C capping; the three LRS
+  rate branches; and clubbing with exclusions. FEATURE_COVERAGE.md and
+  ROADMAP.md updated to match.
+
 ## 2026-07-04 (standardised JSON extraction contract + missing-detail guidance)
 
 - Rewrote the extraction prompt (`prompts/01-extract-statement.md` and its

@@ -1,5 +1,6 @@
 import type { NormalizedTransaction } from "../ingest";
 import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type { InsurancePolicy } from "./insurance";
 import type { PastFiling } from "./pastFilings";
 import type { TdsRow } from "./reconciliation";
 import type { RawSheet } from "./workbookExport";
@@ -43,6 +44,8 @@ export type PersistedSession = {
   /** Year-over-year filing history shown on the dashboard. Added in version 2;
    * optional so version-1 sessions load cleanly with no history. */
   pastFilings?: PastFiling[];
+  /** Detailed per-policy Section 10(10D) input, optional for compatibility with sessions saved before it existed. */
+  insurancePolicies?: InsurancePolicy[];
 };
 
 const STORAGE_KEY = "unravel-tax-session";

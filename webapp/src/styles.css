@@ -1967,6 +1967,25 @@ button.side-nav-step.side-nav-step-current:hover {
   }
 }
 
+.insurance-policy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.insurance-policy-card select {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  background: var(--surface);
+}
+
 .reconciliation-status {
   padding-top: 4px;
 }

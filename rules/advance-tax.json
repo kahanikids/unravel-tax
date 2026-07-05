@@ -10,16 +10,18 @@
   "assessment_year": "2026-27",
   "verification": {
     "status": "verified",
-    "last_verified": "2026-07-03",
-    "note": "The Rs 10,000 threshold, the 90% payment threshold, and the 1% per month rate are long-standing, unchanged provisions of Sections 208 and 234B. Checked against multiple current filing guides; re-check only if a Budget/Finance Act amendment is reported. Section 234C (per-instalment interest) is deliberately not included here yet - see section_234c_status below."
+    "last_verified": "2026-07-04",
+    "note": "The Rs 10,000 threshold, the 90% payment threshold, and the 1% per month rate are long-standing, unchanged provisions of Sections 208 and 234B. Section 234C's instalment calendar (15%/45%/75%/100% by 15 June/15 Sep/15 Dec/15 Mar), the 12%/36% safe harbours for the first two instalments, the 3/3/3/1 month interest periods, and the exclusion of dividend and capital-gains income that arose after an instalment date are likewise long-standing provisions of Section 234C. Checked against multiple current filing guides; re-check only if a Budget/Finance Act amendment is reported."
   },
   "source_refs": [
     "Income Tax Act, 1961, Section 208 (liability to pay advance tax)",
     "Income Tax Act, 1961, Section 234B (interest for default in payment of advance tax)",
+    "Income Tax Act, 1961, Section 234C (interest for deferment of advance tax instalments)",
     "rules/senior-citizen-advance-tax-and-regime.json (senior citizen exemption without business income)"
   ],
   "values": {
     "advance_tax_required_above_inr": 10000,
+    "financial_year_start_date": "2025-04-01",
     "assessment_year_start_date": "2026-04-01",
     "section_234b": {
       "minimum_paid_fraction_to_avoid_interest": 0.9,
@@ -28,7 +30,36 @@
       "part_month_counts_as_full_month": true
     },
     "senior_citizen_exempt_without_business_income": true,
-    "section_234c_status": "not_estimated_by_this_tool",
-    "section_234c_reason": "Needs income dated by quarter to compute correctly - capital gains and dividends arising later in the year are excluded from earlier instalments, and this tool doesn't yet capture income by quarter."
+    "section_234c": {
+      "interest_rate_per_month": 0.01,
+      "no_interest_if_net_liability_below_inr": 10000,
+      "instalments": [
+        {
+          "due_date": "2025-06-15",
+          "cumulative_fraction_due": 0.15,
+          "months_charged": 3,
+          "safe_harbor_cumulative_fraction": 0.12
+        },
+        {
+          "due_date": "2025-09-15",
+          "cumulative_fraction_due": 0.45,
+          "months_charged": 3,
+          "safe_harbor_cumulative_fraction": 0.36
+        },
+        {
+          "due_date": "2025-12-15",
+          "cumulative_fraction_due": 0.75,
+          "months_charged": 3,
+          "safe_harbor_cumulative_fraction": null
+        },
+        {
+          "due_date": "2026-03-15",
+          "cumulative_fraction_due": 1.0,
+          "months_charged": 1,
+          "safe_harbor_cumulative_fraction": null
+        }
+      ],
+      "later_income_caveat": "Listed-equity capital gains (Sections 111A/112A) are dated from your actual transactions, so their tax only counts toward the instalments due after each gain was realised, exactly as the law requires. Dividends, intraday/speculative income, and debt-mutual-fund gains aren't dated the same way, so their tax is still spread evenly across all four instalments - if a meaningful share of your \"total tax liability\" figure above comes from dividends that arrived, or intraday trades made, mid-year or later, the true figure is somewhat lower than shown."
+    }
   }
 }

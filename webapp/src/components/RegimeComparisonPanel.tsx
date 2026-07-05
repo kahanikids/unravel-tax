@@ -19,7 +19,11 @@ export function RegimeComparisonPanel({
   debtMfShortTermDeemedGain,
   intradayGain,
   seniorCitizen,
+  nri = false,
   loanDeductionsTotal = 0,
+  letOutIncomeOldRegime = 0,
+  letOutIncomeNewRegime = 0,
+  additionalOtherSlabIncome = 0,
   rule
 }: {
   supplementalFigures: SupplementalFigures;
@@ -27,8 +31,15 @@ export function RegimeComparisonPanel({
   debtMfShortTermDeemedGain: number;
   intradayGain: number;
   seniorCitizen: boolean;
+  /** A non-resident's dividends are taxed flat under Section 115A/DTAA, never at slab, so they're excluded here and shown in their own CA Summary row instead. */
+  nri?: boolean;
   /** Capped loan-interest deductions from the Loans section, added to the old-regime side. */
   loanDeductionsTotal?: number;
+  /** Let-out house-property income/loss from the Loans section, per regime (loss pre-capped; see lib/loanDeductions.ts). */
+  letOutIncomeOldRegime?: number;
+  letOutIncomeNewRegime?: number;
+  /** A taxable traditional-insurance-policy payout, folded into the ordinary "other income" bucket on both regimes. */
+  additionalOtherSlabIncome?: number;
   rule: RegimeChoiceRule;
 }) {
   const hasEnoughToCompare = supplementalFigures.salaryIncome > 0;
@@ -40,6 +51,10 @@ export function RegimeComparisonPanel({
     debtMfShortTermDeemedGain,
     intradayGain,
     oldRegimeDeductions: supplementalFigures.oldRegimeDeductions + Math.max(0, loanDeductionsTotal),
+    letOutIncomeOldRegime,
+    letOutIncomeNewRegime,
+    additionalOtherSlabIncome,
+    excludeDividendsFromSlab: nri,
     seniorCitizen
   };
   const result = hasEnoughToCompare ? compareRegimes(comparisonInputs, rule) : null;
@@ -88,6 +103,28 @@ export function RegimeComparisonPanel({
         <p className="step-lede">
           Plus ₹{formatAmount(loanDeductionsTotal)} of loan-interest deductions from the Loans section, already added to
           the old-regime side. Don't re-enter those in the field above.
+        </p>
+      ) : null}
+      {additionalOtherSlabIncome > 0 ? (
+        <p className="step-lede">
+          Plus ₹{formatAmount(additionalOtherSlabIncome)} of taxable insurance-payout income from the Insurance
+          section, already added to the "other income" side of both regimes. Don't re-enter it above.
+        </p>
+      ) : null}
+      {nri && supplementalFigures.dividends > 0 ? (
+        <p className="step-lede">
+          Your ₹{formatAmount(supplementalFigures.dividends)} of dividends is left out of both regimes here - as a
+          non-resident, it's taxed at a flat Section 115A/DTAA rate regardless of regime, shown as its own row in the
+          summary above.
+        </p>
+      ) : null}
+      {letOutIncomeOldRegime !== 0 || letOutIncomeNewRegime !== 0 ? (
+        <p className="step-lede">
+          Your rented-out home from the Loans section is already counted:{" "}
+          {letOutIncomeOldRegime < 0
+            ? `a ₹${formatAmount(-letOutIncomeOldRegime)} house-property loss on the old-regime side (the new regime can't use it)`
+            : `₹${formatAmount(letOutIncomeNewRegime)} of house-property income on both sides`}
+          . Don't re-enter it in the fields above.
         </p>
       ) : null}
 

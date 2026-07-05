@@ -13,7 +13,8 @@ export function WelcomeScreen({
   onShowCapabilities,
   onShowTour,
   localFolderSupported,
-  onRestoreFromFolder
+  onRestoreFromFolder,
+  onImportPreviousWorkbook
 }: {
   onStart: () => void;
   onStartComputationFirst: () => void;
@@ -24,6 +25,8 @@ export function WelcomeScreen({
   onShowTour: () => void;
   localFolderSupported: boolean;
   onRestoreFromFolder: () => void;
+  /** Reads a previously exported Unravel Tax workbook to prefill this year's profile and carry-forward-loss figures. */
+  onImportPreviousWorkbook: (file: File) => void;
 }) {
   const [disclaimerDismissed, setDisclaimerDismissed] = useState(false);
 
@@ -123,6 +126,26 @@ export function WelcomeScreen({
           </button>
         </p>
       ) : null}
+
+      <p className="welcome-restore">
+        Filed with Unravel Tax last year?{" "}
+        <label className="text-button">
+          Import Last Year's Workbook
+          <input
+            type="file"
+            accept=".xlsx"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                onImportPreviousWorkbook(file);
+              }
+              event.target.value = "";
+            }}
+          />
+        </label>{" "}
+        to prefill your profile answers and carry-forward losses.
+      </p>
 
       <details className="welcome-legal">
         <summary>Legal, AI Use &amp; Privacy</summary>

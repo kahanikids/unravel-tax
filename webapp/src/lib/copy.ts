@@ -267,24 +267,34 @@ export const CAPABILITIES: Capability[] = [
     detail: "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
   },
   {
-    label: "Section 234B advance-tax interest estimator",
-    status: "partial",
-    detail: "Enter total tax liability, tax already paid, and an as-of date to estimate Section 234B interest. Section 234C quarterly instalment interest is not built yet."
+    label: "Section 234B and 234C advance-tax interest estimator",
+    status: "available",
+    detail: "Enter total tax liability, tax already paid, and what you paid in each instalment window to estimate Section 234B interest and instalment-by-instalment Section 234C interest (with the 12%/36% safe harbours). The 234C figure is a whole-year ceiling: gains or dividends that arrived mid-year make the true figure lower, and the tool says so next to the number."
   },
   {
     label: "Carrying forward last year's filing",
-    status: "planned",
-    detail: "Importing a previous year's exported workbook to reuse your profile and carry-forward losses isn't built yet."
+    status: "available",
+    detail: "On the welcome screen, \"Import Last Year's Workbook\" reads a previously exported Unravel Tax workbook (.xlsx) and prefills this year's profile answers plus dividends, interest, and carry-forward-loss figures - never overwriting anything you've already typed. A workbook exported before this existed has no profile to prefill, but its figures still import."
   },
   {
     label: "NRI, HUF, and single-parent coverage",
     status: "partial",
-    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest and minor-income clubbing are partly calculated. DTAA relief, NRO TDS precision, repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
+    detail: "These profiles get the right checklist, ITR routing, CA recommendation, and caveats. NRE exempt interest, minor-income clubbing (including income the law never clubs: the minor's own work/skill or an 80U disability), NRI dividend tax at the Section 115A/DTAA flat rate, and an NRO interest/dividend TDS-vs-treaty-rate reconciliation are calculated. NRO interest still uses ordinary slab rate rather than a precise treaty-capped figure, and repatriation, HUF transfer clubbing, and Schedule SPI placement still need a CA."
   },
   {
-    label: "Insurance and foreign-asset planning checks",
+    label: "Insurance payout and foreign-asset planning checks",
     status: "partial",
-    detail: "The dashboard checks insurance premium caps, foreign-asset disclosure risk, and LRS TCS. It does not compute policy-level taxable payout, Schedule FA rows, foreign income, or Form 67 figures."
+    detail: "The dashboard's aggregate-premium check is a quick planning signal. For a precise answer, the Results page's per-policy insurance section takes each policy's issue date, sum assured, premium history, and this year's payout, checks both the sum-assured-ratio and aggregate-premium tests, and computes the actual taxable amount - capital gains for a taxable ULIP (folded into the CA Summary), income from other sources for a taxable traditional policy (folded into the regime comparison's other income). It doesn't yet combine a taxable ULIP's gain with your other equity LTCG under the one shared annual exemption - that's flagged, not silently assumed. Foreign-asset checks (LRS TCS by remittance purpose) remain a disclosure reminder; Schedule FA rows, foreign income, and Form 67 figures aren't built."
+  },
+  {
+    label: "Loans, home-loan principal, and a rented-out home",
+    status: "available",
+    detail: "Capped old-regime interest deductions for self-occupied home, 80EEA, 80E, and 80EEB loans; home-loan principal counted inside the shared 80C ceiling; and the full let-out house-property computation (30% standard deduction, uncapped interest, the ₹2 lakh loss set-off cap old regime, no set-off new regime), all folded into the regime comparison and the CA Summary. Business-use vehicle interest and multiple let-out properties are not modelled."
+  },
+  {
+    label: "HUF partition/clubbing, NRI repatriation, Schedule FA builder",
+    status: "planned",
+    detail: "The bigger remaining gaps: an HUF coparcener/member data model with Section 64(2) transfer clubbing and partition tracking, NRI repatriation-limit tracking (a FEMA/banking question more than a tax-return one), and a full Schedule FA builder (a multi-part schedule needing a per-asset data model this tool doesn't collect today). Bring these to a CA for now."
   }
 ];
 

@@ -2,6 +2,7 @@ import type { Cell, Row, SheetData } from "write-excel-file/browser";
 import { findBrokerSpeculativeColumn, findBrokerTaxableColumn, type CaSummaryRow } from "./calculations";
 import type { NormalizedTransaction } from "../ingest";
 import { parseFixtureDate } from "../ingest/normalize";
+import type { OrientationAnswers } from "../state/types";
 
 export type ExportDocument = {
   name: string;
@@ -758,6 +759,50 @@ export function buildLinkedCaSummarySheet(
     }
   }
 
+  return data;
+}
+
+/** Sheet name a later year's Unravel Tax session looks for when importing this workbook - see lib/workbookImport.ts. */
+export const ORIENTATION_SHEET_NAME = "Orientation";
+
+function yesNoOrBlank(value: boolean | null): string {
+  return value === null ? "" : value ? "Yes" : "No";
+}
+
+/**
+ * Plain key/value rows for every orientation answer, written with literal
+ * text values (never formulas) so a later year's Unravel Tax session can
+ * read this sheet back and prefill the same profile - see
+ * lib/workbookImport.ts. Genuinely optional: older workbooks exported before
+ * this sheet existed simply don't have it, and the importer treats that as
+ * "no profile to prefill" rather than an error.
+ */
+export function buildOrientationSheet(orientation: OrientationAnswers): SheetData {
+  const data: SheetData = [];
+  const span = 2;
+  data.push(mergeTitle(emptyRow(span), "Your profile answers, for next year's Unravel Tax filing to read back", span));
+  data.push([txt("Field", C.th), txt("Value", C.th)]);
+  const rows: [string, string][] = [
+    ["Residency", orientation.residency ?? ""],
+    ["NRI Country", orientation.nriCountry ?? ""],
+    ["NRI Days In India", orientation.nriDaysInIndia === null ? "" : String(orientation.nriDaysInIndia)],
+    ["HUF", yesNoOrBlank(orientation.huf)],
+    ["Senior Citizen", yesNoOrBlank(orientation.seniorCitizen)],
+    ["Single Parent Or Sole Guardian", yesNoOrBlank(orientation.singleParent)],
+    ["Income Sources", orientation.incomeSources.join(", ")],
+    ["Multiple Employers", yesNoOrBlank(orientation.multipleEmployers)],
+    ["HRA Claimed", yesNoOrBlank(orientation.hraClaimed)],
+    ["HRA Above Threshold", yesNoOrBlank(orientation.hraAboveThreshold)],
+    ["Has Landlord PAN", yesNoOrBlank(orientation.hasLandlordPan)],
+    ["EPF Withdrawal", yesNoOrBlank(orientation.epfWithdrawal)],
+    ["EPF Before Five Years", yesNoOrBlank(orientation.epfBeforeFiveYears)],
+    ["Loans Repaid", yesNoOrBlank(orientation.loansRepaid)],
+    ["Insurance Payout", yesNoOrBlank(orientation.insurancePayout)],
+    ["Foreign Assets", yesNoOrBlank(orientation.foreignAssets)]
+  ];
+  for (const [field, value] of rows) {
+    data.push([txt(field, C.td), txt(value, C.td)]);
+  }
   return data;
 }
 

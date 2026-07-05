@@ -1,15 +1,19 @@
 import { useState } from "react";
+import type { QuarterlyCapitalGainsTax } from "../lib/advanceTax";
 import type { BrokerGainCheck, CaSummaryRow } from "../lib/calculations";
 import type { ConfidenceReport } from "../lib/confidence";
 import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
-import { computeLoanDeductions } from "../lib/loanDeductions";
-import { ruleCatalog, type AdvanceTaxRule, type LoanTreatmentRule, type RegimeChoiceRule } from "../rules";
-import type { AisReportedFigures, SupplementalFigures } from "../state/types";
+import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
+import { summarizeInsurancePolicies, type InsurancePolicy } from "../lib/insurance";
+import { ruleCatalog, type AdvanceTaxRule, type InsuranceRule, type LoanTreatmentRule, type NriDtaaRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
+import type { AisReportedFigures, NriCountry, NumericFigureKey, SupplementalFigures } from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
+import { InsurancePolicyPanel } from "./InsurancePolicyPanel";
 import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
+import { NriDtaaPanel } from "./NriDtaaPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
 import { RegimeComparisonPanel } from "./RegimeComparisonPanel";
 import { InfoTooltip } from "./InfoTooltip";
@@ -42,7 +46,7 @@ function sourceRefsForRow(row: CaSummaryRow): readonly string[] | null {
   return null;
 }
 
-const SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
+const SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "dividends", label: "Dividends received this year" },
   { key: "interestOtherIncome", label: "Bank interest & other income" },
   { key: "eligibleInterestDeduction", label: "Interest deduction (savings/FD, Section 80TTA/B)" },
@@ -51,13 +55,17 @@ const SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] =
 ];
 
 /** NRI only: kept out of the general list above so it only shows for that profile. */
-const NRI_SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
+const NRI_SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "nreExemptInterest", label: "NRE interest (exempt, keep out of the field above)" }
 ];
 
 /** Single parent/guardian only: kept out of the general list above so it only shows for that profile. */
-const SINGLE_PARENT_SUPPLEMENTAL_FIELDS: { key: keyof SupplementalFigures; label: string }[] = [
+const SINGLE_PARENT_SUPPLEMENTAL_FIELDS: { key: NumericFigureKey; label: string }[] = [
   { key: "minorIncomeToClub", label: "Minor's income to club (before the per-child exemption)" },
+  {
+    key: "minorIncomeExemptFromClubbing",
+    label: "Of that, income the law never clubs (minor's own work/skill, or an 80U disability)"
+  },
   { key: "numberOfMinors", label: "Number of minor children with this income" }
 ];
 
@@ -74,12 +82,20 @@ export function ResultsStep({
   intradayGain,
   seniorCitizen,
   nri = false,
+  nriCountry = null,
   huf = false,
   singleParent = false,
   hasLoans = false,
+  hasInsurancePayout = false,
   regimeChoiceRule,
   loanTreatmentRule = ruleCatalog.loanTreatment,
   advanceTaxRule,
+  capitalGainsTaxByInstalment,
+  nriDtaaRule = ruleCatalog.nriDtaa,
+  nriTdsRule = ruleCatalog.nriTdsAndRefunds,
+  insuranceRule = ruleCatalog.insurance,
+  insurancePolicies,
+  onChangeInsurancePolicies,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -110,12 +126,22 @@ export function ResultsStep({
   intradayGain: number;
   seniorCitizen: boolean;
   nri?: boolean;
+  /** NRI only. Drives the DTAA treaty rate lookups in the NRI panel. */
+  nriCountry?: NriCountry;
   huf?: boolean;
   singleParent?: boolean;
   hasLoans?: boolean;
+  hasInsurancePayout?: boolean;
   regimeChoiceRule: RegimeChoiceRule;
   loanTreatmentRule?: LoanTreatmentRule;
   advanceTaxRule: AdvanceTaxRule;
+  /** Listed-equity STCG/LTCG tax dated by real transaction sell dates, from allocateCapitalGainsTaxByInstalment. */
+  capitalGainsTaxByInstalment: QuarterlyCapitalGainsTax;
+  nriDtaaRule?: NriDtaaRule;
+  nriTdsRule?: NriTdsAndRefundsRule;
+  insuranceRule?: InsuranceRule;
+  insurancePolicies: InsurancePolicy[];
+  onChangeInsurancePolicies: (policies: InsurancePolicy[]) => void;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -137,6 +163,12 @@ export function ResultsStep({
   // (auto-filled figures or a still-needed note), so it isn't left undiscovered.
   // Local state, seeded from that signal, so the user can still collapse it.
   const [refineOpen, setRefineOpen] = useState(hasPrefilled || netGainMissingDetail);
+  // Rented-out home from the Loans section, per regime - shared by the loans
+  // note and the regime comparison so both always show the same figure.
+  const letOut = computeLetOutHouseProperty(supplementalFigures, loanTreatmentRule);
+  // Insurance policies from the Insurance section - shared by that panel and
+  // the regime comparison's "other income" addend so both show the same figure.
+  const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, insuranceRule, ruleCatalog.capitalGainsEquity);
   return (
     <div className="step-card">
       <div className={caRecommendation.recommendCa ? "recommendation-banner recommendation-ca" : "recommendation-banner"}>
@@ -279,11 +311,36 @@ export function ResultsStep({
 
         {hasLoans ? (
           <details className="refine-section" open>
-            <summary>Loans (home, education, electric vehicle)</summary>
+            <summary>Loans (home, rented-out home, education, electric vehicle)</summary>
             <LoanDeductionsPanel
               supplementalFigures={supplementalFigures}
               onChangeSupplementalFigures={onChangeSupplementalFigures}
               rule={loanTreatmentRule}
+            />
+          </details>
+        ) : null}
+
+        {nri ? (
+          <details className="refine-section" open>
+            <summary>NRI: DTAA relief &amp; NRO TDS</summary>
+            <NriDtaaPanel
+              supplementalFigures={supplementalFigures}
+              onChangeSupplementalFigures={onChangeSupplementalFigures}
+              nriCountry={nriCountry}
+              dtaaRule={nriDtaaRule}
+              tdsRule={nriTdsRule}
+            />
+          </details>
+        ) : null}
+
+        {hasInsurancePayout ? (
+          <details className="refine-section" open>
+            <summary>Insurance payout: is it actually taxable? (10(10D))</summary>
+            <InsurancePolicyPanel
+              policies={insurancePolicies}
+              onChangePolicies={onChangeInsurancePolicies}
+              insuranceRule={insuranceRule}
+              capitalGainsRule={ruleCatalog.capitalGainsEquity}
             />
           </details>
         ) : null}
@@ -305,7 +362,11 @@ export function ResultsStep({
               debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
               intradayGain={intradayGain}
               seniorCitizen={seniorCitizen}
+              nri={nri}
               loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
+              letOutIncomeOldRegime={letOut.oldRegimeIncome}
+              letOutIncomeNewRegime={letOut.newRegimeIncome}
+              additionalOtherSlabIncome={insuranceSummary.totalOtherSourcesSlabIncome}
               rule={regimeChoiceRule}
             />
           )}
@@ -318,6 +379,7 @@ export function ResultsStep({
             onChangeSupplementalFigures={onChangeSupplementalFigures}
             seniorCitizen={seniorCitizen}
             hasBusinessOrSpeculativeIncome={intradayGain > 0}
+            capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
             rule={advanceTaxRule}
           />
         </details>
