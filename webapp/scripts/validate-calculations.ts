@@ -50,12 +50,18 @@ async function readM1Reference() {
   if (parsed.errors.length > 0) {
     throw new Error(parsed.errors.map((error) => error.message).join("; "));
   }
-  return Object.fromEntries(parsed.data.map((row) => [row.Head, normalizeReferenceAmount(row.Amount)]));
+  return Object.fromEntries(
+    parsed.data.map((row) => [row.Head, normalizeReferenceAmount(row.Amount)])
+  );
 }
 
 async function assertMirroredRuleJsonMatchesSource() {
-  const sourceNames = (await readdir(topLevelRulesDir)).filter((name) => name.endsWith(".json")).sort();
-  const mirroredNames = (await readdir(webappRulesDir)).filter((name) => name.endsWith(".json")).sort();
+  const sourceNames = (await readdir(topLevelRulesDir))
+    .filter((name) => name.endsWith(".json"))
+    .sort();
+  const mirroredNames = (await readdir(webappRulesDir))
+    .filter((name) => name.endsWith(".json"))
+    .sort();
   if (JSON.stringify(sourceNames) !== JSON.stringify(mirroredNames)) {
     throw new Error("Webapp rule JSON mirror does not contain the same files as top-level rules/.");
   }
@@ -112,7 +118,9 @@ export async function main() {
   }
 
   if (summary.estimatedStcgTax !== 0 || summary.estimatedLtcgTax !== 0) {
-    throw new Error("Synthetic fixture should not owe special-rate capital gains tax after losses/exemption.");
+    throw new Error(
+      "Synthetic fixture should not owe special-rate capital gains tax after losses/exemption."
+    );
   }
 
   // Sale/cost totals: every bucket's gain must equal its own sale minus cost,
@@ -123,7 +131,9 @@ export async function main() {
   }
   for (const [name, bucket] of Object.entries(t)) {
     if (bucket.gain !== bucket.saleValue - bucket.cost) {
-      throw new Error(`Bucket ${name}: gain ${bucket.gain} != sale ${bucket.saleValue} - cost ${bucket.cost}.`);
+      throw new Error(
+        `Bucket ${name}: gain ${bucket.gain} != sale ${bucket.saleValue} - cost ${bucket.cost}.`
+      );
     }
   }
   if (t.stcg.saleValue !== 94500 || t.stcg.cost !== 95000 || t.stcg.gain !== summary.stcg) {
@@ -140,16 +150,22 @@ export async function main() {
   );
   const check = brokerGainCheck(groupedHtml.transactions, ruleCatalog.capitalGainsEquity);
   if (!check || check.columnName !== "Taxable Gain") {
-    throw new Error(`Expected the broker check to pick the "Taxable Gain" column, got ${JSON.stringify(check?.columnName)}.`);
+    throw new Error(
+      `Expected the broker check to pick the "Taxable Gain" column, got ${JSON.stringify(check?.columnName)}.`
+    );
   }
   for (const entry of check.perClass) {
     if (Math.abs(entry.computed - entry.broker) > 1) {
-      throw new Error(`Broker check mismatch for ${entry.label}: computed ${entry.computed} vs broker ${entry.broker}.`);
+      throw new Error(
+        `Broker check mismatch for ${entry.label}: computed ${entry.computed} vs broker ${entry.broker}.`
+      );
     }
   }
   const noBrokerColumn = brokerGainCheck(parsed.transactions, ruleCatalog.capitalGainsEquity);
   if (noBrokerColumn !== null) {
-    throw new Error("CSV fixture has no broker gain column, so the broker check should be unavailable, not passing.");
+    throw new Error(
+      "CSV fixture has no broker gain column, so the broker check should be unavailable, not passing."
+    );
   }
 
   // Regime comparison: a well-publicized FY2025-26 fact is that salary up to
@@ -171,13 +187,19 @@ export async function main() {
     ruleCatalog.regimeChoice
   );
   if (regimeResult.newRegimeTax !== 0) {
-    throw new Error(`Expected zero new-regime tax on Rs 12L salary (standard deduction + 87A rebate), got ${regimeResult.newRegimeTax}.`);
+    throw new Error(
+      `Expected zero new-regime tax on Rs 12L salary (standard deduction + 87A rebate), got ${regimeResult.newRegimeTax}.`
+    );
   }
   if (regimeResult.oldRegimeTax !== 163800) {
-    throw new Error(`Expected Rs 163800 old-regime tax on Rs 12L salary, got ${regimeResult.oldRegimeTax}.`);
+    throw new Error(
+      `Expected Rs 163800 old-regime tax on Rs 12L salary, got ${regimeResult.oldRegimeTax}.`
+    );
   }
   if (regimeResult.cheaperRegime !== "new") {
-    throw new Error("New regime should be cheaper for a plain Rs 12L salary with no other income or deductions.");
+    throw new Error(
+      "New regime should be cheaper for a plain Rs 12L salary with no other income or deductions."
+    );
   }
 
   // Marginal relief: Rs 12,85,000 salary is Rs 12,10,000 taxable after the
@@ -266,7 +288,10 @@ export async function main() {
 
   // Up to Rs 12.75L salary the new regime is already zero-tax, so no amount of
   // old-regime deductions can beat it: there's no break-even to reach.
-  const breakEven1275 = computeRegimeBreakEven(breakEvenInputs(1_275_000), ruleCatalog.regimeChoice);
+  const breakEven1275 = computeRegimeBreakEven(
+    breakEvenInputs(1_275_000),
+    ruleCatalog.regimeChoice
+  );
   if (!breakEven1275.newAlwaysWins || breakEven1275.breakEvenDeductions !== 0) {
     throw new Error(
       `Expected no break-even at Rs 12.75L (new regime already zero-tax), got newAlwaysWins=${breakEven1275.newAlwaysWins}, breakEven=${breakEven1275.breakEvenDeductions}.`
@@ -284,7 +309,10 @@ export async function main() {
     { salary: 2_500_000, newRegimeTax: 319_800, breakEven: 800_000 }
   ];
   for (const testCase of breakEvenCases) {
-    const breakEven = computeRegimeBreakEven(breakEvenInputs(testCase.salary), ruleCatalog.regimeChoice);
+    const breakEven = computeRegimeBreakEven(
+      breakEvenInputs(testCase.salary),
+      ruleCatalog.regimeChoice
+    );
     if (breakEven.newRegimeTax !== testCase.newRegimeTax) {
       throw new Error(
         `Break-even case Rs ${testCase.salary}: expected new-regime tax ${testCase.newRegimeTax}, got ${breakEven.newRegimeTax}.`
@@ -309,20 +337,32 @@ export async function main() {
     intradayGain: 0,
     oldRegimeDeductions: 0
   };
-  const seniorRegime = compareRegimes({ ...seniorInputs, seniorCitizen: true }, ruleCatalog.regimeChoice);
-  const nonSeniorRegime = compareRegimes({ ...seniorInputs, seniorCitizen: false }, ruleCatalog.regimeChoice);
+  const seniorRegime = compareRegimes(
+    { ...seniorInputs, seniorCitizen: true },
+    ruleCatalog.regimeChoice
+  );
+  const nonSeniorRegime = compareRegimes(
+    { ...seniorInputs, seniorCitizen: false },
+    ruleCatalog.regimeChoice
+  );
   // Taxable Rs 8,50,000 after the Rs 50,000 standard deduction. Senior 60-79:
   // 5% of (5L-3L) + 20% of (8.5L-5L) = 10,000 + 70,000 = 80,000, +4% cess = 83,200.
   if (seniorRegime.oldRegimeTax !== 83_200) {
-    throw new Error(`Expected Rs 83,200 old-regime tax for a senior on Rs 9L salary, got ${seniorRegime.oldRegimeTax}.`);
+    throw new Error(
+      `Expected Rs 83,200 old-regime tax for a senior on Rs 9L salary, got ${seniorRegime.oldRegimeTax}.`
+    );
   }
   // Below 60 on the same income: the extra Rs 50,000 taxed at 5% = Rs 2,500,
   // +4% cess = Rs 2,600 more, i.e. Rs 85,800.
   if (nonSeniorRegime.oldRegimeTax !== 85_800) {
-    throw new Error(`Expected Rs 85,800 old-regime tax below 60 on Rs 9L salary, got ${nonSeniorRegime.oldRegimeTax}.`);
+    throw new Error(
+      `Expected Rs 85,800 old-regime tax below 60 on Rs 9L salary, got ${nonSeniorRegime.oldRegimeTax}.`
+    );
   }
   if (!(seniorRegime.oldRegimeTax < nonSeniorRegime.oldRegimeTax)) {
-    throw new Error("Senior 60-79 old-regime band should tax less than the below-60 band on the same income.");
+    throw new Error(
+      "Senior 60-79 old-regime band should tax less than the below-60 band on the same income."
+    );
   }
 
   // Super senior (80+) band must actually be applied, not just seniorCitizen:
@@ -336,10 +376,14 @@ export async function main() {
   // Taxable Rs 8,50,000 after the Rs 50,000 standard deduction. 80+: 20% of
   // (8.5L-5L) = 70,000, +4% cess = 72,800.
   if (superSeniorRegime.oldRegimeTax !== 72_800) {
-    throw new Error(`Expected Rs 72,800 old-regime tax for an 80+ filer on Rs 9L salary, got ${superSeniorRegime.oldRegimeTax}.`);
+    throw new Error(
+      `Expected Rs 72,800 old-regime tax for an 80+ filer on Rs 9L salary, got ${superSeniorRegime.oldRegimeTax}.`
+    );
   }
   if (!(superSeniorRegime.oldRegimeTax < seniorRegime.oldRegimeTax)) {
-    throw new Error("Super-senior 80+ old-regime band should tax less than the 60-79 band on the same income.");
+    throw new Error(
+      "Super-senior 80+ old-regime band should tax less than the 60-79 band on the same income."
+    );
   }
   const superSeniorFlagIgnoredWithoutSenior = compareRegimes(
     { ...seniorInputs, seniorCitizen: false, superSeniorCitizen: true },
@@ -352,25 +396,44 @@ export async function main() {
   // Section 234B advance-tax interest: below the Section 208 threshold, no
   // advance tax was required at all.
   const belowThreshold = estimateAdvanceTaxInterest(
-    { totalTaxLiability: 5000, taxAlreadyPaid: 0, asOfDate: "2026-07-03", seniorCitizenExempt: false },
+    {
+      totalTaxLiability: 5000,
+      taxAlreadyPaid: 0,
+      asOfDate: "2026-07-03",
+      seniorCitizenExempt: false
+    },
     ruleCatalog.advanceTax
   );
   if (belowThreshold.required || belowThreshold.interestApplies) {
-    throw new Error("Tax due under the Rs 10,000 Section 208 threshold should not require advance tax.");
+    throw new Error(
+      "Tax due under the Rs 10,000 Section 208 threshold should not require advance tax."
+    );
   }
 
   // Senior citizens without business income are exempt regardless of amount.
   const seniorExempt = estimateAdvanceTaxInterest(
-    { totalTaxLiability: 50000, taxAlreadyPaid: 0, asOfDate: "2026-07-03", seniorCitizenExempt: true },
+    {
+      totalTaxLiability: 50000,
+      taxAlreadyPaid: 0,
+      asOfDate: "2026-07-03",
+      seniorCitizenExempt: true
+    },
     ruleCatalog.advanceTax
   );
   if (seniorExempt.required || seniorExempt.interestApplies) {
-    throw new Error("Senior citizens without business income should be exempt from advance tax (Section 207(2)).");
+    throw new Error(
+      "Senior citizens without business income should be exempt from advance tax (Section 207(2))."
+    );
   }
 
   // Paying at least 90% of assessed tax avoids 234B interest entirely.
   const wellPaid = estimateAdvanceTaxInterest(
-    { totalTaxLiability: 100000, taxAlreadyPaid: 95000, asOfDate: "2026-07-03", seniorCitizenExempt: false },
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 95000,
+      asOfDate: "2026-07-03",
+      seniorCitizenExempt: false
+    },
     ruleCatalog.advanceTax
   );
   if (wellPaid.interestApplies) {
@@ -380,32 +443,47 @@ export async function main() {
   // A full shortfall from 1 April 2026 (AY start) to 3 July 2026 spans 4
   // months (April, May, June, and a part of July rounding up), at 1% each.
   const shortfallCase = estimateAdvanceTaxInterest(
-    { totalTaxLiability: 100000, taxAlreadyPaid: 0, asOfDate: "2026-07-03", seniorCitizenExempt: false },
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 0,
+      asOfDate: "2026-07-03",
+      seniorCitizenExempt: false
+    },
     ruleCatalog.advanceTax
   );
   if (shortfallCase.monthsElapsed !== 4) {
-    throw new Error(`Expected 4 months elapsed from 2026-04-01 to 2026-07-03, got ${shortfallCase.monthsElapsed}.`);
+    throw new Error(
+      `Expected 4 months elapsed from 2026-04-01 to 2026-07-03, got ${shortfallCase.monthsElapsed}.`
+    );
   }
   if (shortfallCase.estimatedInterest !== 4000) {
-    throw new Error(`Expected Rs 4,000 estimated 234B interest (Rs 100,000 x 1% x 4 months), got ${shortfallCase.estimatedInterest}.`);
+    throw new Error(
+      `Expected Rs 4,000 estimated 234B interest (Rs 100,000 x 1% x 4 months), got ${shortfallCase.estimatedInterest}.`
+    );
   }
 
   // Minor's-income clubbing: two children each get the Rs 1,500 exemption,
   // capped at two children even if more are entered.
   const clubbedTwoChildren = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing);
   if (clubbedTwoChildren !== 7000) {
-    throw new Error(`Expected Rs 7,000 clubbed after two Rs 1,500 exemptions on Rs 10,000, got ${clubbedTwoChildren}.`);
+    throw new Error(
+      `Expected Rs 7,000 clubbed after two Rs 1,500 exemptions on Rs 10,000, got ${clubbedTwoChildren}.`
+    );
   }
   const clubbedCappedAtTwo = clubbedMinorIncome(10000, 4, ruleCatalog.singleParentClubbing);
   if (clubbedCappedAtTwo !== clubbedTwoChildren) {
-    throw new Error("Minor's-income exemption should cap at max_children_for_exemption even with more children entered.");
+    throw new Error(
+      "Minor's-income exemption should cap at max_children_for_exemption even with more children entered."
+    );
   }
   // Section 64(1A) exceptions (the minor's own work/skill or an 80U
   // disability) come off before the Rs 1,500-per-child exemption:
   // 10,000 - 4,000 excluded - 3,000 exemption = 3,000.
   const clubbedWithExclusion = clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing, 4000);
   if (clubbedWithExclusion !== 3000) {
-    throw new Error(`Expected Rs 3,000 clubbed after a Rs 4,000 exclusion and two exemptions, got ${clubbedWithExclusion}.`);
+    throw new Error(
+      `Expected Rs 3,000 clubbed after a Rs 4,000 exclusion and two exemptions, got ${clubbedWithExclusion}.`
+    );
   }
   // Excluding everything (or more than the income) clubs nothing, never negative.
   if (clubbedMinorIncome(10000, 2, ruleCatalog.singleParentClubbing, 12000) !== 0) {
@@ -416,14 +494,26 @@ export async function main() {
   // interest on every instalment's full cumulative target -
   // (15,000 + 45,000 + 75,000) x 1% x 3 months + 100,000 x 1% x 1 month = Rs 5,050.
   const c234Nothing = estimateSection234cInterest(
-    { totalTaxLiability: 100000, taxAlreadyPaid: 0, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: false },
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 0,
+      instalmentsPaid: [0, 0, 0, 0],
+      seniorCitizenExempt: false
+    },
     ruleCatalog.advanceTax
   );
   if (c234Nothing.totalInterest !== 5050) {
-    throw new Error(`Expected Rs 5,050 total 234C interest on a full Rs 100,000 default, got ${c234Nothing.totalInterest}.`);
+    throw new Error(
+      `Expected Rs 5,050 total 234C interest on a full Rs 100,000 default, got ${c234Nothing.totalInterest}.`
+    );
   }
-  if (c234Nothing.instalments.map((instalment) => instalment.interest).join(",") !== "450,1350,2250,1000") {
-    throw new Error(`Unexpected per-instalment 234C interest: ${JSON.stringify(c234Nothing.instalments)}.`);
+  if (
+    c234Nothing.instalments.map((instalment) => instalment.interest).join(",") !==
+    "450,1350,2250,1000"
+  ) {
+    throw new Error(
+      `Unexpected per-instalment 234C interest: ${JSON.stringify(c234Nothing.instalments)}.`
+    );
   }
 
   // Safe harbours: 12% paid by 15 June clears the first instalment despite the
@@ -439,9 +529,14 @@ export async function main() {
     ruleCatalog.advanceTax
   );
   if (c234SafeHarbor.totalInterest !== 0 || c234SafeHarbor.interestApplies) {
-    throw new Error(`Expected the 12%/36% safe harbours + met targets to owe no 234C interest, got ${c234SafeHarbor.totalInterest}.`);
+    throw new Error(
+      `Expected the 12%/36% safe harbours + met targets to owe no 234C interest, got ${c234SafeHarbor.totalInterest}.`
+    );
   }
-  if (!c234SafeHarbor.instalments[0].safeHarborApplied || !c234SafeHarbor.instalments[1].safeHarborApplied) {
+  if (
+    !c234SafeHarbor.instalments[0].safeHarborApplied ||
+    !c234SafeHarbor.instalments[1].safeHarborApplied
+  ) {
     throw new Error("The first two instalments should be cleared by the 12%/36% safe harbours.");
   }
 
@@ -458,10 +553,14 @@ export async function main() {
     ruleCatalog.advanceTax
   );
   if (c234UnderHarbor.instalments[0].interest !== 120) {
-    throw new Error(`Expected Rs 120 first-instalment 234C interest at 11% paid, got ${c234UnderHarbor.instalments[0].interest}.`);
+    throw new Error(
+      `Expected Rs 120 first-instalment 234C interest at 11% paid, got ${c234UnderHarbor.instalments[0].interest}.`
+    );
   }
   if (c234UnderHarbor.totalInterest !== 120) {
-    throw new Error(`Expected only the first instalment to owe (45%/75%/100% met), got ${c234UnderHarbor.totalInterest}.`);
+    throw new Error(
+      `Expected only the first instalment to owe (45%/75%/100% met), got ${c234UnderHarbor.totalInterest}.`
+    );
   }
 
   // TDS is whatever part of taxAlreadyPaid exceeds the entered instalments,
@@ -469,7 +568,12 @@ export async function main() {
   // Rs 95,000 of pure TDS leaves assessed tax Rs 5,000 - under the Rs 10,000
   // floor, so no 234C at all.
   const c234TdsOnly = estimateSection234cInterest(
-    { totalTaxLiability: 100000, taxAlreadyPaid: 95000, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: false },
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 95000,
+      instalmentsPaid: [0, 0, 0, 0],
+      seniorCitizenExempt: false
+    },
     ruleCatalog.advanceTax
   );
   if (c234TdsOnly.required || c234TdsOnly.interestApplies || c234TdsOnly.assessedTax !== 5000) {
@@ -478,11 +582,18 @@ export async function main() {
 
   // Senior citizens without business income owe no 234C either (Section 207(2)).
   const c234Senior = estimateSection234cInterest(
-    { totalTaxLiability: 100000, taxAlreadyPaid: 0, instalmentsPaid: [0, 0, 0, 0], seniorCitizenExempt: true },
+    {
+      totalTaxLiability: 100000,
+      taxAlreadyPaid: 0,
+      instalmentsPaid: [0, 0, 0, 0],
+      seniorCitizenExempt: true
+    },
     ruleCatalog.advanceTax
   );
   if (c234Senior.required || c234Senior.interestApplies) {
-    throw new Error("Senior citizens without business income should be exempt from 234C (Section 207(2)).");
+    throw new Error(
+      "Senior citizens without business income should be exempt from 234C (Section 207(2))."
+    );
   }
 
   // Section 234C quarter precision: a Rs 5,00,000 STCG sold 20-Feb-2026 (inside
@@ -500,10 +611,14 @@ export async function main() {
     ruleCatalog.advanceTax
   );
   if (lateGainAllocation.cumulativeByInstalment.join(",") !== "0,0,0,100000") {
-    throw new Error(`Expected the late STCG's tax to land only in the last instalment, got ${JSON.stringify(lateGainAllocation.cumulativeByInstalment)}.`);
+    throw new Error(
+      `Expected the late STCG's tax to land only in the last instalment, got ${JSON.stringify(lateGainAllocation.cumulativeByInstalment)}.`
+    );
   }
   if (lateGainAllocation.totalForYear !== 100000) {
-    throw new Error(`Expected Rs 1,00,000 total STCG tax for the year, got ${lateGainAllocation.totalForYear}.`);
+    throw new Error(
+      `Expected Rs 1,00,000 total STCG tax for the year, got ${lateGainAllocation.totalForYear}.`
+    );
   }
 
   // Feeding that allocation into estimateSection234cInterest with nothing paid:
@@ -523,13 +638,19 @@ export async function main() {
     ruleCatalog.advanceTax
   );
   if (c234LateGain.instalments.slice(0, 3).some((instalment) => instalment.interest !== 0)) {
-    throw new Error(`Expected no interest on the first three instalments before the gain arose, got ${JSON.stringify(c234LateGain.instalments)}.`);
+    throw new Error(
+      `Expected no interest on the first three instalments before the gain arose, got ${JSON.stringify(c234LateGain.instalments)}.`
+    );
   }
   if (c234LateGain.totalInterest !== 1000) {
-    throw new Error(`Expected Rs 1,000 total 234C interest with quarter precision on an all-late gain, got ${c234LateGain.totalInterest}.`);
+    throw new Error(
+      `Expected Rs 1,000 total 234C interest with quarter precision on an all-late gain, got ${c234LateGain.totalInterest}.`
+    );
   }
   if (c234LateGain.ordinaryTax !== 0 || c234LateGain.capitalGainsTaxForYear !== 100000) {
-    throw new Error(`Expected the full Rs 1,00,000 to be attributed to capital gains, got ordinaryTax=${c234LateGain.ordinaryTax}, capitalGainsTaxForYear=${c234LateGain.capitalGainsTaxForYear}.`);
+    throw new Error(
+      `Expected the full Rs 1,00,000 to be attributed to capital gains, got ordinaryTax=${c234LateGain.ordinaryTax}, capitalGainsTaxForYear=${c234LateGain.capitalGainsTaxForYear}.`
+    );
   }
 
   // An early gain is the mirror case: tax on a gain that already happened by
@@ -550,7 +671,9 @@ export async function main() {
     ruleCatalog.advanceTax
   );
   if (mixedGainsAllocation.cumulativeByInstalment.join(",") !== "40000,40000,40000,100000") {
-    throw new Error(`Unexpected mixed-timing cumulative allocation: ${JSON.stringify(mixedGainsAllocation.cumulativeByInstalment)}.`);
+    throw new Error(
+      `Unexpected mixed-timing cumulative allocation: ${JSON.stringify(mixedGainsAllocation.cumulativeByInstalment)}.`
+    );
   }
 
   // Long-term exemption is applied cumulatively, so it's used up by the
@@ -570,33 +693,66 @@ export async function main() {
     ruleCatalog.advanceTax
   );
   if (ltcgExemptionAllocation.cumulativeByInstalment.join(",") !== "0,0,9375,9375") {
-    throw new Error(`Unexpected cumulative LTCG-exemption allocation: ${JSON.stringify(ltcgExemptionAllocation.cumulativeByInstalment)}.`);
+    throw new Error(
+      `Unexpected cumulative LTCG-exemption allocation: ${JSON.stringify(ltcgExemptionAllocation.cumulativeByInstalment)}.`
+    );
   }
   if (ltcgExemptionAllocation.totalForYear !== 9375) {
-    throw new Error(`Expected Rs 9,375 total LTCG tax after the cumulative exemption, got ${ltcgExemptionAllocation.totalForYear}.`);
+    throw new Error(
+      `Expected Rs 9,375 total LTCG tax after the cumulative exemption, got ${ltcgExemptionAllocation.totalForYear}.`
+    );
   }
 
   // NRI dividend tax (Section 115A/DTAA): UAE's 10% treaty rate beats the 20%
   // domestic rate, so it applies - Rs 1,00,000 dividends -> Rs 10,000 tax.
-  const uaeDividendTax = computeNriDividendTax(100000, "United Arab Emirates", ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
-  if (uaeDividendTax.tax !== 10000 || !uaeDividendTax.treatyApplied || uaeDividendTax.effectiveRate !== 0.1) {
-    throw new Error(`Expected Rs 10,000 UAE dividend tax at the 10% treaty rate, got ${JSON.stringify(uaeDividendTax)}.`);
+  const uaeDividendTax = computeNriDividendTax(
+    100000,
+    "United Arab Emirates",
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
+  if (
+    uaeDividendTax.tax !== 10000 ||
+    !uaeDividendTax.treatyApplied ||
+    uaeDividendTax.effectiveRate !== 0.1
+  ) {
+    throw new Error(
+      `Expected Rs 10,000 UAE dividend tax at the 10% treaty rate, got ${JSON.stringify(uaeDividendTax)}.`
+    );
   }
 
   // The US treaty's individual/portfolio dividend rate (25%) is actually
   // higher than the 20% domestic Section 115A rate, so the domestic rate
   // wins and the treaty gives no benefit - Rs 1,00,000 -> Rs 20,000 tax, not
   // Rs 25,000.
-  const usDividendTax = computeNriDividendTax(100000, "United States", ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
-  if (usDividendTax.tax !== 20000 || usDividendTax.treatyApplied || usDividendTax.effectiveRate !== 0.2) {
-    throw new Error(`Expected Rs 20,000 US dividend tax at the 20% domestic rate (25% treaty rate is higher), got ${JSON.stringify(usDividendTax)}.`);
+  const usDividendTax = computeNriDividendTax(
+    100000,
+    "United States",
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
+  if (
+    usDividendTax.tax !== 20000 ||
+    usDividendTax.treatyApplied ||
+    usDividendTax.effectiveRate !== 0.2
+  ) {
+    throw new Error(
+      `Expected Rs 20,000 US dividend tax at the 20% domestic rate (25% treaty rate is higher), got ${JSON.stringify(usDividendTax)}.`
+    );
   }
 
   // No known country (or no corroborated treaty rate): falls back to the 20%
   // domestic rate, same as the US case above.
-  const unknownDividendTax = computeNriDividendTax(100000, null, ruleCatalog.nriDtaa, ruleCatalog.nriTdsAndRefunds);
+  const unknownDividendTax = computeNriDividendTax(
+    100000,
+    null,
+    ruleCatalog.nriDtaa,
+    ruleCatalog.nriTdsAndRefunds
+  );
   if (unknownDividendTax.tax !== 20000 || unknownDividendTax.treatyApplied) {
-    throw new Error(`Expected Rs 20,000 dividend tax with no known country, got ${JSON.stringify(unknownDividendTax)}.`);
+    throw new Error(
+      `Expected Rs 20,000 dividend tax with no known country, got ${JSON.stringify(unknownDividendTax)}.`
+    );
   }
 
   // NRO TDS reconciliation (UAE): Rs 2,00,000 NRO interest withheld at the
@@ -616,24 +772,38 @@ export async function main() {
     ruleCatalog.nriTdsAndRefunds
   );
   if (uaeTdsReconciliation.interest.recoverableIfTreatyApplies !== 35000) {
-    throw new Error(`Expected Rs 35,000 recoverable NRO interest TDS, got ${uaeTdsReconciliation.interest.recoverableIfTreatyApplies}.`);
+    throw new Error(
+      `Expected Rs 35,000 recoverable NRO interest TDS, got ${uaeTdsReconciliation.interest.recoverableIfTreatyApplies}.`
+    );
   }
   if (uaeTdsReconciliation.dividends.recoverableIfTreatyApplies !== 10000) {
-    throw new Error(`Expected Rs 10,000 recoverable dividend TDS, got ${uaeTdsReconciliation.dividends.recoverableIfTreatyApplies}.`);
+    throw new Error(
+      `Expected Rs 10,000 recoverable dividend TDS, got ${uaeTdsReconciliation.dividends.recoverableIfTreatyApplies}.`
+    );
   }
   if (uaeTdsReconciliation.totalRecoverable !== 45000) {
-    throw new Error(`Expected Rs 45,000 total recoverable NRO TDS, got ${uaeTdsReconciliation.totalRecoverable}.`);
+    throw new Error(
+      `Expected Rs 45,000 total recoverable NRO TDS, got ${uaeTdsReconciliation.totalRecoverable}.`
+    );
   }
 
   // With no known treaty rate for the country, there's nothing to compare
   // against, so the reconciliation must never invent a recoverable amount.
   const unknownTdsReconciliation = computeNroTdsReconciliation(
-    { nroInterest: 200000, dividends: 100000, interestTdsWithheld: 60000, dividendTdsWithheld: 20000, nriCountry: null },
+    {
+      nroInterest: 200000,
+      dividends: 100000,
+      interestTdsWithheld: 60000,
+      dividendTdsWithheld: 20000,
+      nriCountry: null
+    },
     ruleCatalog.nriDtaa,
     ruleCatalog.nriTdsAndRefunds
   );
   if (unknownTdsReconciliation.totalRecoverable !== 0) {
-    throw new Error(`Expected no recoverable NRO TDS with an unknown country, got ${unknownTdsReconciliation.totalRecoverable}.`);
+    throw new Error(
+      `Expected no recoverable NRO TDS with an unknown country, got ${unknownTdsReconciliation.totalRecoverable}.`
+    );
   }
 
   // NRI repatriation check: below both thresholds, no certificate required.
@@ -642,7 +812,9 @@ export async function main() {
     ruleCatalog.nriRepatriation
   );
   if (belowRepatriationLimits.overLimitUsd || belowRepatriationLimits.requiresCaCertificate) {
-    throw new Error(`Expected no limit/certificate trip below both thresholds, got ${JSON.stringify(belowRepatriationLimits)}.`);
+    throw new Error(
+      `Expected no limit/certificate trip below both thresholds, got ${JSON.stringify(belowRepatriationLimits)}.`
+    );
   }
 
   // Past the Rs 5 lakh mark (but well under the USD 1M cap): CA certificate
@@ -652,38 +824,78 @@ export async function main() {
     ruleCatalog.nriRepatriation
   );
   if (!pastCertificateThreshold.requiresCaCertificate || pastCertificateThreshold.overLimitUsd) {
-    throw new Error(`Expected a CA-certificate requirement but no USD cap breach, got ${JSON.stringify(pastCertificateThreshold)}.`);
+    throw new Error(
+      `Expected a CA-certificate requirement but no USD cap breach, got ${JSON.stringify(pastCertificateThreshold)}.`
+    );
   }
-  if (pastCertificateThreshold.formNames.length !== 2 || !pastCertificateThreshold.formNames[0].includes("145")) {
-    throw new Error(`Expected the renamed Form 145/146 names, got ${JSON.stringify(pastCertificateThreshold.formNames)}.`);
+  if (
+    pastCertificateThreshold.formNames.length !== 2 ||
+    !pastCertificateThreshold.formNames[0].includes("145")
+  ) {
+    throw new Error(
+      `Expected the renamed Form 145/146 names, got ${JSON.stringify(pastCertificateThreshold.formNames)}.`
+    );
   }
 
   // Past the USD 1 million/year NRO cap.
-  const overUsdCap = computeNriRepatriationCheck({ amountUsd: 1_200_000, amountInr: 0 }, ruleCatalog.nriRepatriation);
+  const overUsdCap = computeNriRepatriationCheck(
+    { amountUsd: 1_200_000, amountInr: 0 },
+    ruleCatalog.nriRepatriation
+  );
   if (!overUsdCap.overLimitUsd) {
-    throw new Error(`Expected the USD 1M NRO cap to be flagged as breached, got ${JSON.stringify(overUsdCap)}.`);
+    throw new Error(
+      `Expected the USD 1M NRO cap to be flagged as breached, got ${JSON.stringify(overUsdCap)}.`
+    );
   }
 
   // Schedule FA Phase 1: totals sum across accounts, and the disclosure
   // calendar year is the year the financial year STARTS in (FY 2025-26 -> 2025).
   const foreignAccountsSummary = summarizeForeignAccounts(
     [
-      { id: "a1", accountType: "depository", country: "United States", institutionName: "Chase", accountNumber: "1", openingDate: "", peakBalanceInr: 500000, closingBalanceInr: 300000, grossInterestInr: 10000 },
-      { id: "a2", accountType: "custodial", country: "United States", institutionName: "Schwab", accountNumber: "2", openingDate: "", peakBalanceInr: 200000, closingBalanceInr: 200000, grossInterestInr: 5000 }
+      {
+        id: "a1",
+        accountType: "depository",
+        country: "United States",
+        institutionName: "Chase",
+        accountNumber: "1",
+        openingDate: "",
+        peakBalanceInr: 500000,
+        closingBalanceInr: 300000,
+        grossInterestInr: 10000
+      },
+      {
+        id: "a2",
+        accountType: "custodial",
+        country: "United States",
+        institutionName: "Schwab",
+        accountNumber: "2",
+        openingDate: "",
+        peakBalanceInr: 200000,
+        closingBalanceInr: 200000,
+        grossInterestInr: 5000
+      }
     ],
     ruleCatalog.foreignInvestments
   );
   if (foreignAccountsSummary.totalPeakBalanceInr !== 700000) {
-    throw new Error(`Expected Rs 7,00,000 total peak balance, got ${foreignAccountsSummary.totalPeakBalanceInr}.`);
+    throw new Error(
+      `Expected Rs 7,00,000 total peak balance, got ${foreignAccountsSummary.totalPeakBalanceInr}.`
+    );
   }
   if (foreignAccountsSummary.totalClosingBalanceInr !== 500000) {
-    throw new Error(`Expected Rs 5,00,000 total closing balance, got ${foreignAccountsSummary.totalClosingBalanceInr}.`);
+    throw new Error(
+      `Expected Rs 5,00,000 total closing balance, got ${foreignAccountsSummary.totalClosingBalanceInr}.`
+    );
   }
   if (foreignAccountsSummary.totalGrossInterestInr !== 15000) {
-    throw new Error(`Expected Rs 15,000 total gross interest, got ${foreignAccountsSummary.totalGrossInterestInr}.`);
+    throw new Error(
+      `Expected Rs 15,000 total gross interest, got ${foreignAccountsSummary.totalGrossInterestInr}.`
+    );
   }
   if (foreignAccountsSummary.disclosureCalendarYear !== 2025) {
-    throw new Error(`Expected disclosure calendar year 2025 for FY 2025-26, got ${foreignAccountsSummary.disclosureCalendarYear}.`);
+    throw new Error(
+      `Expected disclosure calendar year 2025 for FY 2025-26, got ${foreignAccountsSummary.disclosureCalendarYear}.`
+    );
   }
 
   // Schedule FA Phase 2: foreign equity/debt holdings, including RSU/ESPP.
@@ -749,29 +961,58 @@ export async function main() {
     ruleCatalog.foreignInvestments
   );
   const [h1, h2, h3, h4] = foreignEquitySummary.results;
-  if (h1.taxTreatment !== "long_term" || h1.gain !== 200000 || h1.estimatedLtcgTax !== 25000 || h1.foreignTaxCreditOnGain !== 25000) {
-    throw new Error(`Expected h1 long-term gain 2,00,000 taxed at 25,000 with 25,000 credit, got ${JSON.stringify(h1)}.`);
+  if (
+    h1.taxTreatment !== "long_term" ||
+    h1.gain !== 200000 ||
+    h1.estimatedLtcgTax !== 25000 ||
+    h1.foreignTaxCreditOnGain !== 25000
+  ) {
+    throw new Error(
+      `Expected h1 long-term gain 2,00,000 taxed at 25,000 with 25,000 credit, got ${JSON.stringify(h1)}.`
+    );
   }
-  if (h2.taxTreatment !== "short_term" || h2.gain !== 20000 || h2.estimatedLtcgTax !== 0 || h2.foreignTaxCreditOnGain !== 0) {
-    throw new Error(`Expected h2 short-term gain 20,000 with no flat tax/credit (folds into slab income instead), got ${JSON.stringify(h2)}.`);
+  if (
+    h2.taxTreatment !== "short_term" ||
+    h2.gain !== 20000 ||
+    h2.estimatedLtcgTax !== 0 ||
+    h2.foreignTaxCreditOnGain !== 0
+  ) {
+    throw new Error(
+      `Expected h2 short-term gain 20,000 with no flat tax/credit (folds into slab income instead), got ${JSON.stringify(h2)}.`
+    );
   }
-  if (h3.taxTreatment !== "long_term" || h3.gain !== 150000 || h3.estimatedLtcgTax !== 18750 || h3.foreignTaxCreditOnGain !== 15000) {
-    throw new Error(`Expected RSU h3 long-term gain 1,50,000 (proceeds minus FMV-at-vesting cost basis) taxed at 18,750 with 15,000 credit (capped at foreign tax paid), got ${JSON.stringify(h3)}.`);
+  if (
+    h3.taxTreatment !== "long_term" ||
+    h3.gain !== 150000 ||
+    h3.estimatedLtcgTax !== 18750 ||
+    h3.foreignTaxCreditOnGain !== 15000
+  ) {
+    throw new Error(
+      `Expected RSU h3 long-term gain 1,50,000 (proceeds minus FMV-at-vesting cost basis) taxed at 18,750 with 15,000 credit (capped at foreign tax paid), got ${JSON.stringify(h3)}.`
+    );
   }
   if (h4.sold || h4.taxTreatment !== "not_sold" || h4.gain !== 0) {
     throw new Error(`Expected h4 (not sold) to have no gain/tax, got ${JSON.stringify(h4)}.`);
   }
   if (foreignEquitySummary.totalLtcgTax !== 43750) {
-    throw new Error(`Expected total LTCG tax 25,000 + 18,750 = 43,750, got ${foreignEquitySummary.totalLtcgTax}.`);
+    throw new Error(
+      `Expected total LTCG tax 25,000 + 18,750 = 43,750, got ${foreignEquitySummary.totalLtcgTax}.`
+    );
   }
   if (foreignEquitySummary.totalStcgGain !== 20000) {
-    throw new Error(`Expected total STCG gain 20,000 (h2 only), got ${foreignEquitySummary.totalStcgGain}.`);
+    throw new Error(
+      `Expected total STCG gain 20,000 (h2 only), got ${foreignEquitySummary.totalStcgGain}.`
+    );
   }
   if (foreignEquitySummary.totalPerquisiteValueInr !== 500000) {
-    throw new Error(`Expected total RSU perquisite value 5,00,000 (h3 only), got ${foreignEquitySummary.totalPerquisiteValueInr}.`);
+    throw new Error(
+      `Expected total RSU perquisite value 5,00,000 (h3 only), got ${foreignEquitySummary.totalPerquisiteValueInr}.`
+    );
   }
   if (foreignEquitySummary.totalForeignTaxCreditOnLtcg !== 40000) {
-    throw new Error(`Expected total LTCG foreign tax credit 25,000 + 15,000 = 40,000, got ${foreignEquitySummary.totalForeignTaxCreditOnLtcg}.`);
+    throw new Error(
+      `Expected total LTCG foreign tax credit 25,000 + 15,000 = 40,000, got ${foreignEquitySummary.totalForeignTaxCreditOnLtcg}.`
+    );
   }
 
   // Section 90/91 foreign tax credit helpers directly: flat-rate (exact
@@ -780,15 +1021,21 @@ export async function main() {
   // the computed Indian tax.
   const flatCredit = computeForeignTaxCreditFlatRate(200000, 0.125, 30000);
   if (flatCredit.indianTaxOnThisIncomeInr !== 25000 || flatCredit.creditInr !== 25000) {
-    throw new Error(`Expected flat-rate credit case to match h1 above, got ${JSON.stringify(flatCredit)}.`);
+    throw new Error(
+      `Expected flat-rate credit case to match h1 above, got ${JSON.stringify(flatCredit)}.`
+    );
   }
   const flatCreditCappedByForeignTax = computeForeignTaxCreditFlatRate(200000, 0.125, 10000);
   if (flatCreditCappedByForeignTax.creditInr !== 10000) {
-    throw new Error(`Expected the credit to be capped at the (lower) foreign tax paid, got ${JSON.stringify(flatCreditCappedByForeignTax)}.`);
+    throw new Error(
+      `Expected the credit to be capped at the (lower) foreign tax paid, got ${JSON.stringify(flatCreditCappedByForeignTax)}.`
+    );
   }
   const averageCredit = computeForeignTaxCreditAverageRate(100000, 8000, 100000, 1000000);
   if (averageCredit.indianTaxOnThisIncomeInr !== 10000 || averageCredit.creditInr !== 8000) {
-    throw new Error(`Expected average-rate credit of Rs 10,000 Indian tax (10% average rate x Rs 1,00,000) capped at the Rs 8,000 foreign tax paid, got ${JSON.stringify(averageCredit)}.`);
+    throw new Error(
+      `Expected average-rate credit of Rs 10,000 Indian tax (10% average rate x Rs 1,00,000) capped at the Rs 8,000 foreign tax paid, got ${JSON.stringify(averageCredit)}.`
+    );
   }
 
   // additionalSalaryIncome (an RSU/ESPP perquisite) must be added to the
@@ -822,7 +1069,10 @@ export async function main() {
     },
     ruleCatalog.regimeChoice
   );
-  if (withPerquisite.oldRegimeTax !== withoutPerquisite.oldRegimeTax || withPerquisite.newRegimeTax !== withoutPerquisite.newRegimeTax) {
+  if (
+    withPerquisite.oldRegimeTax !== withoutPerquisite.oldRegimeTax ||
+    withPerquisite.newRegimeTax !== withoutPerquisite.newRegimeTax
+  ) {
     throw new Error(
       `Expected additionalSalaryIncome to fold into the salary bucket identically to entering it directly, got ${JSON.stringify(withPerquisite)} vs ${JSON.stringify(withoutPerquisite)}.`
     );
@@ -847,7 +1097,9 @@ export async function main() {
     ruleCatalog.regimeChoice
   );
   if (nriRegimeResult.newRegimeTax !== 0 || nriRegimeResult.oldRegimeTax !== 163800) {
-    throw new Error(`Expected NRI dividends to be fully excluded from slab income, got ${JSON.stringify(nriRegimeResult)}.`);
+    throw new Error(
+      `Expected NRI dividends to be fully excluded from slab income, got ${JSON.stringify(nriRegimeResult)}.`
+    );
   }
 
   // Insurance payouts (Section 10(10D)), computed per policy:
@@ -864,12 +1116,24 @@ export async function main() {
 
   // A death benefit is exempt regardless of premium or payout size.
   const deathBenefitSummary = summarizeInsurancePolicies(
-    [{ ...blankPolicy, isDeathBenefit: true, annualPremium: 900000, maturityPayoutThisYear: 10000000 }],
+    [
+      {
+        ...blankPolicy,
+        isDeathBenefit: true,
+        annualPremium: 900000,
+        maturityPayoutThisYear: 10000000
+      }
+    ],
     ruleCatalog.insurance,
     ruleCatalog.capitalGainsEquity
   );
-  if (!deathBenefitSummary.results[0].exempt || deathBenefitSummary.totalOtherSourcesSlabIncome !== 0) {
-    throw new Error(`Expected a death benefit to stay exempt, got ${JSON.stringify(deathBenefitSummary.results[0])}.`);
+  if (
+    !deathBenefitSummary.results[0].exempt ||
+    deathBenefitSummary.totalOtherSourcesSlabIncome !== 0
+  ) {
+    throw new Error(
+      `Expected a death benefit to stay exempt, got ${JSON.stringify(deathBenefitSummary.results[0])}.`
+    );
   }
 
   // A modest traditional policy within both the sum-assured ratio (5%) and
@@ -889,7 +1153,9 @@ export async function main() {
     ruleCatalog.capitalGainsEquity
   );
   if (!exemptTraditionalSummary.results[0].exempt) {
-    throw new Error(`Expected a modest traditional policy to stay exempt, got ${JSON.stringify(exemptTraditionalSummary.results[0])}.`);
+    throw new Error(
+      `Expected a modest traditional policy to stay exempt, got ${JSON.stringify(exemptTraditionalSummary.results[0])}.`
+    );
   }
 
   // A traditional policy breaching the Rs 5,00,000 aggregate cap loses its
@@ -909,11 +1175,19 @@ export async function main() {
     ruleCatalog.capitalGainsEquity
   );
   const aggregateResult = aggregateTraditionalSummary.results[0];
-  if (aggregateResult.exempt || !aggregateResult.failsAggregateTest || aggregateResult.taxableAmount !== 1000000) {
-    throw new Error(`Expected the aggregate-cap traditional policy to owe tax on Rs 10,00,000, got ${JSON.stringify(aggregateResult)}.`);
+  if (
+    aggregateResult.exempt ||
+    !aggregateResult.failsAggregateTest ||
+    aggregateResult.taxableAmount !== 1000000
+  ) {
+    throw new Error(
+      `Expected the aggregate-cap traditional policy to owe tax on Rs 10,00,000, got ${JSON.stringify(aggregateResult)}.`
+    );
   }
   if (aggregateTraditionalSummary.totalOtherSourcesSlabIncome !== 1000000) {
-    throw new Error(`Expected Rs 10,00,000 total other-sources slab income, got ${aggregateTraditionalSummary.totalOtherSourcesSlabIncome}.`);
+    throw new Error(
+      `Expected Rs 10,00,000 total other-sources slab income, got ${aggregateTraditionalSummary.totalOtherSourcesSlabIncome}.`
+    );
   }
 
   // A policy can lose its exemption purely on the sum-assured ratio even
@@ -936,7 +1210,9 @@ export async function main() {
   );
   const ratioResult = ratioTraditionalSummary.results[0];
   if (ratioResult.exempt || !ratioResult.failsRatioTest || ratioResult.failsAggregateTest) {
-    throw new Error(`Expected the sum-assured-ratio test alone to disqualify this policy, got ${JSON.stringify(ratioResult)}.`);
+    throw new Error(
+      `Expected the sum-assured-ratio test alone to disqualify this policy, got ${JSON.stringify(ratioResult)}.`
+    );
   }
 
   // A ULIP breaching its Rs 2,50,000 aggregate cap, issued long enough ago to
@@ -959,10 +1235,17 @@ export async function main() {
   );
   const ulipLtResult = ulipLtSummary.results[0];
   if (ulipLtResult.taxTreatment !== "capital_gains_lt" || ulipLtResult.estimatedTax !== 171875) {
-    throw new Error(`Expected Rs 1,71,875 long-term ULIP capital-gains tax, got ${JSON.stringify(ulipLtResult)}.`);
+    throw new Error(
+      `Expected Rs 1,71,875 long-term ULIP capital-gains tax, got ${JSON.stringify(ulipLtResult)}.`
+    );
   }
-  if (ulipLtSummary.totalUlipCapitalGainsTax !== 171875 || ulipLtSummary.totalOtherSourcesSlabIncome !== 0) {
-    throw new Error(`Expected the ULIP tax to stay out of other-sources slab income, got ${JSON.stringify(ulipLtSummary)}.`);
+  if (
+    ulipLtSummary.totalUlipCapitalGainsTax !== 171875 ||
+    ulipLtSummary.totalOtherSourcesSlabIncome !== 0
+  ) {
+    throw new Error(
+      `Expected the ULIP tax to stay out of other-sources slab income, got ${JSON.stringify(ulipLtSummary)}.`
+    );
   }
 
   // A recently-issued ULIP failing the sum-assured ratio test (15% > 10%
@@ -984,7 +1267,9 @@ export async function main() {
   );
   const ulipStResult = ulipStSummary.results[0];
   if (ulipStResult.taxTreatment !== "capital_gains_st" || ulipStResult.estimatedTax !== 7000) {
-    throw new Error(`Expected Rs 7,000 short-term ULIP capital-gains tax, got ${JSON.stringify(ulipStResult)}.`);
+    throw new Error(
+      `Expected Rs 7,000 short-term ULIP capital-gains tax, got ${JSON.stringify(ulipStResult)}.`
+    );
   }
 
   // Let-out house property: rent Rs 2,40,000 minus Rs 40,000 municipal taxes
@@ -998,7 +1283,11 @@ export async function main() {
     homeLoanInterestLetOut: 300000
   };
   const letOutLoss = computeLetOutHouseProperty(letOutFigures, ruleCatalog.loanTreatment);
-  if (letOutLoss.netIncome !== -160000 || letOutLoss.oldRegimeIncome !== -160000 || letOutLoss.newRegimeIncome !== 0) {
+  if (
+    letOutLoss.netIncome !== -160000 ||
+    letOutLoss.oldRegimeIncome !== -160000 ||
+    letOutLoss.newRegimeIncome !== 0
+  ) {
     throw new Error(`Unexpected let-out loss case: ${JSON.stringify(letOutLoss)}.`);
   }
   if (letOutLoss.lossCarriedForward !== 0) {
@@ -1009,17 +1298,30 @@ export async function main() {
     { ...letOutFigures, homeLoanInterestLetOut: 500000 },
     ruleCatalog.loanTreatment
   );
-  if (letOutBigLoss.netIncome !== -360000 || letOutBigLoss.oldRegimeIncome !== -200000 || letOutBigLoss.lossCarriedForward !== 160000) {
+  if (
+    letOutBigLoss.netIncome !== -360000 ||
+    letOutBigLoss.oldRegimeIncome !== -200000 ||
+    letOutBigLoss.lossCarriedForward !== 160000
+  ) {
     throw new Error(`Unexpected capped let-out loss case: ${JSON.stringify(letOutBigLoss)}.`);
   }
   // Positive house-property income lands on both regimes' slab income:
   // rent Rs 3,00,000, no municipal taxes, Rs 50,000 interest ->
   // 3,00,000 x 70% - 50,000 = Rs 1,60,000.
   const letOutIncome = computeLetOutHouseProperty(
-    { ...letOutFigures, letOutRentReceived: 300000, letOutMunicipalTaxes: 0, homeLoanInterestLetOut: 50000 },
+    {
+      ...letOutFigures,
+      letOutRentReceived: 300000,
+      letOutMunicipalTaxes: 0,
+      homeLoanInterestLetOut: 50000
+    },
     ruleCatalog.loanTreatment
   );
-  if (letOutIncome.netIncome !== 160000 || letOutIncome.oldRegimeIncome !== 160000 || letOutIncome.newRegimeIncome !== 160000) {
+  if (
+    letOutIncome.netIncome !== 160000 ||
+    letOutIncome.oldRegimeIncome !== 160000 ||
+    letOutIncome.newRegimeIncome !== 160000
+  ) {
     throw new Error(`Unexpected let-out income case: ${JSON.stringify(letOutIncome)}.`);
   }
 
@@ -1047,10 +1349,14 @@ export async function main() {
   // 9.9L - 10L threshold: 9.9L is below 10L, so 12,500 + 20% of (9.9L-5L)
   // = 12,500 + 98,000 = 110,500, x1.04 = 114,920.
   if (regimeWithLetOutLoss.newRegimeTax !== 0) {
-    throw new Error(`A let-out loss must not change the zero new-regime tax on Rs 12L salary, got ${regimeWithLetOutLoss.newRegimeTax}.`);
+    throw new Error(
+      `A let-out loss must not change the zero new-regime tax on Rs 12L salary, got ${regimeWithLetOutLoss.newRegimeTax}.`
+    );
   }
   if (regimeWithLetOutLoss.oldRegimeTax !== 114920) {
-    throw new Error(`Expected Rs 1,14,920 old-regime tax with a Rs 1.6L house-property loss, got ${regimeWithLetOutLoss.oldRegimeTax}.`);
+    throw new Error(
+      `Expected Rs 1,14,920 old-regime tax with a Rs 1.6L house-property loss, got ${regimeWithLetOutLoss.oldRegimeTax}.`
+    );
   }
 
   // Home-loan principal shares the single 80C ceiling: Rs 1,00,000 of
@@ -1069,21 +1375,27 @@ export async function main() {
   const lrsBase = { ...BLANK_SUPPLEMENTAL_FIGURES, foreignRemittanceLrs: 1_500_000 };
   const lrsInvestment = computeForeignRemittanceTcs(lrsBase, ruleCatalog.foreignInvestments);
   if (lrsInvestment.estimatedTcs !== 100000 || lrsInvestment.rate !== 0.2) {
-    throw new Error(`Expected Rs 1,00,000 TCS at 20% on the investment branch, got ${JSON.stringify(lrsInvestment)}.`);
+    throw new Error(
+      `Expected Rs 1,00,000 TCS at 20% on the investment branch, got ${JSON.stringify(lrsInvestment)}.`
+    );
   }
   const lrsEducation = computeForeignRemittanceTcs(
     { ...lrsBase, foreignRemittancePurpose: "education_medical" },
     ruleCatalog.foreignInvestments
   );
   if (lrsEducation.estimatedTcs !== 10000 || lrsEducation.rate !== 0.02) {
-    throw new Error(`Expected Rs 10,000 TCS at 2% on the education/medical branch, got ${JSON.stringify(lrsEducation)}.`);
+    throw new Error(
+      `Expected Rs 10,000 TCS at 2% on the education/medical branch, got ${JSON.stringify(lrsEducation)}.`
+    );
   }
   const lrsLoanFunded = computeForeignRemittanceTcs(
     { ...lrsBase, foreignRemittancePurpose: "education_loan_funded" },
     ruleCatalog.foreignInvestments
   );
   if (lrsLoanFunded.estimatedTcs !== 0 || lrsLoanFunded.rate !== 0) {
-    throw new Error(`Expected no TCS on an education-loan-funded remittance, got ${JSON.stringify(lrsLoanFunded)}.`);
+    throw new Error(
+      `Expected no TCS on an education-loan-funded remittance, got ${JSON.stringify(lrsLoanFunded)}.`
+    );
   }
 
   console.log(

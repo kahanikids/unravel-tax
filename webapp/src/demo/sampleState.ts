@@ -117,7 +117,10 @@ export const calculationLedger = [
   { label: "STCG", value: formatAmount(calculationSummary.stcg) },
   { label: "LTCG", value: formatAmount(calculationSummary.ltcg) },
   { label: "Recommended form", value: calculationSummary.recommendedItrForm },
-  { label: "Rule verification", value: `${verificationSummary.pendingCurrentSource}/${verificationSummary.total} pending` }
+  {
+    label: "Rule verification",
+    value: `${verificationSummary.pendingCurrentSource}/${verificationSummary.total} pending`
+  }
 ];
 
 export function formatAmount(value: number) {

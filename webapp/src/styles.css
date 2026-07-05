@@ -180,7 +180,9 @@ ol {
 
 button.side-nav-step {
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 button.side-nav-step:hover,
@@ -245,7 +247,10 @@ button.side-nav-step.side-nav-step-current:hover {
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .header-home-button:hover,
@@ -274,7 +279,10 @@ button.side-nav-step.side-nav-step-current:hover {
   font-weight: 800;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .help-button:hover,
@@ -498,8 +506,12 @@ button.side-nav-step.side-nav-step-current:hover {
   gap: 16px 28px;
   padding: 20px clamp(18px, 3vw, 30px);
   border-radius: var(--radius-md);
-  background:
-    radial-gradient(130% 160% at 0% 0%, rgba(232, 131, 58, 0.14) 0%, rgba(35, 38, 45, 0.55) 42%, rgba(22, 24, 28, 0.72) 100%);
+  background: radial-gradient(
+    130% 160% at 0% 0%,
+    rgba(232, 131, 58, 0.14) 0%,
+    rgba(35, 38, 45, 0.55) 42%,
+    rgba(22, 24, 28, 0.72) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
     var(--shadow-card),
@@ -563,7 +575,9 @@ button.side-nav-step.side-nav-step-current:hover {
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 14px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 6px 14px rgba(0, 0, 0, 0.28);
   color: #ffffff;
   font-weight: 800;
   font-size: clamp(1.4rem, 3.4vw, 2rem);
@@ -598,8 +612,12 @@ button.side-nav-step.side-nav-step-current:hover {
   margin-left: auto;
   padding: clamp(3px, calc(-0.6px + 1vw), 8px) clamp(7px, calc(-0.92px + 2.2vw), 18px);
   border-radius: 14px;
-  background:
-    linear-gradient(135deg, rgba(232, 131, 58, 0.1) 0%, rgba(255, 255, 255, 0.55) 55%, rgba(255, 255, 255, 0.35) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(232, 131, 58, 0.1) 0%,
+    rgba(255, 255, 255, 0.55) 55%,
+    rgba(255, 255, 255, 0.35) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow:
     0 8px 24px rgba(20, 20, 20, 0.08),
@@ -629,7 +647,9 @@ button.side-nav-step.side-nav-step-current:hover {
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.65);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.4) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(20, 20, 20, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 6px rgba(20, 20, 20, 0.08);
 }
 
 .countdown-banner-header .countdown-icon {
@@ -751,7 +771,10 @@ button.side-nav-step.side-nav-step-current:hover {
   justify-content: flex-start;
   gap: 10px;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .entry-path-icon {
@@ -827,7 +850,9 @@ button.side-nav-step.side-nav-step-current:hover {
   padding: 13px 24px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .primary-button:hover {
@@ -856,7 +881,10 @@ button.side-nav-step.side-nav-step-current:hover {
   padding: 9px 18px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .secondary-button {
@@ -972,7 +1000,9 @@ button.side-nav-step.side-nav-step-current:hover {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .option-button:hover,
@@ -1023,7 +1053,9 @@ button.side-nav-step.side-nav-step-current:hover {
   border-radius: var(--radius-md);
   padding: 12px 16px;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .checkbox-row:hover {
@@ -1328,7 +1360,9 @@ button.side-nav-step.side-nav-step-current:hover {
   align-items: flex-start;
   gap: 8px;
   background: var(--surface-soft);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .upload-dropzone:hover,
@@ -1373,7 +1407,10 @@ button.side-nav-step.side-nav-step-current:hover {
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
 .info-tip-trigger:hover,
@@ -2112,7 +2149,12 @@ button.side-nav-step.side-nav-step-current:hover {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(28, 154, 91, 0.07), rgba(120, 170, 255, 0.06) 55%, rgba(190, 150, 255, 0.06));
+  background: linear-gradient(
+    135deg,
+    rgba(28, 154, 91, 0.07),
+    rgba(120, 170, 255, 0.06) 55%,
+    rgba(190, 150, 255, 0.06)
+  );
 }
 
 /* Notion-style glass cards: a soft per-row tint cycling through a small
@@ -2127,7 +2169,9 @@ button.side-nav-step.side-nav-step-current:hover {
   backdrop-filter: blur(10px) saturate(1.2);
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
   box-shadow: 0 1px 2px rgba(20, 20, 20, 0.04);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .summary-row:hover {
@@ -2135,11 +2179,21 @@ button.side-nav-step.side-nav-step-current:hover {
   box-shadow: 0 6px 16px rgba(20, 20, 20, 0.08);
 }
 
-.summary-row:nth-child(5n + 1) { --row-tint: 28, 154, 91; }
-.summary-row:nth-child(5n + 2) { --row-tint: 59, 130, 246; }
-.summary-row:nth-child(5n + 3) { --row-tint: 217, 149, 45; }
-.summary-row:nth-child(5n + 4) { --row-tint: 147, 97, 226; }
-.summary-row:nth-child(5n + 5) { --row-tint: 220, 90, 120; }
+.summary-row:nth-child(5n + 1) {
+  --row-tint: 28, 154, 91;
+}
+.summary-row:nth-child(5n + 2) {
+  --row-tint: 59, 130, 246;
+}
+.summary-row:nth-child(5n + 3) {
+  --row-tint: 217, 149, 45;
+}
+.summary-row:nth-child(5n + 4) {
+  --row-tint: 147, 97, 226;
+}
+.summary-row:nth-child(5n + 5) {
+  --row-tint: 220, 90, 120;
+}
 
 .summary-row-main {
   display: flex;
@@ -2282,7 +2336,9 @@ button.side-nav-step.side-nav-step-current:hover {
   padding: 11px 18px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .export-actions .primary-button {

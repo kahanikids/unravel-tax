@@ -71,7 +71,10 @@ export function classifyTransactionWithRules(
     return "Intraday";
   }
 
-  if (transaction.holdPeriodDays > capitalGainsRule.values.listed_equity.long_term_holding_period_days_gt) {
+  if (
+    transaction.holdPeriodDays >
+    capitalGainsRule.values.listed_equity.long_term_holding_period_days_gt
+  ) {
     return "LT";
   }
 
@@ -98,7 +101,8 @@ export function summarizeWithRules(
       bucket = totals.debtMf;
     } else {
       const taxClass = classifyTransactionWithRules(transaction, capitalGainsRule);
-      bucket = taxClass === "Intraday" ? totals.intraday : taxClass === "ST" ? totals.stcg : totals.ltcg;
+      bucket =
+        taxClass === "Intraday" ? totals.intraday : taxClass === "ST" ? totals.stcg : totals.ltcg;
     }
     bucket.saleValue += transaction.sellValue;
     bucket.cost += transaction.buyValue;
@@ -139,7 +143,9 @@ export function summarizeWithRules(
     totals,
     recommendedItrForm,
     caReviewRecommendation:
-      recommendedItrForm === "ITR-3" ? "Get CA review before filing" : "Self-file may be reasonable after checks"
+      recommendedItrForm === "ITR-3"
+        ? "Get CA review before filing"
+        : "Self-file may be reasonable after checks"
   };
 }
 
@@ -163,8 +169,7 @@ export function caSummaryRows(
       head: "Speculative / Intraday income",
       ruleSection: "Business income",
       amount: summary.intradayGain,
-      notes:
-        `Bought and sold the same trading day (intraday), so it's speculative business income, not a capital gain. Taxed at your slab rate, and it's what moves your ITR form to ITR-3. ${saleMinusCost(summary.totals.intraday)}`
+      notes: `Bought and sold the same trading day (intraday), so it's speculative business income, not a capital gain. Taxed at your slab rate, and it's what moves your ITR form to ITR-3. ${saleMinusCost(summary.totals.intraday)}`
     },
     {
       head: "Short-Term Capital Gains",
@@ -182,8 +187,7 @@ export function caSummaryRows(
       head: "Debt/specified mutual fund gains",
       ruleSection: "50AA",
       amount: summary.debtMfShortTermDeemedGain,
-      notes:
-        `Short-term-deemed, taxed at your slab rate. Not the equity 20%/12.5% rates above, and not included in those totals. Confirm the fund's classification with a CA. ${saleMinusCost(summary.totals.debtMf)}`
+      notes: `Short-term-deemed, taxed at your slab rate. Not the equity 20%/12.5% rates above, and not included in those totals. Confirm the fund's classification with a CA. ${saleMinusCost(summary.totals.debtMf)}`
     },
     {
       head: "Total sale value",
@@ -203,47 +207,54 @@ export function caSummaryRows(
       head: "Dividends",
       ruleSection: "Schedule OS",
       amount: supplementalInputs.dividends,
-      notes: "Entered by you under \"A few more numbers\" on the Current Filing page, not read from an uploaded document. Taxed at your slab rate under Schedule OS."
+      notes:
+        'Entered by you under "A few more numbers" on the Current Filing page, not read from an uploaded document. Taxed at your slab rate under Schedule OS.'
     },
     {
       head: "Interest & other income",
       ruleSection: "Schedule OS",
       amount: supplementalInputs.interestOtherIncome,
-      notes: "Entered by you under \"A few more numbers\" on the Current Filing page. Bank/FD interest and similar income, taxed at your slab rate under Schedule OS."
+      notes:
+        'Entered by you under "A few more numbers" on the Current Filing page. Bank/FD interest and similar income, taxed at your slab rate under Schedule OS.'
     },
     {
       head: "Eligible interest deduction",
       ruleSection: "80TTA/80TTB",
       amount: supplementalInputs.eligibleInterestDeduction,
-      notes: "Entered by you. Reduces the interest income above, up to the 80TTA (under 60) or 80TTB (senior citizen) limit."
+      notes:
+        "Entered by you. Reduces the interest income above, up to the 80TTA (under 60) or 80TTB (senior citizen) limit."
     },
     {
       head: "Deductible transaction charges",
       ruleSection: "Expense split",
       amount: supplementalInputs.deductibleTransactionCharges,
-      notes: "Entered by you. Non-STT broker charges (brokerage, stamp duty) that can be netted against gains; STT itself isn't deductible against capital gains."
+      notes:
+        "Entered by you. Non-STT broker charges (brokerage, stamp duty) that can be netted against gains; STT itself isn't deductible against capital gains."
     },
     {
       head: "Carry-forward losses available",
       ruleSection: "CFL",
       amount: supplementalInputs.carryForwardLossesAvailable,
-      notes: "Entered by you. Losses from an earlier year, offsettable against this year's capital gains if filed on time in that earlier year."
+      notes:
+        "Entered by you. Losses from an earlier year, offsettable against this year's capital gains if filed on time in that earlier year."
     },
     {
       head: "Recommended ITR form",
       ruleSection: "",
       amount: summary.recommendedItrForm,
-      notes: summary.intradayGain > 0
-        ? "ITR-3 because your documents show speculative/intraday income, which counts as business income, not just capital gains."
-        : "Based on your profile and documents: capital gains, dividends, and interest without business income fit this simpler form."
+      notes:
+        summary.intradayGain > 0
+          ? "ITR-3 because your documents show speculative/intraday income, which counts as business income, not just capital gains."
+          : "Based on your profile and documents: capital gains, dividends, and interest without business income fit this simpler form."
     },
     {
       head: "CA review recommendation",
       ruleSection: "",
       amount: summary.caReviewRecommendation,
-      notes: summary.recommendedItrForm === "ITR-3"
-        ? "ITR-3 filings involve business-income rules a CA should check before you file."
-        : "No business income or other complexity detected in what you've entered so far. Still worth a final sanity check on the numbers."
+      notes:
+        summary.recommendedItrForm === "ITR-3"
+          ? "ITR-3 filings involve business-income rules a CA should check before you file."
+          : "No business income or other complexity detected in what you've entered so far. Still worth a final sanity check on the numbers."
     }
   ];
 }
@@ -268,7 +279,10 @@ export function findBrokerTaxableColumn(headers: string[]): string | undefined {
   // "Taxable Gain" columns should be checked against the taxable one.
   const patterns: ((n: string) => boolean)[] = [
     (n) => n.includes("taxable gain"),
-    (n) => (n.includes("realised gain") || n.includes("realized gain")) && !n.includes("short term") && !n.includes("long term"),
+    (n) =>
+      (n.includes("realised gain") || n.includes("realized gain")) &&
+      !n.includes("short term") &&
+      !n.includes("long term"),
     (n) => n === "net gain"
   ];
   for (const matches of patterns) {
@@ -293,7 +307,12 @@ export type BrokerGainCheck = {
 
 /** A broker column holding speculative/intraday P&L, kept separate from taxable capital gains in many statements. */
 export function findBrokerSpeculativeColumn(headers: string[]): string | undefined {
-  return headers.find((header) => header.toLowerCase().replace(/[^a-z0-9]+/g, " ").includes("speculative"));
+  return headers.find((header) =>
+    header
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .includes("speculative")
+  );
 }
 
 /**
@@ -318,7 +337,10 @@ export function brokerGainCheck(
   }
   const speculativeColumnName = findBrokerSpeculativeColumn([...brokerHeaders]);
 
-  const sums: Record<"intraday" | "stcg" | "ltcg" | "debtMf", { computed: number; broker: number }> = {
+  const sums: Record<
+    "intraday" | "stcg" | "ltcg" | "debtMf",
+    { computed: number; broker: number }
+  > = {
     intraday: { computed: 0, broker: 0 },
     stcg: { computed: 0, broker: 0 },
     ltcg: { computed: 0, broker: 0 },
@@ -334,10 +356,18 @@ export function brokerGainCheck(
       key = taxClass === "Intraday" ? "intraday" : taxClass === "ST" ? "stcg" : "ltcg";
     }
     sums[key].computed += transaction.sellValue - transaction.buyValue;
-    const sourceColumn = key === "intraday" && speculativeColumnName ? speculativeColumnName : columnName;
+    const sourceColumn =
+      key === "intraday" && speculativeColumnName ? speculativeColumnName : columnName;
     const raw = transaction.brokerColumns?.[sourceColumn];
     if (raw !== undefined) {
-      const parsed = typeof raw === "number" ? raw : Number(String(raw).replace(/[₹,\s]/g, "").replace(/^\((.+)\)$/, "-$1"));
+      const parsed =
+        typeof raw === "number"
+          ? raw
+          : Number(
+              String(raw)
+                .replace(/[₹,\s]/g, "")
+                .replace(/^\((.+)\)$/, "-$1")
+            );
       if (!Number.isNaN(parsed)) {
         sums[key].broker += parsed;
       }

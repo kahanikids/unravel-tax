@@ -105,21 +105,22 @@ export function RegimeComparisonPanel({
       </div>
       {loanDeductionsTotal > 0 ? (
         <p className="step-lede">
-          Plus ₹{formatAmount(loanDeductionsTotal)} of loan-interest deductions from the Loans section, already added to
-          the old-regime side. Don't re-enter those in the field above.
+          Plus ₹{formatAmount(loanDeductionsTotal)} of loan-interest deductions from the Loans
+          section, already added to the old-regime side. Don't re-enter those in the field above.
         </p>
       ) : null}
       {additionalOtherSlabIncome > 0 ? (
         <p className="step-lede">
-          Plus ₹{formatAmount(additionalOtherSlabIncome)} of taxable insurance-payout income from the Insurance
-          section, already added to the "other income" side of both regimes. Don't re-enter it above.
+          Plus ₹{formatAmount(additionalOtherSlabIncome)} of taxable insurance-payout income from
+          the Insurance section, already added to the "other income" side of both regimes. Don't
+          re-enter it above.
         </p>
       ) : null}
       {nri && supplementalFigures.dividends > 0 ? (
         <p className="step-lede">
-          Your ₹{formatAmount(supplementalFigures.dividends)} of dividends is left out of both regimes here - as a
-          non-resident, it's taxed at a flat Section 115A/DTAA rate regardless of regime, shown as its own row in the
-          summary above.
+          Your ₹{formatAmount(supplementalFigures.dividends)} of dividends is left out of both
+          regimes here - as a non-resident, it's taxed at a flat Section 115A/DTAA rate regardless
+          of regime, shown as its own row in the summary above.
         </p>
       ) : null}
       {letOutIncomeOldRegime !== 0 || letOutIncomeNewRegime !== 0 ? (
@@ -152,19 +153,23 @@ export function RegimeComparisonPanel({
               <span className="regime-breakeven-label">Break-even deductions</span>
               {breakEven.newAlwaysWins ? (
                 <p className="regime-verdict">
-                  The new regime already brings this income to zero tax, so no amount of old-regime deductions can beat
-                  it. There's no break-even to reach.
+                  The new regime already brings this income to zero tax, so no amount of old-regime
+                  deductions can beat it. There's no break-even to reach.
                 </p>
               ) : (
                 <>
-                  <strong className="regime-breakeven-value">₹{formatAmount(breakEven.breakEvenDeductions)}</strong>
+                  <strong className="regime-breakeven-value">
+                    ₹{formatAmount(breakEven.breakEvenDeductions)}
+                  </strong>
                   <Meter
                     used={breakEven.actualDeductions}
                     limit={breakEven.breakEvenDeductions}
                     caption={`You've entered ₹${formatAmount(breakEven.actualDeductions)} of old-regime deductions, ₹${formatAmount(
                       Math.abs(breakEven.surplus)
                     )} ${breakEven.surplus >= 0 ? "above" : "below"} the break-even, so the ${
-                      breakEven.surplus >= 0 ? "old regime is cheaper" : "new regime (the default) is cheaper"
+                      breakEven.surplus >= 0
+                        ? "old regime is cheaper"
+                        : "new regime (the default) is cheaper"
                     }.`}
                     overLabel={`You've entered ₹${formatAmount(breakEven.actualDeductions)}, ₹${formatAmount(
                       breakEven.surplus
@@ -172,12 +177,16 @@ export function RegimeComparisonPanel({
                   />
                 </>
               )}
-              {rule.values.break_even ? <p className="regime-verdict">{rule.values.break_even.note}</p> : null}
+              {rule.values.break_even ? (
+                <p className="regime-verdict">{rule.values.break_even.note}</p>
+              ) : null}
             </div>
           ) : null}
         </div>
       ) : (
-        <p className="checklist-empty">Enter your salary/pension income above to see an estimate.</p>
+        <p className="checklist-empty">
+          Enter your salary/pension income above to see an estimate.
+        </p>
       )}
     </section>
   );

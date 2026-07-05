@@ -25,7 +25,10 @@ export type InstrumentType = "equity" | "debt_mutual_fund";
 
 export const OPTIONAL_INSTRUMENT_TYPE_COLUMN = "Instrument Type";
 
-export type RawTransactionRow = Record<(typeof EXPECTED_TRANSACTION_COLUMNS)[number], string | number | Date> &
+export type RawTransactionRow = Record<
+  (typeof EXPECTED_TRANSACTION_COLUMNS)[number],
+  string | number | Date
+> &
   Partial<Record<typeof OPTIONAL_INSTRUMENT_TYPE_COLUMN, string | number | Date>>;
 
 export type NormalizedTransaction = {

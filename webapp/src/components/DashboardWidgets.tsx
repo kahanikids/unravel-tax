@@ -77,9 +77,17 @@ export function Donut({
       <ul className="donut-legend">
         {segments.map((segment) => (
           <li className="donut-legend-item" key={segment.label}>
-            <span className="donut-swatch" style={{ background: segment.color }} aria-hidden="true" />
+            <span
+              className="donut-swatch"
+              style={{ background: segment.color }}
+              aria-hidden="true"
+            />
             <span className="donut-legend-label">{segment.label}</span>
-            <span className={segment.value < 0 ? "donut-legend-value donut-legend-loss" : "donut-legend-value"}>
+            <span
+              className={
+                segment.value < 0 ? "donut-legend-value donut-legend-loss" : "donut-legend-value"
+              }
+            >
               {segment.value < 0 ? "−" : ""}
               {formatCompactInr(Math.abs(segment.value))}
             </span>
@@ -153,8 +161,15 @@ export function DeductionBar({
         <span className="deduction-bar-label">{section}</span>
         <span className="deduction-bar-limit">limit {formatCompactInr(limit)}</span>
       </div>
-      <div className="meter-track" role="img" aria-label={`${label}: ${formatInr(counted)} of ${formatInr(limit)}`}>
-        <span className={over ? "meter-fill meter-fill-over" : "meter-fill"} style={{ width: `${width}%` }} />
+      <div
+        className="meter-track"
+        role="img"
+        aria-label={`${label}: ${formatInr(counted)} of ${formatInr(limit)}`}
+      >
+        <span
+          className={over ? "meter-fill meter-fill-over" : "meter-fill"}
+          style={{ width: `${width}%` }}
+        />
       </div>
       <label className="deduction-bar-input">
         <span className="visually-hidden">{label}</span>
@@ -222,23 +237,42 @@ export function TrendChart({
 
   return (
     <div className="trend-chart">
-      <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} role="img" aria-label={ariaLabel} preserveAspectRatio="none">
+      <svg
+        viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+        role="img"
+        aria-label={ariaLabel}
+        preserveAspectRatio="none"
+      >
         <line x1={PAD_X} y1={zeroY} x2={CHART_W - PAD_X} y2={zeroY} className="trend-axis" />
         {series.map((line) => {
-          const points = line.values.map((value, index) => `${scaleX(index, labels.length)},${y(value)}`).join(" ");
+          const points = line.values
+            .map((value, index) => `${scaleX(index, labels.length)},${y(value)}`)
+            .join(" ");
           return (
             <g key={line.label}>
               {labels.length > 1 ? (
                 <polyline points={points} fill="none" stroke={line.color} className="trend-line" />
               ) : null}
               {line.values.map((value, index) => (
-                <circle key={index} cx={scaleX(index, labels.length)} cy={y(value)} r={4} fill={line.color} />
+                <circle
+                  key={index}
+                  cx={scaleX(index, labels.length)}
+                  cy={y(value)}
+                  r={4}
+                  fill={line.color}
+                />
               ))}
             </g>
           );
         })}
         {labels.map((label, index) => (
-          <text key={label} x={scaleX(index, labels.length)} y={CHART_H - 8} className="trend-x-label" textAnchor="middle">
+          <text
+            key={label}
+            x={scaleX(index, labels.length)}
+            y={CHART_H - 8}
+            className="trend-x-label"
+            textAnchor="middle"
+          >
             {label}
           </text>
         ))}
@@ -248,7 +282,11 @@ export function TrendChart({
           const latest = line.values[line.values.length - 1] ?? 0;
           return (
             <li className="chart-legend-item" key={line.label}>
-              <span className="donut-swatch" style={{ background: line.color }} aria-hidden="true" />
+              <span
+                className="donut-swatch"
+                style={{ background: line.color }}
+                aria-hidden="true"
+              />
               <span className="chart-legend-label">{line.label}</span>
               <span className="chart-legend-value">{format(latest)}</span>
             </li>
@@ -289,7 +327,12 @@ export function SignedBarChart({
 
   return (
     <div className="trend-chart">
-      <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} role="img" aria-label={ariaLabel} preserveAspectRatio="none">
+      <svg
+        viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+        role="img"
+        aria-label={ariaLabel}
+        preserveAspectRatio="none"
+      >
         <line x1={PAD_X} y1={zeroY} x2={CHART_W - PAD_X} y2={zeroY} className="trend-axis" />
         {values.map((value, index) => {
           const cx = PAD_X + slot * (index + 0.5);
@@ -348,7 +391,12 @@ export function VarianceGauge({ matched, total }: { matched: number; total: numb
   const ratio = total > 0 ? matched / total : 0;
   const path = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
   return (
-    <svg className="variance-gauge" viewBox="0 0 128 76" role="img" aria-label={`${matched} of ${total} figures match your AIS entries`}>
+    <svg
+      className="variance-gauge"
+      viewBox="0 0 128 76"
+      role="img"
+      aria-label={`${matched} of ${total} figures match your AIS entries`}
+    >
       <path d={path} className="variance-gauge-track" />
       <path
         d={path}

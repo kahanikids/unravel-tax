@@ -1,5 +1,10 @@
 import type { NormalizedTransaction } from "../ingest";
-import type { AisReportedFigures, AppStep, OrientationAnswers, SupplementalFigures } from "../state/types";
+import type {
+  AisReportedFigures,
+  AppStep,
+  OrientationAnswers,
+  SupplementalFigures
+} from "../state/types";
 import type { ForeignEquityHolding } from "./foreignEquity";
 import type { HufAssetTransfer, HufMember } from "./hufClubbing";
 import type { InsurancePolicy } from "./insurance";

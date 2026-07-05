@@ -144,7 +144,9 @@ function detectItrForm(root: unknown): string {
  * "2025-2026", or "AY2025-26". Returns "" if it can't tell.
  */
 export function normalizeAssessmentYear(raw: unknown): string {
-  const text = String(raw ?? "").replace(/ay/i, "").trim();
+  const text = String(raw ?? "")
+    .replace(/ay/i, "")
+    .trim();
   const full = text.match(/^(\d{4})\s*[-/]\s*(\d{2,4})$/);
   if (full) {
     const start = Number(full[1]);
@@ -161,11 +163,7 @@ export function normalizeAssessmentYear(raw: unknown): string {
 function detectRegime(root: unknown): FilingRegime {
   // New regime (115BAC) is the default; the return records whether the
   // filer opted OUT of it. Different schema versions name this differently.
-  const optOut = findByKey(root, [
-    "OptOutNewTaxRegime",
-    "OptingOutNewTaxRegime",
-    "NewTaxRegime"
-  ]);
+  const optOut = findByKey(root, ["OptOutNewTaxRegime", "OptingOutNewTaxRegime", "NewTaxRegime"]);
   if (typeof optOut === "string") {
     const value = optOut.trim().toUpperCase();
     if (value === "Y" || value === "YES") {
@@ -195,11 +193,14 @@ export function parseItrJson(text: string): ParsedItrFiling {
       ok: false,
       fields,
       readFields,
-      message: "This doesn't look like a valid ITR JSON file. You can still enter the figures by hand below."
+      message:
+        "This doesn't look like a valid ITR JSON file. You can still enter the figures by hand below."
     };
   }
 
-  const assessmentYear = normalizeAssessmentYear(findByKey(root, ["AssessmentYear", "AsstYear", "AY"]));
+  const assessmentYear = normalizeAssessmentYear(
+    findByKey(root, ["AssessmentYear", "AsstYear", "AY"])
+  );
   if (assessmentYear) {
     fields.assessmentYear = assessmentYear;
     readFields.push("assessmentYear");
@@ -291,7 +292,9 @@ function numberAfterLabel(text: string, labels: string[]): number | null {
  * "unknown" and the user picks it in the manual dropdown.
  */
 function detectRegimeFromText(text: string): FilingRegime {
-  const newRegime = text.match(/new\s*tax\s*regime[^A-Za-z]{0,25}(yes|no)/i) ?? text.match(/115\s*BAC[^A-Za-z]{0,25}(yes|no)/i);
+  const newRegime =
+    text.match(/new\s*tax\s*regime[^A-Za-z]{0,25}(yes|no)/i) ??
+    text.match(/115\s*BAC[^A-Za-z]{0,25}(yes|no)/i);
   if (newRegime) {
     return newRegime[1].toLowerCase() === "yes" ? "new" : "old";
   }
@@ -315,7 +318,8 @@ export function parseItrVText(text: string): ParsedItrFiling {
       ok: false,
       fields,
       readFields,
-      message: "Couldn't read any text from this PDF — it may be a scan or image. Enter the figures by hand below instead."
+      message:
+        "Couldn't read any text from this PDF — it may be a scan or image. Enter the figures by hand below instead."
     };
   }
 
@@ -353,7 +357,11 @@ export function parseItrVText(text: string): ParsedItrFiling {
   }
 
   const refund = numberAfterLabel(normalized, ["Refund"]);
-  const payable = numberAfterLabel(normalized, ["Net\\s*Tax\\s*Payable", "Total\\s*Tax\\s*Payable", "Tax\\s*Payable"]);
+  const payable = numberAfterLabel(normalized, [
+    "Net\\s*Tax\\s*Payable",
+    "Total\\s*Tax\\s*Payable",
+    "Tax\\s*Payable"
+  ]);
   if (refund !== null && refund > 0) {
     fields.refundOrPayable = refund;
     readFields.push("refundOrPayable");
@@ -410,18 +418,22 @@ export function deriveHistoryInsights(filings: PastFiling[]): HistoryInsights {
     const previous = sorted[sorted.length - 2];
     const latest = sorted[sorted.length - 1];
     if (previous.grossTotalIncome > 0) {
-      incomeGrowthPct = ((latest.grossTotalIncome - previous.grossTotalIncome) / previous.grossTotalIncome) * 100;
+      incomeGrowthPct =
+        ((latest.grossTotalIncome - previous.grossTotalIncome) / previous.grossTotalIncome) * 100;
     }
   }
 
-  const regimesUsed = Array.from(new Set(sorted.map((filing) => filing.regime).filter((regime) => regime !== "unknown")));
+  const regimesUsed = Array.from(
+    new Set(sorted.map((filing) => filing.regime).filter((regime) => regime !== "unknown"))
+  );
 
   return {
     sorted,
     yearsCount: sorted.length,
     incomeGrowthPct,
     effectiveRates,
-    latestEffectiveRate: effectiveRates.length > 0 ? effectiveRates[effectiveRates.length - 1].rate : null,
+    latestEffectiveRate:
+      effectiveRates.length > 0 ? effectiveRates[effectiveRates.length - 1].rate : null,
     regimeSwitched: regimesUsed.length > 1,
     regimesUsed
   };

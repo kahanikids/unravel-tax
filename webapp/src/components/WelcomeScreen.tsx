@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { IconChecklist, IconCompass, IconUpload } from "./icons";
-import { LEGAL_INTRO, LEGAL_SECTIONS, REPORT_ISSUE_URL, REPO_URL, WELCOME_DISCLAIMER_BANNER } from "../lib/copy";
+import {
+  LEGAL_INTRO,
+  LEGAL_SECTIONS,
+  REPORT_ISSUE_URL,
+  REPO_URL,
+  WELCOME_DISCLAIMER_BANNER
+} from "../lib/copy";
 
 const WELCOME_DISCLAIMER_KEY = "unravel-tax-welcome-disclaimer-dismissed";
 
@@ -46,19 +52,29 @@ export function WelcomeScreen({
       {!disclaimerDismissed ? (
         <div className="welcome-disclaimer-banner" role="status">
           <p>{WELCOME_DISCLAIMER_BANNER}</p>
-          <button type="button" className="text-button welcome-disclaimer-dismiss" onClick={dismissDisclaimer}>
+          <button
+            type="button"
+            className="text-button welcome-disclaimer-dismiss"
+            onClick={dismissDisclaimer}
+          >
             Got It
           </button>
         </div>
       ) : null}
       <div className="welcome-card-header">
         <p className="eyebrow">Unravel Tax</p>
-        <button type="button" className="secondary-button welcome-capabilities-trigger" onClick={onShowCapabilities}>
+        <button
+          type="button"
+          className="secondary-button welcome-capabilities-trigger"
+          onClick={onShowCapabilities}
+        >
           Tools Features
         </button>
       </div>
       <h1 className="welcome-title">
-        <span className="welcome-title-desktop">Turn a pile of tax documents into a filing you understand.</span>
+        <span className="welcome-title-desktop">
+          Turn a pile of tax documents into a filing you understand.
+        </span>
         <span className="welcome-title-mobile">Tax documents, sorted.</span>
       </h1>
 
@@ -90,9 +106,7 @@ export function WelcomeScreen({
         </div>
       ) : null}
 
-      <p className="entry-path-lede">
-        Pick how you'd like to begin:
-      </p>
+      <p className="entry-path-lede">Pick how you'd like to begin:</p>
 
       <div className="entry-path-cards">
         <button type="button" className="entry-path-card" onClick={onStart}>

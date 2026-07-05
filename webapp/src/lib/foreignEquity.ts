@@ -93,7 +93,9 @@ export function computeForeignEquityHoldings(
         foreignTaxCreditOnGain: 0
       };
     }
-    const holdPeriodDays = holding.acquisitionDate ? daysBetween(holding.acquisitionDate, holding.saleDate) : 0;
+    const holdPeriodDays = holding.acquisitionDate
+      ? daysBetween(holding.acquisitionDate, holding.saleDate)
+      : 0;
     const gain = holding.saleProceedsInr - holding.costBasisInr;
     const isLongTerm = holdPeriodDays > shareRule.long_term_holding_period_days_gt;
     const estimatedLtcgTax = isLongTerm ? Math.max(0, gain) * shareRule.ltcg_rate : 0;
@@ -135,7 +137,13 @@ export function summarizeForeignEquityHoldings(
     totalStcgGain: results
       .filter((result) => result.taxTreatment === "short_term")
       .reduce((sum, result) => sum + Math.max(0, result.gain), 0),
-    totalPerquisiteValueInr: holdings.reduce((sum, holding) => sum + Math.max(0, holding.perquisiteValueInr), 0),
-    totalForeignTaxCreditOnLtcg: results.reduce((sum, result) => sum + result.foreignTaxCreditOnGain, 0)
+    totalPerquisiteValueInr: holdings.reduce(
+      (sum, holding) => sum + Math.max(0, holding.perquisiteValueInr),
+      0
+    ),
+    totalForeignTaxCreditOnLtcg: results.reduce(
+      (sum, result) => sum + result.foreignTaxCreditOnGain,
+      0
+    )
   };
 }

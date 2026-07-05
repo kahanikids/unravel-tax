@@ -116,8 +116,18 @@ export type RegimeChoiceValues = {
 };
 
 export type NriNreNroValues = {
-  nre: { holds: string; interest_taxable_in_india: boolean; exemption_section: string; withholding: boolean };
-  nro: { holds: string; interest_taxable_in_india: boolean; withholding: boolean; withholding_section: string };
+  nre: {
+    holds: string;
+    interest_taxable_in_india: boolean;
+    exemption_section: string;
+    withholding: boolean;
+  };
+  nro: {
+    holds: string;
+    interest_taxable_in_india: boolean;
+    withholding: boolean;
+    withholding_section: string;
+  };
   common_error: string;
 };
 
@@ -136,9 +146,7 @@ export type NriTdsAndRefundsValues = {
 };
 
 export type NriDtaaMfTreatment =
-  | "country_of_residence_only"
-  | "taxable_in_india"
-  | "taxable_in_india_with_credit";
+  "country_of_residence_only" | "taxable_in_india" | "taxable_in_india_with_credit";
 
 export type NriDtaaCountryEntry = {
   treatment: NriDtaaMfTreatment;
@@ -244,7 +252,11 @@ export type AdvanceTaxValues = {
 export type DeductionLimitsValues = {
   regime_applicability: string;
   section_80c: { limit_inr: number; covers: string };
-  section_80d: { self_family_below_60_inr: number; self_family_senior_citizen_inr: number; covers: string };
+  section_80d: {
+    self_family_below_60_inr: number;
+    self_family_senior_citizen_inr: number;
+    covers: string;
+  };
   section_80ccd_1b_nps: { limit_inr: number; covers: string };
 };
 

@@ -147,7 +147,8 @@ const QUESTIONS: Question[] = [
   {
     id: "huf",
     kind: "yes-no",
-    prompt: "Is any of this income or investment held through a family (HUF) rather than just you personally?",
+    prompt:
+      "Is any of this income or investment held through a family (HUF) rather than just you personally?",
     helper: "Skip this if that term is unfamiliar. It almost certainly doesn't apply to you.",
     mobileHelper: "Not sure? Skip it.",
     visible: () => true,
@@ -162,7 +163,10 @@ const QUESTIONS: Question[] = [
     visible: () => true,
     skippable: true,
     value: (a) => a.seniorCitizen,
-    set: (a, value) => (value ? { ...a, seniorCitizen: value } : { ...a, seniorCitizen: value, superSeniorCitizen: null })
+    set: (a, value) =>
+      value
+        ? { ...a, seniorCitizen: value }
+        : { ...a, seniorCitizen: value, superSeniorCitizen: null }
   },
   {
     id: "superSeniorCitizen",
@@ -217,7 +221,12 @@ const QUESTIONS: Question[] = [
     visible: isResident,
     skippable: true,
     value: (a) => a.hraClaimed,
-    set: (a, value) => ({ ...a, hraClaimed: value, hraAboveThreshold: value ? a.hraAboveThreshold : null, hasLandlordPan: value ? a.hasLandlordPan : null })
+    set: (a, value) => ({
+      ...a,
+      hraClaimed: value,
+      hraAboveThreshold: value ? a.hraAboveThreshold : null,
+      hasLandlordPan: value ? a.hasLandlordPan : null
+    })
   },
   {
     id: "hraAboveThreshold",
@@ -226,7 +235,11 @@ const QUESTIONS: Question[] = [
     visible: (a) => isResident(a) && a.hraClaimed === true,
     skippable: true,
     value: (a) => a.hraAboveThreshold,
-    set: (a, value) => ({ ...a, hraAboveThreshold: value, hasLandlordPan: value ? a.hasLandlordPan : null })
+    set: (a, value) => ({
+      ...a,
+      hraAboveThreshold: value,
+      hasLandlordPan: value ? a.hasLandlordPan : null
+    })
   },
   {
     id: "hasLandlordPan",
@@ -245,7 +258,11 @@ const QUESTIONS: Question[] = [
     visible: isResident,
     skippable: true,
     value: (a) => a.epfWithdrawal,
-    set: (a, value) => ({ ...a, epfWithdrawal: value, epfBeforeFiveYears: value ? a.epfBeforeFiveYears : null })
+    set: (a, value) => ({
+      ...a,
+      epfWithdrawal: value,
+      epfBeforeFiveYears: value ? a.epfBeforeFiveYears : null
+    })
   },
   {
     id: "epfBeforeFiveYears",
@@ -283,7 +300,8 @@ const QUESTIONS: Question[] = [
   {
     id: "foreignAssets",
     kind: "yes-no",
-    prompt: "Do you hold any assets outside India (foreign shares, US RSUs/ESPP, overseas accounts or property)?",
+    prompt:
+      "Do you hold any assets outside India (foreign shares, US RSUs/ESPP, overseas accounts or property)?",
     helper:
       "Residents must report every foreign holding in Schedule FA, even a dormant account, with no minimum value. Getting this wrong risks a ₹10 lakh penalty, so it changes which form you file.",
     mobileHelper: "Foreign shares, RSUs, or accounts? Say Yes.",
@@ -381,7 +399,9 @@ export function OrientationForm({
     return (
       <div className="orientation-card">
         <h2 className="orientation-prompt">Your answers</h2>
-        <p className="orientation-note">Here's what you told us. These shape your checklist and recommendations.</p>
+        <p className="orientation-note">
+          Here's what you told us. These shape your checklist and recommendations.
+        </p>
         <dl className="orientation-summary">
           {visible.map((question) => (
             <div key={question.id} className="orientation-summary-row">
@@ -429,7 +449,11 @@ export function OrientationForm({
       <div className="orientation-progress-bar" aria-hidden="true">
         <span style={{ width: `${progressPercent}%` }} />
       </div>
-      {index === 0 ? <p className="orientation-note">Answers only shape what's asked next. Nothing is submitted anywhere.</p> : null}
+      {index === 0 ? (
+        <p className="orientation-note">
+          Answers only shape what's asked next. Nothing is submitted anywhere.
+        </p>
+      ) : null}
       <h2 className="orientation-prompt">
         {isNri(answers) && current.promptNri ? current.promptNri : current.prompt}
       </h2>
@@ -439,17 +463,26 @@ export function OrientationForm({
             {isNri(answers) && current.helperNri ? current.helperNri : current.helper}
           </span>
           <span className="orientation-helper-mobile">
-            {current.mobileHelper ?? (isNri(answers) && current.helperNri ? current.helperNri : current.helper)}
+            {current.mobileHelper ??
+              (isNri(answers) && current.helperNri ? current.helperNri : current.helper)}
           </span>
         </p>
       ) : null}
 
       {current.kind === "yes-no" ? (
         <div className="orientation-options">
-          <button type="button" className="option-button" onClick={() => answerAndAdvance(current.set(answers, true))}>
+          <button
+            type="button"
+            className="option-button"
+            onClick={() => answerAndAdvance(current.set(answers, true))}
+          >
             Yes
           </button>
-          <button type="button" className="option-button" onClick={() => answerAndAdvance(current.set(answers, false))}>
+          <button
+            type="button"
+            className="option-button"
+            onClick={() => answerAndAdvance(current.set(answers, false))}
+          >
             No
           </button>
         </div>
@@ -471,7 +504,12 @@ export function OrientationForm({
       ) : null}
 
       {current.kind === "multi" ? (
-        <MultiSelectQuestion question={current} answers={answers} onChange={onChange} onContinue={() => setIndex((value) => value + 1)} />
+        <MultiSelectQuestion
+          question={current}
+          answers={answers}
+          onChange={onChange}
+          onContinue={() => setIndex((value) => value + 1)}
+        />
       ) : null}
 
       {current.kind === "number" ? (
@@ -486,7 +524,11 @@ export function OrientationForm({
 
       <div className="orientation-nav">
         {index > 0 ? (
-          <button type="button" className="text-button" onClick={() => setIndex((value) => Math.max(0, value - 1))}>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setIndex((value) => Math.max(0, value - 1))}
+          >
             ← Back
           </button>
         ) : enteredWithAnswers ? (
@@ -532,7 +574,12 @@ function NumberQuestionInput({
         placeholder={question.unit ?? ""}
         onChange={(event) => setDraft(event.target.value)}
       />
-      <button type="button" className="primary-button" onClick={commit} disabled={draft.trim() === ""}>
+      <button
+        type="button"
+        className="primary-button"
+        onClick={commit}
+        disabled={draft.trim() === ""}
+      >
         Continue
       </button>
     </div>
@@ -554,7 +601,9 @@ function MultiSelectQuestion({
   const options = isNri(answers) && question.optionsNri ? question.optionsNri : question.options;
 
   const toggle = (value: IncomeSource) => {
-    const next = selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
+    const next = selected.includes(value)
+      ? selected.filter((item) => item !== value)
+      : [...selected, value];
     onChange(question.set(answers, next));
   };
 
@@ -563,12 +612,21 @@ function MultiSelectQuestion({
       <div className="orientation-checkboxes">
         {options.map((option) => (
           <label key={option.value} className="checkbox-row">
-            <input type="checkbox" checked={selected.includes(option.value)} onChange={() => toggle(option.value)} />
+            <input
+              type="checkbox"
+              checked={selected.includes(option.value)}
+              onChange={() => toggle(option.value)}
+            />
             {option.label}
           </label>
         ))}
       </div>
-      <button type="button" className="primary-button" disabled={selected.length === 0} onClick={onContinue}>
+      <button
+        type="button"
+        className="primary-button"
+        disabled={selected.length === 0}
+        onClick={onContinue}
+      >
         Continue
       </button>
     </div>

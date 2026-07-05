@@ -54,7 +54,12 @@ export function ToolTour({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" role="dialog" aria-labelledby="tour-title" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="modal-card"
+        role="dialog"
+        aria-labelledby="tour-title"
+        onClick={(event) => event.stopPropagation()}
+      >
         <p className="eyebrow">{`Step ${stepIndex + 1} of ${STEP_TITLES.length}`}</p>
         <h3 id="tour-title">{STEP_TITLES[stepIndex]}</h3>
 
@@ -79,28 +84,35 @@ export function ToolTour({
               ))}
             </ol>
             <p>
-              Every number comes from documented tax rules, never guessed by AI. At the end you get two files: a
-              short summary for your CA, and a full workbook to keep.
+              Every number comes from documented tax rules, never guessed by AI. At the end you get
+              two files: a short summary for your CA, and a full workbook to keep.
             </p>
           </>
         ) : null}
 
         {stepIndex === 2 ? (
           <p>
-            See it with a sample broker statement already loaded, so you can look around before entering anything
-            real. Nothing on that screen is your actual data.
+            See it with a sample broker statement already loaded, so you can look around before
+            entering anything real. Nothing on that screen is your actual data.
           </p>
         ) : null}
 
         <div className="tour-dots" aria-hidden="true">
           {STEP_TITLES.map((title, index) => (
-            <span key={title} className={`tour-dot${index === stepIndex ? " tour-dot-current" : ""}`} />
+            <span
+              key={title}
+              className={`tour-dot${index === stepIndex ? " tour-dot-current" : ""}`}
+            />
           ))}
         </div>
 
         <div className="modal-actions">
           {stepIndex > 0 ? (
-            <button type="button" className="text-button" onClick={() => setStepIndex((value) => value - 1)}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setStepIndex((value) => value - 1)}
+            >
               Back
             </button>
           ) : (
@@ -113,7 +125,11 @@ export function ToolTour({
               See With Sample Data
             </button>
           ) : (
-            <button type="button" className="primary-button" onClick={() => setStepIndex((value) => value + 1)}>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => setStepIndex((value) => value + 1)}
+            >
               Next
             </button>
           )}

@@ -50,7 +50,10 @@ export function findHeaderRowIndex(rows: unknown[][]): number {
 }
 
 /** First occurrence wins, so duplicate broker headers (two "Buy Value" columns) keep the real one. */
-function rowToRecord(headers: string[], values: (string | number | Date)[]): Record<string, string | number | Date> {
+function rowToRecord(
+  headers: string[],
+  values: (string | number | Date)[]
+): Record<string, string | number | Date> {
   const record: Record<string, string | number | Date> = {};
   headers.forEach((header, index) => {
     if (!(header in record)) {
@@ -95,7 +98,11 @@ export function routePdfOrFreeform(
   };
 }
 
-function emptyResult(kind: IngestionKind, promptRoute?: PromptRoute, warnings: IngestWarning[] = []): IngestResult {
+function emptyResult(
+  kind: IngestionKind,
+  promptRoute?: PromptRoute,
+  warnings: IngestWarning[] = []
+): IngestResult {
   return {
     kind,
     transactions: [],
@@ -176,7 +183,8 @@ function buildIngestResult(
         if (value === undefined || value === null || String(value).trim() === "") {
           continue;
         }
-        brokerColumns[header] = value instanceof Date ? formatFixtureDate(value) : (value as string | number);
+        brokerColumns[header] =
+          value instanceof Date ? formatFixtureDate(value) : (value as string | number);
       }
       const row = remapRecordKeys(record, resolution.headerMap) as RawTransactionRow;
       return { row, brokerColumns };
@@ -197,7 +205,11 @@ function buildIngestResult(
   };
 }
 
-function parseDelimitedText(text: string, delimiter: string, kind: "csv" | "structured_text"): IngestResult {
+function parseDelimitedText(
+  text: string,
+  delimiter: string,
+  kind: "csv" | "structured_text"
+): IngestResult {
   const parsed = Papa.parse<Record<string, string | number | Date>>(text, {
     delimiter,
     header: true,
@@ -221,7 +233,11 @@ function parseDelimitedText(text: string, delimiter: string, kind: "csv" | "stru
   }
 
   if (parsed.data.length === 0) {
-    return emptyResult(kind, routePdfOrFreeform("Could not read delimited text."), rowIssueWarnings);
+    return emptyResult(
+      kind,
+      routePdfOrFreeform("Could not read delimited text."),
+      rowIssueWarnings
+    );
   }
 
   const sourceHeaders = parsed.meta.fields ?? [];
@@ -243,7 +259,10 @@ export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<IngestResul
   // disclaimers). Read them all and use the sheet whose headers match the
   // transaction columns best, the same way HTML ingestion picks between
   // multiple tables on a page.
-  const sheets = (await readXlsxFile(new Blob([buffer]))) as { sheet: string; data: ExcelCell[][] }[];
+  const sheets = (await readXlsxFile(new Blob([buffer]))) as {
+    sheet: string;
+    data: ExcelCell[][];
+  }[];
   const nonEmptySheets = sheets.filter((s) => s.data.length > 0);
   if (nonEmptySheets.length === 0) {
     return emptyResult("excel", routePdfOrFreeform("Excel file is empty."));
@@ -285,7 +304,11 @@ export function parseHtmlText(text: string): IngestResult {
   const candidates = tables.map((table) => {
     const headerIndex = findHeaderRowIndex(table);
     const headers = table[headerIndex] ?? [];
-    return { headers, dataRows: table.slice(headerIndex + 1), resolution: resolveTransactionHeaders(headers) };
+    return {
+      headers,
+      dataRows: table.slice(headerIndex + 1),
+      resolution: resolveTransactionHeaders(headers)
+    };
   });
 
   const best =
@@ -301,7 +324,10 @@ export function parseTextSource(fileName: string, text: string, mimeType = ""): 
   const trimmed = text.trim();
 
   if (!trimmed) {
-    return emptyResult(kind === "pdf_or_freeform" ? "pdf_or_freeform" : kind, routePdfOrFreeform("File is empty."));
+    return emptyResult(
+      kind === "pdf_or_freeform" ? "pdf_or_freeform" : kind,
+      routePdfOrFreeform("File is empty.")
+    );
   }
 
   if (kind === "csv") {
@@ -320,7 +346,12 @@ export function parseTextSource(fileName: string, text: string, mimeType = ""): 
     return parseCsvText(text);
   }
 
-  return emptyResult("pdf_or_freeform", routePdfOrFreeform("PDF/free-form table reconstruction stays in the guided AI extraction prompt path."));
+  return emptyResult(
+    "pdf_or_freeform",
+    routePdfOrFreeform(
+      "PDF/free-form table reconstruction stays in the guided AI extraction prompt path."
+    )
+  );
 }
 
 /**
@@ -332,7 +363,10 @@ export function parsePastedExtraction(text: string): IngestResult {
   const trimmed = text.trim();
   if (!trimmed) {
     return emptyResult("structured_text", undefined, [
-      { code: "parse_error", message: "Paste the JSON block you got back from the extraction prompt." }
+      {
+        code: "parse_error",
+        message: "Paste the JSON block you got back from the extraction prompt."
+      }
     ]);
   }
   // The extraction prompt now asks the AI for one standardised JSON object, so
@@ -370,7 +404,9 @@ export function parseExtractionJson(text: string): IngestResult {
   }
 
   const obj = data as Record<string, unknown>;
-  const rawTransactions = Array.isArray(obj.capitalGainsTransactions) ? obj.capitalGainsTransactions : [];
+  const rawTransactions = Array.isArray(obj.capitalGainsTransactions)
+    ? obj.capitalGainsTransactions
+    : [];
   const rowInputs = rawTransactions
     .map((item) => ({ row: jsonTransactionToRow(item) }))
     // A row with no scrip name isn't a usable transaction - mirrors buildIngestResult.
@@ -420,9 +456,15 @@ function jsonTransactionToRow(item: unknown): RawTransactionRow {
   };
 }
 
-function parseAnnualFigures(annual: unknown, netRealisedGain: unknown): ExtractionSummaryFigures | undefined {
+function parseAnnualFigures(
+  annual: unknown,
+  netRealisedGain: unknown
+): ExtractionSummaryFigures | undefined {
   const figures: ExtractionSummaryFigures = {};
-  const source = (typeof annual === "object" && annual !== null ? annual : {}) as Record<string, unknown>;
+  const source = (typeof annual === "object" && annual !== null ? annual : {}) as Record<
+    string,
+    unknown
+  >;
   const assign = (key: keyof ExtractionSummaryFigures, value: unknown) => {
     const amount = coerceAmount(value);
     if (amount !== undefined) {
@@ -478,7 +520,10 @@ function parseMarkdownTable(text: string): IngestResult {
 
   const [headers, ...dataRows] = rows;
   if (!headers) {
-    return emptyResult("structured_text", routePdfOrFreeform("Could not find a table in the pasted text."));
+    return emptyResult(
+      "structured_text",
+      routePdfOrFreeform("Could not find a table in the pasted text.")
+    );
   }
 
   const sourceRecords = dataRows.map((row) => rowToRecord(headers, row));
@@ -522,7 +567,9 @@ export async function parseFile(file: File): Promise<IngestResult> {
   if (kind === "pdf_or_freeform" && file.name.toLowerCase().endsWith(".pdf")) {
     try {
       const { extractPdfText, diagnosePdfText } = await import("./pdfExtract");
-      const { text, pageCount, sheetNameHint, mergedDocumentsNote } = await extractPdfText(await file.arrayBuffer());
+      const { text, pageCount, sheetNameHint, mergedDocumentsNote } = await extractPdfText(
+        await file.arrayBuffer()
+      );
       const diagnostic = diagnosePdfText(text, pageCount, mergedDocumentsNote);
       const result = parseTextSource(file.name, text, file.type);
       if (result.transactions.length > 0) {
@@ -530,7 +577,11 @@ export async function parseFile(file: File): Promise<IngestResult> {
       }
       const promptRoute = routePdfOrFreeform(
         result.promptRoute?.reason ?? "Could not find a transaction table in this PDF.",
-        { extractedText: text, diagnosticSummary: diagnostic.summary, suggestedSheetName: sheetNameHint }
+        {
+          extractedText: text,
+          diagnosticSummary: diagnostic.summary,
+          suggestedSheetName: sheetNameHint
+        }
       );
       return { ...result, kind: "pdf_or_freeform", promptRoute };
     } catch (error) {
@@ -543,7 +594,10 @@ export async function parseFile(file: File): Promise<IngestResult> {
           )
         );
       }
-      return emptyResult("pdf_or_freeform", routePdfOrFreeform("Could not read text from this PDF."));
+      return emptyResult(
+        "pdf_or_freeform",
+        routePdfOrFreeform("Could not read text from this PDF.")
+      );
     }
   }
 

@@ -70,9 +70,18 @@ export function summarizeForeignAccounts(
   const disclosureCalendarYear = Number.parseInt(rule.financial_year.split("-")[0], 10);
   return {
     accounts,
-    totalPeakBalanceInr: accounts.reduce((sum, account) => sum + Math.max(0, account.peakBalanceInr), 0),
-    totalClosingBalanceInr: accounts.reduce((sum, account) => sum + Math.max(0, account.closingBalanceInr), 0),
-    totalGrossInterestInr: accounts.reduce((sum, account) => sum + Math.max(0, account.grossInterestInr), 0),
+    totalPeakBalanceInr: accounts.reduce(
+      (sum, account) => sum + Math.max(0, account.peakBalanceInr),
+      0
+    ),
+    totalClosingBalanceInr: accounts.reduce(
+      (sum, account) => sum + Math.max(0, account.closingBalanceInr),
+      0
+    ),
+    totalGrossInterestInr: accounts.reduce(
+      (sum, account) => sum + Math.max(0, account.grossInterestInr),
+      0
+    ),
     disclosureCalendarYear
   };
 }

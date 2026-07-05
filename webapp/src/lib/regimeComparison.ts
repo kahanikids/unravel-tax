@@ -89,7 +89,10 @@ function applyRebate(tax: number, taxableIncome: number, rebate: RegimeRebate87a
  * left out. See rules/regime-choice.json's comparison_scope_caveat, which
  * this always ships alongside so the result is never shown without it.
  */
-export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoiceRule): RegimeComparisonResult {
+export function compareRegimes(
+  inputs: RegimeComparisonInputs,
+  rule: RegimeChoiceRule
+): RegimeComparisonResult {
   const otherSlabIncome =
     (inputs.excludeDividendsFromSlab ? 0 : Math.max(0, inputs.dividends)) +
     Math.max(0, inputs.interestOtherIncome) +
@@ -106,7 +109,9 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
 
   const newRegimeSlabIncome = Math.max(
     0,
-    Math.max(0, salary - rule.values.new_regime.standard_deduction_inr) + otherSlabIncome + letOutNew
+    Math.max(0, salary - rule.values.new_regime.standard_deduction_inr) +
+      otherSlabIncome +
+      letOutNew
   );
   // The new regime doesn't have separate age-based slabs, unlike the old one.
   let newRegimeTax = taxFromSlabs(newRegimeSlabIncome, rule.values.new_regime.slabs);
@@ -119,18 +124,30 @@ export function compareRegimes(inputs: RegimeComparisonInputs, rule: RegimeChoic
     relief?.tax_capped_at_income_above_threshold &&
     newRegimeSlabIncome > relief.applies_above_taxable_income_inr
   ) {
-    newRegimeTax = Math.min(newRegimeTax, newRegimeSlabIncome - relief.applies_above_taxable_income_inr);
+    newRegimeTax = Math.min(
+      newRegimeTax,
+      newRegimeSlabIncome - relief.applies_above_taxable_income_inr
+    );
   }
   newRegimeTax *= 1 + rule.values.cess_rate;
 
-  const oldRegimeOtherIncome = Math.max(0, otherSlabIncome - Math.max(0, inputs.eligibleInterestDeduction));
+  const oldRegimeOtherIncome = Math.max(
+    0,
+    otherSlabIncome - Math.max(0, inputs.eligibleInterestDeduction)
+  );
   // The standard deduction only applies against salary income, so clamp it
   // there - otherwise a low or zero salary would let the unused part of the
   // deduction wrongly reduce interest/dividend income too.
-  const oldRegimeSalaryAfterStandardDeduction = Math.max(0, salary - rule.values.old_regime.standard_deduction_inr);
+  const oldRegimeSalaryAfterStandardDeduction = Math.max(
+    0,
+    salary - rule.values.old_regime.standard_deduction_inr
+  );
   const oldRegimeSlabIncome = Math.max(
     0,
-    oldRegimeSalaryAfterStandardDeduction + oldRegimeOtherIncome + letOutOld - Math.max(0, inputs.oldRegimeDeductions)
+    oldRegimeSalaryAfterStandardDeduction +
+      oldRegimeOtherIncome +
+      letOutOld -
+      Math.max(0, inputs.oldRegimeDeductions)
   );
   const oldRegimeSlabs =
     inputs.seniorCitizen && inputs.superSeniorCitizen
@@ -182,12 +199,21 @@ export type RegimeBreakEven = {
  * old regime can at best tie, so break-even is reported as zero / not
  * applicable rather than a large unreachable figure.
  */
-export function computeRegimeBreakEven(inputs: RegimeComparisonInputs, rule: RegimeChoiceRule): RegimeBreakEven {
+export function computeRegimeBreakEven(
+  inputs: RegimeComparisonInputs,
+  rule: RegimeChoiceRule
+): RegimeBreakEven {
   const base = compareRegimes({ ...inputs, oldRegimeDeductions: 0 }, rule);
   const newRegimeTax = base.newRegimeTax;
   const actualDeductions = Math.max(0, inputs.oldRegimeDeductions);
   if (newRegimeTax <= 0) {
-    return { newRegimeTax, breakEvenDeductions: 0, actualDeductions, surplus: actualDeductions, newAlwaysWins: true };
+    return {
+      newRegimeTax,
+      breakEvenDeductions: 0,
+      actualDeductions,
+      surplus: actualDeductions,
+      newAlwaysWins: true
+    };
   }
 
   let breakEvenDeductions = 0;
@@ -199,7 +225,10 @@ export function computeRegimeBreakEven(inputs: RegimeComparisonInputs, rule: Reg
     let hi = base.oldRegimeSlabIncome;
     for (let i = 0; i < 60; i++) {
       const mid = (lo + hi) / 2;
-      const oldRegimeTax = compareRegimes({ ...inputs, oldRegimeDeductions: mid }, rule).oldRegimeTax;
+      const oldRegimeTax = compareRegimes(
+        { ...inputs, oldRegimeDeductions: mid },
+        rule
+      ).oldRegimeTax;
       if (oldRegimeTax > newRegimeTax) {
         lo = mid;
       } else {

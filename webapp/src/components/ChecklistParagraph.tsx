@@ -1,7 +1,10 @@
 import { useState } from "react";
 
 function splitSentences(text: string): string[] {
-  const parts = text.trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  const parts = text
+    .trim()
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean);
   return parts.length > 0 ? parts : [text.trim()];
 }
 
@@ -17,7 +20,11 @@ export function ChecklistParagraph({ text }: { text: string }) {
   return (
     <p>
       {expanded ? text : `${sentences.slice(0, 2).join(" ")} `}
-      <button type="button" className="text-button checklist-text-toggle" onClick={() => setExpanded((value) => !value)}>
+      <button
+        type="button"
+        className="text-button checklist-text-toggle"
+        onClick={() => setExpanded((value) => !value)}
+      >
         {expanded ? "Less" : "More"}
       </button>
     </p>

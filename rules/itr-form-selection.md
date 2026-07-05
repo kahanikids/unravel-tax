@@ -1,7 +1,7 @@
 # Which ITR form to file
 
 **Applies to:** every profile
-**Last verified:** 2026-07-03 (against a secondary source — see Sources)
+**Last verified:** 2026-07-05, against current AY 2026-27 filing guidance
 
 ## The one-line version
 
@@ -83,36 +83,51 @@ filing, and this tool does not produce them.
 ## What this tool can and can't check
 
 The guided questionnaire asks about residency, HUF, income sources,
-capital gains, and a minor's clubbed income, and it reads intraday
+capital gains, foreign assets, and a minor's clubbed income, and it reads intraday
 trading from your broker documents. From those it can correctly route
-NRI, HUF, capital-gains, clubbing and intraday cases, and it applies the
+NRI, HUF, capital-gains, foreign-asset, clubbing and intraday cases, and it applies the
 Rs 50 lakh ITR-1 ceiling when you have entered enough income figures for
 it to be known.
 
-It **cannot** see, and so does not ask about: foreign assets or income,
-unlisted shares, whether you are a company director, whether you have more
-than one house property, or a loss carried forward from an earlier year.
+It **cannot** see from uploaded documents alone: unlisted shares, whether
+you are a company director, whether you have more than one house property,
+or a loss carried forward from an earlier year.
 Because of that, whenever the tool suggests ITR-1 it says so as
 "ITR-1 fits **if** none of these apply", and lists them, rather than
 asserting ITR-1 unconditionally. When in doubt, ITR-2 is the safe form —
 it never hides income, it only asks for a little more detail.
 
-## A note on the house-property count
+## Conservative routing for small Section 112A gains
 
-The secondary source used here is internally inconsistent on whether
-ITR-1 allows one or two house properties for AY 2026-27. This file uses
-the long-standing, conservative rule of **one** house property for
-ITR-1: a filer with two properties is routed to ITR-2, which is never
-wrong even if the looser reading turns out to be correct. Confirm against
-the official ITR-1 instructions if this matters to a specific filing.
+AY 2026-27 ITR-1 can report long-term capital gains under Section 112A up
+to Rs 1.25 lakh when there is no capital loss to carry forward. This tool
+still routes detected capital-gains uploads to ITR-2 because uploaded
+broker statements can include STCG, non-112A gains, or losses that need
+carry-forward treatment. That is conservative: ITR-2 asks for more detail,
+but it avoids hiding a disqualifying capital-gains fact.
+
+## Due-date split for AY 2026-27
+
+The due date is not a single date for every profile. The rule JSON uses:
+
+- 31 Jul 2026 for resident-simple, resident-ITR-2, NRI-without-business,
+  and HUF-without-business paths.
+- 31 Aug 2026 for non-audit business/professional ITR-3 paths.
+- 31 Oct 2026 for audit ITR-3 paths.
+
+Confirm the date on the e-filing portal before filing, especially if the
+case has audit, transfer-pricing, or firm-partner complications.
 
 ## Sources
 
 - ClearTax, "Which ITR to File in FY 2025-26 (AY 2026-27)?"
   <https://cleartax.in/s/which-itr-to-file>
-- CBDT ITR-form notifications for AY 2026-27 (Official Gazette).
+- Economic Times, "Made less than Rs 1.25 lakh LTCG from equities this year,
+  do you need to file ITR?"
+  <https://m.economictimes.com/wealth/tax/made-less-than-rs-1-25-lakh-ltcg-from-equities-this-year-do-you-need-to-file-itr/articleshow/132135264.cms>
+- Economic Times, "Will the ITR filing deadline for AY 2026-27 be extended?"
+  <https://m.economictimes.com/wealth/tax/will-the-itr-filing-deadline-for-ay-2026-27-be-extended-heres-what-taxpayers-need-to-know/articleshow/131964799.cms>
+- Economic Times, "Is extended August 31 ITR deadline applicable to all
+  taxpayers or only select categories?"
+  <https://m.economictimes.com/wealth/tax/is-extended-august-31-itr-deadline-applicable-to-all-taxpayers-or-only-select-categories/articleshow/127855824.cms>
 - BUILD_PLAN.md Section 15.6; SYSTEM_SPEC.md Section 10.
-
-Due dates in the paired `itr-form-selection.json` are carried over from
-the earlier draft and are still pending verification against the CBDT
-due-date source — that is a separate check from form choice.

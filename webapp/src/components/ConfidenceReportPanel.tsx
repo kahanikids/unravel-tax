@@ -1,6 +1,14 @@
 import type { ConfidenceItem, ConfidenceReport } from "../lib/confidence";
 
-function ConfidenceGroup({ title, items, tone }: { title: string; items: ConfidenceItem[]; tone: string }) {
+function ConfidenceGroup({
+  title,
+  items,
+  tone
+}: {
+  title: string;
+  items: ConfidenceItem[];
+  tone: string;
+}) {
   if (items.length === 0) {
     return null;
   }
@@ -38,8 +46,16 @@ export function ConfidenceReportPanel({ report }: { report: ConfidenceReport }) 
       ) : (
         <>
           <ConfidenceGroup title="Still missing" items={report.missing} tone="missing" />
-          <ConfidenceGroup title="May change your numbers" items={report.mayChange} tone="may-change" />
-          <ConfidenceGroup title="Flagged, but safe to export as-is" items={report.safeToIgnore} tone="safe" />
+          <ConfidenceGroup
+            title="May change your numbers"
+            items={report.mayChange}
+            tone="may-change"
+          />
+          <ConfidenceGroup
+            title="Flagged, but safe to export as-is"
+            items={report.safeToIgnore}
+            tone="safe"
+          />
         </>
       )}
     </section>

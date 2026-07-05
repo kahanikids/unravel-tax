@@ -17,7 +17,15 @@ const LONG_TERM_HOLDING_DAYS_GT =
 
 export type EditableTransactionFields = Pick<
   NormalizedTransaction,
-  "scripName" | "purchaseDate" | "sellDate" | "units" | "buyValue" | "sellValue" | "buyPrice" | "sellPrice" | "instrumentType"
+  | "scripName"
+  | "purchaseDate"
+  | "sellDate"
+  | "units"
+  | "buyValue"
+  | "sellValue"
+  | "buyPrice"
+  | "sellPrice"
+  | "instrumentType"
 >;
 
 const MONTHS: Record<string, number> = {
@@ -166,8 +174,15 @@ export function parseNumberSoft(
 }
 
 export function parseInstrumentType(value: string | number | Date | undefined): InstrumentType {
-  const text = String(value ?? "").trim().toLowerCase();
-  if (text === "debt_mutual_fund" || text === "debt mutual fund" || text === "debt fund" || text === "debt") {
+  const text = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (
+    text === "debt_mutual_fund" ||
+    text === "debt mutual fund" ||
+    text === "debt fund" ||
+    text === "debt"
+  ) {
     return "debt_mutual_fund";
   }
   return "equity";
@@ -205,7 +220,10 @@ export function deriveComputedFields(fields: EditableTransactionFields): Normali
   };
 }
 
-function parseRowSoft(row: RawTransactionRow, rowIndex: number): { fields: EditableTransactionFields; warnings: IngestWarning[] } {
+function parseRowSoft(
+  row: RawTransactionRow,
+  rowIndex: number
+): { fields: EditableTransactionFields; warnings: IngestWarning[] } {
   const warnings: IngestWarning[] = [];
   const purchase = parseDateSoft(row["Purchase Date"], rowIndex, "Purchase Date");
   const sell = parseDateSoft(row["Sell Date"], rowIndex, "Sell Date");
@@ -248,9 +266,10 @@ export function normalizeRows(rows: RawTransactionRow[]): NormalizedTransaction[
   return normalizeRowsSoft(rows.map((row) => ({ row }))).transactions;
 }
 
-export function normalizeRowsSoft(
-  inputs: NormalizeRowInput[] | RawTransactionRow[]
-): { transactions: NormalizedTransaction[]; warnings: IngestWarning[] } {
+export function normalizeRowsSoft(inputs: NormalizeRowInput[] | RawTransactionRow[]): {
+  transactions: NormalizedTransaction[];
+  warnings: IngestWarning[];
+} {
   const transactions: NormalizedTransaction[] = [];
   const warnings: IngestWarning[] = [];
   const normalizedInputs: NormalizeRowInput[] =

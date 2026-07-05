@@ -45,8 +45,8 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
       >
         <h3 id="capabilities-title">What this tool can do</h3>
         <p>
-          The full picture before you enter anything: what's live today, and what's still planned. Nothing here is a
-          step you need to complete.
+          The full picture before you enter anything: what's live today, and what's still planned.
+          Nothing here is a step you need to complete.
         </p>
 
         <h4 className="capabilities-group-title">Available now</h4>
@@ -55,8 +55,8 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
             <li key={capability.label}>
               <details className="capabilities-item">
                 <summary className="capabilities-item-heading">
-                <strong>{capability.label}</strong>
-                <span className="pill pill-ready">Available</span>
+                  <strong>{capability.label}</strong>
+                  <span className="pill pill-ready">Available</span>
                 </summary>
                 <p>{capability.detail}</p>
               </details>
@@ -70,8 +70,8 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
             <li key={capability.label}>
               <details className="capabilities-item">
                 <summary className="capabilities-item-heading">
-                <strong>{capability.label}</strong>
-                <span className="pill pill-neutral">Partial</span>
+                  <strong>{capability.label}</strong>
+                  <span className="pill pill-neutral">Partial</span>
                 </summary>
                 <p>{capability.detail}</p>
               </details>
@@ -85,8 +85,8 @@ export function CapabilitiesPanel({ open, onClose }: { open: boolean; onClose: (
             <li key={capability.label}>
               <details className="capabilities-item">
                 <summary className="capabilities-item-heading">
-                <strong>{capability.label}</strong>
-                <span className="pill pill-neutral">Coming soon</span>
+                  <strong>{capability.label}</strong>
+                  <span className="pill pill-neutral">Coming soon</span>
                 </summary>
                 <p>{capability.detail}</p>
               </details>

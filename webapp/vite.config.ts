@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -11,11 +10,6 @@ const base = process.env.GITHUB_PAGES === "true" ? "/unravel-tax/" : "/";
 export default defineConfig({
   base,
   plugins: [react()],
-  resolve: {
-    alias: {
-      "@repo-prompts": resolve(import.meta.dirname, "../prompts")
-    }
-  },
   build: {
     outDir: "dist",
     emptyOutDir: true

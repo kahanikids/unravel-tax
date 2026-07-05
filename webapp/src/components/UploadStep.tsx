@@ -16,7 +16,10 @@ import type { RawSheet } from "../lib";
 import { InfoTooltip } from "./InfoTooltip";
 
 /** Dates from Excel/HTML arrive as Date objects; flatten to a stable string so the reference sheet and saved session hold plain primitives. */
-function toRawSheet(headers: string[], records: Record<string, string | number | Date>[]): RawSheet {
+function toRawSheet(
+  headers: string[],
+  records: Record<string, string | number | Date>[]
+): RawSheet {
   return {
     headers,
     records: records.map((record) => {
@@ -56,7 +59,11 @@ export function UploadStep({
   onChooseLocalFolder
 }: {
   documents: UploadedDocument[];
-  onCommit: (transactions: NormalizedTransaction[], fileName: string, sheetNameHint?: string) => void;
+  onCommit: (
+    transactions: NormalizedTransaction[],
+    fileName: string,
+    sheetNameHint?: string
+  ) => void;
   onCommitReference: (fileName: string, rawSheet: RawSheet, sheetNameHint?: string) => void;
   /** Push recognised annual totals into the results-screen "A few more numbers" fields, plus a net-gain-with-no-detail flag. */
   onApplySummaryFigures?: (figures: ExtractionSummaryFigures, netGainOnly: boolean) => void;
@@ -101,7 +108,11 @@ export function UploadStep({
     fetch(`${import.meta.env.BASE_URL}extraction-prompt.txt`)
       .then((response) => response.text())
       .then(setExtractionPrompt)
-      .catch(() => setExtractionPrompt("Could not load extraction prompt. See prompts/01-extract-statement.md in the repo."));
+      .catch(() =>
+        setExtractionPrompt(
+          "Could not load extraction prompt. See prompts/01-extract-statement.md in the repo."
+        )
+      );
   }, [awaitingPaste, extractionPrompt]);
 
   useEffect(() => {
@@ -152,7 +163,9 @@ export function UploadStep({
       return true;
     }
 
-    setError(`Could not read any rows from ${fileName}. ${result.warnings[0]?.message ?? ""}`.trim());
+    setError(
+      `Could not read any rows from ${fileName}. ${result.warnings[0]?.message ?? ""}`.trim()
+    );
     return false;
   }
 
@@ -172,7 +185,10 @@ export function UploadStep({
     setParsing(true);
     let opened = false;
     try {
-      const [result, thumbnailDataUrl] = await Promise.all([parseFile(file), generatePdfThumbnail(file)]);
+      const [result, thumbnailDataUrl] = await Promise.all([
+        parseFile(file),
+        generatePdfThumbnail(file)
+      ]);
       opened = openReview(file.name, result, thumbnailDataUrl);
     } catch {
       setError(`Could not read ${file.name}.`);
@@ -253,7 +269,10 @@ export function UploadStep({
       setPasteText("");
       return;
     }
-    setError(result.warnings[0]?.message ?? "Could not read that. Paste the whole JSON block the AI gave you.");
+    setError(
+      result.warnings[0]?.message ??
+        "Could not read that. Paste the whole JSON block the AI gave you."
+    );
   }
 
   function dismissSummaryGuidance() {
@@ -283,7 +302,10 @@ export function UploadStep({
       pending.columnAssignments
     );
     if (result.transactions.length === 0) {
-      setError(result.warnings.find((w) => w.code === "missing_column")?.message ?? "Still missing required columns.");
+      setError(
+        result.warnings.find((w) => w.code === "missing_column")?.message ??
+          "Still missing required columns."
+      );
       return;
     }
     setPending({
@@ -341,11 +363,15 @@ export function UploadStep({
   }
 
   function removePendingRow(index: number) {
-    setPending((prev) => (prev ? { ...prev, transactions: prev.transactions.filter((_, i) => i !== index) } : prev));
+    setPending((prev) =>
+      prev ? { ...prev, transactions: prev.transactions.filter((_, i) => i !== index) } : prev
+    );
   }
 
   const missingColumns = pending
-    ? EXPECTED_TRANSACTION_COLUMNS.filter((col) => !Object.values(pending.ingest.headerMap).includes(col))
+    ? EXPECTED_TRANSACTION_COLUMNS.filter(
+        (col) => !Object.values(pending.ingest.headerMap).includes(col)
+      )
     : [];
 
   return (
@@ -353,15 +379,20 @@ export function UploadStep({
       <h2>Add your documents</h2>
       <p className="step-lede">
         <span className="upload-lede-desktop">
-          Add all your statements at once, or a few at a time. We'll walk through them one by one and show what we read
-          before using anything. CSV, Excel, and saved webpages are read in your browser. PDFs and pasted text go through
-          the guided extraction prompt.
+          Add all your statements at once, or a few at a time. We'll walk through them one by one
+          and show what we read before using anything. CSV, Excel, and saved webpages are read in
+          your browser. PDFs and pasted text go through the guided extraction prompt.
         </span>
-        <span className="upload-lede-mobile">Add your statements. Pick several at once if you like. We'll show what we read before using each.</span>
+        <span className="upload-lede-mobile">
+          Add your statements. Pick several at once if you like. We'll show what we read before
+          using each.
+        </span>
       </p>
 
       {parsing ? (
-        <p className="upload-parsing-hint">Reading file{queue.length > 0 ? ` (${queue.length} more queued)` : ""}...</p>
+        <p className="upload-parsing-hint">
+          Reading file{queue.length > 0 ? ` (${queue.length} more queued)` : ""}...
+        </p>
       ) : (
         <div
           className={isDragOver ? "upload-dropzone upload-dropzone-active" : "upload-dropzone"}
@@ -377,11 +408,22 @@ export function UploadStep({
           }}
         >
           <InfoTooltip label="About adding documents" className="upload-info-tip align-right">
-            Drop files here, or click to choose. You can pick several at once. Broker/AMC capital gains statements
-            are the main thing this step is for; bank interest, dividend, and MF statements can be added too.
+            Drop files here, or click to choose. You can pick several at once. Broker/AMC capital
+            gains statements are the main thing this step is for; bank interest, dividend, and MF
+            statements can be added too.
           </InfoTooltip>
           <label className="primary-button upload-button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
@@ -402,7 +444,8 @@ export function UploadStep({
         <div className="folder-panel">
           {localFolderName ? (
             <p className="folder-panel-selected">
-              Saving a copy of each document to <strong>{localFolderName}</strong> on your computer as you go.
+              Saving a copy of each document to <strong>{localFolderName}</strong> on your computer
+              as you go.
             </p>
           ) : (
             <button type="button" className="text-button" onClick={onChooseLocalFolder}>
@@ -425,7 +468,9 @@ export function UploadStep({
           ) : null}
           <p>
             <strong>{awaitingPaste.fileName}</strong> needs the AI extraction step.
-            {awaitingPaste.reason ? ` ${awaitingPaste.reason}` : " This app couldn't read it on its own."}
+            {awaitingPaste.reason
+              ? ` ${awaitingPaste.reason}`
+              : " This app couldn't read it on its own."}
           </p>
           {awaitingPaste.diagnosticSummary ? (
             <p className="ingest-warnings">{awaitingPaste.diagnosticSummary}</p>
@@ -434,7 +479,10 @@ export function UploadStep({
             <>
               <ol className="paste-steps">
                 <li>Copy the prompt and document text below (one button does both).</li>
-                <li>Paste it into your AI chat of choice - no need to attach the file again, we already read it.</li>
+                <li>
+                  Paste it into your AI chat of choice - no need to attach the file again, we
+                  already read it.
+                </li>
                 <li>Paste the JSON it gives you back here.</li>
               </ol>
               <div className="paste-actions">
@@ -446,7 +494,11 @@ export function UploadStep({
                     navigator.clipboard
                       .writeText(bundle)
                       .then(() => setCopyStatus("copied"))
-                      .catch(() => setError("Could not copy to clipboard. Use \"Show the extraction prompt\" below and copy manually."));
+                      .catch(() =>
+                        setError(
+                          'Could not copy to clipboard. Use "Show the extraction prompt" below and copy manually.'
+                        )
+                      );
                   }}
                 >
                   {copyStatus === "copied" ? "Copied!" : "Copy Prompt + Document Text"}
@@ -479,7 +531,12 @@ export function UploadStep({
             rows={6}
           />
           <div className="paste-actions">
-            <button type="button" className="primary-button" onClick={handlePasteSubmit} disabled={!pasteText.trim()}>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={handlePasteSubmit}
+              disabled={!pasteText.trim()}
+            >
               Read This
             </button>
             <button
@@ -501,8 +558,11 @@ export function UploadStep({
         <div className="paste-panel">
           <p>
             <strong>{summaryGuidance.fileName}</strong>
-            {summaryGuidance.documentType ? ` looks like a ${summaryGuidance.documentType}` : " looks like a summary statement"}
-            . It has no per-transaction buy/sell rows, so there's nothing to tax-calculate from it directly.
+            {summaryGuidance.documentType
+              ? ` looks like a ${summaryGuidance.documentType}`
+              : " looks like a summary statement"}
+            . It has no per-transaction buy/sell rows, so there's nothing to tax-calculate from it
+            directly.
           </p>
           {(() => {
             const figures = summaryGuidance.figures;
@@ -520,7 +580,8 @@ export function UploadStep({
               <div>
                 <p>
                   We recognised these annual figures and added them for you under{" "}
-                  <strong>"A few more numbers"</strong> on the Current Filing page. Open that section and check them:
+                  <strong>"A few more numbers"</strong> on the Current Filing page. Open that
+                  section and check them:
                 </p>
                 <ul className="paste-steps">
                   {annualRows.map(([label, value]) => (
@@ -534,10 +595,11 @@ export function UploadStep({
           })()}
           {summaryGuidance.netGainOnly ? (
             <p className="inline-error">
-              This statement only gives a <strong>net realised capital gain</strong>, with no per-transaction buy/sell
-              dates. This tool can't split short-term vs long-term from a net figure, so it is <strong>not being used
-              in any calculation</strong>. Get the detailed per-transaction capital-gains statement from your
-              broker/AMC/PMS (or enter the short-term/long-term split yourself), then add that here.
+              This statement only gives a <strong>net realised capital gain</strong>, with no
+              per-transaction buy/sell dates. This tool can't split short-term vs long-term from a
+              net figure, so it is <strong>not being used in any calculation</strong>. Get the
+              detailed per-transaction capital-gains statement from your broker/AMC/PMS (or enter
+              the short-term/long-term split yourself), then add that here.
             </p>
           ) : null}
           {summaryGuidance.notes ? (
@@ -579,8 +641,8 @@ export function UploadStep({
             {missingColumns.length > 0 && pending.ingest.sourceHeaders.length > 0 ? (
               <div className="column-mapper">
                 <p>
-                  <strong>Map columns:</strong> we couldn't match every required column automatically. Pick the right
-                  source column for each, then click Apply Mapping.
+                  <strong>Map columns:</strong> we couldn't match every required column
+                  automatically. Pick the right source column for each, then click Apply Mapping.
                 </p>
                 {pending.ingest.promptRoute ? (
                   <p className="column-mapper-alt">
@@ -594,7 +656,9 @@ export function UploadStep({
                           reason: pending.ingest.promptRoute?.reason,
                           extractedText: pending.ingest.promptRoute?.extractedText,
                           diagnosticSummary: pending.ingest.promptRoute?.diagnosticSummary,
-                          suggestedSheetName: pending.ingest.promptRoute?.suggestedSheetName ?? pending.ingest.suggestedSheetName,
+                          suggestedSheetName:
+                            pending.ingest.promptRoute?.suggestedSheetName ??
+                            pending.ingest.suggestedSheetName,
                           thumbnailDataUrl: pending.thumbnailDataUrl
                         });
                         setPending(null);
@@ -640,7 +704,9 @@ export function UploadStep({
             ) : null}
 
             {pending.transactions.length === 0 ? (
-              <p className="checklist-empty">Every row has been removed. Discard, or go back and re-add the document.</p>
+              <p className="checklist-empty">
+                Every row has been removed. Discard, or go back and re-add the document.
+              </p>
             ) : (
               <div className="preview-table-wrap">
                 <table className="preview-table preview-table-editable">
@@ -667,7 +733,9 @@ export function UploadStep({
                             type="text"
                             value={row.scripName}
                             aria-label="Scrip name"
-                            onChange={(event) => updatePendingRow(index, { scripName: event.target.value })}
+                            onChange={(event) =>
+                              updatePendingRow(index, { scripName: event.target.value })
+                            }
                           />
                         </td>
                         <td data-label="Purchase">
@@ -676,7 +744,9 @@ export function UploadStep({
                             value={row.purchaseDate}
                             aria-label="Purchase date"
                             placeholder="DD-MMM-YYYY"
-                            onChange={(event) => updatePendingRow(index, { purchaseDate: event.target.value })}
+                            onChange={(event) =>
+                              updatePendingRow(index, { purchaseDate: event.target.value })
+                            }
                           />
                         </td>
                         <td data-label="Sell">
@@ -685,7 +755,9 @@ export function UploadStep({
                             value={row.sellDate}
                             aria-label="Sell date"
                             placeholder="DD-MMM-YYYY"
-                            onChange={(event) => updatePendingRow(index, { sellDate: event.target.value })}
+                            onChange={(event) =>
+                              updatePendingRow(index, { sellDate: event.target.value })
+                            }
                           />
                         </td>
                         <td className="col-units" data-label="Units">
@@ -693,7 +765,9 @@ export function UploadStep({
                             type="number"
                             value={row.units}
                             aria-label="Units"
-                            onChange={(event) => updatePendingRow(index, { units: Number(event.target.value) || 0 })}
+                            onChange={(event) =>
+                              updatePendingRow(index, { units: Number(event.target.value) || 0 })
+                            }
                           />
                         </td>
                         <td className="col-buy" data-label="Buy value">
@@ -701,7 +775,9 @@ export function UploadStep({
                             type="number"
                             value={row.buyValue}
                             aria-label="Buy value"
-                            onChange={(event) => updatePendingRow(index, { buyValue: Number(event.target.value) || 0 })}
+                            onChange={(event) =>
+                              updatePendingRow(index, { buyValue: Number(event.target.value) || 0 })
+                            }
                           />
                         </td>
                         <td className="col-sell" data-label="Sell value">
@@ -709,7 +785,11 @@ export function UploadStep({
                             type="number"
                             value={row.sellValue}
                             aria-label="Sell value"
-                            onChange={(event) => updatePendingRow(index, { sellValue: Number(event.target.value) || 0 })}
+                            onChange={(event) =>
+                              updatePendingRow(index, {
+                                sellValue: Number(event.target.value) || 0
+                              })
+                            }
                           />
                         </td>
                         <td className="col-price" data-label="Buy price">
@@ -717,7 +797,9 @@ export function UploadStep({
                             type="number"
                             value={row.buyPrice}
                             aria-label="Buy price"
-                            onChange={(event) => updatePendingRow(index, { buyPrice: Number(event.target.value) || 0 })}
+                            onChange={(event) =>
+                              updatePendingRow(index, { buyPrice: Number(event.target.value) || 0 })
+                            }
                           />
                         </td>
                         <td className="col-price" data-label="Sell price">
@@ -725,13 +807,21 @@ export function UploadStep({
                             type="number"
                             value={row.sellPrice}
                             aria-label="Sell price"
-                            onChange={(event) => updatePendingRow(index, { sellPrice: Number(event.target.value) || 0 })}
+                            onChange={(event) =>
+                              updatePendingRow(index, {
+                                sellPrice: Number(event.target.value) || 0
+                              })
+                            }
                           />
                         </td>
                         <td data-label="Gain">{row.gainLoss}</td>
                         <td data-label="Class">{row.taxClass}</td>
                         <td data-label="Action">
-                          <button type="button" className="text-button" onClick={() => removePendingRow(index)}>
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => removePendingRow(index)}
+                          >
                             Remove
                           </button>
                         </td>
@@ -743,7 +833,8 @@ export function UploadStep({
             )}
             {pending.transactions.length === 0 && pending.ingest.sourceRecords.length > 0 ? (
               <p className="column-mapper-alt">
-                Not a capital-gains statement (e.g. bank interest, dividends, or an MF holdings list)?{" "}
+                Not a capital-gains statement (e.g. bank interest, dividends, or an MF holdings
+                list)?{" "}
                 <button type="button" className="text-button" onClick={addAsReference}>
                   Keep It As A Reference Sheet
                 </button>
@@ -783,7 +874,12 @@ export function UploadStep({
       ) : null}
 
       <div className="step-actions">
-        <button type="button" className="primary-button" onClick={onContinue} disabled={documents.length === 0}>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={onContinue}
+          disabled={documents.length === 0}
+        >
           Continue To Your Results
         </button>
       </div>

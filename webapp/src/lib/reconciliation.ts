@@ -31,7 +31,14 @@ export type ReconciliationReport = {
   ready: boolean;
 };
 
-const COMPLETE_STATUSES = new Set(["complete", "loaded", "sample loaded", "provided", "available", "done"]);
+const COMPLETE_STATUSES = new Set([
+  "complete",
+  "loaded",
+  "sample loaded",
+  "provided",
+  "available",
+  "done"
+]);
 const NOT_REQUIRED_STATUSES = new Set(["not applicable", "not needed", "n/a", "na"]);
 const REQUIRED_VALUES = new Set(["yes", "required", "true", "1"]);
 
@@ -98,7 +105,12 @@ export function reconciliationReport({
 }): ReconciliationReport {
   const missingDocuments = checklistGaps(checklistItems);
   const mismatches = [
-    ...figureMismatches(expectedFigures, reportedFigures, "Calculated totals vs reported CA summary", tolerance),
+    ...figureMismatches(
+      expectedFigures,
+      reportedFigures,
+      "Calculated totals vs reported CA summary",
+      tolerance
+    ),
     ...tdsMismatches(tdsRows, tolerance)
   ];
 
@@ -110,7 +122,9 @@ export function reconciliationReport({
 }
 
 function normalizeStatus(value: string) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function isRequired(item: ChecklistItem) {

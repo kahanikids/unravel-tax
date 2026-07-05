@@ -11,7 +11,9 @@ import {
   IconUpload
 } from "./icons";
 
-const RAIL_STEPS = STEP_ORDER.filter((step): step is Exclude<AppStep, "welcome"> => step !== "welcome");
+const RAIL_STEPS = STEP_ORDER.filter(
+  (step): step is Exclude<AppStep, "welcome"> => step !== "welcome"
+);
 
 const STEP_ICONS: Record<Exclude<AppStep, "welcome">, typeof IconPerson> = {
   orientation: IconPerson,
@@ -53,7 +55,13 @@ const DESTINATION_ITEMS = [
     Icon: IconHome,
     className: "side-nav-home side-nav-home-mobile-only"
   },
-  { key: "dashboard", label: "Dashboard", mobileLabel: "Dash", Icon: IconDashboard, className: "side-nav-dashboard" }
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    mobileLabel: "Dash",
+    Icon: IconDashboard,
+    className: "side-nav-dashboard"
+  }
 ] as const;
 
 export function SideNav({
@@ -95,7 +103,8 @@ export function SideNav({
     <nav className="side-nav" aria-label="Filing steps">
       <div className="side-nav-primary" aria-label="Destinations">
         {DESTINATION_ITEMS.map(({ key, label, mobileLabel, Icon, className }) => {
-          const active = key === "dashboard" ? dashboardActive : !dashboardActive && current === "welcome";
+          const active =
+            key === "dashboard" ? dashboardActive : !dashboardActive && current === "welcome";
           return (
             <button
               type="button"
@@ -118,41 +127,44 @@ export function SideNav({
       </div>
 
       <div className="side-nav-steps">
-      {RAIL_STEPS.map((step) => {
-        const index = STEP_ORDER.indexOf(step);
-        const state = index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming";
-        const reached = index <= furthestIndex;
-        const Icon = STEP_ICONS[step];
-        const content = (
-          <>
-            <Icon className="side-nav-icon" />
-            <span className="side-nav-label side-nav-label-full">{STEP_LABELS[step]}</span>
-            <span className="side-nav-label side-nav-label-mobile">{MOBILE_STEP_LABELS[step]}</span>
-          </>
-        );
+        {RAIL_STEPS.map((step) => {
+          const index = STEP_ORDER.indexOf(step);
+          const state =
+            index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming";
+          const reached = index <= furthestIndex;
+          const Icon = STEP_ICONS[step];
+          const content = (
+            <>
+              <Icon className="side-nav-icon" />
+              <span className="side-nav-label side-nav-label-full">{STEP_LABELS[step]}</span>
+              <span className="side-nav-label side-nav-label-mobile">
+                {MOBILE_STEP_LABELS[step]}
+              </span>
+            </>
+          );
 
-        return reached ? (
-          <button
-            type="button"
-            key={step}
-            className={`side-nav-step side-nav-step-${state}`}
-            onClick={() => onNavigate(step)}
-            aria-current={state === "current" ? "step" : undefined}
-            title={STEP_LABELS[step]}
-          >
-            {content}
-          </button>
-        ) : (
-          <span
-            key={step}
-            className={`side-nav-step side-nav-step-${state}`}
-            aria-disabled="true"
-            title={STEP_LABELS[step]}
-          >
-            {content}
-          </span>
-        );
-      })}
+          return reached ? (
+            <button
+              type="button"
+              key={step}
+              className={`side-nav-step side-nav-step-${state}`}
+              onClick={() => onNavigate(step)}
+              aria-current={state === "current" ? "step" : undefined}
+              title={STEP_LABELS[step]}
+            >
+              {content}
+            </button>
+          ) : (
+            <span
+              key={step}
+              className={`side-nav-step side-nav-step-${state}`}
+              aria-disabled="true"
+              title={STEP_LABELS[step]}
+            >
+              {content}
+            </span>
+          );
+        })}
       </div>
 
       <div className="side-nav-utility" aria-label="Help and information">

@@ -25,15 +25,19 @@ export function NriRepatriationPanel({
   rule: NriRepatriationRule;
 }) {
   const check = computeNriRepatriationCheck(
-    { amountUsd: supplementalFigures.nriRepatriatedThisYearUsd, amountInr: supplementalFigures.nriRepatriatedThisYearInr },
+    {
+      amountUsd: supplementalFigures.nriRepatriatedThisYearUsd,
+      amountInr: supplementalFigures.nriRepatriatedThisYearInr
+    },
     rule
   );
 
   return (
     <section className="supplemental-form">
       <p className="step-lede">
-        This is a planning check, not part of your tax return - Form 145/146 (the renamed Form 15CA/15CB) are filed
-        with your bank, separately from your ITR. <RuleSourceLink refs={rule.source_refs} />
+        This is a planning check, not part of your tax return - Form 145/146 (the renamed Form
+        15CA/15CB) are filed with your bank, separately from your ITR.{" "}
+        <RuleSourceLink refs={rule.source_refs} />
       </p>
       <div className="supplemental-grid">
         <label className="supplemental-field">

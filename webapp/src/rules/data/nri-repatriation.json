@@ -9,7 +9,7 @@
   "verification": {
     "status": "verified_secondary_source",
     "last_verified": "2026-07-05",
-    "note": "The USD 1 million/year NRO repatriation cap (RBI 2012 notice, no cap on NRE), the Rs 5 lakh threshold above which a CA certificate is required, and the Form 15CA/15CB -> Form 145/146 renaming under the Income Tax Act 2025 (effective 1 April 2026) were checked against secondary tax-reference summaries, not the RBI/CBDT primary text directly - re-verify against incometaxindia.gov.in's own Form 145 FAQ or an RBI FEMA master direction before treating the exact rupee threshold as final."
+    "note": "The Form 145/146 workflow and the Rs 5 lakh Part C/Form 146 threshold were checked against the Income Tax Department's Form 145 FAQ. The USD 1 million/year NRO repatriation cap (RBI 2012 notice, no cap on NRE) is still verified through secondary tax-reference summaries here; re-check an RBI FEMA master direction before treating the exact FEMA limit as final."
   },
   "source_refs": [
     "SYSTEM_SPEC.md Sections 9.5, 8",

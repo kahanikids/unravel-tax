@@ -1,4 +1,8 @@
-import { computeNriDividendTax, computeNroTdsReconciliation, type NroTdsCheck } from "../lib/nriTax";
+import {
+  computeNriDividendTax,
+  computeNroTdsReconciliation,
+  type NroTdsCheck
+} from "../lib/nriTax";
 import type { NriDtaaRule, NriTdsAndRefundsRule } from "../rules";
 import type { NriCountry, SupplementalFigures } from "../state/types";
 import { RuleSourceLink } from "./RuleSourceLink";
@@ -23,7 +27,12 @@ function TdsCheckRow({ check }: { check: NroTdsCheck }) {
           {check.treatyRate !== null ? ` or ${formatRate(check.treatyRate)} treaty` : ""}
         </span>
         <strong>
-          Expected ₹{formatAmount(check.treatyRate !== null ? (check.expectedAtTreatyRate ?? 0) : check.expectedAtDomesticRate)}
+          Expected ₹
+          {formatAmount(
+            check.treatyRate !== null
+              ? (check.expectedAtTreatyRate ?? 0)
+              : check.expectedAtDomesticRate
+          )}
         </strong>
       </div>
       <p className="regime-verdict">
@@ -41,7 +50,10 @@ function TdsCheckRow({ check }: { check: NroTdsCheck }) {
   );
 }
 
-const NUMERIC_FIELDS: { key: "nriNroInterestTdsWithheld" | "nriDividendTdsWithheld"; label: string }[] = [
+const NUMERIC_FIELDS: {
+  key: "nriNroInterestTdsWithheld" | "nriDividendTdsWithheld";
+  label: string;
+}[] = [
   { key: "nriNroInterestTdsWithheld", label: "TDS actually withheld on your NRO interest" },
   { key: "nriDividendTdsWithheld", label: "TDS actually withheld on your dividends" }
 ];
@@ -67,7 +79,12 @@ export function NriDtaaPanel({
   dtaaRule: NriDtaaRule;
   tdsRule: NriTdsAndRefundsRule;
 }) {
-  const dividendTax = computeNriDividendTax(supplementalFigures.dividends, nriCountry, dtaaRule, tdsRule);
+  const dividendTax = computeNriDividendTax(
+    supplementalFigures.dividends,
+    nriCountry,
+    dtaaRule,
+    tdsRule
+  );
   const reconciliation = computeNroTdsReconciliation(
     {
       nroInterest: supplementalFigures.interestOtherIncome,
@@ -83,14 +100,15 @@ export function NriDtaaPanel({
   return (
     <section className="supplemental-form">
       <p className="step-lede">
-        Your dividends are taxed at a flat {formatRate(dividendTax.effectiveRate)} under Section 115A
+        Your dividends are taxed at a flat {formatRate(dividendTax.effectiveRate)} under Section
+        115A
         {dividendTax.treatyApplied
           ? `, the lower treaty rate for ${nriCountry}`
           : nriCountry
             ? `, since your country's treaty rate isn't lower than the 20% domestic rate (or isn't known)`
             : ""}
-        , not slab rate - shown as its own row in the summary above, and left out of the regime comparison below.{" "}
-        <RuleSourceLink refs={dtaaRule.source_refs} />
+        , not slab rate - shown as its own row in the summary above, and left out of the regime
+        comparison below. <RuleSourceLink refs={dtaaRule.source_refs} />
       </p>
       <div className="supplemental-grid">
         {NUMERIC_FIELDS.map((field) => (
@@ -115,12 +133,14 @@ export function NriDtaaPanel({
       <TdsCheckRow check={reconciliation.dividends} />
       {reconciliation.totalRecoverable > 0 ? (
         <p className="regime-verdict">
-          Possible recoverable TDS, total: <strong>₹{formatAmount(reconciliation.totalRecoverable)}</strong>
+          Possible recoverable TDS, total:{" "}
+          <strong>₹{formatAmount(reconciliation.totalRecoverable)}</strong>
         </p>
       ) : null}
       <p className="step-lede">
-        NRO interest is still taxed at your real slab rate, not a flat one - the treaty only helps once slab tax would
-        otherwise exceed the treaty cap, which this tool doesn't compute precisely. Confirm the exact figures with a CA.{" "}
+        NRO interest is still taxed at your real slab rate, not a flat one - the treaty only helps
+        once slab tax would otherwise exceed the treaty cap, which this tool doesn't compute
+        precisely. Confirm the exact figures with a CA.{" "}
         <RuleSourceLink refs={tdsRule.source_refs} />
       </p>
     </section>

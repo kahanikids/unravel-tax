@@ -43,10 +43,15 @@ export function ReconciliationPanel({
     ...figureMismatches(expectedFigures, reportedFigures, "AIS/Form 26AS"),
     ...tdsMismatches(tdsRows)
   ];
-  const nothingEnteredYet = aisFigures.dividends === null && aisFigures.interestOtherIncome === null && tdsRows.length === 0;
+  const nothingEnteredYet =
+    aisFigures.dividends === null &&
+    aisFigures.interestOtherIncome === null &&
+    tdsRows.length === 0;
 
   function updateTdsRow(index: number, patch: Partial<TdsRow>) {
-    onChangeTdsRows(tdsRows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+    onChangeTdsRows(
+      tdsRows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row))
+    );
   }
 
   function removeTdsRow(index: number) {
@@ -57,8 +62,8 @@ export function ReconciliationPanel({
     <section className="reconciliation-panel">
       <h3>Check against your AIS, Form 26AS, or Form 16</h3>
       <p className="step-lede">
-        Optional, and never required to export. Enter what those documents say. Anything that doesn't match what we
-        calculated shows up below right away.
+        Optional, and never required to export. Enter what those documents say. Anything that
+        doesn't match what we calculated shows up below right away.
       </p>
 
       <div className="supplemental-grid">
@@ -109,13 +114,17 @@ export function ReconciliationPanel({
                 type="number"
                 value={row.tdsPerDocument}
                 placeholder="TDS per document"
-                onChange={(event) => updateTdsRow(index, { tdsPerDocument: Number(event.target.value) || 0 })}
+                onChange={(event) =>
+                  updateTdsRow(index, { tdsPerDocument: Number(event.target.value) || 0 })
+                }
               />
               <input
                 type="number"
                 value={row.tdsPerAis}
                 placeholder="TDS per AIS/26AS"
-                onChange={(event) => updateTdsRow(index, { tdsPerAis: Number(event.target.value) || 0 })}
+                onChange={(event) =>
+                  updateTdsRow(index, { tdsPerAis: Number(event.target.value) || 0 })
+                }
               />
               <button type="button" className="text-button" onClick={() => removeTdsRow(index)}>
                 Remove
@@ -126,7 +135,9 @@ export function ReconciliationPanel({
         <button
           type="button"
           className="text-button"
-          onClick={() => onChangeTdsRows([...tdsRows, { source: "", tdsPerDocument: 0, tdsPerAis: 0 }])}
+          onClick={() =>
+            onChangeTdsRows([...tdsRows, { source: "", tdsPerDocument: 0, tdsPerAis: 0 }])
+          }
         >
           + Add A TDS Row
         </button>
@@ -134,9 +145,13 @@ export function ReconciliationPanel({
 
       <div className="reconciliation-status">
         {nothingEnteredYet ? (
-          <p className="checklist-empty">Add a figure or a TDS row above to check for mismatches.</p>
+          <p className="checklist-empty">
+            Add a figure or a TDS row above to check for mismatches.
+          </p>
         ) : mismatches.length === 0 ? (
-          <p className="reconciliation-clean">Everything you've entered matches. No mismatches found.</p>
+          <p className="reconciliation-clean">
+            Everything you've entered matches. No mismatches found.
+          </p>
         ) : (
           <ul className="mismatch-list">
             {mismatches.map((mismatch, index) => (
@@ -144,7 +159,8 @@ export function ReconciliationPanel({
                 <strong>{mismatch.field}</strong>
                 <p>
                   {mismatch.source}: calculated ₹{formatAmount(mismatch.expected)}, but shows ₹
-                  {formatAmount(mismatch.reported)}. Difference: ₹{formatAmount(Math.abs(mismatch.difference))}.
+                  {formatAmount(mismatch.reported)}. Difference: ₹
+                  {formatAmount(Math.abs(mismatch.difference))}.
                 </p>
               </li>
             ))}

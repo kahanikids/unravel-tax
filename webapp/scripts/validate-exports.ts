@@ -8,7 +8,6 @@ import {
   buildCaSummaryCsvExport,
   buildCaSummaryWorkbookExport,
   buildFullWorkbookExport,
-  caSummaryRows,
   parsePreviousWorkbook,
   rateInputsFromRule,
   type ExportState
@@ -44,7 +43,10 @@ export async function main() {
   if (caCsvRows.errors.length > 0) {
     throw new Error(caCsvRows.errors.map((error) => error.message).join("; "));
   }
-  assertAmountsMatch(reference, Object.fromEntries(caCsvRows.data.map((row) => [row.Head, normalizeAmount(row.Amount)])));
+  assertAmountsMatch(
+    reference,
+    Object.fromEntries(caCsvRows.data.map((row) => [row.Head, normalizeAmount(row.Amount)]))
+  );
 
   const caWorkbook = await buildCaSummaryWorkbookExport(calculationRows);
   const caSheets = await readWorkbook(caWorkbook.blob);
@@ -56,10 +58,14 @@ export async function main() {
   const sheetNames = (fullSheets as Array<{ sheet: string }>).map((s) => s.sheet);
   // Requested order: (1) CA Summary, (2) Detailed Summary, then one sheet per raw file.
   if (sheetNames[0] !== "CA Summary" || sheetNames[1] !== "Detailed Summary") {
-    throw new Error(`Full workbook must start with CA Summary then Detailed Summary. Found: ${sheetNames.join(", ")}`);
+    throw new Error(
+      `Full workbook must start with CA Summary then Detailed Summary. Found: ${sheetNames.join(", ")}`
+    );
   }
   if (sheetNames[2] !== "sample-broker-statement") {
-    throw new Error(`Raw file sheet should follow the two summaries. Found: ${sheetNames.join(", ")}`);
+    throw new Error(
+      `Raw file sheet should follow the two summaries. Found: ${sheetNames.join(", ")}`
+    );
   }
 
   const brokerRows = sheetData(fullSheets, "sample-broker-statement");
@@ -127,7 +133,10 @@ export async function main() {
     ...exportState,
     documents: [
       { name: "sample-broker-statement.csv", transactions: fixtureTransactions },
-      { name: "another-really-long-broker-statement-name-2025.xlsx", transactions: fixtureTransactions },
+      {
+        name: "another-really-long-broker-statement-name-2025.xlsx",
+        transactions: fixtureTransactions
+      },
       {
         name: "hdfc-bank-interest.csv",
         transactions: [],
@@ -146,14 +155,20 @@ export async function main() {
   const multiNames = (multiSheets as Array<{ sheet: string }>).map((s) => s.sheet);
 
   if (multiNames.length !== 5) {
-    throw new Error(`Expected 5 sheets (2 summaries + 3 raw files), found ${multiNames.length}: ${multiNames.join(", ")}`);
+    throw new Error(
+      `Expected 5 sheets (2 summaries + 3 raw files), found ${multiNames.length}: ${multiNames.join(", ")}`
+    );
   }
   if (multiNames[0] !== "CA Summary" || multiNames[1] !== "Detailed Summary") {
-    throw new Error(`Multi-file workbook must start with CA Summary then Detailed Summary. Found: ${multiNames.join(", ")}`);
+    throw new Error(
+      `Multi-file workbook must start with CA Summary then Detailed Summary. Found: ${multiNames.join(", ")}`
+    );
   }
   const rawFileNames = multiNames.slice(2);
   if (rawFileNames.length !== 3) {
-    throw new Error(`Expected one sheet per raw file after the two summaries. Found: ${rawFileNames.join(", ")}`);
+    throw new Error(
+      `Expected one sheet per raw file after the two summaries. Found: ${rawFileNames.join(", ")}`
+    );
   }
   const illegal = /[:\\/?*[\]]/;
   for (const name of rawFileNames) {
@@ -165,15 +180,22 @@ export async function main() {
     }
   }
   if (new Set(multiNames.map((n) => n.toLowerCase())).size !== multiNames.length) {
-    throw new Error(`Sheet names must be unique (case-insensitive). Found: ${multiNames.join(", ")}`);
+    throw new Error(
+      `Sheet names must be unique (case-insensitive). Found: ${multiNames.join(", ")}`
+    );
   }
 
   // The reference sheet should preserve the raw rows verbatim (its header row
   // plus both data rows), and never feed the tax working.
   const referenceSheet = sheetData(multiSheets, rawFileNames[2]);
   const referenceHeaderRow = referenceSheet.find((row) => String(row[0]) === "Date");
-  if (!referenceHeaderRow || !referenceHeaderRow.some((cell) => String(cell) === "Interest Credited")) {
-    throw new Error("Reference sheet should preserve the raw upload's header row (Date … Interest Credited).");
+  if (
+    !referenceHeaderRow ||
+    !referenceHeaderRow.some((cell) => String(cell) === "Interest Credited")
+  ) {
+    throw new Error(
+      "Reference sheet should preserve the raw upload's header row (Date … Interest Credited)."
+    );
   }
   if (!referenceSheet.some((row) => Number(row[2]) === 1234.5)) {
     throw new Error("Reference sheet should preserve the raw upload's data rows verbatim.");
@@ -195,38 +217,70 @@ export async function main() {
     hraClaimed: null,
     foreignAssets: true
   };
-  const exportWithOrientation = await buildFullWorkbookExport({ ...exportState, orientation: syntheticOrientation });
+  const exportWithOrientation = await buildFullWorkbookExport({
+    ...exportState,
+    orientation: syntheticOrientation
+  });
   const importedBuffer = await exportWithOrientation.blob.arrayBuffer();
   const imported = await parsePreviousWorkbook(importedBuffer);
   if (!imported.foundAnything) {
-    throw new Error("Expected the round-tripped workbook import to find the orientation sheet and CA Summary figures.");
+    throw new Error(
+      "Expected the round-tripped workbook import to find the orientation sheet and CA Summary figures."
+    );
   }
-  if (imported.orientation?.residency !== "nri" || imported.orientation?.nriCountry !== "United Arab Emirates") {
-    throw new Error(`Expected residency/nriCountry to round-trip, got ${JSON.stringify(imported.orientation)}.`);
+  if (
+    imported.orientation?.residency !== "nri" ||
+    imported.orientation?.nriCountry !== "United Arab Emirates"
+  ) {
+    throw new Error(
+      `Expected residency/nriCountry to round-trip, got ${JSON.stringify(imported.orientation)}.`
+    );
   }
   if (imported.orientation?.seniorCitizen !== true || imported.orientation?.huf !== false) {
-    throw new Error(`Expected boolean Yes/No answers to round-trip, got ${JSON.stringify(imported.orientation)}.`);
+    throw new Error(
+      `Expected boolean Yes/No answers to round-trip, got ${JSON.stringify(imported.orientation)}.`
+    );
   }
   if (imported.orientation?.hraClaimed !== undefined) {
-    throw new Error("An unanswered (null) orientation field should round-trip as absent, not a guessed value.");
+    throw new Error(
+      "An unanswered (null) orientation field should round-trip as absent, not a guessed value."
+    );
   }
   if (imported.orientation?.incomeSources?.join(",") !== "capital_gains,dividends") {
-    throw new Error(`Expected income sources to round-trip, got ${JSON.stringify(imported.orientation?.incomeSources)}.`);
+    throw new Error(
+      `Expected income sources to round-trip, got ${JSON.stringify(imported.orientation?.incomeSources)}.`
+    );
   }
-  if (imported.dividends !== 4000 || imported.interestOtherIncome !== 24000 || imported.carryForwardLossesAvailable !== 500) {
-    throw new Error(`Expected the known synthetic figures to round-trip, got ${JSON.stringify(imported)}.`);
+  if (
+    imported.dividends !== 4000 ||
+    imported.interestOtherIncome !== 24000 ||
+    imported.carryForwardLossesAvailable !== 500
+  ) {
+    throw new Error(
+      `Expected the known synthetic figures to round-trip, got ${JSON.stringify(imported)}.`
+    );
   }
 
   // Merging into a blank current orientation fills every field the import
   // found; merging into an already-answered orientation must never clobber it.
-  const mergedIntoBlank = applyPreviousWorkbookToOrientation(BLANK_ORIENTATION, imported.orientation);
+  const mergedIntoBlank = applyPreviousWorkbookToOrientation(
+    BLANK_ORIENTATION,
+    imported.orientation
+  );
   if (mergedIntoBlank.residency !== "nri" || mergedIntoBlank.seniorCitizen !== true) {
-    throw new Error(`Expected merge into a blank orientation to fill every found field, got ${JSON.stringify(mergedIntoBlank)}.`);
+    throw new Error(
+      `Expected merge into a blank orientation to fill every found field, got ${JSON.stringify(mergedIntoBlank)}.`
+    );
   }
   const alreadyAnswered = { ...BLANK_ORIENTATION, residency: "resident" as const };
-  const mergedIntoAnswered = applyPreviousWorkbookToOrientation(alreadyAnswered, imported.orientation);
+  const mergedIntoAnswered = applyPreviousWorkbookToOrientation(
+    alreadyAnswered,
+    imported.orientation
+  );
   if (mergedIntoAnswered.residency !== "resident") {
-    throw new Error("Importing a workbook should never overwrite an orientation answer already given.");
+    throw new Error(
+      "Importing a workbook should never overwrite an orientation answer already given."
+    );
   }
   if (mergedIntoAnswered.seniorCitizen !== true) {
     throw new Error("Importing a workbook should still fill in fields that are still blank.");
@@ -236,9 +290,13 @@ export async function main() {
   // Orientation sheet) must degrade gracefully - no orientation to prefill,
   // but the CA Summary figures still come through.
   const exportWithoutOrientation = await buildFullWorkbookExport(exportState);
-  const importedWithoutOrientation = await parsePreviousWorkbook(await exportWithoutOrientation.blob.arrayBuffer());
+  const importedWithoutOrientation = await parsePreviousWorkbook(
+    await exportWithoutOrientation.blob.arrayBuffer()
+  );
   if (importedWithoutOrientation.orientation !== null) {
-    throw new Error("A workbook with no Orientation sheet should report orientation as null, not a guessed profile.");
+    throw new Error(
+      "A workbook with no Orientation sheet should report orientation as null, not a guessed profile."
+    );
   }
   if (importedWithoutOrientation.dividends !== 4000) {
     throw new Error("CA Summary figures should still import even without an Orientation sheet.");
@@ -279,22 +337,34 @@ export async function main() {
     scheduleFaCalendarYear: 2025
   });
   const foreignAccountsSheets = await readWorkbook(exportWithForeignAccounts.blob);
-  const scheduleFaSheetNames = (foreignAccountsSheets as Array<{ sheet: string }>).map((s) => s.sheet);
+  const scheduleFaSheetNames = (foreignAccountsSheets as Array<{ sheet: string }>).map(
+    (s) => s.sheet
+  );
   if (!scheduleFaSheetNames.includes("Schedule FA")) {
     throw new Error(`Expected a Schedule FA sheet, found: ${scheduleFaSheetNames.join(", ")}`);
   }
   const scheduleFaSheet = sheetData(foreignAccountsSheets, "Schedule FA");
   const scheduleFaText = JSON.stringify(scheduleFaSheet);
   if (!scheduleFaText.includes("Chase") || !scheduleFaText.includes("500000")) {
-    throw new Error(`Expected the Schedule FA sheet to include the entered account's institution and peak balance, got: ${scheduleFaText}`);
+    throw new Error(
+      `Expected the Schedule FA sheet to include the entered account's institution and peak balance, got: ${scheduleFaText}`
+    );
   }
   if (!scheduleFaText.includes("Acme Inc") || !scheduleFaText.includes("650000")) {
-    throw new Error(`Expected the Schedule FA sheet to include the equity holding's entity name and sale proceeds, got: ${scheduleFaText}`);
+    throw new Error(
+      `Expected the Schedule FA sheet to include the equity holding's entity name and sale proceeds, got: ${scheduleFaText}`
+    );
   }
   const exportWithoutForeignAccounts = await buildFullWorkbookExport(exportState);
   const withoutForeignAccountsSheets = await readWorkbook(exportWithoutForeignAccounts.blob);
-  if ((withoutForeignAccountsSheets as Array<{ sheet: string }>).some((s) => s.sheet === "Schedule FA")) {
-    throw new Error("A workbook with no foreign accounts/holdings entered should not have a Schedule FA sheet at all.");
+  if (
+    (withoutForeignAccountsSheets as Array<{ sheet: string }>).some(
+      (s) => s.sheet === "Schedule FA"
+    )
+  ) {
+    throw new Error(
+      "A workbook with no foreign accounts/holdings entered should not have a Schedule FA sheet at all."
+    );
   }
 
   console.log(
@@ -314,7 +384,10 @@ async function readM1Reference() {
   return Object.fromEntries(parsed.data.map((row) => [row.Head, normalizeAmount(row.Amount)]));
 }
 
-function assertAmountsMatch(reference: Record<string, string | number>, actual: Record<string, string | number>) {
+function assertAmountsMatch(
+  reference: Record<string, string | number>,
+  actual: Record<string, string | number>
+) {
   for (const key of [
     "Speculative / Intraday income",
     "Short-Term Capital Gains",
@@ -342,7 +415,9 @@ function rowsToAmountMap(rows: unknown[][]) {
 }
 
 function sheetData(sheets: unknown, name: string) {
-  const sheet = (sheets as Array<{ sheet: string; data: unknown[][] }>).find((item) => item.sheet === name);
+  const sheet = (sheets as Array<{ sheet: string; data: unknown[][] }>).find(
+    (item) => item.sheet === name
+  );
   if (!sheet) {
     throw new Error(`Missing workbook sheet: ${name}`);
   }

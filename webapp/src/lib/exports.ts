@@ -125,7 +125,9 @@ export async function buildCaSummaryWorkbookExport(
   financialYear = "FY2025-26",
   assessmentYear = "AY2026-27"
 ): Promise<ExportFile> {
-  const blob = await writeXlsxFile(buildStandaloneCaSummarySheet(rows, financialYear, assessmentYear)).toBlob();
+  const blob = await writeXlsxFile(
+    buildStandaloneCaSummarySheet(rows, financialYear, assessmentYear)
+  ).toBlob();
   return {
     filename: CA_SUMMARY_XLSX_FILENAME,
     mimeType: xlsxMimeType,
@@ -134,7 +136,8 @@ export async function buildCaSummaryWorkbookExport(
 }
 
 export async function buildFullWorkbookExport(state: ExportState): Promise<ExportFile> {
-  const documents = state.documents.length > 0 ? state.documents : [{ name: "Transactions", transactions: [] }];
+  const documents =
+    state.documents.length > 0 ? state.documents : [{ name: "Transactions", transactions: [] }];
   const sheetNames = uniqueSheetNames(documents.map((doc) => doc.sheetNameHint || doc.name));
 
   // One sheet per raw uploaded document, kept in upload order. A document that
@@ -146,7 +149,12 @@ export async function buildFullWorkbookExport(state: ExportState): Promise<Expor
     if (doc.rawSheet && doc.transactions.length === 0) {
       return buildRawSheet(doc.name, doc.rawSheet, sheetNames[index]);
     }
-    const broker = buildBrokerSheet(doc.name, doc.transactions, state.financialYear, sheetNames[index]);
+    const broker = buildBrokerSheet(
+      doc.name,
+      doc.transactions,
+      state.financialYear,
+      sheetNames[index]
+    );
     brokerMetas.push(broker.meta);
     return { sheet: broker.sheet, data: broker.data, columns: broker.columns };
   });
@@ -164,7 +172,11 @@ export async function buildFullWorkbookExport(state: ExportState): Promise<Expor
   const sheets = [
     {
       sheet: "CA Summary",
-      data: buildLinkedCaSummarySheet(state.caSummaryRows, state.financialYear, state.assessmentYear),
+      data: buildLinkedCaSummarySheet(
+        state.caSummaryRows,
+        state.financialYear,
+        state.assessmentYear
+      ),
       columns: [{ width: 34 }, { width: 14 }, { width: 18 }, { width: 40 }]
     },
     {
@@ -191,7 +203,15 @@ export async function buildFullWorkbookExport(state: ExportState): Promise<Expor
               state.scheduleFaCalendarYear ?? new Date().getFullYear(),
               state.foreignEquityHoldings ?? []
             ),
-            columns: [{ width: 22 }, { width: 20 }, { width: 24 }, { width: 20 }, { width: 18 }, { width: 22 }, { width: 22 }]
+            columns: [
+              { width: 22 },
+              { width: 20 },
+              { width: 24 },
+              { width: 20 },
+              { width: 18 },
+              { width: 22 },
+              { width: 22 }
+            ]
           }
         ]
       : []),

@@ -36,7 +36,9 @@ export function ScheduleFaPanel({
   const summary = summarizeForeignAccounts(accounts, rule);
 
   function updateAccount(id: string, patch: Partial<ForeignAccount>) {
-    onChangeAccounts(accounts.map((account) => (account.id === id ? { ...account, ...patch } : account)));
+    onChangeAccounts(
+      accounts.map((account) => (account.id === id ? { ...account, ...patch } : account))
+    );
   }
   function removeAccount(id: string) {
     onChangeAccounts(accounts.filter((account) => account.id !== id));
@@ -48,17 +50,19 @@ export function ScheduleFaPanel({
   return (
     <section className="supplemental-form">
       <p className="step-lede">
-        Schedule FA uses the <strong>calendar year</strong>, not the financial year: for this filing, that&apos;s
-        January-December {summary.disclosureCalendarYear}, not April {summary.disclosureCalendarYear}-March{" "}
-        {summary.disclosureCalendarYear + 1}. Enter every foreign bank or brokerage account held at any point in that
-        calendar year, even a dormant one - there is no minimum value. Amounts should already be converted to rupees
-        using the SBI TT buying rate; this tool has no live exchange-rate source, so it doesn&apos;t convert for you.{" "}
-        <RuleSourceLink refs={rule.source_refs} />
+        Schedule FA uses the <strong>calendar year</strong>, not the financial year: for this
+        filing, that&apos;s January-December {summary.disclosureCalendarYear}, not April{" "}
+        {summary.disclosureCalendarYear}-March {summary.disclosureCalendarYear + 1}. Enter every
+        foreign bank or brokerage account held at any point in that calendar year, even a dormant
+        one - there is no minimum value. Amounts should already be converted to rupees using the SBI
+        TT buying rate; this tool has no live exchange-rate source, so it doesn&apos;t convert for
+        you. <RuleSourceLink refs={rule.source_refs} />
       </p>
       <p className="step-lede">
-        This produces the disclosure rows only, for your CA to place into Schedule FA - it doesn&apos;t compute Indian
-        tax on this interest (that&apos;s a separate schedule, Schedule FSI/OS) and doesn&apos;t decide whether you
-        must file Schedule FA at all (see the foreign-assets checklist item and caveat for that).
+        This produces the disclosure rows only, for your CA to place into Schedule FA - it
+        doesn&apos;t compute Indian tax on this interest (that&apos;s a separate schedule, Schedule
+        FSI/OS) and doesn&apos;t decide whether you must file Schedule FA at all (see the
+        foreign-assets checklist item and caveat for that).
       </p>
 
       {accounts.length === 0 ? (
@@ -71,7 +75,11 @@ export function ScheduleFaPanel({
                 Account type
                 <select
                   value={account.accountType}
-                  onChange={(event) => updateAccount(account.id, { accountType: event.target.value as ForeignAccountType })}
+                  onChange={(event) =>
+                    updateAccount(account.id, {
+                      accountType: event.target.value as ForeignAccountType
+                    })
+                  }
                 >
                   <option value="depository">{ACCOUNT_TYPE_LABELS.depository}</option>
                   <option value="custodial">{ACCOUNT_TYPE_LABELS.custodial}</option>
@@ -91,7 +99,9 @@ export function ScheduleFaPanel({
                 <input
                   type="text"
                   value={account.institutionName}
-                  onChange={(event) => updateAccount(account.id, { institutionName: event.target.value })}
+                  onChange={(event) =>
+                    updateAccount(account.id, { institutionName: event.target.value })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -99,7 +109,9 @@ export function ScheduleFaPanel({
                 <input
                   type="text"
                   value={account.accountNumber}
-                  onChange={(event) => updateAccount(account.id, { accountNumber: event.target.value })}
+                  onChange={(event) =>
+                    updateAccount(account.id, { accountNumber: event.target.value })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -107,7 +119,9 @@ export function ScheduleFaPanel({
                 <input
                   type="date"
                   value={account.openingDate}
-                  onChange={(event) => updateAccount(account.id, { openingDate: event.target.value })}
+                  onChange={(event) =>
+                    updateAccount(account.id, { openingDate: event.target.value })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -117,7 +131,9 @@ export function ScheduleFaPanel({
                   min={0}
                   value={account.peakBalanceInr}
                   placeholder="₹0"
-                  onChange={(event) => updateAccount(account.id, { peakBalanceInr: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateAccount(account.id, { peakBalanceInr: Number(event.target.value) || 0 })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -127,7 +143,11 @@ export function ScheduleFaPanel({
                   min={0}
                   value={account.closingBalanceInr}
                   placeholder="₹0"
-                  onChange={(event) => updateAccount(account.id, { closingBalanceInr: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateAccount(account.id, {
+                      closingBalanceInr: Number(event.target.value) || 0
+                    })
+                  }
                 />
               </label>
               <label className="supplemental-field">
@@ -137,7 +157,9 @@ export function ScheduleFaPanel({
                   min={0}
                   value={account.grossInterestInr}
                   placeholder="₹0"
-                  onChange={(event) => updateAccount(account.id, { grossInterestInr: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateAccount(account.id, { grossInterestInr: Number(event.target.value) || 0 })
+                  }
                 />
               </label>
             </div>
@@ -167,9 +189,10 @@ export function ScheduleFaPanel({
           </div>
           {summary.totalGrossInterestInr > 0 ? (
             <p className="regime-verdict">
-              This interest is taxable at slab rate under income from other sources - it's added automatically to
-              your slab income in the regime comparison below, and to the Section 90/91 foreign tax credit estimate
-              in the "Foreign shares, RSU &amp; ESPP" section. Don't re-enter it in "Bank interest &amp; other income".
+              This interest is taxable at slab rate under income from other sources - it's added
+              automatically to your slab income in the regime comparison below, and to the Section
+              90/91 foreign tax credit estimate in the "Foreign shares, RSU &amp; ESPP" section.
+              Don't re-enter it in "Bank interest &amp; other income".
             </p>
           ) : null}
         </div>
