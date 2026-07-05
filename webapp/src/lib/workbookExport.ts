@@ -3,6 +3,7 @@ import { findBrokerSpeculativeColumn, findBrokerTaxableColumn, type CaSummaryRow
 import type { NormalizedTransaction } from "../ingest";
 import { parseFixtureDate } from "../ingest/normalize";
 import type { OrientationAnswers } from "../state/types";
+import type { ForeignAccount } from "./scheduleFa";
 
 export type ExportDocument = {
   name: string;
@@ -788,6 +789,7 @@ export function buildOrientationSheet(orientation: OrientationAnswers): SheetDat
     ["NRI Days In India", orientation.nriDaysInIndia === null ? "" : String(orientation.nriDaysInIndia)],
     ["HUF", yesNoOrBlank(orientation.huf)],
     ["Senior Citizen", yesNoOrBlank(orientation.seniorCitizen)],
+    ["Super Senior Citizen (80+)", yesNoOrBlank(orientation.superSeniorCitizen)],
     ["Single Parent Or Sole Guardian", yesNoOrBlank(orientation.singleParent)],
     ["Income Sources", orientation.incomeSources.join(", ")],
     ["Multiple Employers", yesNoOrBlank(orientation.multipleEmployers)],
@@ -802,6 +804,62 @@ export function buildOrientationSheet(orientation: OrientationAnswers): SheetDat
   ];
   for (const [field, value] of rows) {
     data.push([txt(field, C.td), txt(value, C.td)]);
+  }
+  return data;
+}
+
+/** Sheet name for the Schedule FA Phase 1 disclosure rows (foreign depository/custodial accounts). */
+export const SCHEDULE_FA_SHEET_NAME = "Schedule FA (Phase 1)";
+
+const ACCOUNT_TYPE_SHEET_LABELS: Record<ForeignAccount["accountType"], string> = {
+  depository: "A1 - Depository (bank)",
+  custodial: "A2 - Custodial (brokerage)"
+};
+
+/**
+ * Disclosure rows only for foreign bank/brokerage accounts (Schedule FA
+ * tables A1/A2 combined) - literal values, no formulas, for a CA to place
+ * into the actual schedule. Does not compute Indian tax on the interest
+ * shown; see rules/foreign-investments.md and docs/DESIGN-remaining-gaps.md
+ * for why the rest of Schedule FA (RSUs, foreign property, trusts, and the
+ * tax computation itself) is out of scope for this phase.
+ */
+export function buildScheduleFaSheet(accounts: ForeignAccount[], disclosureCalendarYear: number): SheetData {
+  const data: SheetData = [];
+  const span = 7;
+  data.push(
+    mergeTitle(
+      emptyRow(span),
+      `Schedule FA Phase 1 - foreign accounts held at any point in calendar year ${disclosureCalendarYear} (Jan-Dec)`,
+      span
+    )
+  );
+  data.push(
+    mergeTitle(
+      emptyRow(span),
+      "Disclosure rows only, for your CA to place into the actual schedule - this does not compute Indian tax on the interest shown.",
+      span
+    )
+  );
+  data.push([
+    txt("Table", C.th),
+    txt("Country", C.th),
+    txt("Institution", C.th),
+    txt("Account Number", C.th),
+    txt(`Peak Balance (INR)`, C.th),
+    txt("Closing Balance 31-Dec (INR)", C.th),
+    txt("Gross Interest/Income (INR)", C.th)
+  ]);
+  for (const account of accounts) {
+    data.push([
+      txt(ACCOUNT_TYPE_SHEET_LABELS[account.accountType], C.td),
+      txt(account.country, C.td),
+      txt(account.institutionName, C.td),
+      txt(account.accountNumber, C.td),
+      num(account.peakBalanceInr, C.td),
+      num(account.closingBalanceInr, C.td),
+      num(account.grossInterestInr, C.td)
+    ]);
   }
   return data;
 }

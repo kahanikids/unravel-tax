@@ -10,6 +10,7 @@ export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
     nriCountry: answers.residency === "nri" ? answers.nriCountry : null,
     huf: Boolean(answers.huf),
     seniorCitizen: Boolean(answers.seniorCitizen),
+    superSeniorCitizen: Boolean(answers.seniorCitizen && answers.superSeniorCitizen),
     singleParent: Boolean(answers.singleParent),
     hasCapitalGains: answers.incomeSources.includes("capital_gains"),
     hasDividends: answers.incomeSources.includes("dividends"),
@@ -115,6 +116,12 @@ export function buildChecklist(flags: ProfileFlags, capitalGainsDocumentLoaded: 
       "HUF PAN and list of coparceners/members",
       "The HUF is a separate taxable entity from you personally, with its own PAN.",
       "Needed"
+    );
+    add(
+      "If any partition has happened: the Assessing Officer's Section 171 order, or confirmation there isn't one",
+      "A private family agreement to split HUF property isn't recognised for tax purposes unless it's a full partition with an AO order (Section 171) - splitting only some property or among only some members (a partial partition) has been disallowed since 1978, so the HUF keeps being assessed as if it never happened. Get a CA to confirm which kind yours is before assuming your HUF's tax position has changed.",
+      "Optional",
+      false
     );
   }
 
@@ -239,12 +246,12 @@ function mfDtaaCaveat(flags: ProfileFlags, rule: NriDtaaRule): ProfileScopeCavea
 /**
  * Honesty check: the orientation flow asks about every profile from
  * SYSTEM_SPEC.md Section 6.2, and the checklist above lists the right
- * documents for each - but the profile-specific *calculations* (NRE/NRO
- * split, TDS-withheld-vs-owed reconciliation, DTAA/repatriation, HUF
- * partition, minor's-income clubbing amounts) aren't wired into this
- * webapp yet (SYSTEM_SPEC.md Section 14 phases these after the resident +
- * senior-citizen MVP). Say so plainly rather than letting the checklist
- * imply more coverage than the numbers below actually have.
+ * documents for each. NRE/NRO split, dividend DTAA/TDS reconciliation,
+ * NRO repatriation limits, minor's-income clubbing, and insurance-payout
+ * taxability are now computed; HUF partition stays checklist-only (see
+ * docs/DESIGN-remaining-gaps.md). Say so plainly rather than letting the
+ * checklist imply more or less coverage than the numbers below actually
+ * have.
  */
 export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   const caveats: ProfileScopeCaveat[] = [];
@@ -258,16 +265,16 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
       id: "nri_scope",
       label: "Some NRI-specific numbers are calculated; others still need a CA",
       note:
-        "NRE interest can be entered as its own exempt line, and the \"NRI: DTAA relief & NRO TDS\" section computes your actual dividend tax (Section 115A, the lower of the 20% domestic rate and your treaty's rate) and checks NRO interest/dividend TDS withheld against the treaty rate for a possible refund. This tool still taxes NRO interest at your ordinary slab rate rather than a precise treaty-capped figure, and doesn't track repatriation limits. Bring your NRO TDS certificates and DTAA paperwork to a CA."
+        "NRE interest can be entered as its own exempt line, and the \"NRI: DTAA relief & NRO TDS\" section computes your actual dividend tax (Section 115A, the lower of the 20% domestic rate and your treaty's rate) and checks NRO interest/dividend TDS withheld against the treaty rate for a possible refund. The \"NRI: repatriation check\" section is a planning-only check against the USD 1 million NRO cap and the ₹5 lakh CA-certificate threshold - it's a banking/FEMA compliance step, not part of the return, so it never changes a tax figure. This tool still taxes NRO interest at your ordinary slab rate rather than a precise treaty-capped figure. Bring your NRO TDS certificates and DTAA paperwork to a CA."
     });
   }
 
   if (flags.huf) {
     caveats.push({
       id: "huf_scope",
-      label: "HUF-specific numbers aren't calculated here yet",
+      label: "Some HUF-specific numbers are calculated; partition still needs a CA",
       note:
-        "Coparcener details, transfers-without-consideration clubbing (Section 64(2)), and partition tracking aren't computed by this tool. The figures below only cover capital gains, dividends, and interest, which apply to an HUF the same flat way they do to an individual. The old-vs-new regime comparison tool doesn't fit an HUF's numbers at all (no salary income, no standard deduction, no Section 87A rebate), so it's hidden for this profile. A CA needs to handle the rest of the HUF-entity side."
+        "The \"HUF: members & Section 64(2) transfers\" section computes clubbing for any asset a member transferred into the HUF without adequate consideration - that income belongs on the transferring member's own return, not the HUF's. The figures elsewhere only cover capital gains, dividends, and interest, which apply to an HUF the same flat way they do to an individual. Partition (total or partial) isn't computed at all - see the checklist for why. The old-vs-new regime comparison tool doesn't fit an HUF's numbers at all (no salary income, no standard deduction, no Section 87A rebate), so it's hidden for this profile."
     });
   }
 
@@ -292,9 +299,9 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   if (flags.hasForeignAssets) {
     caveats.push({
       id: "foreign_assets_scope",
-      label: "Foreign assets: disclosure and foreign income aren't computed here",
+      label: "Foreign accounts: disclosure rows built; foreign income tax isn't",
       note:
-        "As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. Foreign dividends and interest are taxable at slab rate, gains on foreign shares are unlisted-share gains (long-term after 24 months at 12.5%), and foreign tax paid is credited via Form 67. This tool doesn't build the Schedule FA table or those figures. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA."
+        "As a resident you must report every foreign asset in Schedule FA for the calendar year (Jan–Dec), with no minimum value — this needs ITR-2/ITR-3, never ITR-1. The \"Foreign accounts: Schedule FA rows\" section produces the disclosure rows for a foreign bank or brokerage account (Phase 1 - RSUs, foreign property, and trusts aren't covered yet). Foreign dividends and interest are taxable at slab rate, gains on foreign shares are unlisted-share gains (long-term after 24 months at 12.5%), and foreign tax paid is credited via Form 67 - none of that tax computation is done here. Non-disclosure risks a ₹10 lakh Black Money Act penalty, so take your foreign statements to a CA."
     });
   }
 

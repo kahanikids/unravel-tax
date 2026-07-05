@@ -4,6 +4,81 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-05 (implemented the design-doc proposals: HUF clubbing, NRI repatriation check, Schedule FA Phase 1; 80+ super-senior slab; questionnaire review)
+
+- **Old-regime super-senior (80+) slab is now selected**, not just the
+  60-79 senior band. `webapp/src/state/types.ts` adds `superSeniorCitizen`
+  to `OrientationAnswers`/`ProfileFlags`; `OrientationForm.tsx` asks an
+  "are you 80 or older?" follow-up once "60 or older?" is Yes (and clears
+  it if that's later changed back to No); `regimeComparison.ts` picks
+  `rules/regime-choice.json`'s existing (already-verified)
+  `slabs_above_80` instead of always using `slabs_60_to_80`. No rule
+  value changed — this closes a gap the rule already documented
+  (`comparison_scope_caveat`, `copy.ts`) but the webapp didn't act on.
+- **HUF Section 64(2) transfer clubbing is now computed**, per the design
+  doc's approved scope. New `webapp/src/lib/hufClubbing.ts`: a
+  member/coparcener list (`HufMember`, reference only for the CA, feeds
+  no calculation — coparcener status can turn on family-specific facts
+  this tool can't verify) and an asset-transfer list
+  (`HufAssetTransfer`) that flags, for every transfer without adequate
+  consideration, that the asset's income belongs on the transferring
+  member's own return, not the HUF's — without removing it from the
+  HUF's own CA Summary total (this tool computes the HUF's return, not
+  each member's). `rules/huf-clubbing.json` moves from
+  `pending_current_source` to `verified_secondary_source` (source: Income
+  Tax Department's own clubbing explainer plus a secondary summary — long-
+  standing anti-avoidance provision, no yearly Budget change). Partition
+  stays calculation-free by design (a private partial partition is
+  tax-invisible under Section 171(9), and this tool can't verify an
+  Assessing Officer's total-partition order) — the checklist now has a
+  dedicated item pointing at that distinction instead of a blanket "not
+  computed" caveat. New `HufPanel.tsx`.
+- **NRI repatriation gets a planning-only check**, per the design doc's
+  approved scope. `rules/nri-repatriation.json` moves from
+  `pending_current_source` to `verified_secondary_source` (USD 1 million/
+  year NRO cap, ₹5 lakh CA-certificate threshold, the Form 15CA/15CB →
+  145/146 renaming effective 1 April 2026 — all re-checked against
+  secondary tax-reference sources). New `webapp/src/lib/nriRepatriation.ts`
+  and `NriRepatriationPanel.tsx` compare a user-entered cumulative USD
+  figure against the annual cap and a separate rupee figure against the
+  certificate threshold — two figures, not one converted from the other,
+  since this tool has no live exchange-rate source. Purely informational:
+  it's a banking/FEMA compliance signal, never folded into any tax figure.
+- **Schedule FA Phase 1 (foreign bank/brokerage accounts) is now built**,
+  per the design doc's approved phased scope. New
+  `webapp/src/lib/scheduleFa.ts` and `ScheduleFaPanel.tsx`: a per-account
+  record (country, institution, account number, opening date, peak/
+  closing balance, gross interest — entered already converted to rupees
+  by the user, since this tool doesn't do the SBI TT-rate conversion
+  itself) produces the schedule's A1/A2 disclosure rows, output as a new
+  workbook sheet (`buildScheduleFaSheet` in `workbookExport.ts`). The
+  calendar-year disclosure window (distinct from the financial year) is
+  shown explicitly to avoid the exact confusion this tool's own copy
+  already calls out elsewhere. Disclosure only — no Indian tax computed
+  on the interest shown; RSUs, foreign property, and trusts (Schedule FA
+  tables A3/B/C) and the Schedule FSI/OS tax computation remain out of
+  scope, per Phases 2-3 in `docs/DESIGN-remaining-gaps.md`.
+- **Orientation questionnaire reviewed** for the NRI/HUF/senior-citizen/
+  single-parent profile categories: confirmed the existing "single parent
+  or guardian" phrasing is already gender-neutral (Section 64(1A)/10(32)
+  clubbing has no gender-based distinction — Indian income tax hasn't had
+  a separate female tax slab since it was equalised years ago), and no
+  gender question was added, since one would have no calculation to
+  attach to. Confirmed business/professional/firm profiles remain
+  explicitly out of scope (`WHO_ITS_FOR_EXCLUDES`), with no orientation
+  question implying otherwise.
+- `docs/DESIGN-remaining-gaps.md` updated with a "Build note" under each
+  of the three sections recording what was approved, implemented, and
+  left out (and why), rather than leaving the document to imply nothing
+  had moved. FEATURE_COVERAGE.md, ROADMAP.md, and the in-app capabilities
+  list (`copy.ts`) updated to match.
+- Validators extended: the super-senior 80+ slab (regime-comparison and
+  orientation-visibility cases), HUF clubbing (member list, clubbed vs
+  not-clubbed transfer cases), NRI repatriation (below-threshold/
+  certificate-required/cap-breached cases, renamed form names), and
+  Schedule FA Phase 1 (account totals, calendar-year derivation, panel
+  visibility, and a workbook round-trip for the new sheet).
+
 ## 2026-07-04 (remaining gaps: 234C quarter precision, NRI DTAA/TDS, insurance per-policy, workbook carry-forward import; design doc for HUF/repatriation/Schedule FA)
 
 - **Section 234C now dates listed-equity capital gains to the instalment they

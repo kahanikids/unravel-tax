@@ -31,6 +31,8 @@ export type OrientationAnswers = {
   nriDaysInIndia: number | null;
   huf: boolean | null;
   seniorCitizen: boolean | null;
+  /** Only asked when seniorCitizen is true. Picks the old-regime super-senior (80+) slab instead of the 60-79 one. */
+  superSeniorCitizen: boolean | null;
   singleParent: boolean | null;
   incomeSources: IncomeSource[];
   multipleEmployers: boolean | null;
@@ -52,6 +54,7 @@ export const BLANK_ORIENTATION: OrientationAnswers = {
   nriDaysInIndia: null,
   huf: null,
   seniorCitizen: null,
+  superSeniorCitizen: null,
   singleParent: null,
   incomeSources: [],
   multipleEmployers: null,
@@ -70,6 +73,7 @@ export type ProfileFlags = {
   nriCountry: NriCountry;
   huf: boolean;
   seniorCitizen: boolean;
+  superSeniorCitizen: boolean;
   singleParent: boolean;
   hasCapitalGains: boolean;
   hasDividends: boolean;
@@ -118,6 +122,10 @@ export type SupplementalFigures = {
   nriNroInterestTdsWithheld: number;
   /** NRI only. TDS actually withheld on the dividends figure above (Section 115A), for the treaty-rate reconciliation. */
   nriDividendTdsWithheld: number;
+  /** NRI only. Cumulative NRO repatriation this financial year, in USD, checked against the USD 1 million annual cap. Planning figure only - doesn't touch any tax number. */
+  nriRepatriatedThisYearUsd: number;
+  /** NRI only. The same cumulative repatriation in rupees, checked against the ₹5 lakh CA-certificate threshold. Entered separately rather than converted, since this tool doesn't fetch a live exchange rate. */
+  nriRepatriatedThisYearInr: number;
   /** Single parent/guardian only. Minor's income before the Section 10(32) per-child exemption. */
   minorIncomeToClub: number;
   /** Single parent/guardian only. Portion of the minor's income Section 64(1A) never clubs (their own manual work, own skill/talent, or an 80U disability), left out before the exemption. */
@@ -179,6 +187,8 @@ export const BLANK_SUPPLEMENTAL_FIGURES: SupplementalFigures = {
   nreExemptInterest: 0,
   nriNroInterestTdsWithheld: 0,
   nriDividendTdsWithheld: 0,
+  nriRepatriatedThisYearUsd: 0,
+  nriRepatriatedThisYearInr: 0,
   minorIncomeToClub: 0,
   minorIncomeExemptFromClubbing: 0,
   numberOfMinors: 0,

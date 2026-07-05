@@ -22,6 +22,7 @@ import {
   computeLetOutHouseProperty,
   computeInsurancePayoutCheck,
   computeNriDividendTax,
+  summarizeForeignAccounts,
   summarizeInsurancePolicies,
   applyPreviousWorkbookToOrientation,
   parsePreviousWorkbook,
@@ -54,6 +55,9 @@ import {
   type ChecklistItem,
   type ExportFile,
   type FilingSource,
+  type ForeignAccount,
+  type HufAssetTransfer,
+  type HufMember,
   type InsurancePolicy,
   type LocalFolderHandle,
   type PastFiling,
@@ -113,6 +117,9 @@ function App() {
   const [aisFigures, setAisFigures] = useState<AisReportedFigures>(BLANK_AIS_REPORTED_FIGURES);
   const [tdsRows, setTdsRows] = useState<TdsRow[]>([]);
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
+  const [hufMembers, setHufMembers] = useState<HufMember[]>([]);
+  const [hufTransfers, setHufTransfers] = useState<HufAssetTransfer[]>([]);
+  const [foreignAccounts, setForeignAccounts] = useState<ForeignAccount[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
@@ -210,7 +217,10 @@ function App() {
         aisFigures,
         tdsRows,
         pastFilings,
-        insurancePolicies
+        insurancePolicies,
+        hufMembers,
+        hufTransfers,
+        foreignAccounts
       };
       saveSession(input);
       // The folder is a disk-durable backup: write the same session there so
@@ -237,6 +247,9 @@ function App() {
     tdsRows,
     pastFilings,
     insurancePolicies,
+    hufMembers,
+    hufTransfers,
+    foreignAccounts,
     sampleMode,
     folderHandle
   ]);
@@ -391,6 +404,7 @@ function App() {
   // least one policy has lost its exemption - an all-exempt policy list adds
   // no new tax, so it stays out of the summary.
   const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, ruleCatalog.insurance, ruleCatalog.capitalGainsEquity);
+  const foreignAccountsSummary = summarizeForeignAccounts(foreignAccounts, ruleCatalog.foreignInvestments);
   if (insuranceSummary.totalOtherSourcesSlabIncome > 0) {
     rows.push({
       head: "Insurance payout (traditional, taxable)",
@@ -495,7 +509,8 @@ function App() {
     // A taxable traditional-insurance-policy payout, folded into the same
     // "other income" bucket the Insurance panel's own note explains.
     additionalOtherSlabIncome: insuranceSummary.totalOtherSourcesSlabIncome,
-    seniorCitizen: flags.seniorCitizen
+    seniorCitizen: flags.seniorCitizen,
+    superSeniorCitizen: flags.superSeniorCitizen
   };
   const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
   const regimeBreakEven = regimeComparable ? computeRegimeBreakEven(regimeInputs, ruleCatalog.regimeChoice) : null;
@@ -621,6 +636,9 @@ function App() {
     setAisFigures(BLANK_AIS_REPORTED_FIGURES);
     setTdsRows([]);
     setInsurancePolicies([]);
+    setHufMembers([]);
+    setHufTransfers([]);
+    setForeignAccounts([]);
   }
 
   function startOrientation() {
@@ -736,6 +754,9 @@ function App() {
     setTdsRows(session.tdsRows ?? []);
     setPastFilings(session.pastFilings ?? []);
     setInsurancePolicies(session.insurancePolicies ?? []);
+    setHufMembers(session.hufMembers ?? []);
+    setHufTransfers(session.hufTransfers ?? []);
+    setForeignAccounts(session.foreignAccounts ?? []);
     setSampleMode(false);
   }
 
@@ -767,6 +788,9 @@ function App() {
     setTdsRows([]);
     setPastFilings([]);
     setInsurancePolicies([]);
+    setHufMembers([]);
+    setHufTransfers([]);
+    setForeignAccounts([]);
     setImportWorkbookMessage(null);
     setSampleMode(false);
     setShowDashboard(false);
@@ -938,7 +962,9 @@ function App() {
         rateInputs: rateInputsFromRule(cgRule),
         financialYear: `FY${cgRule.financial_year}`,
         assessmentYear: `AY${cgRule.assessment_year}`,
-        orientation
+        orientation,
+        foreignAccounts,
+        scheduleFaCalendarYear: foreignAccountsSummary.disclosureCalendarYear
       })
     );
   }
@@ -1129,19 +1155,30 @@ function App() {
                 debtMfShortTermDeemedGain={calculationSummary.debtMfShortTermDeemedGain}
                 intradayGain={calculationSummary.intradayGain}
                 seniorCitizen={flags.seniorCitizen}
+                superSeniorCitizen={flags.superSeniorCitizen}
                 nri={flags.nri}
                 nriCountry={flags.nriCountry}
                 huf={flags.huf}
                 singleParent={flags.singleParent}
                 hasLoans={flags.hasLoans}
                 hasInsurancePayout={flags.hasInsurancePayout}
+                hasForeignAssets={flags.hasForeignAssets}
                 insurancePolicies={insurancePolicies}
                 onChangeInsurancePolicies={setInsurancePolicies}
                 insuranceRule={ruleCatalog.insurance}
+                hufMembers={hufMembers}
+                onChangeHufMembers={setHufMembers}
+                hufTransfers={hufTransfers}
+                onChangeHufTransfers={setHufTransfers}
+                hufClubbingRule={ruleCatalog.hufClubbing}
+                foreignAccounts={foreignAccounts}
+                onChangeForeignAccounts={setForeignAccounts}
+                foreignInvestmentsRule={ruleCatalog.foreignInvestments}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
                 loanTreatmentRule={ruleCatalog.loanTreatment}
                 nriDtaaRule={ruleCatalog.nriDtaa}
                 nriTdsRule={ruleCatalog.nriTdsAndRefunds}
+                nriRepatriationRule={ruleCatalog.nriRepatriation}
                 advanceTaxRule={ruleCatalog.advanceTax}
                 capitalGainsTaxByInstalment={capitalGainsTaxByInstalment}
                 aisFigures={aisFigures}

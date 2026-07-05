@@ -1,22 +1,65 @@
 # NRI — repatriation
 
 **Applies to:** NRI profile
-**Last verified:** PENDING — not yet populated against a current source.
+**Last verified:** 2026-07-05 (secondary sources — see below)
 
 ## What this covers
-The USD 1 million/year NRO repatriation cap (NRE has no cap), the
-self-declaration + CA certificate requirement above ₹5 lakh, and the
-form renaming under the new Income Tax Act 2025 (Form 15CA/15CB → Form
-145/146 from 1 April 2026) — a case where the form name is dictated by
-today's date, not the year the income was earned.
 
-## Status
-Stub only. Source material already drafted in the plan — port and verify
-against a current source before treating this as ground truth:
-- SYSTEM_SPEC.md Section 9.5 (includes a source citation to port/verify)
-- `Reference/New Income Tax Act 2025 - Transition Notes.md` in the parent
-  vault, for the form-renaming detail specifically
+Once you've paid Indian tax on your NRO account's income, moving that
+money out of India (to your foreign bank account) is a separate step
+from filing your return, with its own rules:
 
-Once verified, replace this file's content with the actual plain-language
-rule explanation (see CLAUDE.md > Style) and populate the paired
-`nri-repatriation.json` with the machine-readable limits and thresholds.
+- **The USD 1 million/year cap.** You can repatriate up to USD 1 million
+  out of your NRO account(s) in a financial year, added up across every
+  NRO account you hold. There's no separate cap for your NRE account —
+  that money was always freely repatriable, since it started out as
+  foreign currency.
+- **Above ₹5 lakh, you need a CA's sign-off.** Once the amount you're
+  repatriating this year crosses ₹5 lakh, you (or your bank) need a
+  Chartered Accountant's certificate confirming the right tax has
+  already been paid on that money, in addition to your own declaration.
+  Below ₹5 lakh, your own declaration alone is usually enough.
+- **The forms got renamed on 1 April 2026, mid-transition.** Under the
+  old Income Tax Act, 1961, your declaration was Form 15CA and the CA's
+  certificate was Form 15CB. Under the new Income Tax Act, 2025, the
+  same two documents are now called Form 145 and Form 146. The
+  underlying requirement hasn't changed — only the form's name has, and
+  which name applies depends on **today's date** (when you file the
+  form), not the year the income was earned. That's a genuinely
+  confusing distinction during a transition year, worth stating
+  explicitly rather than assuming everyone already knows it.
+
+## Why this isn't part of your income tax return
+
+This is a **banking/FEMA compliance step, not a line item on your ITR.**
+Form 145/146 (formerly 15CA/15CB) are filed through the income-tax
+e-filing portal's own separate module and given to the bank handling
+your remittance — they don't get attached to your return, and the USD 1
+million limit never appears on an ITR form. This tool treats it as a
+**planning check** — "am I approaching the limit, will I need a CA
+certificate this time" — not a number that changes any tax figure
+calculated elsewhere. Getting your Indian tax liability right and
+staying within the repatriation limit are two different questions, and
+answering one doesn't answer the other.
+
+## What this tool does with this
+
+Enter the total you've repatriated out of your NRO account so far this
+financial year, in USD, and this tool checks it against the USD 1
+million annual limit and tells you whether the ₹5 lakh CA-certificate
+threshold applies to your latest transfer. It doesn't change any tax
+number, doesn't prepare Form 145/146 itself, and doesn't know your
+remitting bank's own additional documentation requirements — bring your
+NRO account statements and this check to your CA or your bank's forex
+desk before the transfer.
+
+## Sources
+
+- [Panda — NRO Repatriation USD 1M Limit](https://www.getpanda.money/blogs/nro-account-repatriation-usd-1-million-limit/)
+- [Income Tax Department — Form 145 FAQs](https://www.incometaxindia.gov.in/documents/d/guest/form-145-faqs)
+- [ClearTax — Form 145 Income Tax 2025](https://cleartax.in/s/form-145-income-tax)
+
+These are secondary tax-reference summaries, not the RBI FEMA master
+direction or CBDT notification text directly — treat the ₹5 lakh
+threshold and the 1 April 2026 renaming date as directionally right, and
+confirm with your bank/CA before relying on the exact figure.

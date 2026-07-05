@@ -68,7 +68,16 @@ infer scope from the roadmap or implementation notes.
   regime comparison's slab income since it isn't slab income for a
   non-resident. An NRO interest/dividend TDS-vs-treaty-rate reconciliation
   surfaces a possible recoverable refund, for the 16 countries this tool
-  has treaty rates for.
+  has treaty rates for. An NRO repatriation planning check (USD 1 million
+  annual cap, Rs 5 lakh CA-certificate threshold, the renamed Form
+  145/146) is a banking/FEMA compliance signal, not a tax figure.
+- HUF Section 64(2) transfer clubbing: a member/coparcener list for the
+  CA's reference (feeds no calculation), and an asset-transfer list that
+  flags when a transfer without adequate consideration clubs that asset's
+  income to the transferring member's own return instead of the HUF's.
+- Old-regime super-senior (80+) slab, selected once a follow-up question
+  past "60 or older?" confirms the age, instead of always using the 60-79
+  band.
 - Per-policy Section 10(10D) computation: sum-assured-ratio and
   aggregate-premium-cap tests per policy, the taxable amount when a policy
   loses its exemption, capital-gains tax for a taxable ULIP (its own CA
@@ -82,7 +91,9 @@ infer scope from the roadmap or implementation notes.
   simple charts.
 - Deduction planning widgets for 80C, 80D, and 80CCD(1B).
 - Insurance payout premium-cap reminder for Section 10(10D).
-- Foreign asset Schedule FA reminder and LRS TCS estimate.
+- Foreign asset Schedule FA reminder and LRS TCS estimate, plus a Phase 1
+  Schedule FA builder producing foreign bank/brokerage account disclosure
+  rows as a workbook sheet.
 - Dismissible first-visit disclaimer, full legal/privacy/AI disclosure, help
   panel, tool tour, sample-data mode, error boundary, issue/report links, and
   project-source links.
@@ -101,26 +112,25 @@ infer scope from the roadmap or implementation notes.
   be somewhat lower than shown if a meaningful share of those arrived
   mid-year or later. The caveat is displayed with every estimate.
 - Regime comparison covers slab-taxed income only. It excludes surcharge above
-  Rs 50 lakh, the age 80+ super-senior slab, and capital gains taxed the same
-  under both regimes. It is hidden for HUF.
+  Rs 50 lakh and capital gains taxed the same under both regimes. It is
+  hidden for HUF.
 - ITR form recommendation is conservative but cannot see every disqualifier,
   such as directorship, unlisted shares, more than one house property, foreign
   income details, or carried-forward losses unless the user enters enough
   related information.
 - NRI support orients the user, builds the checklist, routes to ITR-2/ITR-3,
   flags DTAA mutual fund caveats for known countries, keeps NRE interest as a
-  separate exempt entry, applies Section 115A/DTAA dividend tax, and
-  reconciles NRO interest/dividend TDS against the treaty rate. NRO interest
-  itself still uses ordinary slab tax rather than a precise treaty-capped
-  final rate (that needs marginal-rate context this tool doesn't have), and
-  it does not track repatriation limits or calculate refund claims beyond
-  the TDS reconciliation. See docs/DESIGN-remaining-gaps.md for the
-  repatriation-tracking design.
+  separate exempt entry, applies Section 115A/DTAA dividend tax, reconciles
+  NRO interest/dividend TDS against the treaty rate, and runs the
+  repatriation planning check above. NRO interest itself still uses
+  ordinary slab tax rather than a precise treaty-capped final rate (that
+  needs marginal-rate context this tool doesn't have), and refund claims
+  beyond the TDS reconciliation aren't calculated.
 - HUF support orients the user, builds the checklist, routes to ITR-2/ITR-3,
-  and skips the regime comparison. It does not calculate coparcener/member
-  detail, Section 64(2) transfer clubbing, or partition effects. See
-  docs/DESIGN-remaining-gaps.md for the proposed scope (partition tracking
-  is proposed to stay calculation-free even in a future build).
+  skips the regime comparison, and computes the Section 64(2) clubbing note
+  above. It does not calculate partition effects - see
+  docs/DESIGN-remaining-gaps.md for why partition is proposed to stay
+  calculation-free even in a future build.
 - Single-parent support orients the user, builds the checklist, and computes
   minor-income clubbing after the Section 64(1A) exclusions and the Section
   10(32) per-child exemption. It cannot verify an exclusion genuinely
@@ -137,10 +147,16 @@ infer scope from the roadmap or implementation notes.
   combine with other equity LTCG under the one shared annual exemption -
   each taxable ULIP uses the full exemption on its own, flagged rather
   than silently assumed.
-- Foreign-asset support is a disclosure reminder and a purpose-aware LRS TCS
-  estimate. It does not build Schedule FA, compute foreign
-  dividends/interest/gains, or prepare Form 67 foreign-tax-credit inputs.
-  See docs/DESIGN-remaining-gaps.md for a phased Schedule FA design.
+- Foreign-asset support is a disclosure reminder, a purpose-aware LRS TCS
+  estimate, and Phase 1 of the Schedule FA builder: a foreign bank or
+  brokerage account (country, institution, account number, opening date,
+  peak/closing balance, gross interest, all entered already-converted to
+  rupees) produces the schedule's disclosure rows as a workbook sheet, with
+  no Indian tax computed on the interest shown. It does not cover RSUs,
+  foreign property, or trusts (Schedule FA tables A3/B/C), compute foreign
+  dividend/interest/gains tax (Schedule FSI/OS), or prepare Form 67
+  foreign-tax-credit inputs. See docs/DESIGN-remaining-gaps.md for the
+  remaining phased Schedule FA design.
 - Past-filing import is a dashboard history feature that reads a handful of
   ITR JSON or ITR-V PDF fields when it can. Importing a previous Unravel Tax
   workbook is a separate, now-built feature (see Built above) that prefills
@@ -156,16 +172,18 @@ infer scope from the roadmap or implementation notes.
 
 - Section 234C precision for dividends/intraday/debt-MF income dated by
   quarter (listed-equity capital gains are already precise).
-- NRI: repatriation-limit tracking (design proposed,
-  docs/DESIGN-remaining-gaps.md), NRO TDS-rate precision applied as a final
-  slab-tax figure (not just the TDS reconciliation already built), and
-  refund reconciliation beyond TDS.
-- HUF: coparcener/member data model and Section 64(2) transfer clubbing
-  (design proposed, docs/DESIGN-remaining-gaps.md); partition tracking is
-  proposed to stay out of scope for calculation entirely.
+- NRI: NRO TDS-rate precision applied as a final slab-tax figure (not just
+  the TDS reconciliation already built), and refund reconciliation beyond
+  TDS.
+- HUF: partition tracking - proposed to stay out of scope for calculation
+  entirely (docs/DESIGN-remaining-gaps.md); a private partial partition is
+  tax-invisible under Section 171(9) and this tool can't verify an
+  Assessing Officer's total-partition order.
 - Single-parent Schedule SPI placement.
-- Schedule FA builder and foreign income computation for resident foreign
-  assets (phased design proposed, docs/DESIGN-remaining-gaps.md).
+- Schedule FA Phases 2-3 (RSU/ESPP and foreign equity/debt, then trusts and
+  other assets) and the foreign-income tax computation (Schedule FSI/OS)
+  for resident foreign assets - Phase 1 (foreign bank/brokerage accounts)
+  is built; see docs/DESIGN-remaining-gaps.md for the remaining phases.
 - Combining a taxable ULIP's capital gains with other equity LTCG under the
   one shared annual exemption, instead of each source using it
   independently.

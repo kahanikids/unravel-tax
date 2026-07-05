@@ -6,16 +6,21 @@ import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
 import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
 import { summarizeInsurancePolicies, type InsurancePolicy } from "../lib/insurance";
-import { ruleCatalog, type AdvanceTaxRule, type InsuranceRule, type LoanTreatmentRule, type NriDtaaRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
+import type { HufAssetTransfer, HufMember } from "../lib/hufClubbing";
+import type { ForeignAccount } from "../lib/scheduleFa";
+import { ruleCatalog, type AdvanceTaxRule, type ForeignInvestmentsRule, type HufClubbingRule, type InsuranceRule, type LoanTreatmentRule, type NriDtaaRule, type NriRepatriationRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
 import type { AisReportedFigures, NriCountry, NumericFigureKey, SupplementalFigures } from "../state/types";
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
+import { HufPanel } from "./HufPanel";
 import { InsurancePolicyPanel } from "./InsurancePolicyPanel";
 import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
 import { NriDtaaPanel } from "./NriDtaaPanel";
+import { NriRepatriationPanel } from "./NriRepatriationPanel";
 import { ReconciliationPanel } from "./ReconciliationPanel";
 import { RegimeComparisonPanel } from "./RegimeComparisonPanel";
+import { ScheduleFaPanel } from "./ScheduleFaPanel";
 import { InfoTooltip } from "./InfoTooltip";
 import type { UploadedDocument } from "./UploadStep";
 
@@ -81,21 +86,32 @@ export function ResultsStep({
   debtMfShortTermDeemedGain,
   intradayGain,
   seniorCitizen,
+  superSeniorCitizen = false,
   nri = false,
   nriCountry = null,
   huf = false,
   singleParent = false,
   hasLoans = false,
   hasInsurancePayout = false,
+  hasForeignAssets = false,
   regimeChoiceRule,
   loanTreatmentRule = ruleCatalog.loanTreatment,
   advanceTaxRule,
   capitalGainsTaxByInstalment,
   nriDtaaRule = ruleCatalog.nriDtaa,
   nriTdsRule = ruleCatalog.nriTdsAndRefunds,
+  nriRepatriationRule = ruleCatalog.nriRepatriation,
+  hufClubbingRule = ruleCatalog.hufClubbing,
+  hufMembers,
+  onChangeHufMembers,
+  hufTransfers,
+  onChangeHufTransfers,
   insuranceRule = ruleCatalog.insurance,
   insurancePolicies,
   onChangeInsurancePolicies,
+  foreignInvestmentsRule = ruleCatalog.foreignInvestments,
+  foreignAccounts,
+  onChangeForeignAccounts,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -125,6 +141,8 @@ export function ResultsStep({
   debtMfShortTermDeemedGain: number;
   intradayGain: number;
   seniorCitizen: boolean;
+  /** 80 or older; ignored unless seniorCitizen is also true. Picks the old-regime super-senior slab in the comparison panel. */
+  superSeniorCitizen?: boolean;
   nri?: boolean;
   /** NRI only. Drives the DTAA treaty rate lookups in the NRI panel. */
   nriCountry?: NriCountry;
@@ -132,6 +150,7 @@ export function ResultsStep({
   singleParent?: boolean;
   hasLoans?: boolean;
   hasInsurancePayout?: boolean;
+  hasForeignAssets?: boolean;
   regimeChoiceRule: RegimeChoiceRule;
   loanTreatmentRule?: LoanTreatmentRule;
   advanceTaxRule: AdvanceTaxRule;
@@ -139,9 +158,18 @@ export function ResultsStep({
   capitalGainsTaxByInstalment: QuarterlyCapitalGainsTax;
   nriDtaaRule?: NriDtaaRule;
   nriTdsRule?: NriTdsAndRefundsRule;
+  nriRepatriationRule?: NriRepatriationRule;
+  hufClubbingRule?: HufClubbingRule;
+  hufMembers: HufMember[];
+  onChangeHufMembers: (members: HufMember[]) => void;
+  hufTransfers: HufAssetTransfer[];
+  onChangeHufTransfers: (transfers: HufAssetTransfer[]) => void;
   insuranceRule?: InsuranceRule;
   insurancePolicies: InsurancePolicy[];
   onChangeInsurancePolicies: (policies: InsurancePolicy[]) => void;
+  foreignInvestmentsRule?: ForeignInvestmentsRule;
+  foreignAccounts: ForeignAccount[];
+  onChangeForeignAccounts: (accounts: ForeignAccount[]) => void;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -333,6 +361,17 @@ export function ResultsStep({
           </details>
         ) : null}
 
+        {nri ? (
+          <details className="refine-section">
+            <summary>NRI: repatriation check</summary>
+            <NriRepatriationPanel
+              supplementalFigures={supplementalFigures}
+              onChangeSupplementalFigures={onChangeSupplementalFigures}
+              rule={nriRepatriationRule}
+            />
+          </details>
+        ) : null}
+
         {hasInsurancePayout ? (
           <details className="refine-section" open>
             <summary>Insurance payout: is it actually taxable? (10(10D))</summary>
@@ -341,6 +380,30 @@ export function ResultsStep({
               onChangePolicies={onChangeInsurancePolicies}
               insuranceRule={insuranceRule}
               capitalGainsRule={ruleCatalog.capitalGainsEquity}
+            />
+          </details>
+        ) : null}
+
+        {huf ? (
+          <details className="refine-section">
+            <summary>HUF: members &amp; Section 64(2) transfers</summary>
+            <HufPanel
+              members={hufMembers}
+              onChangeMembers={onChangeHufMembers}
+              transfers={hufTransfers}
+              onChangeTransfers={onChangeHufTransfers}
+              rule={hufClubbingRule}
+            />
+          </details>
+        ) : null}
+
+        {hasForeignAssets ? (
+          <details className="refine-section">
+            <summary>Foreign accounts: Schedule FA rows (Phase 1)</summary>
+            <ScheduleFaPanel
+              accounts={foreignAccounts}
+              onChangeAccounts={onChangeForeignAccounts}
+              rule={foreignInvestmentsRule}
             />
           </details>
         ) : null}
@@ -362,6 +425,7 @@ export function ResultsStep({
               debtMfShortTermDeemedGain={debtMfShortTermDeemedGain}
               intradayGain={intradayGain}
               seniorCitizen={seniorCitizen}
+              superSeniorCitizen={superSeniorCitizen}
               nri={nri}
               loanDeductionsTotal={computeLoanDeductions(supplementalFigures, loanTreatmentRule).total}
               letOutIncomeOldRegime={letOut.oldRegimeIncome}

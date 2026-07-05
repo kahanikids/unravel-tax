@@ -29,11 +29,13 @@ import type {
   FilingMistakesRule,
   ForeignInvestmentsRule,
   HufBasicsRule,
+  HufClubbingRule,
   InsuranceRule,
   ItrFormSelectionRule,
   LoanTreatmentRule,
   NriNreNroRule,
   NriDtaaRule,
+  NriRepatriationRule,
   NriTdsAndRefundsRule,
   RegimeChoiceRule,
   RuleDocument,
@@ -42,12 +44,13 @@ import type {
 
 // Every rules/*.json topic, mirrored 1:1 from the top-level rules/ directory.
 // capitalGainsEquity, itrFormSelection, filingMistakesAndPenalties,
-// regimeChoice, nriNreNro, nriDtaa, nriTdsAndRefunds, hufBasics,
-// singleParentClubbing, advanceTax, insurance, and foreignInvestments are
-// typed for programmatic use (calculations, ITR selection, risk triggers,
-// regime comparison, NRI DTAA/TDS reconciliation, HUF/single-parent partial
-// calculations, and the dashboard's 10(10D) premium-cap and LRS-TCS
-// threshold checks).
+// regimeChoice, nriNreNro, nriDtaa, nriTdsAndRefunds, nriRepatriation,
+// hufBasics, hufClubbing, singleParentClubbing, advanceTax, insurance, and
+// foreignInvestments are typed for programmatic use (calculations, ITR
+// selection, risk triggers, regime comparison, NRI DTAA/TDS reconciliation,
+// NRI repatriation limit checks, HUF Section 64(2) transfer clubbing,
+// single-parent partial calculations, and the dashboard's 10(10D)
+// premium-cap and LRS-TCS threshold checks).
 // The rest are typed generically (RuleDocument) - they're surfaced as
 // reference/explanatory content today, not yet consumed by calculation
 // logic. See CLAUDE.md: never hardcode a rate that belongs in one of these.
@@ -60,14 +63,14 @@ export const ruleCatalog = {
   filingMistakesAndPenalties: filingMistakesAndPenalties as FilingMistakesRule,
   foreignInvestments: foreignInvestments as ForeignInvestmentsRule,
   hufBasics: hufBasics as HufBasicsRule,
-  hufClubbing: hufClubbing as RuleDocument,
+  hufClubbing: hufClubbing as HufClubbingRule,
   insurance: insurance as InsuranceRule,
   itrFormSelection: itrFormSelection as ItrFormSelectionRule,
   loanTreatment: loanTreatment as LoanTreatmentRule,
   newActTransition: newActTransition as RuleDocument,
   nriDtaa: nriDtaa as NriDtaaRule,
   nriNreNro: nriNreNro as NriNreNroRule,
-  nriRepatriation: nriRepatriation as RuleDocument,
+  nriRepatriation: nriRepatriation as NriRepatriationRule,
   nriResidentialStatus: nriResidentialStatus as RuleDocument,
   nriTdsAndRefunds: nriTdsAndRefunds as NriTdsAndRefundsRule,
   regimeChoice: regimeChoice as RegimeChoiceRule,

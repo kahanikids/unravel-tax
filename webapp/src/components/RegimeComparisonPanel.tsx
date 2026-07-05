@@ -19,6 +19,7 @@ export function RegimeComparisonPanel({
   debtMfShortTermDeemedGain,
   intradayGain,
   seniorCitizen,
+  superSeniorCitizen = false,
   nri = false,
   loanDeductionsTotal = 0,
   letOutIncomeOldRegime = 0,
@@ -31,6 +32,8 @@ export function RegimeComparisonPanel({
   debtMfShortTermDeemedGain: number;
   intradayGain: number;
   seniorCitizen: boolean;
+  /** 80 or older; ignored unless seniorCitizen is also true. Picks the old-regime super-senior slab. */
+  superSeniorCitizen?: boolean;
   /** A non-resident's dividends are taxed flat under Section 115A/DTAA, never at slab, so they're excluded here and shown in their own CA Summary row instead. */
   nri?: boolean;
   /** Capped loan-interest deductions from the Loans section, added to the old-regime side. */
@@ -55,7 +58,8 @@ export function RegimeComparisonPanel({
     letOutIncomeNewRegime,
     additionalOtherSlabIncome,
     excludeDividendsFromSlab: nri,
-    seniorCitizen
+    seniorCitizen,
+    superSeniorCitizen
   };
   const result = hasEnoughToCompare ? compareRegimes(comparisonInputs, rule) : null;
   const breakEven = hasEnoughToCompare ? computeRegimeBreakEven(comparisonInputs, rule) : null;
