@@ -6,7 +6,7 @@ import { ruleCatalog } from "../rules";
 export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
   const hraAboveThreshold = Boolean(answers.hraClaimed && answers.hraAboveThreshold);
   const isRor = answers.residency === "resident";
-  const hufYes = Boolean(answers.huf);
+  const hufYes = answers.residency !== "nri" && Boolean(answers.huf);
   const capitalGainsDisqualifiesItr1 = (answers.capitalGainsAssetTypes ?? []).length > 0;
   const foreignAssetsYes = isRor && Boolean(answers.foreignAssets);
   return {

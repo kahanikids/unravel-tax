@@ -498,6 +498,44 @@ function checkOrientationForm() {
     "Validated super-senior follow-up: hidden unless 60+ is Yes, shown and labelled once it is."
   );
 
+  const superSeniorHtml = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        seniorCitizen: true,
+        superSeniorCitizen: true,
+        incomeSources: ["salary_pension"]
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  if (superSeniorHtml.includes("Minor child with own income")) {
+    throw new Error(
+      "The minor-child income question should be hidden when superSeniorCitizen is Yes (80+)."
+    );
+  }
+
+  const seniorNotSuperHtml = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        seniorCitizen: true,
+        superSeniorCitizen: false,
+        incomeSources: ["salary_pension"]
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(seniorNotSuperHtml, "Minor child with own income");
+
+  console.log(
+    "Validated minor-child question: hidden for confirmed 80+, still shown for 60-79."
+  );
+
   const businessPresumptiveSummary = renderToString(
     <OrientationForm
       answers={{
@@ -531,6 +569,28 @@ function checkOrientationForm() {
   console.log(
     "Validated presumptive follow-up: shown for resident/RNOR with business income, hidden otherwise."
   );
+
+  const presumptiveHelperCopy =
+    "Presumptive taxation is an optional simplified scheme for small goods businesses (Section 44AD), freelancers and professionals (44ADA), or goods transport (44AE). You declare income as a fixed percentage of turnover instead of keeping full books. Say Yes only if you actually opted for this scheme this year. Skip if you're not sure yet.";
+  const orientationSource = readFileSync(
+    resolve(import.meta.dirname, "../src/components/OrientationForm.tsx"),
+    "utf8"
+  );
+  assertIncludes(orientationSource, presumptiveHelperCopy);
+  if (orientationSource.includes("On 44AD/44ADA/44AE? Say Yes.")) {
+    throw new Error("Presumptive question should not use the old cryptic mobile helper.");
+  }
+  if (orientationSource.includes("infoTooltip:")) {
+    throw new Error("Presumptive explanation should be helper text, not an info icon.");
+  }
+  if (businessPresumptiveSummary.includes('class="orientation-helper"')) {
+    throw new Error(
+      "Presumptive summary recap should not show a default helper block under the prompt."
+    );
+  }
+  console.log(
+    "Validated presumptive helper: plain-language explanation shown below the question."
+  );
 }
 
 function checkNriOrientationAndDtaa() {
@@ -550,6 +610,9 @@ function checkNriOrientationAndDtaa() {
   assertIncludes(nriFlowHtml, "Days in India this year");
   if (nriFlowHtml.includes("HRA")) {
     throw new Error("HRA questions should be hidden for the NRI profile.");
+  }
+  if (nriFlowHtml.includes("family (HUF)") || nriFlowHtml.includes("Personal or HUF return")) {
+    throw new Error("HUF questions should be hidden for the NRI profile.");
   }
   if (nriFlowHtml.includes("More than one Indian employer")) {
     throw new Error("Multiple-employer question should be hidden for NRIs.");
@@ -667,6 +730,18 @@ function checkNriOrientationAndDtaa() {
   );
   if (residentHtml.includes("Days in India this year")) {
     throw new Error("Days-in-India question should only show for NRI/RNOR profiles.");
+  }
+
+  const staleHufNriFlags = deriveProfileFlags({
+    ...BLANK_ORIENTATION,
+    residency: "nri",
+    nriCountry: "Singapore",
+    huf: true,
+    hufReturnScope: "huf_return",
+    incomeSources: ["bank_interest"]
+  });
+  if (staleHufNriFlags.huf || staleHufNriFlags.hufFilingAsEntity) {
+    throw new Error("Stale HUF answers must not set huf flags when residency is NRI.");
   }
 
   const singaporeFlags = deriveProfileFlags({

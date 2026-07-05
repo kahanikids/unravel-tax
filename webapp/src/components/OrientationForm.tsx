@@ -178,7 +178,7 @@ const QUESTIONS: Question[] = [
     set: (a, value) => {
       const residency = value as NonNullable<OrientationAnswers["residency"]>;
       if (residency === "nri") {
-        return clearResidentOnlyAnswers({ ...a, residency });
+        return clearResidentOnlyAnswers({ ...a, residency, huf: null, hufReturnScope: null });
       }
       if (residency === "rnor") {
         return clearNriOnlyAnswers(clearResidentOnlyAnswers({ ...a, residency }));
@@ -212,37 +212,6 @@ const QUESTIONS: Question[] = [
     set: (a, value) => ({ ...a, nriDaysInIndia: value })
   },
   {
-    id: "huf",
-    kind: "yes-no",
-    prompt:
-      "Is any of this income or investment held through a family (HUF) rather than just you personally?",
-    helper: "Skip this if that term is unfamiliar. It almost certainly doesn't apply to you.",
-    mobileHelper: "Not sure? Skip it.",
-    visible: () => true,
-    skippable: true,
-    value: (a) => a.huf,
-    set: (a, value) =>
-      value
-        ? { ...a, huf: value }
-        : { ...a, huf: value, hufReturnScope: null }
-  },
-  {
-    id: "hufReturnScope",
-    kind: "choice",
-    prompt: "Are you preparing your personal return or the HUF's return?",
-    helper:
-      "Personal = your own ITR even if some investments sit in the HUF's name. HUF's return = filing as the HUF assessee with the HUF's PAN.",
-    mobileHelper: "Your return or the HUF's?",
-    options: [
-      { label: "My personal return", value: "personal" },
-      { label: "The HUF's return", value: "huf_return" }
-    ],
-    visible: (a) => a.huf === true,
-    skippable: true,
-    value: (a) => a.hufReturnScope,
-    set: (a, value) => ({ ...a, hufReturnScope: value as "personal" | "huf_return" })
-  },
-  {
     id: "seniorCitizen",
     kind: "yes-no",
     prompt: "Are you 60 or older?",
@@ -266,19 +235,10 @@ const QUESTIONS: Question[] = [
     visible: (a) => a.seniorCitizen === true,
     skippable: true,
     value: (a) => a.superSeniorCitizen,
-    set: (a, value) => ({ ...a, superSeniorCitizen: value })
-  },
-  {
-    id: "singleParent",
-    kind: "yes-no",
-    prompt: "Does any minor child have income or investments in their own name?",
-    helper:
-      "If yes, the higher-earning parent usually clubs it on their return, not only single parents. Answer No if no minor has separate income.",
-    mobileHelper: "Minor with their own income? Say Yes.",
-    visible: () => true,
-    skippable: true,
-    value: (a) => a.singleParent,
-    set: (a, value) => ({ ...a, singleParent: value })
+    set: (a, value) =>
+      value
+        ? { ...a, superSeniorCitizen: value, singleParent: null }
+        : { ...a, superSeniorCitizen: value }
   },
   {
     id: "incomeSources",
@@ -302,6 +262,66 @@ const QUESTIONS: Question[] = [
       multipleEmployers:
         values.includes("salary_pension") && isTaxResident(a) ? a.multipleEmployers : null
     })
+  },
+  {
+    id: "incomeLikelyAbove50L",
+    kind: "yes-no",
+    prompt: "Is your total income likely above ₹50 lakh this year?",
+    helper:
+      "ITR-1 is only for resident individuals up to ₹50 lakh. If you're not sure yet, skip. We'll check again once you enter salary and other figures.",
+    mobileHelper: "Total income above ₹50 lakh?",
+    visible: isTaxResident,
+    skippable: true,
+    value: (a) => a.incomeLikelyAbove50L,
+    set: (a, value) => ({ ...a, incomeLikelyAbove50L: value })
+  },
+  {
+    id: "businessIncome",
+    kind: "yes-no",
+    prompt:
+      "Did you have business, freelance, professional, F&O, intraday, or speculative trading income?",
+    helper:
+      "This changes your ITR form (usually ITR-3), due date, and whether books may need audit. Answer No if you only had salary, interest, dividends, or long-term investing.",
+    mobileHelper: "Freelance, F&O, or intraday? Say Yes.",
+    visible: isTaxResident,
+    skippable: true,
+    value: (a) => a.businessIncome,
+    set: (a, value) => ({ ...a, businessIncome: value, presumptiveTaxation: value ? a.presumptiveTaxation : null })
+  },
+  {
+    id: "presumptiveTaxation",
+    kind: "yes-no",
+    prompt:
+      "Are you using presumptive taxation under Section 44AD, 44ADA, or 44AE?",
+    helper:
+      "Presumptive taxation is an optional simplified scheme for small goods businesses (Section 44AD), freelancers and professionals (44ADA), or goods transport (44AE). You declare income as a fixed percentage of turnover instead of keeping full books. Say Yes only if you actually opted for this scheme this year. Skip if you're not sure yet.",
+    visible: (a) => isTaxResident(a) && a.businessIncome === true,
+    skippable: true,
+    value: (a) => a.presumptiveTaxation,
+    set: (a, value) => ({ ...a, presumptiveTaxation: value })
+  },
+  {
+    id: "housePropertyCount",
+    kind: "choice",
+    prompt: "How many house properties did you own or report income/loss from?",
+    helper: "ITR-1 allows up to two house properties. More than two needs ITR-2.",
+    options: [
+      { label: "One", value: "one" },
+      { label: "Two", value: "two" },
+      { label: "More than two", value: "more_than_two" }
+    ],
+    visible: (a) => isTaxResident(a) && hasRentIncome(a),
+    value: (a) => a.housePropertyCount,
+    set: (a, value) => ({ ...a, housePropertyCount: value as HousePropertyCount })
+  },
+  {
+    id: "multipleEmployers",
+    kind: "yes-no",
+    prompt: "Did you change jobs this year, or have income from more than one employer in India?",
+    visible: (a) => isTaxResident(a) && hasSalaryIncome(a),
+    skippable: true,
+    value: (a) => a.multipleEmployers,
+    set: (a, value) => ({ ...a, multipleEmployers: value })
   },
   {
     id: "capitalGainsAssetTypes",
@@ -363,67 +383,6 @@ const QUESTIONS: Question[] = [
     skippable: true,
     value: (a) => a.nriTenantTdsForm16A,
     set: (a, value) => ({ ...a, nriTenantTdsForm16A: value })
-  },
-  {
-    id: "businessIncome",
-    kind: "yes-no",
-    prompt:
-      "Did you have business, freelance, professional, F&O, intraday, or speculative trading income?",
-    helper:
-      "This changes your ITR form (usually ITR-3), due date, and whether books may need audit. Answer No if you only had salary, interest, dividends, or long-term investing.",
-    mobileHelper: "Freelance, F&O, or intraday? Say Yes.",
-    visible: isTaxResident,
-    skippable: true,
-    value: (a) => a.businessIncome,
-    set: (a, value) => ({ ...a, businessIncome: value, presumptiveTaxation: value ? a.presumptiveTaxation : null })
-  },
-  {
-    id: "presumptiveTaxation",
-    kind: "yes-no",
-    prompt:
-      "Are you using presumptive taxation under Section 44AD, 44ADA, or 44AE?",
-    helper:
-      "If yes, you may file ITR-4 (Sugam) instead of ITR-3, as long as total income stays within ₹50 lakh and you are not on intraday/F&O trading. Skip if you are not sure yet.",
-    mobileHelper: "On 44AD/44ADA/44AE? Say Yes.",
-    visible: (a) => isTaxResident(a) && a.businessIncome === true,
-    skippable: true,
-    value: (a) => a.presumptiveTaxation,
-    set: (a, value) => ({ ...a, presumptiveTaxation: value })
-  },
-  {
-    id: "incomeLikelyAbove50L",
-    kind: "yes-no",
-    prompt: "Is your total income likely above ₹50 lakh this year?",
-    helper:
-      "ITR-1 is only for resident individuals up to ₹50 lakh. If you're not sure yet, skip. We'll check again once you enter salary and other figures.",
-    mobileHelper: "Total income above ₹50 lakh?",
-    visible: isTaxResident,
-    skippable: true,
-    value: (a) => a.incomeLikelyAbove50L,
-    set: (a, value) => ({ ...a, incomeLikelyAbove50L: value })
-  },
-  {
-    id: "housePropertyCount",
-    kind: "choice",
-    prompt: "How many house properties did you own or report income/loss from?",
-    helper: "ITR-1 allows up to two house properties. More than two needs ITR-2.",
-    options: [
-      { label: "One", value: "one" },
-      { label: "Two", value: "two" },
-      { label: "More than two", value: "more_than_two" }
-    ],
-    visible: (a) => isTaxResident(a) && hasRentIncome(a),
-    value: (a) => a.housePropertyCount,
-    set: (a, value) => ({ ...a, housePropertyCount: value as HousePropertyCount })
-  },
-  {
-    id: "multipleEmployers",
-    kind: "yes-no",
-    prompt: "Did you change jobs this year, or have income from more than one employer in India?",
-    visible: (a) => isTaxResident(a) && hasSalaryIncome(a),
-    skippable: true,
-    value: (a) => a.multipleEmployers,
-    set: (a, value) => ({ ...a, multipleEmployers: value })
   },
   {
     id: "hraClaimed",
@@ -509,6 +468,18 @@ const QUESTIONS: Question[] = [
     set: (a, value) => ({ ...a, insurancePayout: value })
   },
   {
+    id: "singleParent",
+    kind: "yes-no",
+    prompt: "Does any minor child have income or investments in their own name?",
+    helper:
+      "If yes, the higher-earning parent usually clubs it on their return, not only single parents. Answer No if no minor has separate income.",
+    mobileHelper: "Minor with their own income? Say Yes.",
+    visible: (a) => a.superSeniorCitizen !== true,
+    skippable: true,
+    value: (a) => a.singleParent,
+    set: (a, value) => ({ ...a, singleParent: value })
+  },
+  {
     id: "foreignAssets",
     kind: "yes-no",
     prompt:
@@ -560,6 +531,37 @@ const QUESTIONS: Question[] = [
     skippable: true,
     value: (a) => a.foreignCashValueInsurance,
     set: (a, value) => ({ ...a, foreignCashValueInsurance: value })
+  },
+  {
+    id: "huf",
+    kind: "yes-no",
+    prompt:
+      "Is any of this income or investment held through a family (HUF) rather than just you personally?",
+    helper: "Skip this if that term is unfamiliar. It almost certainly doesn't apply to you.",
+    mobileHelper: "Not sure? Skip it.",
+    visible: isTaxResident,
+    skippable: true,
+    value: (a) => a.huf,
+    set: (a, value) =>
+      value
+        ? { ...a, huf: value }
+        : { ...a, huf: value, hufReturnScope: null }
+  },
+  {
+    id: "hufReturnScope",
+    kind: "choice",
+    prompt: "Are you preparing your personal return or the HUF's return?",
+    helper:
+      "Personal = your own ITR even if some investments sit in the HUF's name. HUF's return = filing as the HUF assessee with the HUF's PAN.",
+    mobileHelper: "Your return or the HUF's?",
+    options: [
+      { label: "My personal return", value: "personal" },
+      { label: "The HUF's return", value: "huf_return" }
+    ],
+    visible: (a) => isTaxResident(a) && a.huf === true,
+    skippable: true,
+    value: (a) => a.hufReturnScope,
+    set: (a, value) => ({ ...a, hufReturnScope: value as "personal" | "huf_return" })
   }
 ];
 
