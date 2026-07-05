@@ -71,8 +71,9 @@ ITR-2 or ITR-4.
 
 Use ITR-4 if you are a resident individual/HUF/firm (not an LLP) with
 total income up to Rs 50 lakh who has opted for the presumptive taxation
-scheme under Section 44AD, 44ADA or 44AE. This tool does not currently
-compute presumptive income, so it does not route anyone to ITR-4.
+scheme under Section 44AD, 44ADA or 44AE. This tool routes presumptive
+cases to ITR-4 when you say so in About You, but it does not yet compute
+presumptive turnover or audit thresholds — confirm eligibility with your CA.
 
 ## ITR-5, ITR-6, ITR-7 — not individuals
 

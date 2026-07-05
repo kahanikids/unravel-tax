@@ -72,6 +72,7 @@ import { ruleCatalog } from "./rules";
 import {
   BLANK_AIS_REPORTED_FIGURES,
   BLANK_ORIENTATION,
+  mergeOrientationAnswers,
   BLANK_SUPPLEMENTAL_FIGURES,
   STEP_ORDER,
   type AisReportedFigures,
@@ -269,6 +270,12 @@ function App() {
   );
   const flags = useMemo(() => deriveProfileFlags(orientation), [orientation]);
   const hasBusinessIncome = useMemo(
+    () =>
+      flags.declaredBusinessIncome ||
+      transactions.some((transaction) => transaction.taxClass === "Intraday"),
+    [flags.declaredBusinessIncome, transactions]
+  );
+  const hasSpeculativeIncome = useMemo(
     () => transactions.some((transaction) => transaction.taxClass === "Intraday"),
     [transactions]
   );
@@ -311,16 +318,23 @@ function App() {
     );
   }, [rulesSummary, supplementalFigures]);
   const itrForm = useMemo(
-    () => selectItrForm(flags, hasBusinessIncome, ruleCatalog.itrFormSelection, totalIncomeForItr),
-    [flags, hasBusinessIncome, totalIncomeForItr]
+    () =>
+      selectItrForm(
+        flags,
+        hasBusinessIncome,
+        ruleCatalog.itrFormSelection,
+        totalIncomeForItr,
+        hasSpeculativeIncome
+      ),
+    [flags, hasBusinessIncome, hasSpeculativeIncome, totalIncomeForItr]
   );
   const riskTriggers = useMemo(
     () => evaluateRiskTriggers(flags, hasBusinessIncome, itrForm, new Date()),
     [flags, hasBusinessIncome, itrForm]
   );
   const caRecommendation = useMemo(
-    () => caOrSelfFileRecommendation(flags, riskTriggers, hasBusinessIncome),
-    [flags, riskTriggers, hasBusinessIncome]
+    () => caOrSelfFileRecommendation(flags, riskTriggers, hasBusinessIncome, itrForm),
+    [flags, riskTriggers, hasBusinessIncome, itrForm]
   );
   const checklistItems: ChecklistItem[] = useMemo(
     () => buildChecklist(flags, transactions.length > 0),
@@ -890,7 +904,7 @@ function App() {
   // pointer): loads everything except step/furthestStepIndex, which each
   // caller sets to wherever it's actually navigating.
   function hydrateSession(session: PersistedSession) {
-    setOrientation(session.orientation);
+    setOrientation(mergeOrientationAnswers(session.orientation));
     setDocuments(session.documents);
     // Merge over defaults: sessions saved before salaryIncome/oldRegimeDeductions
     // existed won't have them, and a missing number would break the regime

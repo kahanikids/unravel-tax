@@ -17,6 +17,7 @@ import {
   BLANK_AIS_REPORTED_FIGURES,
   BLANK_ORIENTATION,
   BLANK_SUPPLEMENTAL_FIGURES,
+  mergeOrientationAnswers,
   STEP_ORDER
 } from "../src/state/types";
 import {
@@ -260,6 +261,16 @@ function checkComputationFirstPathIsReachable() {
   console.log(
     "Validated 'Add documents' jump: documents step stays reachable back to orientation, and blank orientation resolves to a safe default profile."
   );
+
+  const legacyOrientation = mergeOrientationAnswers({
+    residency: "resident",
+    incomeSources: ["salary_pension", "capital_gains"]
+  });
+  deriveProfileFlags(legacyOrientation);
+  if (legacyOrientation.capitalGainsAssetTypes.length !== 0) {
+    throw new Error("Legacy session merge should default capitalGainsAssetTypes to [].");
+  }
+  console.log("Validated legacy orientation merge: pre-P1 saved sessions get new fields without crashing.");
 }
 
 /**
@@ -414,7 +425,7 @@ function checkOrientationForm() {
     <OrientationForm answers={BLANK_ORIENTATION} onChange={noop as never} onComplete={noop} />
   );
   assertIncludes(html, "Question 1 of");
-  assertIncludes(html, "Are you living in India right now");
+  assertIncludes(html, "tax residential status");
   if (html.includes("Start Over")) {
     throw new Error(
       "'Start Over' no longer belongs in the orientation card; it moved to the welcome resume-banner."
@@ -442,8 +453,9 @@ function checkOrientationForm() {
     />
   );
   assertIncludes(summaryHtml, "Your answers");
-  assertIncludes(summaryHtml, "Where you live");
-  assertIncludes(summaryHtml, "I live in India");
+  assertIncludes(summaryHtml, "Tax residential status");
+  assertIncludes(summaryHtml, "Resident in India (ROR)");
+  assertIncludes(summaryHtml, "treated as No for now");
   assertIncludes(summaryHtml, "Salary or pension");
   assertIncludes(summaryHtml, ">Continue<");
   assertIncludes(summaryHtml, ">Update Answers<");
@@ -485,22 +497,166 @@ function checkOrientationForm() {
   console.log(
     "Validated super-senior follow-up: hidden unless 60+ is Yes, shown and labelled once it is."
   );
+
+  const businessPresumptiveSummary = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        incomeSources: ["salary_pension"],
+        businessIncome: true
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(businessPresumptiveSummary, "Presumptive taxation (44AD/44ADA/44AE)");
+
+  const businessSkippedSummary = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        incomeSources: ["salary_pension"],
+        businessIncome: false
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  if (businessSkippedSummary.includes("Presumptive taxation")) {
+    throw new Error("Presumptive question should be hidden when business income is No.");
+  }
+
+  console.log(
+    "Validated presumptive follow-up: shown for resident/RNOR with business income, hidden otherwise."
+  );
 }
 
 function checkNriOrientationAndDtaa() {
   const nriFlowHtml = renderToString(
     <OrientationForm
-      answers={{ ...BLANK_ORIENTATION, residency: "nri" }}
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "nri",
+        nriCountry: "Singapore",
+        incomeSources: ["salary_pension", "bank_interest"]
+      }}
       onChange={noop as never}
       onComplete={noop}
     />
   );
-  // Saved NRI residency shows the recap first; country and days-in-India are dedicated follow-up rows.
   assertIncludes(nriFlowHtml, "Country of tax residence");
   assertIncludes(nriFlowHtml, "Days in India this year");
   if (nriFlowHtml.includes("HRA")) {
     throw new Error("HRA questions should be hidden for the NRI profile.");
   }
+  if (nriFlowHtml.includes("More than one Indian employer")) {
+    throw new Error("Multiple-employer question should be hidden for NRIs.");
+  }
+  if (nriFlowHtml.includes("Business, F&O, or intraday")) {
+    throw new Error("Business-income question should be hidden for NRIs.");
+  }
+  assertIncludes(nriFlowHtml, "TDS deducted on NRI income");
+  assertIncludes(nriFlowHtml, "TRC and Form 10F");
+  assertIncludes(nriFlowHtml, "Form 13 lower/nil TDS");
+
+  const nriRentHtml = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "nri",
+        nriCountry: "Singapore",
+        incomeSources: ["rent"],
+        nriTenantTdsForm16A: false
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(nriRentHtml, "Tenant TDS / Form 16A");
+
+  const residentCgHtml = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        incomeSources: ["capital_gains"],
+        capitalGainsAssetTypes: ["property"]
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(residentCgHtml, "Other capital-gains types sold");
+  assertIncludes(residentCgHtml, "Property or land");
+
+  const residentForeignHtml = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        incomeSources: ["salary_pension"],
+        foreignAssets: true,
+        foreignProperty: true
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(residentForeignHtml, "Foreign immovable property");
+  if (residentForeignHtml.includes("Signing authority")) {
+    // all four follow-ups visible in summary when foreignAssets=yes
+  }
+
+  const hufScopeHtml = renderToString(
+    <OrientationForm
+      answers={{
+        ...BLANK_ORIENTATION,
+        residency: "resident",
+        incomeSources: ["salary_pension"],
+        huf: true,
+        hufReturnScope: "huf_return"
+      }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(hufScopeHtml, "Personal or HUF return");
+  assertIncludes(hufScopeHtml, "HUF&#x27;s return");
+
+  const hufEntityFlags = deriveProfileFlags({
+    ...BLANK_ORIENTATION,
+    huf: true,
+    hufReturnScope: "huf_return",
+    incomeSources: ["bank_interest"]
+  });
+  if (!hufEntityFlags.hufFilingAsEntity) {
+    throw new Error("huf_return scope should set hufFilingAsEntity.");
+  }
+
+  const cgFlags = deriveProfileFlags({
+    ...BLANK_ORIENTATION,
+    residency: "resident",
+    incomeSources: ["capital_gains"],
+    capitalGainsAssetTypes: ["crypto_vda"]
+  });
+  if (!cgFlags.capitalGainsDisqualifiesItr1) {
+    throw new Error("Declared crypto/VDA gains should disqualify ITR-1 routing.");
+  }
+
+  const rnorHtml = renderToString(
+    <OrientationForm
+      answers={{ ...BLANK_ORIENTATION, residency: "rnor", incomeSources: ["salary_pension"] }}
+      onChange={noop as never}
+      onComplete={noop}
+    />
+  );
+  assertIncludes(rnorHtml, "Days in India this year");
+  if (rnorHtml.includes("Holds assets outside India")) {
+    throw new Error("Schedule FA question should be ROR-only, not shown to RNOR in the recap.");
+  }
+  assertIncludes(rnorHtml, "More than one Indian employer");
 
   const residentHtml = renderToString(
     <OrientationForm
@@ -510,7 +666,7 @@ function checkNriOrientationAndDtaa() {
     />
   );
   if (residentHtml.includes("Days in India this year")) {
-    throw new Error("Days-in-India question should only show for the NRI profile.");
+    throw new Error("Days-in-India question should only show for NRI/RNOR profiles.");
   }
 
   const singaporeFlags = deriveProfileFlags({
@@ -534,7 +690,7 @@ function checkNriOrientationAndDtaa() {
   }
 
   console.log(
-    "Validated NRI orientation branch: country-of-residence question, resident-only questions hidden, DTAA MF caveats by country."
+    "Validated NRI orientation branch: country-of-residence question, NRI TDS/TRC/Form 13 prompts, resident-only questions hidden, capital-gains asset split, foreign-asset follow-ups, HUF return scope, DTAA MF caveats by country."
   );
 }
 
@@ -1699,12 +1855,20 @@ function checkConfidenceReportPanel() {
 
 const BLANK_FLAGS: ProfileFlags = {
   nri: false,
+  rnor: false,
   nriCountry: null,
   huf: false,
+  hufFilingAsEntity: false,
+  hufPersonalHoldings: false,
   seniorCitizen: false,
   superSeniorCitizen: false,
   singleParent: false,
+  declaredBusinessIncome: false,
+  usesPresumptiveTaxation: false,
+  incomeLikelyAbove50L: false,
+  housePropertiesOverItr1Limit: false,
   hasCapitalGains: false,
+  capitalGainsDisqualifiesItr1: false,
   hasDividends: false,
   hasBankInterest: false,
   hasRent: false,
@@ -1713,7 +1877,12 @@ const BLANK_FLAGS: ProfileFlags = {
   epfRisk: false,
   hasLoans: false,
   hasInsurancePayout: false,
-  hasForeignAssets: false
+  hasForeignAssets: false,
+  hasExtendedForeignAssets: false,
+  nriNeedsForm13: false,
+  nriTdsDeducted: false,
+  nriMissingTrc: false,
+  nriTenantMissingForm16A: false
 };
 
 function checkItrFormSelection() {
@@ -1726,9 +1895,16 @@ function checkItrFormSelection() {
     hasBusinessIncome: boolean,
     totalIncome: number,
     expectedForm: string,
-    expectedKey: string
+    expectedKey: string,
+    hasSpeculativeIncome = false
   ) => {
-    const choice = selectItrForm(flags, hasBusinessIncome, rule, totalIncome);
+    const choice = selectItrForm(
+      flags,
+      hasBusinessIncome,
+      rule,
+      totalIncome,
+      hasSpeculativeIncome
+    );
     if (choice.form !== expectedForm || choice.key !== expectedKey) {
       throw new Error(
         `ITR selection for ${label}: expected ${expectedForm} (${expectedKey}), got ${choice.form} (${choice.key}).`
@@ -1787,15 +1963,109 @@ function checkItrFormSelection() {
     "nri_no_business"
   );
   expect(
+    "RNOR without business",
+    { ...BLANK_FLAGS, rnor: true },
+    false,
+    100000,
+    "ITR-2",
+    "nri_no_business"
+  );
+  expect(
+    "resident declaring income above 50L",
+    { ...BLANK_FLAGS, incomeLikelyAbove50L: true },
+    false,
+    0,
+    "ITR-2",
+    "resident_above_itr1_limit"
+  );
+  expect(
+    "resident with more than two house properties",
+    { ...BLANK_FLAGS, housePropertiesOverItr1Limit: true },
+    false,
+    100000,
+    "ITR-2",
+    "resident_capital_gains_or_clubbing"
+  );
+  expect(
     "HUF without business",
-    { ...BLANK_FLAGS, huf: true },
+    { ...BLANK_FLAGS, huf: true, hufFilingAsEntity: true },
     false,
     100000,
     "ITR-2",
     "huf_no_business"
   );
+  expect(
+    "HUF investments on personal return — not HUF form",
+    { ...BLANK_FLAGS, huf: true, hufPersonalHoldings: true },
+    false,
+    100000,
+    "ITR-1",
+    "resident_simple"
+  );
+  expect(
+    "declared property/crypto capital gains without upload",
+    { ...BLANK_FLAGS, capitalGainsDisqualifiesItr1: true },
+    false,
+    100000,
+    "ITR-2",
+    "resident_capital_gains_or_clubbing"
+  );
   // Unknown income (0) must never trip the ceiling - the safe direction.
   expect("resident, income not yet known", BLANK_FLAGS, false, 0, "ITR-1", "resident_simple");
+
+  expect(
+    "resident with presumptive business income under the cap",
+    { ...BLANK_FLAGS, usesPresumptiveTaxation: true },
+    true,
+    cap - 1,
+    "ITR-4",
+    "presumptive_non_audit"
+  );
+  expect(
+    "HUF with presumptive business income under the cap",
+    { ...BLANK_FLAGS, huf: true, hufFilingAsEntity: true, usesPresumptiveTaxation: true },
+    true,
+    cap - 1,
+    "ITR-4",
+    "huf_presumptive_non_audit"
+  );
+  expect(
+    "presumptive business but income above the cap",
+    { ...BLANK_FLAGS, usesPresumptiveTaxation: true },
+    true,
+    cap + 1,
+    "ITR-3",
+    "business_or_speculative_non_audit"
+  );
+  expect(
+    "presumptive business but RNOR",
+    { ...BLANK_FLAGS, rnor: true, usesPresumptiveTaxation: true },
+    true,
+    cap - 1,
+    "ITR-3",
+    "nri_with_business"
+  );
+  expect(
+    "presumptive business but intraday documents detected",
+    { ...BLANK_FLAGS, usesPresumptiveTaxation: true },
+    true,
+    cap - 1,
+    "ITR-3",
+    "business_or_speculative_non_audit",
+    true
+  );
+  expect(
+    "presumptive business but capital gains flagged",
+    { ...BLANK_FLAGS, usesPresumptiveTaxation: true, hasCapitalGains: true },
+    true,
+    cap - 1,
+    "ITR-3",
+    "business_or_speculative_non_audit"
+  );
+
+  if (!ITR_FORM_REASONS.presumptive_non_audit?.includes("44AD")) {
+    throw new Error("ITR-4 reason copy should mention the presumptive sections.");
+  }
 
   // The ITR-1 recommendation must be honest about disqualifiers this tool can't see.
   const itr1Reason = ITR_FORM_REASONS.resident_simple;
@@ -1808,7 +2078,7 @@ function checkItrFormSelection() {
   }
 
   console.log(
-    "Validated ITR form selection: Rs 50 lakh ITR-1 ceiling, capital-gains/clubbing/NRI/HUF/intraday routing, and the honest ITR-1 disqualifier caveat."
+    "Validated ITR form selection: Rs 50 lakh ITR-1 ceiling, capital-gains/clubbing/NRI/HUF/intraday routing, presumptive ITR-4 routing, and the honest ITR-1 disqualifier caveat."
   );
 }
 
@@ -2252,6 +2522,7 @@ function checkWelcomeDisclaimerBanner() {
   );
   assertIncludes(html, WELCOME_DISCLAIMER_BANNER);
   assertIncludes(html, 'class="welcome-disclaimer-banner"');
+  assertIncludes(html, 'class="welcome-disclaimer-icon"');
   assertIncludes(html, "Got It");
   if (
     html.includes("Import Last Year's Workbook") ||

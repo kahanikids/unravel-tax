@@ -20,9 +20,9 @@ const ACCOUNT_TYPE_LABELS: Record<ForeignAccountType, string> = {
 /**
  * Phase 1 of the Schedule FA builder: foreign bank and brokerage accounts
  * only (tables A1/A2 combined - RSUs, foreign property, and trusts aren't
- * covered here). Disclosure rows only, no tax computed - see
- * rules/foreign-investments.md and docs/DESIGN-remaining-gaps.md for why
- * the rest of the schedule is out of scope for now. Entirely skippable.
+ * covered here). Disclosure rows plus interest folded into slab income -
+ * see rules/foreign-investments.md and docs/DESIGN-remaining-gaps.md for
+ * why the rest of the schedule is out of scope for now. Entirely skippable.
  */
 export function ScheduleFaPanel({
   accounts,
@@ -59,10 +59,10 @@ export function ScheduleFaPanel({
         you. <RuleSourceLink refs={rule.source_refs} />
       </p>
       <p className="step-lede">
-        This produces the disclosure rows only, for your CA to place into Schedule FA - it
-        doesn&apos;t compute Indian tax on this interest (that&apos;s a separate schedule, Schedule
-        FSI/OS) and doesn&apos;t decide whether you must file Schedule FA at all (see the
-        foreign-assets checklist item and caveat for that).
+        This produces disclosure rows for your CA to place into Schedule FA. Any gross interest
+        you enter is folded into your regime comparison as slab income (a planning figure, not a
+        per-country Schedule FSI/OS breakdown). It doesn&apos;t decide whether you must file
+        Schedule FA at all (see the foreign-assets checklist item and caveat for that).
       </p>
 
       {accounts.length === 0 ? (

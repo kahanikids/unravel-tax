@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import type { IncomeSource, NriCountry, OrientationAnswers } from "../state/types";
+import type {
+  CapitalGainsAssetType,
+  HousePropertyCount,
+  IncomeSource,
+  NriCountry,
+  OrientationAnswers
+} from "../state/types";
 
 type QuestionBase = {
   id: string;
@@ -46,7 +52,22 @@ type NumberQuestion = QuestionBase & {
   set: (answers: OrientationAnswers, value: number | null) => OrientationAnswers;
 };
 
-type Question = YesNoQuestion | ChoiceQuestion | MultiQuestion | NumberQuestion;
+type CapitalGainsMultiQuestion = QuestionBase & {
+  kind: "cg-multi";
+  options: { label: string; value: CapitalGainsAssetType }[];
+  value: (answers: OrientationAnswers) => CapitalGainsAssetType[];
+  set: (answers: OrientationAnswers, values: CapitalGainsAssetType[]) => OrientationAnswers;
+};
+
+type Question = YesNoQuestion | ChoiceQuestion | MultiQuestion | NumberQuestion | CapitalGainsMultiQuestion;
+
+const CAPITAL_GAINS_ASSET_OPTIONS: { label: string; value: CapitalGainsAssetType }[] = [
+  { label: "Property or land", value: "property" },
+  { label: "Crypto or virtual digital assets", value: "crypto_vda" },
+  { label: "Unlisted shares", value: "unlisted_shares" },
+  { label: "Foreign shares outside India", value: "foreign_shares" },
+  { label: "Debt mutual funds", value: "debt_mf" }
+];
 
 const INCOME_OPTIONS: { label: string; value: IncomeSource }[] = [
   { label: "Salary or pension", value: "salary_pension" },
@@ -59,7 +80,7 @@ const INCOME_OPTIONS: { label: string; value: IncomeSource }[] = [
 
 const INCOME_OPTIONS_NRI: { label: string; value: IncomeSource }[] = [
   { label: "Salary for work done in India", value: "salary_pension" },
-  { label: "Interest on NRO or Indian bank accounts (not NRE)", value: "bank_interest" },
+  { label: "Interest on NRO or other Indian accounts, not NRE", value: "bank_interest" },
   { label: "Mutual funds or shares you sold in India", value: "capital_gains" },
   { label: "Dividends from Indian companies", value: "dividends" },
   { label: "Rent from property in India", value: "rent" },
@@ -87,16 +108,55 @@ const NRI_COUNTRY_OPTIONS: { label: string; value: string }[] = [
 ];
 
 const isNri = (answers: OrientationAnswers) => answers.residency === "nri";
-const isResident = (answers: OrientationAnswers) => answers.residency !== "nri";
+const isRnor = (answers: OrientationAnswers) => answers.residency === "rnor";
+const isRor = (answers: OrientationAnswers) => answers.residency === "resident";
+/** Resident or RNOR — Indian tax resident, not NRI. */
+const isTaxResident = (answers: OrientationAnswers) =>
+  answers.residency === "resident" || answers.residency === "rnor";
+const hasSalaryIncome = (answers: OrientationAnswers) =>
+  answers.incomeSources.includes("salary_pension");
+const hasRentIncome = (answers: OrientationAnswers) => answers.incomeSources.includes("rent");
 
-function clearResidentOnlyAnswers(answers: OrientationAnswers): OrientationAnswers {
+const hasCapitalGainsIncome = (answers: OrientationAnswers) =>
+  answers.incomeSources.includes("capital_gains");
+
+function clearForeignAssetFollowUps(answers: OrientationAnswers): OrientationAnswers {
   return {
     ...answers,
+    foreignSigningAuthority: null,
+    foreignProperty: null,
+    foreignTrust: null,
+    foreignCashValueInsurance: null
+  };
+}
+
+function clearResidentOnlyAnswers(answers: OrientationAnswers): OrientationAnswers {
+  return clearForeignAssetFollowUps({
+    ...answers,
+    multipleEmployers: null,
+    businessIncome: null,
+    presumptiveTaxation: null,
+    incomeLikelyAbove50L: null,
+    housePropertyCount: null,
+    capitalGainsAssetTypes: [],
     hraClaimed: null,
     hraAboveThreshold: null,
     hasLandlordPan: null,
     epfWithdrawal: null,
-    epfBeforeFiveYears: null
+    epfBeforeFiveYears: null,
+    foreignAssets: null
+  });
+}
+
+function clearNriOnlyAnswers(answers: OrientationAnswers): OrientationAnswers {
+  return {
+    ...answers,
+    nriCountry: null,
+    nriDaysInIndia: null,
+    nriTdsDeducted: null,
+    nriHasTrcAndForm10F: null,
+    nriNeedsForm13: null,
+    nriTenantTdsForm16A: null
   };
 }
 
@@ -104,10 +164,14 @@ const QUESTIONS: Question[] = [
   {
     id: "residency",
     kind: "choice",
-    prompt: "Are you living in India right now, or outside India, for this financial year?",
+    prompt: "What was your tax residential status for FY 2025-26 (Apr 2025 to Mar 2026)?",
+    helper:
+      "This is your tax status, not just where you live day-to-day. Resident (ROR), RNOR (recently returned or partly abroad), and non-resident (NRI) change which form you file and what you must disclose.",
+    mobileHelper: "Resident, RNOR, or non-resident (NRI)?",
     options: [
-      { label: "I live in India", value: "resident" },
-      { label: "I live outside India (NRI)", value: "nri" }
+      { label: "Resident in India (ROR)", value: "resident" },
+      { label: "RNOR (recently returned or partly abroad)", value: "rnor" },
+      { label: "Non-resident (NRI)", value: "nri" }
     ],
     visible: () => true,
     value: (a) => a.residency,
@@ -116,7 +180,10 @@ const QUESTIONS: Question[] = [
       if (residency === "nri") {
         return clearResidentOnlyAnswers({ ...a, residency });
       }
-      return { ...clearResidentOnlyAnswers(a), residency, nriCountry: null };
+      if (residency === "rnor") {
+        return clearNriOnlyAnswers(clearResidentOnlyAnswers({ ...a, residency }));
+      }
+      return clearNriOnlyAnswers(clearResidentOnlyAnswers({ ...a, residency }));
     }
   },
   {
@@ -139,7 +206,7 @@ const QUESTIONS: Question[] = [
       "The return asks for this to confirm your non-resident status (under 182 days usually keeps you an NRI). Don't have the exact count handy? Skip it and come back later.",
     mobileHelper: "Don't know yet? Skip and come back later.",
     unit: "days",
-    visible: isNri,
+    visible: (a) => isNri(a) || isRnor(a),
     skippable: true,
     value: (a) => a.nriDaysInIndia,
     set: (a, value) => ({ ...a, nriDaysInIndia: value })
@@ -154,12 +221,34 @@ const QUESTIONS: Question[] = [
     visible: () => true,
     skippable: true,
     value: (a) => a.huf,
-    set: (a, value) => ({ ...a, huf: value })
+    set: (a, value) =>
+      value
+        ? { ...a, huf: value }
+        : { ...a, huf: value, hufReturnScope: null }
+  },
+  {
+    id: "hufReturnScope",
+    kind: "choice",
+    prompt: "Are you preparing your personal return or the HUF's return?",
+    helper:
+      "Personal = your own ITR even if some investments sit in the HUF's name. HUF's return = filing as the HUF assessee with the HUF's PAN.",
+    mobileHelper: "Your return or the HUF's?",
+    options: [
+      { label: "My personal return", value: "personal" },
+      { label: "The HUF's return", value: "huf_return" }
+    ],
+    visible: (a) => a.huf === true,
+    skippable: true,
+    value: (a) => a.hufReturnScope,
+    set: (a, value) => ({ ...a, hufReturnScope: value as "personal" | "huf_return" })
   },
   {
     id: "seniorCitizen",
     kind: "yes-no",
     prompt: "Are you 60 or older?",
+    helper:
+      "As of 31 March 2026. Senior-citizen slab benefits apply to resident individuals, but they may not fully apply if you are NRI or RNOR.",
+    mobileHelper: "60+ as of 31 March 2026?",
     visible: () => true,
     skippable: true,
     value: (a) => a.seniorCitizen,
@@ -182,10 +271,10 @@ const QUESTIONS: Question[] = [
   {
     id: "singleParent",
     kind: "yes-no",
-    prompt: "Are you a single parent or guardian with children under 18?",
+    prompt: "Does any minor child have income or investments in their own name?",
     helper:
-      "Answer No if you don't have minor children. This only changes things when a child has money in their own name: bank interest or investments in a minor's name get added to your return.",
-    mobileHelper: "No minor children? Answer No.",
+      "If yes, the higher-earning parent usually clubs it on their return, not only single parents. Answer No if no minor has separate income.",
+    mobileHelper: "Minor with their own income? Say Yes.",
     visible: () => true,
     skippable: true,
     value: (a) => a.singleParent,
@@ -203,13 +292,135 @@ const QUESTIONS: Question[] = [
     optionsNri: INCOME_OPTIONS_NRI,
     visible: () => true,
     value: (a) => a.incomeSources,
-    set: (a, values) => ({ ...a, incomeSources: values })
+    set: (a, values) => ({
+      ...a,
+      incomeSources: values,
+      housePropertyCount: values.includes("rent") ? a.housePropertyCount : null,
+      capitalGainsAssetTypes: values.includes("capital_gains") ? a.capitalGainsAssetTypes : [],
+      nriTenantTdsForm16A:
+        values.includes("rent") && isNri(a) ? a.nriTenantTdsForm16A : null,
+      multipleEmployers:
+        values.includes("salary_pension") && isTaxResident(a) ? a.multipleEmployers : null
+    })
+  },
+  {
+    id: "capitalGainsAssetTypes",
+    kind: "cg-multi",
+    prompt:
+      "Did you sell anything other than listed shares or equity mutual funds?",
+    helper:
+      "Listed equity and equity MF are already covered. Pick any other types. Each one usually means ITR-2, not ITR-1. Pick none if you only sold listed shares/equity MF.",
+    mobileHelper: "Property, crypto, unlisted, foreign, or debt MF?",
+    options: CAPITAL_GAINS_ASSET_OPTIONS,
+    visible: (a) => isTaxResident(a) && hasCapitalGainsIncome(a),
+    skippable: true,
+    value: (a) => a.capitalGainsAssetTypes,
+    set: (a, values) => ({ ...a, capitalGainsAssetTypes: values })
+  },
+  {
+    id: "nriTdsDeducted",
+    kind: "yes-no",
+    prompt:
+      "Did any broker, AMC, bank, or tenant deduct TDS on your NRI income (capital gains, NRO interest, dividends, or rent)?",
+    helper: "TDS on NRI income is common at default rates. You'll reconcile certificates when you file.",
+    mobileHelper: "TDS deducted on NRI income?",
+    visible: isNri,
+    skippable: true,
+    value: (a) => a.nriTdsDeducted,
+    set: (a, value) => ({ ...a, nriTdsDeducted: value })
+  },
+  {
+    id: "nriHasTrcAndForm10F",
+    kind: "yes-no",
+    prompt: "Do you have a Tax Residency Certificate (TRC) and have you filed Form 10F for treaty relief?",
+    helper:
+      "Needed to claim DTAA benefits on NRO interest, dividends, or mutual fund gains taxed in India.",
+    mobileHelper: "Have TRC and Form 10F?",
+    visible: isNri,
+    skippable: true,
+    value: (a) => a.nriHasTrcAndForm10F,
+    set: (a, value) => ({ ...a, nriHasTrcAndForm10F: value })
+  },
+  {
+    id: "nriNeedsForm13",
+    kind: "yes-no",
+    prompt: "Did you apply for, or do you need, a Form 13 lower/nil TDS certificate?",
+    helper:
+      "Form 13 (Section 197) lets an NRI get tax deducted at a lower rate or nil before income is paid.",
+    mobileHelper: "Need Form 13 lower/nil TDS?",
+    visible: isNri,
+    skippable: true,
+    value: (a) => a.nriNeedsForm13,
+    set: (a, value) => ({ ...a, nriNeedsForm13: value })
+  },
+  {
+    id: "nriTenantTdsForm16A",
+    kind: "yes-no",
+    prompt: "For Indian rental income, did your tenant deduct TDS and give you Form 16A?",
+    helper: "Tenants paying rent to an NRI usually deduct TDS at 30% and issue Form 16A.",
+    mobileHelper: "Tenant gave Form 16A?",
+    visible: (a) => isNri(a) && hasRentIncome(a),
+    skippable: true,
+    value: (a) => a.nriTenantTdsForm16A,
+    set: (a, value) => ({ ...a, nriTenantTdsForm16A: value })
+  },
+  {
+    id: "businessIncome",
+    kind: "yes-no",
+    prompt:
+      "Did you have business, freelance, professional, F&O, intraday, or speculative trading income?",
+    helper:
+      "This changes your ITR form (usually ITR-3), due date, and whether books may need audit. Answer No if you only had salary, interest, dividends, or long-term investing.",
+    mobileHelper: "Freelance, F&O, or intraday? Say Yes.",
+    visible: isTaxResident,
+    skippable: true,
+    value: (a) => a.businessIncome,
+    set: (a, value) => ({ ...a, businessIncome: value, presumptiveTaxation: value ? a.presumptiveTaxation : null })
+  },
+  {
+    id: "presumptiveTaxation",
+    kind: "yes-no",
+    prompt:
+      "Are you using presumptive taxation under Section 44AD, 44ADA, or 44AE?",
+    helper:
+      "If yes, you may file ITR-4 (Sugam) instead of ITR-3, as long as total income stays within ₹50 lakh and you are not on intraday/F&O trading. Skip if you are not sure yet.",
+    mobileHelper: "On 44AD/44ADA/44AE? Say Yes.",
+    visible: (a) => isTaxResident(a) && a.businessIncome === true,
+    skippable: true,
+    value: (a) => a.presumptiveTaxation,
+    set: (a, value) => ({ ...a, presumptiveTaxation: value })
+  },
+  {
+    id: "incomeLikelyAbove50L",
+    kind: "yes-no",
+    prompt: "Is your total income likely above ₹50 lakh this year?",
+    helper:
+      "ITR-1 is only for resident individuals up to ₹50 lakh. If you're not sure yet, skip. We'll check again once you enter salary and other figures.",
+    mobileHelper: "Total income above ₹50 lakh?",
+    visible: isTaxResident,
+    skippable: true,
+    value: (a) => a.incomeLikelyAbove50L,
+    set: (a, value) => ({ ...a, incomeLikelyAbove50L: value })
+  },
+  {
+    id: "housePropertyCount",
+    kind: "choice",
+    prompt: "How many house properties did you own or report income/loss from?",
+    helper: "ITR-1 allows up to two house properties. More than two needs ITR-2.",
+    options: [
+      { label: "One", value: "one" },
+      { label: "Two", value: "two" },
+      { label: "More than two", value: "more_than_two" }
+    ],
+    visible: (a) => isTaxResident(a) && hasRentIncome(a),
+    value: (a) => a.housePropertyCount,
+    set: (a, value) => ({ ...a, housePropertyCount: value as HousePropertyCount })
   },
   {
     id: "multipleEmployers",
     kind: "yes-no",
-    prompt: "Did you change jobs this year, or have income from more than one employer?",
-    visible: (a) => isResident(a) || a.incomeSources.includes("salary_pension"),
+    prompt: "Did you change jobs this year, or have income from more than one employer in India?",
+    visible: (a) => isTaxResident(a) && hasSalaryIncome(a),
     skippable: true,
     value: (a) => a.multipleEmployers,
     set: (a, value) => ({ ...a, multipleEmployers: value })
@@ -218,7 +429,7 @@ const QUESTIONS: Question[] = [
     id: "hraClaimed",
     kind: "yes-no",
     prompt: "Do you pay rent and claim it against your salary (HRA)?",
-    visible: isResident,
+    visible: isTaxResident,
     skippable: true,
     value: (a) => a.hraClaimed,
     set: (a, value) => ({
@@ -232,7 +443,7 @@ const QUESTIONS: Question[] = [
     id: "hraAboveThreshold",
     kind: "yes-no",
     prompt: "Is your annual rent over roughly ₹1 lakh (about ₹8,300/month)?",
-    visible: (a) => isResident(a) && a.hraClaimed === true,
+    visible: (a) => isTaxResident(a) && a.hraClaimed === true,
     skippable: true,
     value: (a) => a.hraAboveThreshold,
     set: (a, value) => ({
@@ -246,7 +457,7 @@ const QUESTIONS: Question[] = [
     kind: "yes-no",
     prompt: "Do you have your landlord's PAN?",
     helper: "Above that rent threshold, the HRA claim needs it on file.",
-    visible: (a) => isResident(a) && a.hraClaimed === true && a.hraAboveThreshold === true,
+    visible: (a) => isTaxResident(a) && a.hraClaimed === true && a.hraAboveThreshold === true,
     skippable: true,
     value: (a) => a.hasLandlordPan,
     set: (a, value) => ({ ...a, hasLandlordPan: value })
@@ -255,7 +466,7 @@ const QUESTIONS: Question[] = [
     id: "epfWithdrawal",
     kind: "yes-no",
     prompt: "Did you take money out of your provident fund this year?",
-    visible: isResident,
+    visible: isTaxResident,
     skippable: true,
     value: (a) => a.epfWithdrawal,
     set: (a, value) => ({
@@ -268,7 +479,7 @@ const QUESTIONS: Question[] = [
     id: "epfBeforeFiveYears",
     kind: "yes-no",
     prompt: "Was that before completing 5 years of continuous service?",
-    visible: (a) => isResident(a) && a.epfWithdrawal === true,
+    visible: (a) => isTaxResident(a) && a.epfWithdrawal === true,
     skippable: true,
     value: (a) => a.epfBeforeFiveYears,
     set: (a, value) => ({ ...a, epfBeforeFiveYears: value })
@@ -280,7 +491,7 @@ const QUESTIONS: Question[] = [
     helper:
       "The interest you pay on these can lower your tax, mostly under the old regime. Answer No for a personal or car loan, which usually gives no deduction.",
     mobileHelper: "Home, education, or EV loan? Say Yes.",
-    visible: () => true,
+    visible: (a) => isTaxResident(a) || hasRentIncome(a),
     skippable: true,
     value: (a) => a.loansRepaid,
     set: (a, value) => ({ ...a, loansRepaid: value })
@@ -305,15 +516,55 @@ const QUESTIONS: Question[] = [
     helper:
       "Residents must report every foreign holding in Schedule FA, even a dormant account, with no minimum value. Getting this wrong risks a ₹10 lakh penalty, so it changes which form you file.",
     mobileHelper: "Foreign shares, RSUs, or accounts? Say Yes.",
-    visible: isResident,
+    visible: isRor,
     skippable: true,
     value: (a) => a.foreignAssets,
-    set: (a, value) => ({ ...a, foreignAssets: value })
+    set: (a, value) =>
+      value ? { ...a, foreignAssets: value } : clearForeignAssetFollowUps({ ...a, foreignAssets: value })
+  },
+  {
+    id: "foreignSigningAuthority",
+    kind: "yes-no",
+    prompt:
+      "At any time in calendar year 2025, did you have signing authority over a foreign bank, brokerage, or custodial account (not already covered above)?",
+    helper: "Signing authority alone can trigger Schedule FA disclosure, even without owning the account.",
+    mobileHelper: "Signing authority abroad?",
+    visible: (a) => isRor(a) && a.foreignAssets === true,
+    skippable: true,
+    value: (a) => a.foreignSigningAuthority,
+    set: (a, value) => ({ ...a, foreignSigningAuthority: value })
+  },
+  {
+    id: "foreignProperty",
+    kind: "yes-no",
+    prompt: "Did you hold any foreign immovable property (house, land, apartment abroad)?",
+    visible: (a) => isRor(a) && a.foreignAssets === true,
+    skippable: true,
+    value: (a) => a.foreignProperty,
+    set: (a, value) => ({ ...a, foreignProperty: value })
+  },
+  {
+    id: "foreignTrust",
+    kind: "yes-no",
+    prompt: "Were you a beneficiary or settlor of a foreign trust?",
+    visible: (a) => isRor(a) && a.foreignAssets === true,
+    skippable: true,
+    value: (a) => a.foreignTrust,
+    set: (a, value) => ({ ...a, foreignTrust: value })
+  },
+  {
+    id: "foreignCashValueInsurance",
+    kind: "yes-no",
+    prompt: "Did you hold any foreign life insurance with cash surrender value?",
+    visible: (a) => isRor(a) && a.foreignAssets === true,
+    skippable: true,
+    value: (a) => a.foreignCashValueInsurance,
+    set: (a, value) => ({ ...a, foreignCashValueInsurance: value })
   }
 ];
 
 function isUnanswered(question: Question, answers: OrientationAnswers): boolean {
-  if (question.kind === "multi") {
+  if (question.kind === "multi" || question.kind === "cg-multi") {
     return question.value(answers).length === 0;
   }
   return question.value(answers) === null;
@@ -322,15 +573,25 @@ function isUnanswered(question: Question, answers: OrientationAnswers): boolean 
 /** Short, plain-language labels for the saved-answers summary card, so a
  * returning user sees a scannable recap rather than the full question text. */
 const SUMMARY_LABELS: Record<string, string> = {
-  residency: "Where you live",
+  residency: "Tax residential status",
   nriCountry: "Country of tax residence",
   nriDaysInIndia: "Days in India this year",
   huf: "Income held through a family (HUF)",
+  hufReturnScope: "Personal or HUF return",
   seniorCitizen: "60 or older",
   superSeniorCitizen: "80 or older",
-  singleParent: "Single parent with minor children",
+  singleParent: "Minor child with own income",
   incomeSources: "Kinds of income",
-  multipleEmployers: "More than one employer this year",
+  capitalGainsAssetTypes: "Other capital-gains types sold",
+  nriTdsDeducted: "TDS deducted on NRI income",
+  nriHasTrcAndForm10F: "TRC and Form 10F for treaty relief",
+  nriNeedsForm13: "Form 13 lower/nil TDS needed",
+  nriTenantTdsForm16A: "Tenant TDS / Form 16A on rent",
+  businessIncome: "Business, F&O, or intraday income",
+  presumptiveTaxation: "Presumptive taxation (44AD/44ADA/44AE)",
+  incomeLikelyAbove50L: "Total income likely above ₹50 lakh",
+  housePropertyCount: "House properties reported",
+  multipleEmployers: "More than one Indian employer this year",
   hraClaimed: "Claim rent against salary (HRA)",
   hraAboveThreshold: "Annual rent over ~₹1 lakh",
   hasLandlordPan: "Have landlord's PAN",
@@ -338,7 +599,11 @@ const SUMMARY_LABELS: Record<string, string> = {
   epfBeforeFiveYears: "Withdrawal before 5 years of service",
   loansRepaid: "Repaying a home, education, or EV loan",
   insurancePayout: "Received a life-insurance payout",
-  foreignAssets: "Holds assets outside India"
+  foreignAssets: "Holds assets outside India",
+  foreignSigningAuthority: "Signing authority over foreign account",
+  foreignProperty: "Foreign immovable property",
+  foreignTrust: "Beneficiary/settlor of foreign trust",
+  foreignCashValueInsurance: "Foreign cash-value life insurance"
 };
 
 function formatAnswer(question: Question, answers: OrientationAnswers): string {
@@ -353,6 +618,16 @@ function formatAnswer(question: Question, answers: OrientationAnswers): string {
     }
     const options = isNri(answers) && question.optionsNri ? question.optionsNri : question.options;
     return options
+      .filter((option) => values.includes(option.value))
+      .map((option) => option.label)
+      .join(", ");
+  }
+  if (question.kind === "cg-multi") {
+    const values = question.value(answers);
+    if (values.length === 0) {
+      return "Listed shares/equity MF only";
+    }
+    return question.options
       .filter((option) => values.includes(option.value))
       .map((option) => option.label)
       .join(", ");
@@ -400,7 +675,8 @@ export function OrientationForm({
       <div className="orientation-card">
         <h2 className="orientation-prompt">Your answers</h2>
         <p className="orientation-note">
-          Here's what you told us. These shape your checklist and recommendations.
+          Here's what you told us. These shape your checklist and recommendations. Skipped
+          answers are treated as No for now.
         </p>
         <dl className="orientation-summary">
           {visible.map((question) => (
@@ -512,11 +788,22 @@ export function OrientationForm({
         />
       ) : null}
 
+      {current.kind === "cg-multi" ? (
+        <CapitalGainsMultiSelectQuestion
+          question={current}
+          answers={answers}
+          onChange={onChange}
+          onContinue={() => setIndex((value) => value + 1)}
+          onSkip={skip}
+          skippable={current.skippable}
+        />
+      ) : null}
+
       {current.kind === "number" ? (
         <NumberQuestionInput question={current} answers={answers} onCommit={answerAndAdvance} />
       ) : null}
 
-      {current.skippable ? (
+      {current.skippable && current.kind !== "cg-multi" ? (
         <button type="button" className="text-button orientation-skip" onClick={skip}>
           Skip
         </button>
@@ -582,6 +869,56 @@ function NumberQuestionInput({
       >
         Continue
       </button>
+    </div>
+  );
+}
+
+function CapitalGainsMultiSelectQuestion({
+  question,
+  answers,
+  onChange,
+  onContinue,
+  onSkip,
+  skippable
+}: {
+  question: CapitalGainsMultiQuestion;
+  answers: OrientationAnswers;
+  onChange: (answers: OrientationAnswers) => void;
+  onContinue: () => void;
+  onSkip: () => void;
+  skippable?: boolean;
+}) {
+  const selected = question.value(answers);
+
+  const toggle = (value: CapitalGainsAssetType) => {
+    const next = selected.includes(value)
+      ? selected.filter((item) => item !== value)
+      : [...selected, value];
+    onChange(question.set(answers, next));
+  };
+
+  return (
+    <div className="orientation-multi">
+      <div className="orientation-checkboxes">
+        {question.options.map((option) => (
+          <label key={option.value} className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={selected.includes(option.value)}
+              onChange={() => toggle(option.value)}
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+      <button type="button" className="primary-button" onClick={onContinue}>
+        Continue
+      </button>
+      {skippable ? (
+        <button type="button" className="text-button orientation-skip" onClick={onSkip}>
+          Skip (listed shares/equity MF only)
+        </button>
+      ) : null}
     </div>
   );
 }

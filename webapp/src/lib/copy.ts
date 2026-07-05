@@ -128,7 +128,7 @@ export const WHO_ITS_FOR: string[] = [
 ];
 
 export const WHO_ITS_FOR_EXCLUDES =
-  "Not built for business or professional income that needs full bookkeeping. That's a different job for a different tool.";
+  "Intraday/speculative trading routes to ITR-3 and presumptive business income to ITR-4, but full bookkeeping, P&L, and audit schedules aren't built here. Firms, companies, trusts, and other non-individual entities (ITR-5/6/7) are out of scope.";
 
 /**
  * Plain-language reason for each ITR form selection.values.forms key in
@@ -142,7 +142,7 @@ export const ITR_FORM_REASONS: Record<string, string> = {
   resident_above_itr1_limit:
     "Your total income is above the ₹50 lakh ceiling for ITR-1 (Sahaj), so ITR-2 applies even though your income is only salary, interest, or dividends.",
   resident_capital_gains_or_clubbing:
-    "Capital gains from your documents, or minor's-income clubbing from your profile, need this form.",
+    "Capital gains from your documents, declared non-listed-equity gains (property, crypto, unlisted/foreign shares, debt MF), or minor's-income clubbing from your profile need this form.",
   nri_no_business: "Your NRI status routes filing through this form, even without business income.",
   nri_with_business:
     "Your NRI status plus business or speculative income from your documents need this form.",
@@ -150,7 +150,11 @@ export const ITR_FORM_REASONS: Record<string, string> = {
   huf_with_business:
     "Filing as a HUF plus business or speculative income from your documents need this form.",
   business_or_speculative_non_audit:
-    "Your documents show speculative or intraday income, which counts as business income under this form."
+    "Your documents show speculative or intraday income, which counts as business income under this form.",
+  presumptive_non_audit:
+    "You told us your business or professional income is on the presumptive scheme (Section 44AD, 44ADA, or 44AE), total income is within ₹50 lakh, and you have no capital gains or foreign assets flagged, so ITR-4 (Sugam) fits. This tool does not compute presumptive turnover or audit thresholds — confirm eligibility with your CA before filing.",
+  huf_presumptive_non_audit:
+    "Filing as a HUF with presumptive business income (Section 44AD, 44ADA, or 44AE) and total income within ₹50 lakh routes through ITR-4 (Sugam). Confirm presumptive eligibility with your CA."
 };
 
 export type HowToStep = { title: string; detail: string };
@@ -238,7 +242,7 @@ export const CAPABILITIES: Capability[] = [
   {
     label: "ITR form and CA-vs-self-file recommendation",
     status: "available",
-    detail: "Worked out from your profile, documents, and risk flags, not left for you to guess."
+    detail: "Worked out from your profile, documents, and risk flags — including ITR-4 when presumptive taxation applies — not left for you to guess."
   },
   {
     label: "CA Summary and full workbook exports",

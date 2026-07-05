@@ -5,14 +5,26 @@ import { ruleCatalog } from "../rules";
 
 export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
   const hraAboveThreshold = Boolean(answers.hraClaimed && answers.hraAboveThreshold);
+  const isRor = answers.residency === "resident";
+  const hufYes = Boolean(answers.huf);
+  const capitalGainsDisqualifiesItr1 = (answers.capitalGainsAssetTypes ?? []).length > 0;
+  const foreignAssetsYes = isRor && Boolean(answers.foreignAssets);
   return {
     nri: answers.residency === "nri",
+    rnor: answers.residency === "rnor",
     nriCountry: answers.residency === "nri" ? answers.nriCountry : null,
-    huf: Boolean(answers.huf),
+    huf: hufYes,
+    hufFilingAsEntity: hufYes && answers.hufReturnScope === "huf_return",
+    hufPersonalHoldings: hufYes && answers.hufReturnScope !== "huf_return",
     seniorCitizen: Boolean(answers.seniorCitizen),
     superSeniorCitizen: Boolean(answers.seniorCitizen && answers.superSeniorCitizen),
     singleParent: Boolean(answers.singleParent),
+    declaredBusinessIncome: Boolean(answers.businessIncome),
+    usesPresumptiveTaxation: Boolean(answers.presumptiveTaxation),
+    incomeLikelyAbove50L: Boolean(answers.incomeLikelyAbove50L),
+    housePropertiesOverItr1Limit: answers.housePropertyCount === "more_than_two",
     hasCapitalGains: answers.incomeSources.includes("capital_gains"),
+    capitalGainsDisqualifiesItr1,
     hasDividends: answers.incomeSources.includes("dividends"),
     hasBankInterest: answers.incomeSources.includes("bank_interest"),
     hasRent: answers.incomeSources.includes("rent"),
@@ -21,8 +33,23 @@ export function deriveProfileFlags(answers: OrientationAnswers): ProfileFlags {
     epfRisk: Boolean(answers.epfWithdrawal && answers.epfBeforeFiveYears),
     hasLoans: Boolean(answers.loansRepaid),
     hasInsurancePayout: Boolean(answers.insurancePayout),
-    // Only a resident (ROR) has a Schedule FA obligation; an NRI/RNOR is out of scope.
-    hasForeignAssets: answers.residency !== "nri" && Boolean(answers.foreignAssets)
+    // Schedule FA applies to ROR only — not RNOR or NRI.
+    hasForeignAssets: foreignAssetsYes,
+    hasExtendedForeignAssets:
+      foreignAssetsYes &&
+      Boolean(
+        answers.foreignSigningAuthority ||
+          answers.foreignProperty ||
+          answers.foreignTrust ||
+          answers.foreignCashValueInsurance
+      ),
+    nriNeedsForm13: Boolean(answers.nriNeedsForm13),
+    nriTdsDeducted: Boolean(answers.nriTdsDeducted),
+    nriMissingTrc: answers.residency === "nri" && answers.nriHasTrcAndForm10F === false,
+    nriTenantMissingForm16A:
+      answers.residency === "nri" &&
+      answers.incomeSources.includes("rent") &&
+      answers.nriTenantTdsForm16A === false
   };
 }
 
@@ -105,6 +132,20 @@ export function buildChecklist(
         ? nriTrcWhy(flags, ruleCatalog.nriDtaa)
         : "Needed to claim double-taxation relief under the treaty between India and your country of residence.";
     add("Tax Residency Certificate (TRC) and Form 10F", trcWhy, "Needed");
+    if (flags.nriTdsDeducted) {
+      add(
+        "TDS certificates (Form 16A / 16B / AMC or bank TDS statements)",
+        "NRI income often has TDS at source on NRO interest, dividends, capital gains, or rent. You'll reconcile these against your return.",
+        "Needed"
+      );
+    }
+    if (flags.nriNeedsForm13) {
+      add(
+        "Form 13 lower/nil deduction certificate (if approved)",
+        "If you applied for a lower or nil TDS rate under Section 197, keep the AO's certificate — otherwise TDS may have been deducted at the default NRI rate.",
+        "Needed"
+      );
+    }
     add(
       "NRE and NRO account statements, separately",
       "These two account types are taxed completely differently. Don't combine them.",
@@ -113,7 +154,9 @@ export function buildChecklist(
     if (flags.hasRent) {
       add(
         "Rental income details and tenant TDS certificate (Form 16A)",
-        "Rent from Indian property is taxable here. Tenants often deduct TDS at 30% — you'll reconcile that in your return.",
+        flags.nriTenantMissingForm16A
+          ? "You said the tenant may not have issued Form 16A — confirm whether TDS was deducted under Section 195 and get the certificate or challan details."
+          : "Rent from Indian property is taxable here. Tenants often deduct TDS at 30% — you'll reconcile that in your return.",
         "Needed"
       );
     }
@@ -122,7 +165,9 @@ export function buildChecklist(
   if (flags.huf) {
     add(
       "HUF PAN and list of coparceners/members",
-      "The HUF is a separate taxable entity from you personally, with its own PAN.",
+      flags.hufFilingAsEntity
+        ? "You're filing the HUF's return — the HUF is a separate taxable entity with its own PAN."
+        : "The HUF is a separate taxable entity from you personally, with its own PAN.",
       "Needed"
     );
     add(
@@ -144,7 +189,7 @@ export function buildChecklist(
   if (flags.singleParent) {
     add(
       "Details of investments or accounts in a minor's name",
-      "Income from these gets clubbed with your own return under Section 64(1A).",
+      "Income from a minor's own accounts is usually clubbed with the higher-earning parent's return under Section 64(1A).",
       "Needed"
     );
   }
@@ -171,6 +216,13 @@ export function buildChecklist(
       "Every foreign holding — shares, RSUs, ESPP, bank/brokerage accounts — must go in Schedule FA for the calendar year, with no minimum value. Missing one risks a ₹10 lakh Black Money Act penalty.",
       "Needed"
     );
+    if (flags.hasExtendedForeignAssets) {
+      add(
+        "Foreign property, trust, signing-authority, or cash-value insurance records",
+        "You flagged foreign property, a trust, signing authority abroad, or cash-value life insurance — each needs its own Schedule FA table. This tool does not yet compute those rows.",
+        "Needed"
+      );
+    }
     add(
       "Foreign tax paid proof (for Form 67 / foreign tax credit)",
       'If tax was withheld abroad on foreign dividends or gains, enter it in the "Foreign shares, RSU & ESPP" section for a credit estimate, then claim the real credit under Section 90/91 by filing Form 67 before your return.',
@@ -264,6 +316,14 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push(mfCaveat);
   }
 
+  if (flags.rnor) {
+    caveats.push({
+      id: "rnor_scope",
+      label: "RNOR — some resident rules apply, but not all",
+      note: "As RNOR you file like a resident for most Indian income, but Schedule FA foreign-asset disclosure and some senior-citizen slab benefits may not apply the same way as for someone resident and ordinarily resident (ROR). Confirm your exact status and Schedule FA obligation with a CA before filing."
+    });
+  }
+
   if (flags.nri) {
     caveats.push({
       id: "nri_scope",
@@ -273,10 +333,13 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
   }
 
   if (flags.huf) {
+    const hufNote = flags.hufFilingAsEntity
+      ? 'You told us this is the HUF\'s own return. The "HUF: members & Section 64(2) transfers" section computes clubbing for any asset a member transferred into the HUF without adequate consideration. Partition isn\'t computed — see the checklist. The old-vs-new regime comparison tool doesn\'t fit an HUF\'s numbers, so it\'s hidden.'
+      : 'You told us this is your personal return but some income is held through a HUF. Section 64(2) clubbing may apply on transfers into the HUF — use the members/transfers panel if relevant. If you actually meant to file the HUF\'s return, update About You.';
     caveats.push({
       id: "huf_scope",
       label: "Some HUF-specific numbers are calculated; partition still needs a CA",
-      note: "The \"HUF: members & Section 64(2) transfers\" section computes clubbing for any asset a member transferred into the HUF without adequate consideration - that income belongs on the transferring member's own return, not the HUF's. The figures elsewhere only cover capital gains, dividends, and interest, which apply to an HUF the same flat way they do to an individual. Partition (total or partial) isn't computed at all - see the checklist for why. The old-vs-new regime comparison tool doesn't fit an HUF's numbers at all (no salary income, no standard deduction, no Section 87A rebate), so it's hidden for this profile."
+      note: hufNote
     });
   }
 
@@ -284,7 +347,7 @@ export function profileScopeCaveats(flags: ProfileFlags): ProfileScopeCaveat[] {
     caveats.push({
       id: "single_parent_scope",
       label: "Minor's-income clubbing: check the exceptions yourself",
-      note: "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
+      note: "Enter the minor's income and child count under \"A few more numbers\" on the Current Filing page and this tool computes the clubbed amount after the Section 10(32) per-child exemption. The higher-earning parent usually clubs it — not only single parents. Income the law never clubs - the minor's own manual work, their own skill or talent, or a Section 80U disability - has its own field there and is left out of the clubbed figure, but this tool can't verify the exception genuinely applies, and it doesn't place the figure in Schedule SPI itself. Keep the evidence and confirm with a CA."
     });
   }
 
@@ -353,20 +416,42 @@ export function selectItrForm(
   flags: ProfileFlags,
   hasBusinessIncome: boolean,
   itrFormRule: ItrFormSelectionRule,
-  totalIncome = 0
+  totalIncome = 0,
+  hasSpeculativeIncome = false
 ): ItrFormChoice {
-  const aboveItr1IncomeCap = totalIncome > itrFormRule.values.itr1_conditions.total_income_max_inr;
+  const aboveItr1IncomeCap =
+    totalIncome > itrFormRule.values.itr1_conditions.total_income_max_inr ||
+    flags.incomeLikelyAbove50L;
+  const nonResident = flags.nri || flags.rnor;
+  const presumptiveItr4 =
+    Boolean(itrFormRule.values.presumptive_scheme_uses_itr_4) &&
+    hasBusinessIncome &&
+    !hasSpeculativeIncome &&
+    flags.usesPresumptiveTaxation &&
+    !nonResident &&
+    !aboveItr1IncomeCap &&
+    !flags.hasForeignAssets &&
+    !flags.hasCapitalGains;
+
   const key = hasBusinessIncome
-    ? flags.nri
-      ? "nri_with_business"
-      : flags.huf
-        ? "huf_with_business"
-        : "business_or_speculative_non_audit"
-    : flags.nri
+    ? presumptiveItr4
+      ? flags.hufFilingAsEntity
+        ? "huf_presumptive_non_audit"
+        : "presumptive_non_audit"
+      : nonResident
+        ? "nri_with_business"
+        : flags.hufFilingAsEntity
+          ? "huf_with_business"
+          : "business_or_speculative_non_audit"
+    : nonResident
       ? "nri_no_business"
-      : flags.huf
+      : flags.hufFilingAsEntity
         ? "huf_no_business"
-        : flags.hasCapitalGains || flags.singleParent || flags.hasForeignAssets
+        : flags.hasCapitalGains ||
+            flags.capitalGainsDisqualifiesItr1 ||
+            flags.singleParent ||
+            flags.hasForeignAssets ||
+            flags.housePropertiesOverItr1Limit
           ? "resident_capital_gains_or_clubbing"
           : aboveItr1IncomeCap
             ? "resident_above_itr1_limit"

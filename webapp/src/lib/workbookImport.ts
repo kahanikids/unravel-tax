@@ -1,6 +1,12 @@
 import readXlsxFile from "read-excel-file/universal";
 import { ORIENTATION_SHEET_NAME } from "./workbookExport";
-import type { IncomeSource, NriCountry, OrientationAnswers } from "../state/types";
+import type {
+  CapitalGainsAssetType,
+  HufReturnScope,
+  IncomeSource,
+  NriCountry,
+  OrientationAnswers
+} from "../state/types";
 
 type ExcelCell = string | number | Date | boolean | null;
 
@@ -22,6 +28,14 @@ const INCOME_SOURCE_VALUES: IncomeSource[] = [
   "dividends",
   "rent",
   "other"
+];
+
+const CAPITAL_GAINS_ASSET_VALUES: CapitalGainsAssetType[] = [
+  "property",
+  "crypto_vda",
+  "unlisted_shares",
+  "foreign_shares",
+  "debt_mf"
 ];
 
 function toYesNo(value: string): boolean | null {
@@ -74,7 +88,7 @@ function parseOrientationSheet(data: ExcelCell[][]): Partial<OrientationAnswers>
   };
 
   const residencyText = fields.get("Residency");
-  if (residencyText === "resident" || residencyText === "nri") {
+  if (residencyText === "resident" || residencyText === "rnor" || residencyText === "nri") {
     orientation.residency = residencyText;
   }
   const nriCountryText = fields.get("NRI Country");
@@ -100,10 +114,37 @@ function parseOrientationSheet(data: ExcelCell[][]): Partial<OrientationAnswers>
       orientation.incomeSources = sources;
     }
   }
+  const capitalGainsAssetsText = fields.get("Capital Gains Asset Types");
+  if (capitalGainsAssetsText) {
+    const assets = capitalGainsAssetsText
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item): item is CapitalGainsAssetType =>
+        (CAPITAL_GAINS_ASSET_VALUES as string[]).includes(item)
+      );
+    if (assets.length > 0) {
+      orientation.capitalGainsAssetTypes = assets;
+    }
+  }
   setYesNo("HUF", "huf");
+  const hufScope = fields.get("HUF Return Scope");
+  if (hufScope === "personal" || hufScope === "huf_return") {
+    orientation.hufReturnScope = hufScope as HufReturnScope;
+  }
   setYesNo("Senior Citizen", "seniorCitizen");
   setYesNo("Super Senior Citizen (80+)", "superSeniorCitizen");
-  setYesNo("Single Parent Or Sole Guardian", "singleParent");
+  setYesNo("Minor Child Income To Club", "singleParent");
+  setYesNo("NRI TDS Deducted", "nriTdsDeducted");
+  setYesNo("NRI Has TRC And Form 10F", "nriHasTrcAndForm10F");
+  setYesNo("NRI Needs Form 13", "nriNeedsForm13");
+  setYesNo("NRI Tenant TDS Form 16A", "nriTenantTdsForm16A");
+  setYesNo("Business Or Speculative Income", "businessIncome");
+  setYesNo("Presumptive Taxation (44AD/44ADA/44AE)", "presumptiveTaxation");
+  setYesNo("Income Likely Above 50 Lakh", "incomeLikelyAbove50L");
+  const houseCount = fields.get("House Property Count");
+  if (houseCount === "one" || houseCount === "two" || houseCount === "more_than_two") {
+    orientation.housePropertyCount = houseCount;
+  }
   setYesNo("Multiple Employers", "multipleEmployers");
   setYesNo("HRA Claimed", "hraClaimed");
   setYesNo("HRA Above Threshold", "hraAboveThreshold");
@@ -113,6 +154,10 @@ function parseOrientationSheet(data: ExcelCell[][]): Partial<OrientationAnswers>
   setYesNo("Loans Repaid", "loansRepaid");
   setYesNo("Insurance Payout", "insurancePayout");
   setYesNo("Foreign Assets", "foreignAssets");
+  setYesNo("Foreign Signing Authority", "foreignSigningAuthority");
+  setYesNo("Foreign Property", "foreignProperty");
+  setYesNo("Foreign Trust", "foreignTrust");
+  setYesNo("Foreign Cash Value Insurance", "foreignCashValueInsurance");
 
   return orientation;
 }

@@ -125,9 +125,10 @@ change (Budget, Finance Act, CBDT circular).
   clubbing has no gender-based distinction — Indian income tax hasn't had
   a separate female tax slab since it was equalised years ago), and no
   gender question was added, since one would have no calculation to
-  attach to. Confirmed business/professional/firm profiles remain
-  explicitly out of scope (`WHO_ITS_FOR_EXCLUDES`), with no orientation
-  question implying otherwise.
+  attach to. Confirmed business income routes to ITR-3/ITR-4 via
+  orientation flags but full bookkeeping and audit schedules remain out
+  of scope (`WHO_ITS_FOR_EXCLUDES`); ITR-5/6/7 and non-individual
+  entities are not supported.
 - `docs/DESIGN-remaining-gaps.md` updated with a "Build note" under each
   of the three sections recording what was approved, implemented, and
   left out (and why), rather than leaving the document to imply nothing

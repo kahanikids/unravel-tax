@@ -48,7 +48,12 @@ export function WelcomeScreen({
     <div className="welcome-card">
       {!disclaimerDismissed ? (
         <div className="welcome-disclaimer-banner" role="status">
-          <p>{WELCOME_DISCLAIMER_BANNER}</p>
+          <div className="welcome-disclaimer-lede">
+            <span className="welcome-disclaimer-icon" aria-hidden="true">
+              !
+            </span>
+            <p>{WELCOME_DISCLAIMER_BANNER}</p>
+          </div>
           <button
             type="button"
             className="text-button welcome-disclaimer-dismiss"

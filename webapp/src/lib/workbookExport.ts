@@ -982,10 +982,23 @@ export function buildOrientationSheet(orientation: OrientationAnswers): SheetDat
       orientation.nriDaysInIndia === null ? "" : String(orientation.nriDaysInIndia)
     ],
     ["HUF", yesNoOrBlank(orientation.huf)],
+    ["HUF Return Scope", orientation.hufReturnScope ?? ""],
     ["Senior Citizen", yesNoOrBlank(orientation.seniorCitizen)],
     ["Super Senior Citizen (80+)", yesNoOrBlank(orientation.superSeniorCitizen)],
-    ["Single Parent Or Sole Guardian", yesNoOrBlank(orientation.singleParent)],
+    ["Minor Child Income To Club", yesNoOrBlank(orientation.singleParent)],
     ["Income Sources", orientation.incomeSources.join(", ")],
+    [
+      "Capital Gains Asset Types",
+      orientation.capitalGainsAssetTypes.join(", ")
+    ],
+    ["NRI TDS Deducted", yesNoOrBlank(orientation.nriTdsDeducted)],
+    ["NRI Has TRC And Form 10F", yesNoOrBlank(orientation.nriHasTrcAndForm10F)],
+    ["NRI Needs Form 13", yesNoOrBlank(orientation.nriNeedsForm13)],
+    ["NRI Tenant TDS Form 16A", yesNoOrBlank(orientation.nriTenantTdsForm16A)],
+    ["Business Or Speculative Income", yesNoOrBlank(orientation.businessIncome)],
+    ["Presumptive Taxation (44AD/44ADA/44AE)", yesNoOrBlank(orientation.presumptiveTaxation)],
+    ["Income Likely Above 50 Lakh", yesNoOrBlank(orientation.incomeLikelyAbove50L)],
+    ["House Property Count", orientation.housePropertyCount ?? ""],
     ["Multiple Employers", yesNoOrBlank(orientation.multipleEmployers)],
     ["HRA Claimed", yesNoOrBlank(orientation.hraClaimed)],
     ["HRA Above Threshold", yesNoOrBlank(orientation.hraAboveThreshold)],
@@ -994,7 +1007,11 @@ export function buildOrientationSheet(orientation: OrientationAnswers): SheetDat
     ["EPF Before Five Years", yesNoOrBlank(orientation.epfBeforeFiveYears)],
     ["Loans Repaid", yesNoOrBlank(orientation.loansRepaid)],
     ["Insurance Payout", yesNoOrBlank(orientation.insurancePayout)],
-    ["Foreign Assets", yesNoOrBlank(orientation.foreignAssets)]
+    ["Foreign Assets", yesNoOrBlank(orientation.foreignAssets)],
+    ["Foreign Signing Authority", yesNoOrBlank(orientation.foreignSigningAuthority)],
+    ["Foreign Property", yesNoOrBlank(orientation.foreignProperty)],
+    ["Foreign Trust", yesNoOrBlank(orientation.foreignTrust)],
+    ["Foreign Cash Value Insurance", yesNoOrBlank(orientation.foreignCashValueInsurance)]
   ];
   for (const [field, value] of rows) {
     data.push([txt(field, C.td), txt(value, C.td)]);

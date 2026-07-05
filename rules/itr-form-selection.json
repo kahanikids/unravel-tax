@@ -60,13 +60,21 @@
       "huf_with_business": {
         "form": "ITR-3",
         "due_date": "2026-08-31"
+      },
+      "presumptive_non_audit": {
+        "form": "ITR-4",
+        "due_date": "2026-07-31"
+      },
+      "huf_presumptive_non_audit": {
+        "form": "ITR-4",
+        "due_date": "2026-07-31"
       }
     },
     "itr1_conditions": {
       "resident_only": true,
       "total_income_max_inr": 5000000,
       "agricultural_income_max_inr": 5000,
-      "house_properties_max": 1,
+      "house_properties_max": 2,
       "ltcg_112a_allowed_max_inr": 125000,
       "ltcg_112a_requires_no_carry_forward_loss": true,
       "allows": [

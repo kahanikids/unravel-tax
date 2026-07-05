@@ -24,19 +24,57 @@ export type NriCountry =
 
 export type YesNo = "yes" | "no";
 
+export type TaxResidency = "resident" | "rnor" | "nri";
+
+export type HousePropertyCount = "one" | "two" | "more_than_two";
+
+/** Non-listed-equity capital-gains types that disqualify ITR-1. Listed shares/equity MF are implied by the main income-source option. */
+export type CapitalGainsAssetType =
+  | "property"
+  | "crypto_vda"
+  | "unlisted_shares"
+  | "foreign_shares"
+  | "debt_mf";
+
+/** When income is held through a HUF — personal return vs filing the HUF as assessee. */
+export type HufReturnScope = "personal" | "huf_return";
+
 export type OrientationAnswers = {
-  residency: "resident" | "nri" | null;
+  /** Tax residential status for the financial year — not where you live day-to-day. */
+  residency: TaxResidency | null;
   /** Where you are a tax resident. Only asked when residency is "nri". */
   nriCountry: NriCountry;
-  /** NRI only. Days physically in India this financial year, reported on the return. Skippable. */
+  /** NRI/RNOR. Days physically in India this financial year. Skippable. */
   nriDaysInIndia: number | null;
   huf: boolean | null;
+  /** Only when huf is Yes — personal return or the HUF's own return. */
+  hufReturnScope: HufReturnScope | null;
   seniorCitizen: boolean | null;
   /** Only asked when seniorCitizen is true. Picks the old-regime super-senior (80+) slab instead of the 60-79 one. */
   superSeniorCitizen: boolean | null;
+  /** Minor child has income or investments in their own name (Section 64(1A) clubbing). */
   singleParent: boolean | null;
   incomeSources: IncomeSource[];
+  /** Resident/RNOR with capital gains — asset types beyond listed shares/equity MF. */
+  capitalGainsAssetTypes: CapitalGainsAssetType[];
+  /** NRI only. TDS deducted on capital gains, NRO interest, dividends, or rent. */
+  nriTdsDeducted: boolean | null;
+  /** NRI only. Has a TRC and filed Form 10F for treaty relief. */
+  nriHasTrcAndForm10F: boolean | null;
+  /** NRI only. Applied for or needs Form 13 lower/nil TDS certificate. */
+  nriNeedsForm13: boolean | null;
+  /** NRI with rent. Tenant deducted TDS and issued Form 16A. */
+  nriTenantTdsForm16A: boolean | null;
+  /** Resident/RNOR with India salary only — not shown to NRIs. */
   multipleEmployers: boolean | null;
+  /** Resident/RNOR. Self-declared business, freelance, F&O, intraday, or speculative income. */
+  businessIncome: boolean | null;
+  /** Resident/RNOR with business income. Opted for presumptive taxation under 44AD/44ADA/44AE. */
+  presumptiveTaxation: boolean | null;
+  /** Resident/RNOR. Likely total income above the ITR-1 Rs 50 lakh cap. */
+  incomeLikelyAbove50L: boolean | null;
+  /** When rent is an income source — how many house properties you reported. */
+  housePropertyCount: HousePropertyCount | null;
   hraClaimed: boolean | null;
   hraAboveThreshold: boolean | null;
   hasLandlordPan: boolean | null;
@@ -47,6 +85,14 @@ export type OrientationAnswers = {
   insurancePayout: boolean | null;
   /** Resident only. Holds any asset outside India (foreign shares, RSUs, ESPP, foreign accounts/property). Forces Schedule FA / ITR-2. */
   foreignAssets: boolean | null;
+  /** ROR with foreignAssets=Yes. Signing authority over a foreign bank/brokerage/custodial account. */
+  foreignSigningAuthority: boolean | null;
+  /** ROR with foreignAssets=Yes. Foreign immovable property held. */
+  foreignProperty: boolean | null;
+  /** ROR with foreignAssets=Yes. Beneficiary/settlor of a foreign trust. */
+  foreignTrust: boolean | null;
+  /** ROR with foreignAssets=Yes. Foreign life insurance with cash surrender value. */
+  foreignCashValueInsurance: boolean | null;
 };
 
 export const BLANK_ORIENTATION: OrientationAnswers = {
@@ -54,11 +100,21 @@ export const BLANK_ORIENTATION: OrientationAnswers = {
   nriCountry: null,
   nriDaysInIndia: null,
   huf: null,
+  hufReturnScope: null,
   seniorCitizen: null,
   superSeniorCitizen: null,
   singleParent: null,
   incomeSources: [],
+  capitalGainsAssetTypes: [],
+  nriTdsDeducted: null,
+  nriHasTrcAndForm10F: null,
+  nriNeedsForm13: null,
+  nriTenantTdsForm16A: null,
   multipleEmployers: null,
+  businessIncome: null,
+  presumptiveTaxation: null,
+  incomeLikelyAbove50L: null,
+  housePropertyCount: null,
   hraClaimed: null,
   hraAboveThreshold: null,
   hasLandlordPan: null,
@@ -66,17 +122,44 @@ export const BLANK_ORIENTATION: OrientationAnswers = {
   epfBeforeFiveYears: null,
   loansRepaid: null,
   insurancePayout: null,
-  foreignAssets: null
+  foreignAssets: null,
+  foreignSigningAuthority: null,
+  foreignProperty: null,
+  foreignTrust: null,
+  foreignCashValueInsurance: null
 };
+
+/** Fills defaults for fields added after a session was saved — prevents runtime crashes on resume. */
+export function mergeOrientationAnswers(
+  partial: Partial<OrientationAnswers> | OrientationAnswers
+): OrientationAnswers {
+  return {
+    ...BLANK_ORIENTATION,
+    ...partial,
+    incomeSources: partial.incomeSources ?? [],
+    capitalGainsAssetTypes: partial.capitalGainsAssetTypes ?? []
+  };
+}
 
 export type ProfileFlags = {
   nri: boolean;
+  rnor: boolean;
   nriCountry: NriCountry;
   huf: boolean;
+  /** Filing the HUF's return as assessee (not just personal return with HUF investments). */
+  hufFilingAsEntity: boolean;
+  /** HUF investments exist but this is a personal return. */
+  hufPersonalHoldings: boolean;
   seniorCitizen: boolean;
   superSeniorCitizen: boolean;
   singleParent: boolean;
+  declaredBusinessIncome: boolean;
+  usesPresumptiveTaxation: boolean;
+  incomeLikelyAbove50L: boolean;
+  housePropertiesOverItr1Limit: boolean;
   hasCapitalGains: boolean;
+  /** Declared non-listed-equity capital-gains types — routes away from ITR-1. */
+  capitalGainsDisqualifiesItr1: boolean;
   hasDividends: boolean;
   hasBankInterest: boolean;
   hasRent: boolean;
@@ -86,6 +169,12 @@ export type ProfileFlags = {
   hasLoans: boolean;
   hasInsurancePayout: boolean;
   hasForeignAssets: boolean;
+  /** Schedule FA types beyond shares/accounts already covered in results panels. */
+  hasExtendedForeignAssets: boolean;
+  nriNeedsForm13: boolean;
+  nriTdsDeducted: boolean;
+  nriMissingTrc: boolean;
+  nriTenantMissingForm16A: boolean;
 };
 
 export type AppStep = "welcome" | "orientation" | "documents" | "results";
