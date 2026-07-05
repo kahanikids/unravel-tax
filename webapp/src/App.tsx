@@ -22,7 +22,9 @@ import {
   computeLetOutHouseProperty,
   computeInsurancePayoutCheck,
   computeNriDividendTax,
+  computeForeignTaxCreditAverageRate,
   summarizeForeignAccounts,
+  summarizeForeignEquityHoldings,
   summarizeInsurancePolicies,
   applyPreviousWorkbookToOrientation,
   parsePreviousWorkbook,
@@ -56,6 +58,7 @@ import {
   type ExportFile,
   type FilingSource,
   type ForeignAccount,
+  type ForeignEquityHolding,
   type HufAssetTransfer,
   type HufMember,
   type InsurancePolicy,
@@ -120,6 +123,7 @@ function App() {
   const [hufMembers, setHufMembers] = useState<HufMember[]>([]);
   const [hufTransfers, setHufTransfers] = useState<HufAssetTransfer[]>([]);
   const [foreignAccounts, setForeignAccounts] = useState<ForeignAccount[]>([]);
+  const [foreignEquityHoldings, setForeignEquityHoldings] = useState<ForeignEquityHolding[]>([]);
   const [sampleMode, setSampleMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("unravel-tax-view") === "advanced"
@@ -220,7 +224,8 @@ function App() {
         insurancePolicies,
         hufMembers,
         hufTransfers,
-        foreignAccounts
+        foreignAccounts,
+        foreignEquityHoldings
       };
       saveSession(input);
       // The folder is a disk-durable backup: write the same session there so
@@ -250,6 +255,7 @@ function App() {
     hufMembers,
     hufTransfers,
     foreignAccounts,
+    foreignEquityHoldings,
     sampleMode,
     folderHandle
   ]);
@@ -405,6 +411,7 @@ function App() {
   // no new tax, so it stays out of the summary.
   const insuranceSummary = summarizeInsurancePolicies(insurancePolicies, ruleCatalog.insurance, ruleCatalog.capitalGainsEquity);
   const foreignAccountsSummary = summarizeForeignAccounts(foreignAccounts, ruleCatalog.foreignInvestments);
+  const foreignEquitySummary = summarizeForeignEquityHoldings(foreignEquityHoldings, ruleCatalog.foreignInvestments);
   if (insuranceSummary.totalOtherSourcesSlabIncome > 0) {
     rows.push({
       head: "Insurance payout (traditional, taxable)",
@@ -421,6 +428,15 @@ function App() {
       amount: insuranceSummary.totalUlipCapitalGainsTax,
       notes:
         "Entered by you under \"Insurance\" on the Current Filing page: one or more ULIPs lost their Section 10(10D) exemption, so their maturity gain is taxed as capital gains at listed-equity rates. Each policy's tax here uses the full annual LTCG exemption on its own; if you also have other equity long-term gains this year, the two share one exemption combined, so ask a CA to combine both before filing."
+    });
+  }
+  if (foreignEquitySummary.totalLtcgTax > 0) {
+    rows.push({
+      head: "Foreign share capital gains (long-term)",
+      ruleSection: "Schedule CG - unlisted shares",
+      amount: foreignEquitySummary.totalLtcgTax,
+      notes:
+        "Entered by you under \"Foreign shares, RSU & ESPP\" on the Current Filing page: foreign shares (and vested RSU/ESPP) are taxed like unlisted Indian shares, not listed equity - long-term after 24 months at a flat 12.5%, no indexation. Short-term foreign-share gains are already added to the regime comparison's other income instead of a flat rate."
     });
   }
 
@@ -506,14 +522,48 @@ function App() {
     // NRI dividends are taxed flat under Section 115A/DTAA, never at slab -
     // see the "Dividend tax" CA Summary row and lib/nriTax.ts.
     excludeDividendsFromSlab: flags.nri,
-    // A taxable traditional-insurance-policy payout, folded into the same
-    // "other income" bucket the Insurance panel's own note explains.
-    additionalOtherSlabIncome: insuranceSummary.totalOtherSourcesSlabIncome,
+    // A taxable traditional-insurance-policy payout, plus foreign
+    // dividends/interest (Schedule FA accounts) and short-term foreign-share
+    // gains, all slab-rate "other income" - each panel's own note explains it.
+    additionalOtherSlabIncome:
+      insuranceSummary.totalOtherSourcesSlabIncome +
+      foreignAccountsSummary.totalGrossInterestInr +
+      foreignEquitySummary.totalStcgGain,
+    // An RSU/ESPP vesting perquisite (Section 17(2)(vi)) is salary income,
+    // eligible for the standard deduction unlike the other-income bucket above.
+    additionalSalaryIncome: foreignEquitySummary.totalPerquisiteValueInr,
     seniorCitizen: flags.seniorCitizen,
     superSeniorCitizen: flags.superSeniorCitizen
   };
   const regimeResult = regimeComparable ? compareRegimes(regimeInputs, ruleCatalog.regimeChoice) : null;
   const regimeBreakEven = regimeComparable ? computeRegimeBreakEven(regimeInputs, ruleCatalog.regimeChoice) : null;
+
+  // Section 90/91 foreign tax credit estimate (Rule 128's average-rate
+  // method) for the slab-taxed foreign income above - needs a regime result
+  // to know the average rate, so it's null until salary is entered. Uses
+  // whichever regime looks cheaper, since that's the one most likely filed
+  // under; a CA should confirm against the regime actually chosen.
+  const foreignOtherIncomeInr =
+    foreignAccountsSummary.totalGrossInterestInr + foreignEquitySummary.totalStcgGain + foreignEquitySummary.totalPerquisiteValueInr;
+  const foreignTaxCreditOnOtherIncome = regimeResult
+    ? computeForeignTaxCreditAverageRate(
+        foreignOtherIncomeInr,
+        supplementalFigures.foreignTaxPaidOnOtherIncomeInr,
+        regimeResult.cheaperRegime === "new" ? regimeResult.newRegimeTax : regimeResult.oldRegimeTax,
+        regimeResult.cheaperRegime === "new" ? regimeResult.newRegimeSlabIncome : regimeResult.oldRegimeSlabIncome
+      )
+    : null;
+  const totalForeignTaxCredit =
+    foreignEquitySummary.totalForeignTaxCreditOnLtcg + (foreignTaxCreditOnOtherIncome?.creditInr ?? 0);
+  if (totalForeignTaxCredit > 0) {
+    rows.push({
+      head: "Foreign tax credit (Section 90/91, estimate)",
+      ruleSection: "90/91, Rule 128",
+      amount: Math.round(totalForeignTaxCredit),
+      notes:
+        "Lower of the foreign tax paid and the Indian tax on that same income - exact for foreign-share long-term gains (a flat rate), estimated using Rule 128's average-rate method for slab-taxed foreign income (dividends/interest, short-term foreign-share gains, RSU/ESPP perquisite). This is a planning estimate, not a Form 67 figure: real filing computes credit separately per country, which this tool doesn't itemize. A CA should verify the exact amount and file Form 67 with Schedule FSI/TR before the return."
+    });
+  }
 
   // Deduction ceilings come from rules/deduction-limits.json, never hardcoded
   // here (CLAUDE.md). The 80D limit steps up when a senior citizen is covered.
@@ -639,6 +689,7 @@ function App() {
     setHufMembers([]);
     setHufTransfers([]);
     setForeignAccounts([]);
+    setForeignEquityHoldings([]);
   }
 
   function startOrientation() {
@@ -757,6 +808,7 @@ function App() {
     setHufMembers(session.hufMembers ?? []);
     setHufTransfers(session.hufTransfers ?? []);
     setForeignAccounts(session.foreignAccounts ?? []);
+    setForeignEquityHoldings(session.foreignEquityHoldings ?? []);
     setSampleMode(false);
   }
 
@@ -791,6 +843,7 @@ function App() {
     setHufMembers([]);
     setHufTransfers([]);
     setForeignAccounts([]);
+    setForeignEquityHoldings([]);
     setImportWorkbookMessage(null);
     setSampleMode(false);
     setShowDashboard(false);
@@ -964,6 +1017,7 @@ function App() {
         assessmentYear: `AY${cgRule.assessment_year}`,
         orientation,
         foreignAccounts,
+        foreignEquityHoldings,
         scheduleFaCalendarYear: foreignAccountsSummary.disclosureCalendarYear
       })
     );
@@ -1173,6 +1227,8 @@ function App() {
                 hufClubbingRule={ruleCatalog.hufClubbing}
                 foreignAccounts={foreignAccounts}
                 onChangeForeignAccounts={setForeignAccounts}
+                foreignEquityHoldings={foreignEquityHoldings}
+                onChangeForeignEquityHoldings={setForeignEquityHoldings}
                 foreignInvestmentsRule={ruleCatalog.foreignInvestments}
                 regimeChoiceRule={ruleCatalog.regimeChoice}
                 loanTreatmentRule={ruleCatalog.loanTreatment}

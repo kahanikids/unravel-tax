@@ -6,6 +6,7 @@ import type { CaRecommendation } from "../lib/riskTriggers";
 import type { TdsRow } from "../lib/reconciliation";
 import { computeLetOutHouseProperty, computeLoanDeductions } from "../lib/loanDeductions";
 import { summarizeInsurancePolicies, type InsurancePolicy } from "../lib/insurance";
+import type { ForeignEquityHolding } from "../lib/foreignEquity";
 import type { HufAssetTransfer, HufMember } from "../lib/hufClubbing";
 import type { ForeignAccount } from "../lib/scheduleFa";
 import { ruleCatalog, type AdvanceTaxRule, type ForeignInvestmentsRule, type HufClubbingRule, type InsuranceRule, type LoanTreatmentRule, type NriDtaaRule, type NriRepatriationRule, type NriTdsAndRefundsRule, type RegimeChoiceRule } from "../rules";
@@ -13,6 +14,7 @@ import type { AisReportedFigures, NriCountry, NumericFigureKey, SupplementalFigu
 import { AdvanceTaxPanel } from "./AdvanceTaxPanel";
 import { RuleSourceLink } from "./RuleSourceLink";
 import { ConfidenceReportPanel } from "./ConfidenceReportPanel";
+import { ForeignEquityPanel } from "./ForeignEquityPanel";
 import { HufPanel } from "./HufPanel";
 import { InsurancePolicyPanel } from "./InsurancePolicyPanel";
 import { LoanDeductionsPanel } from "./LoanDeductionsPanel";
@@ -112,6 +114,8 @@ export function ResultsStep({
   foreignInvestmentsRule = ruleCatalog.foreignInvestments,
   foreignAccounts,
   onChangeForeignAccounts,
+  foreignEquityHoldings,
+  onChangeForeignEquityHoldings,
   aisFigures,
   onChangeAisFigures,
   tdsRows,
@@ -170,6 +174,8 @@ export function ResultsStep({
   foreignInvestmentsRule?: ForeignInvestmentsRule;
   foreignAccounts: ForeignAccount[];
   onChangeForeignAccounts: (accounts: ForeignAccount[]) => void;
+  foreignEquityHoldings: ForeignEquityHolding[];
+  onChangeForeignEquityHoldings: (holdings: ForeignEquityHolding[]) => void;
   aisFigures: AisReportedFigures;
   onChangeAisFigures: (figures: AisReportedFigures) => void;
   tdsRows: TdsRow[];
@@ -404,6 +410,20 @@ export function ResultsStep({
               accounts={foreignAccounts}
               onChangeAccounts={onChangeForeignAccounts}
               rule={foreignInvestmentsRule}
+            />
+          </details>
+        ) : null}
+
+        {hasForeignAssets ? (
+          <details className="refine-section">
+            <summary>Foreign shares, RSU &amp; ESPP (Phase 2)</summary>
+            <ForeignEquityPanel
+              holdings={foreignEquityHoldings}
+              onChangeHoldings={onChangeForeignEquityHoldings}
+              supplementalFigures={supplementalFigures}
+              onChangeSupplementalFigures={onChangeSupplementalFigures}
+              rule={foreignInvestmentsRule}
+              hasRegimeResult={supplementalFigures.salaryIncome > 0 && !huf}
             />
           </details>
         ) : null}

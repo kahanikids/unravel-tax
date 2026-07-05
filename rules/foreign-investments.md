@@ -36,14 +36,23 @@ dwarf the tax on the asset itself. So disclosure comes first, tax second.
 - **Dividends and interest** from abroad are taxable in India at your slab
   rate as income from other sources.
 - **Capital gains on foreign shares** go in Schedule CG. Foreign shares
-  are treated like unlisted shares: long-term only after **24 months**
-  (12.5%), otherwise short-term at slab rate.
-- **RSU / ESPP:** the value at vesting is a salary perquisite taxed at
-  slab rate; selling later is a separate capital gain.
+  are treated like **unlisted** Indian shares, not listed equity:
+  long-term only after **24 months**, at a flat **12.5%** with no
+  indexation (Budget 2024, for transfers on or after 23 July 2024);
+  short-term (24 months or less) is slab rate, not a flat rate.
+- **RSU / ESPP:** the FMV of the shares on the **vesting date** (converted
+  to rupees at the SBI TT buying rate as on that date) is a salary
+  perquisite under Section 17(2)(vi), taxed at slab rate in the vesting
+  year. That same FMV becomes your **cost basis** for a later sale, and
+  the holding period for that sale starts from the **vesting date**, not
+  the grant date. An ESPP discount is taxed the same way at purchase.
 - **Foreign tax credit.** If tax was withheld abroad, you can credit it
-  against your Indian tax on the same income under Section 90/91, by
-  filing **Form 67** (before you file the return) along with Schedule FSI
-  and Schedule TR. Miss Form 67 and the credit can be denied.
+  against your Indian tax on the same income under Section 90/91 (Rule
+  128), by filing **Form 67** (before you file the return) along with
+  Schedule FSI and Schedule TR. The credit is capped at whichever is
+  **lower** — the foreign tax actually paid, or the Indian tax the same
+  income would attract — computed separately per country and income
+  source, then added together. Miss Form 67 and the credit can be denied.
 
 ## TCS when you send money abroad (LRS)
 
@@ -83,12 +92,31 @@ brokerage account (tables A1/A2 combined) gets its own entry — country,
 institution, account number, opening date, peak balance during the
 calendar year, closing balance on 31 December, and gross interest — all
 entered by you in rupees, since this tool has no live exchange-rate
-source and doesn't attempt the SBI TT-rate conversion itself. It produces
-the disclosure **rows** for your CA to place into the actual schedule; it
-does not compute Indian tax on the interest shown (that's Schedule
-FSI/OS, still a gap) and does not cover RSUs/ESPP, foreign property, or
-foreign trusts (Schedule FA tables A3, B, C — see
-`docs/DESIGN-remaining-gaps.md` for the phased plan).
+source and doesn't attempt the SBI TT-rate conversion itself. This
+interest is now folded automatically into your slab income (see below),
+not just disclosed.
+
+**Phase 2 is also live**: foreign shares and vested RSU/ESPP (table A3)
+get their own entry — entity, acquisition/vesting date, cost basis,
+closing value, and (once sold) sale proceeds and foreign tax paid. This
+computes actual Indian tax: a long-term sale's flat 12.5% capital-gains
+tax shows as its own CA Summary row; a short-term sale, plus the RSU/ESPP
+perquisite value, fold automatically into the regime comparison's slab
+income (the perquisite into the salary bucket specifically, since it's
+eligible for the standard deduction unlike other income).
+
+**A Section 90/91 foreign tax credit estimate is computed too**: exact
+for long-term foreign-share gains (a known flat rate), and using Rule
+128's average-rate method (this filing's own average tax rate applied to
+the doubly-taxed income) for everything else — dividends, interest,
+short-term gains, and the RSU/ESPP perquisite. This is a **planning
+estimate**, not a Form 67 number: real filing computes credit separately
+per country, which this tool doesn't itemize, so a CA should verify the
+exact figure before you file Form 67 with Schedule FSI/TR.
+
+**Foreign property, foreign trusts, and Phase 3 more broadly remain out
+of scope** — see `docs/DESIGN-remaining-gaps.md` for the phased plan and
+why Phase 3 is lower priority for this tool's audience.
 
 ## Renumbering under the new Income Tax Act, 2025
 

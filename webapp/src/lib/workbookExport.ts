@@ -3,6 +3,7 @@ import { findBrokerSpeculativeColumn, findBrokerTaxableColumn, type CaSummaryRow
 import type { NormalizedTransaction } from "../ingest";
 import { parseFixtureDate } from "../ingest/normalize";
 import type { OrientationAnswers } from "../state/types";
+import type { ForeignEquityHolding } from "./foreignEquity";
 import type { ForeignAccount } from "./scheduleFa";
 
 export type ExportDocument = {
@@ -808,8 +809,8 @@ export function buildOrientationSheet(orientation: OrientationAnswers): SheetDat
   return data;
 }
 
-/** Sheet name for the Schedule FA Phase 1 disclosure rows (foreign depository/custodial accounts). */
-export const SCHEDULE_FA_SHEET_NAME = "Schedule FA (Phase 1)";
+/** Sheet name for the Schedule FA disclosure rows (foreign accounts plus foreign equity/debt holdings). */
+export const SCHEDULE_FA_SHEET_NAME = "Schedule FA";
 
 const ACCOUNT_TYPE_SHEET_LABELS: Record<ForeignAccount["accountType"], string> = {
   depository: "A1 - Depository (bank)",
@@ -817,27 +818,34 @@ const ACCOUNT_TYPE_SHEET_LABELS: Record<ForeignAccount["accountType"], string> =
 };
 
 /**
- * Disclosure rows only for foreign bank/brokerage accounts (Schedule FA
- * tables A1/A2 combined) - literal values, no formulas, for a CA to place
- * into the actual schedule. Does not compute Indian tax on the interest
- * shown; see rules/foreign-investments.md and docs/DESIGN-remaining-gaps.md
- * for why the rest of Schedule FA (RSUs, foreign property, trusts, and the
- * tax computation itself) is out of scope for this phase.
+ * Disclosure rows for foreign bank/brokerage accounts (Schedule FA tables
+ * A1/A2 combined, Phase 1) and foreign equity/debt holdings including
+ * RSU/ESPP (table A3, Phase 2) - literal values, no formulas, for a CA to
+ * place into the actual schedule. The A1/A2 section does not compute
+ * Indian tax on the interest shown here (it's folded into the regime
+ * comparison elsewhere); the A3 section's long-term capital gains tax is
+ * shown as its own CA Summary row, not repeated on this sheet. See
+ * rules/foreign-investments.md and docs/DESIGN-remaining-gaps.md for why
+ * foreign property and trusts (Phase 3) are still out of scope.
  */
-export function buildScheduleFaSheet(accounts: ForeignAccount[], disclosureCalendarYear: number): SheetData {
+export function buildScheduleFaSheet(
+  accounts: ForeignAccount[],
+  disclosureCalendarYear: number,
+  equityHoldings: ForeignEquityHolding[] = []
+): SheetData {
   const data: SheetData = [];
   const span = 7;
   data.push(
     mergeTitle(
       emptyRow(span),
-      `Schedule FA Phase 1 - foreign accounts held at any point in calendar year ${disclosureCalendarYear} (Jan-Dec)`,
+      `Schedule FA - foreign holdings at any point in calendar year ${disclosureCalendarYear} (Jan-Dec)`,
       span
     )
   );
   data.push(
     mergeTitle(
       emptyRow(span),
-      "Disclosure rows only, for your CA to place into the actual schedule - this does not compute Indian tax on the interest shown.",
+      "Disclosure rows only, for your CA to place into the actual schedule - does not compute Indian tax on the A1/A2 interest shown here (see the regime comparison), and repeats no tax figure already shown as its own CA Summary row.",
       span
     )
   );
@@ -860,6 +868,30 @@ export function buildScheduleFaSheet(accounts: ForeignAccount[], disclosureCalen
       num(account.closingBalanceInr, C.td),
       num(account.grossInterestInr, C.td)
     ]);
+  }
+
+  if (equityHoldings.length > 0) {
+    data.push(emptyRow(span));
+    data.push([
+      txt("Table", C.th),
+      txt("Entity", C.th),
+      txt("RSU/ESPP", C.th),
+      txt("Acquisition/Vesting Date", C.th),
+      txt("Closing Value (INR)", C.th),
+      txt("Sale Date", C.th),
+      txt("Sale Proceeds (INR)", C.th)
+    ]);
+    for (const holding of equityHoldings) {
+      data.push([
+        txt("A3 - Equity/Debt Interest", C.td),
+        txt(holding.entityName, C.td),
+        txt(holding.isRsuOrEspp ? "Yes" : "No", C.td),
+        txt(holding.acquisitionDate, C.td),
+        num(holding.closingValueInr, C.td),
+        txt(holding.saleDate, C.td),
+        num(holding.saleProceedsInr, C.td)
+      ]);
+    }
   }
   return data;
 }
