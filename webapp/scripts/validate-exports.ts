@@ -201,10 +201,11 @@ export async function main() {
     throw new Error("Reference sheet should preserve the raw upload's data rows verbatim.");
   }
 
-  // Round trip: a Full Workbook exported WITH a profile (synthetic, never
-  // real data) must let a later session read that profile and the
-  // carry-forward-loss/dividend/interest figures back out, without
-  // evaluating any of the CA Summary sheet's capital-gains formulas.
+  // Internal round trip: a Full Workbook exported WITH a profile (synthetic,
+  // never real data) must keep the profile and CA Summary rows readable
+  // without evaluating any of the capital-gains formulas. This protects the
+  // workbook structure even though previous-workbook import is not exposed in
+  // the FY 2025-26 welcome flow.
   const syntheticOrientation: OrientationAnswers = {
     ...BLANK_ORIENTATION,
     residency: "nri",
@@ -261,8 +262,8 @@ export async function main() {
     );
   }
 
-  // Merging into a blank current orientation fills every field the import
-  // found; merging into an already-answered orientation must never clobber it.
+  // The retained merge helper fills blank fields only; it must never clobber
+  // already-entered answers.
   const mergedIntoBlank = applyPreviousWorkbookToOrientation(
     BLANK_ORIENTATION,
     imported.orientation
@@ -286,9 +287,8 @@ export async function main() {
     throw new Error("Importing a workbook should still fill in fields that are still blank.");
   }
 
-  // A workbook exported without an orientation (or an older one predating the
-  // Orientation sheet) must degrade gracefully - no orientation to prefill,
-  // but the CA Summary figures still come through.
+  // A workbook exported without an orientation must degrade gracefully - no
+  // profile record, but the CA Summary figures still come through.
   const exportWithoutOrientation = await buildFullWorkbookExport(exportState);
   const importedWithoutOrientation = await parsePreviousWorkbook(
     await exportWithoutOrientation.blob.arrayBuffer()
@@ -368,7 +368,7 @@ export async function main() {
   }
 
   console.log(
-    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), multi-file sheet naming + raw reference passthrough, the previous-workbook import round trip (orientation profile, carry-forward losses, dividends, interest, never-clobber merge, and graceful no-Orientation-sheet fallback), and the Schedule FA sheet (Phase 1 accounts plus Phase 2 equity/RSU holdings both present when entered, absent entirely with none)."
+    "Validated webapp exports: CA Summary CSV/XLSX, full workbook ordering (CA Summary, Detailed Summary, one sheet per raw file), multi-file sheet naming + raw reference passthrough, internal workbook round trip (orientation profile, carry-forward losses, dividends, interest, never-clobber merge helper, and graceful no-Orientation-sheet fallback), and the Schedule FA sheet (Phase 1 accounts plus Phase 2 equity/RSU holdings both present when entered, absent entirely with none)."
   );
 }
 

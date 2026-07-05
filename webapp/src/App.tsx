@@ -26,8 +26,6 @@ import {
   summarizeForeignAccounts,
   summarizeForeignEquityHoldings,
   summarizeInsurancePolicies,
-  applyPreviousWorkbookToOrientation,
-  parsePreviousWorkbook,
   computeLoanDeductions,
   deriveProfileFlags,
   downloadExport,
@@ -160,9 +158,6 @@ function App() {
   const [showTour, setShowTour] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
-  // Feedback banner shown on the orientation step right after importing a
-  // previous year's workbook - not persisted, cleared on the next import.
-  const [importWorkbookMessage, setImportWorkbookMessage] = useState<string | null>(null);
   // Width (px) of the left checklist column on the documents/results stage.
   // Driven by dragging the vertical handle between the two cards; clamped in
   // startPanelResize. A CSS var carries it so the mobile media query can
@@ -946,7 +941,6 @@ function App() {
     setHufTransfers([]);
     setForeignAccounts([]);
     setForeignEquityHoldings([]);
-    setImportWorkbookMessage(null);
     setSampleMode(false);
     setShowDashboard(false);
     setFurthestStepIndex(0);
@@ -1048,40 +1042,6 @@ function App() {
     hydrateSession(session);
     setFurthestStepIndex(session.furthestStepIndex ?? STEP_ORDER.indexOf(session.step));
     setStep(session.step);
-  }
-
-  // Reads a previously exported Unravel Tax workbook (.xlsx) to prefill this
-  // year's profile answers and carry-forward-loss figure, then drops the
-  // user on the orientation step to review what was filled in - it never
-  // starts the filing itself or overwrites an answer already given.
-  async function importPreviousWorkbook(file: File) {
-    clearSampleData();
-    setSampleMode(false);
-    const buffer = await file.arrayBuffer();
-    const imported = await parsePreviousWorkbook(buffer);
-    if (imported.orientation) {
-      setOrientation((prev) => applyPreviousWorkbookToOrientation(prev, imported.orientation));
-    }
-    setSupplementalFigures((prev) => ({
-      ...prev,
-      carryForwardLossesAvailable:
-        prev.carryForwardLossesAvailable === 0 && imported.carryForwardLossesAvailable !== null
-          ? imported.carryForwardLossesAvailable
-          : prev.carryForwardLossesAvailable,
-      dividends:
-        prev.dividends === 0 && imported.dividends !== null ? imported.dividends : prev.dividends,
-      interestOtherIncome:
-        prev.interestOtherIncome === 0 && imported.interestOtherIncome !== null
-          ? imported.interestOtherIncome
-          : prev.interestOtherIncome
-    }));
-    setImportWorkbookMessage(
-      imported.foundAnything
-        ? `Imported from "${file.name}". Check the answers below, then continue - some may still need updating for this year.`
-        : `Couldn't find anything to import in "${file.name}". ${imported.warnings.join(" ")}`
-    );
-    setFurthestStepIndex((prev) => Math.max(prev, STEP_ORDER.indexOf("orientation")));
-    setStep("orientation");
   }
 
   async function deliverExport(file: ExportFile) {
@@ -1213,21 +1173,16 @@ function App() {
               onShowTour={() => setShowTour(true)}
               localFolderSupported={isLocalFolderSupported()}
               onRestoreFromFolder={restoreFromFolder}
-              onImportPreviousWorkbook={importPreviousWorkbook}
             />
           </div>
         ) : null}
 
         {!showDashboard && step === "orientation" ? (
           <div className="stage-single">
-            {importWorkbookMessage ? (
-              <p className="defaults-banner">{importWorkbookMessage}</p>
-            ) : null}
             <OrientationForm
               answers={orientation}
               onChange={setOrientation}
               onComplete={() => {
-                setImportWorkbookMessage(null);
                 setStep("documents");
               }}
             />

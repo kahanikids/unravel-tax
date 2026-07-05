@@ -28,7 +28,7 @@ Someone who handles tax filing for themselves and often their family, dreads it 
 
 **Stage 7 — The handover.** Two files come out, and their purposes must be unmistakable from the filename alone: one for the CA, one to keep. No settings to configure, no format to choose. Both are available from either the simple or the advanced view (Section 5) — the view the user is looking at doesn't gate what they can export.
 
-**Stage 8 — The close.** Filing is done. The tool should say, explicitly, what happens next — that losses carry forward and need this same file next year, that the exported workbook is the thing to keep, not the chat history. This sets up next year's Stage 1 to start faster.
+**Stage 8 — The close.** Filing is done. The tool should say, explicitly, what happens next — what to keep for audit/CA review, where any losses or disclosure notes are recorded, and why the exported workbook is the thing to keep, not the chat history. For now, keep this focused on the FY 2025-26 filing rather than a next-year import loop.
 
 ### 1.3 What the journey rules out
 
@@ -52,7 +52,7 @@ Every stage gets exactly the amount of interruption it needs — not zero, not m
 | 5. The reveal | Any newly-fired routine risk trigger: inline flag in the "things to check" panel. Anything that would change which ITR form applies, or that materially changes the recommendation in Stage 6: a popup. | Inline for routine flags; **popup for form-changing or recommendation-changing triggers only.** |
 | 6. The decision | The CA-or-self-file recommendation, stated plainly with one line of reasoning. | Inline — it's information, not a blocker. |
 | 7. The handover | If the checklist still has open items when export is requested: "N things are still missing — export anyway, or go back?" | **Popup, but not a hard block** — the user can proceed knowingly; this is a confirm, not a wall. |
-| 8. The close | A short reminder of what to keep and what changes next year. | Inline. |
+| 8. The close | A short reminder of what to keep for audit, CA review, loss schedules, and disclosure notes. | Inline. |
 
 ## 2. Design principles (derived from Section 1, not invented separately)
 

@@ -83,9 +83,6 @@ infer scope from the roadmap or implementation notes.
   loses its exemption, capital-gains tax for a taxable ULIP (its own CA
   Summary row) and slab-taxed other-sources income for a taxable
   traditional policy (folded into the regime comparison).
-- Import a previous year's Unravel Tax workbook (.xlsx) to prefill this
-  year's profile answers and carry-forward-loss/dividend/interest figures,
-  never overwriting an answer already given.
 - Year-over-year dashboard with current-year widgets, past-filing history,
   ITR JSON import, ITR-V PDF text read, manual past-year entry, trends, and
   simple charts.
@@ -168,10 +165,10 @@ infer scope from the roadmap or implementation notes.
   country). It does not cover foreign property or trusts (Schedule FA
   tables B/C, Phase 3). See docs/DESIGN-remaining-gaps.md for the
   remaining phased Schedule FA design.
-- Past-filing import is a dashboard history feature that reads a handful of
-  ITR JSON or ITR-V PDF fields when it can. Importing a previous Unravel Tax
-  workbook is a separate, now-built feature (see Built above) that prefills
-  the live current-year filing, not this dashboard history.
+- Past-filing import is only a dashboard history feature that reads a handful
+  of ITR JSON or ITR-V PDF fields when it can. Importing a previous Unravel
+  Tax workbook from the welcome screen is intentionally not exposed now; the
+  primary flow stays focused on the FY 2025-26 filing.
 - TDS auto-fill from AI-extracted annual figures is lean: it lands in the
   existing tax-paid field and still needs user review against AIS/26AS.
 - Local-folder save is Chromium-only because it uses the File System Access API.

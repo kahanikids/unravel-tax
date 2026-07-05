@@ -957,7 +957,7 @@ export function buildLinkedCaSummarySheet(
   return data;
 }
 
-/** Sheet name a later year's Unravel Tax session looks for when importing this workbook - see lib/workbookImport.ts. */
+/** Sheet name for the workbook's plain FY 2025-26 profile record. */
 export const ORIENTATION_SHEET_NAME = "Orientation";
 
 function yesNoOrBlank(value: boolean | null): string {
@@ -966,22 +966,13 @@ function yesNoOrBlank(value: boolean | null): string {
 
 /**
  * Plain key/value rows for every orientation answer, written with literal
- * text values (never formulas) so a later year's Unravel Tax session can
- * read this sheet back and prefill the same profile - see
- * lib/workbookImport.ts. Genuinely optional: older workbooks exported before
- * this sheet existed simply don't have it, and the importer treats that as
- * "no profile to prefill" rather than an error.
+ * text values (never formulas) so the full workbook remains reviewable
+ * without depending on app state or browser storage.
  */
 export function buildOrientationSheet(orientation: OrientationAnswers): SheetData {
   const data: SheetData = [];
   const span = 2;
-  data.push(
-    mergeTitle(
-      emptyRow(span),
-      "Your profile answers, for next year's Unravel Tax filing to read back",
-      span
-    )
-  );
+  data.push(mergeTitle(emptyRow(span), "Your profile answers for this FY 2025-26 filing", span));
   data.push([txt("Field", C.th), txt("Value", C.th)]);
   const rows: [string, string][] = [
     ["Residency", orientation.residency ?? ""],
