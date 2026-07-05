@@ -5,7 +5,7 @@ import type { IncomeSource, NriCountry, OrientationAnswers } from "../state/type
 type ExcelCell = string | number | Date | boolean | null;
 
 export type PreviousWorkbookImport = {
-  /** Only the fields the "Orientation" sheet had a recognisable value for - null when that sheet doesn't exist at all (a workbook exported before it was added). */
+  /** Only the fields the "Orientation" sheet had a recognisable value for - null when that sheet doesn't exist at all. */
   orientation: Partial<OrientationAnswers> | null;
   carryForwardLossesAvailable: number | null;
   dividends: number | null;
@@ -142,13 +142,10 @@ function parseCaSummaryFigures(data: ExcelCell[][]) {
 
 /**
  * Reads a previously exported Unravel Tax Full Workbook (or standalone CA
- * Summary XLSX) to prefill this year's filing: the profile answers from its
- * "Orientation" sheet (only present in a workbook exported after that sheet
- * was added - older exports simply have nothing to prefill from) and the
- * carry-forward-loss/dividend/interest figures from its "CA Summary" sheet,
- * which uses plain literal values for every row except the capital-gains
- * heads (see workbookExport.ts's buildLinkedCaSummarySheet), so it's safe to
- * read back without evaluating any spreadsheet formulas.
+ * Reads an Unravel Tax workbook's plain profile and CA Summary rows. This
+ * helper is retained for export round-trip tests and possible future tools,
+ * but the current FY 2025-26 welcome flow does not expose previous-workbook
+ * import.
  */
 export async function parsePreviousWorkbook(buffer: ArrayBuffer): Promise<PreviousWorkbookImport> {
   const warnings: string[] = [];
@@ -194,11 +191,9 @@ export async function parsePreviousWorkbook(buffer: ArrayBuffer): Promise<Previo
 }
 
 /**
- * Merges a previous workbook's import into the current orientation, filling
- * only fields still at their blank default - the same never-clobber-what-
- * you-already-typed rule as applySummaryFiguresToSupplemental, so importing
- * after you've already answered some questions never overwrites your own
- * answers.
+ * Merges workbook-imported profile fields into an orientation object, filling
+ * only fields still at their blank default. Retained as a pure helper for the
+ * parser above; not exposed in the current FY 2025-26 welcome flow.
  */
 export function applyPreviousWorkbookToOrientation(
   current: OrientationAnswers,

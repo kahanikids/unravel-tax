@@ -244,7 +244,7 @@ export const CAPABILITIES: Capability[] = [
     label: "CA Summary and full workbook exports",
     status: "available",
     detail:
-      "One file to hand your CA, one detailed workbook to keep for your own records and next year's carry-forward figures."
+      "One file to hand your CA, one detailed workbook to keep for your own FY 2025-26 records."
   },
   {
     label: "Everything stays on your device",
@@ -292,19 +292,13 @@ export const CAPABILITIES: Capability[] = [
     label: "Year-over-year tax dashboard",
     status: "available",
     detail:
-      "A dashboard shows this year at a glance and your past filings side by side. Upload a previous year's ITR JSON from the income-tax portal to prefill it, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes. PDF acknowledgements aren't read; enter those by hand."
+      "A dashboard shows this year at a glance and can compare manually added past filings. Upload a previous year's ITR JSON or ITR-V PDF from the income-tax portal, or type the figures in, then see income growth, effective tax rate over time, and whether you've switched regimes."
   },
   {
     label: "Section 234B and 234C advance-tax interest estimator",
     status: "available",
     detail:
       "Enter total tax liability, tax already paid, and what you paid in each instalment window to estimate Section 234B interest and instalment-by-instalment Section 234C interest (with the 12%/36% safe harbours). The 234C figure is a whole-year ceiling: gains or dividends that arrived mid-year make the true figure lower, and the tool says so next to the number."
-  },
-  {
-    label: "Carrying forward last year's filing",
-    status: "available",
-    detail:
-      "On the welcome screen, \"Import Last Year's Workbook\" reads a previously exported Unravel Tax workbook (.xlsx) and prefills this year's profile answers plus dividends, interest, and carry-forward-loss figures - never overwriting anything you've already typed. A workbook exported before this existed has no profile to prefill, but its figures still import."
   },
   {
     label: "NRI, HUF, and single-parent coverage",

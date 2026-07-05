@@ -2248,12 +2248,19 @@ function checkWelcomeDisclaimerBanner() {
       onShowTour={noop}
       localFolderSupported={false}
       onRestoreFromFolder={noop}
-      onImportPreviousWorkbook={noop}
     />
   );
   assertIncludes(html, WELCOME_DISCLAIMER_BANNER);
   assertIncludes(html, 'class="welcome-disclaimer-banner"');
   assertIncludes(html, "Got It");
+  if (
+    html.includes("Import Last Year's Workbook") ||
+    html.includes("Filed with Unravel Tax last year")
+  ) {
+    throw new Error(
+      "Welcome screen should stay focused on FY 2025-26 and not show last-year workbook import."
+    );
+  }
   console.log(
     "Validated welcome disclaimer banner: Stage-1 dismissible CA line renders on first visit."
   );

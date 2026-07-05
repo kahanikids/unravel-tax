@@ -64,9 +64,8 @@ HUF partition reasoning and the repatriation-check build note.
 ### Prior-year carry-forward
 
 Built today: dashboard history can import some ITR JSON and ITR-V PDF fields,
-or accept manual past-year entries. A previous Unravel Tax full workbook can
-also be imported from the welcome screen to prefill profile answers and
-carry-forward loss figures for the current-year filing.
+or accept manual past-year entries. The welcome screen stays focused on the
+FY 2025-26 filing flow, with no prior-workbook import prompt.
 
 ### PDF extraction
 

@@ -548,8 +548,8 @@ export function ResultsStep({
             </InfoTooltip>
           </h3>
           <p className="step-lede">
-            Give the CA Summary to your CA. Keep the Full Workbook for your own records, especially
-            for carrying forward any losses next year.
+            Give the CA Summary to your CA. Keep the Full Workbook for your FY 2025-26 records,
+            especially for loss schedules and disclosure notes.
           </p>
           <p>
             {openIssueCount === 0

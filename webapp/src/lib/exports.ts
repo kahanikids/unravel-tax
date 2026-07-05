@@ -31,7 +31,7 @@ export type ExportState = {
   rateInputs: RateInputs;
   financialYear: string;
   assessmentYear: string;
-  /** Optional: written as its own "Orientation" sheet so a later year's Unravel Tax session can read the profile back - see lib/workbookImport.ts. */
+  /** Optional: written as its own "Orientation" sheet so the workbook keeps a plain FY 2025-26 profile record. */
   orientation?: OrientationAnswers;
   /** Optional: Schedule FA Phase 1 disclosure rows, written as their own sheet when there's at least one foreign account entered. */
   foreignAccounts?: ForeignAccount[];
