@@ -10,12 +10,15 @@ import {
   combined80cUsage,
   compareRegimes,
   computeForeignRemittanceTcs,
+  computeForeignTaxCreditAverageRate,
+  computeForeignTaxCreditFlatRate,
   computeLetOutHouseProperty,
   computeNriDividendTax,
   computeNriRepatriationCheck,
   computeNroTdsReconciliation,
   computeRegimeBreakEven,
   summarizeForeignAccounts,
+  summarizeForeignEquityHoldings,
   summarizeInsurancePolicies,
   type InsurancePolicy,
   estimateAdvanceTaxInterest,
@@ -895,6 +898,186 @@ export async function main() {
     );
   }
 
+  // Schedule FA Phase 2: foreign equity/debt holdings, including RSU/ESPP.
+  // Foreign shares are taxed like UNLISTED shares (24-month threshold, flat
+  // 12.5%, no indexation), not listed equity - a long-term sale, a
+  // short-term sale (folds into slab income instead of a flat rate), a
+  // long-term RSU sale (cost basis = FMV at vesting), and an unsold holding.
+  const foreignEquitySummary = summarizeForeignEquityHoldings(
+    [
+      // Long-term: bought 2022-01-01, sold 2025-06-01 (~1247 days > 730).
+      {
+        id: "h1",
+        entityName: "Acme Inc",
+        isRsuOrEspp: false,
+        acquisitionDate: "2022-01-01",
+        costBasisInr: 100000,
+        perquisiteValueInr: 0,
+        closingValueInr: 0,
+        saleDate: "2025-06-01",
+        saleProceedsInr: 300000,
+        foreignTaxPaidOnGainInr: 30000
+      },
+      // Short-term: bought 2025-01-01, sold 2025-06-01 (~151 days <= 730).
+      {
+        id: "h2",
+        entityName: "Beta Corp",
+        isRsuOrEspp: false,
+        acquisitionDate: "2025-01-01",
+        costBasisInr: 50000,
+        perquisiteValueInr: 0,
+        closingValueInr: 0,
+        saleDate: "2025-06-01",
+        saleProceedsInr: 70000,
+        foreignTaxPaidOnGainInr: 5000
+      },
+      // RSU, long-term: vested 2023-01-01 (cost basis = FMV at vesting), sold 2025-06-01.
+      {
+        id: "h3",
+        entityName: "Foreign Employer Inc",
+        isRsuOrEspp: true,
+        acquisitionDate: "2023-01-01",
+        costBasisInr: 500000,
+        perquisiteValueInr: 500000,
+        closingValueInr: 0,
+        saleDate: "2025-06-01",
+        saleProceedsInr: 650000,
+        foreignTaxPaidOnGainInr: 15000
+      },
+      // Not sold this year - no gain, no tax.
+      {
+        id: "h4",
+        entityName: "Gamma Ltd",
+        isRsuOrEspp: false,
+        acquisitionDate: "2024-01-01",
+        costBasisInr: 10000,
+        perquisiteValueInr: 0,
+        closingValueInr: 12000,
+        saleDate: "",
+        saleProceedsInr: 0,
+        foreignTaxPaidOnGainInr: 0
+      }
+    ],
+    ruleCatalog.foreignInvestments
+  );
+  const [h1, h2, h3, h4] = foreignEquitySummary.results;
+  if (
+    h1.taxTreatment !== "long_term" ||
+    h1.gain !== 200000 ||
+    h1.estimatedLtcgTax !== 25000 ||
+    h1.foreignTaxCreditOnGain !== 25000
+  ) {
+    throw new Error(
+      `Expected h1 long-term gain 2,00,000 taxed at 25,000 with 25,000 credit, got ${JSON.stringify(h1)}.`
+    );
+  }
+  if (
+    h2.taxTreatment !== "short_term" ||
+    h2.gain !== 20000 ||
+    h2.estimatedLtcgTax !== 0 ||
+    h2.foreignTaxCreditOnGain !== 0
+  ) {
+    throw new Error(
+      `Expected h2 short-term gain 20,000 with no flat tax/credit (folds into slab income instead), got ${JSON.stringify(h2)}.`
+    );
+  }
+  if (
+    h3.taxTreatment !== "long_term" ||
+    h3.gain !== 150000 ||
+    h3.estimatedLtcgTax !== 18750 ||
+    h3.foreignTaxCreditOnGain !== 15000
+  ) {
+    throw new Error(
+      `Expected RSU h3 long-term gain 1,50,000 (proceeds minus FMV-at-vesting cost basis) taxed at 18,750 with 15,000 credit (capped at foreign tax paid), got ${JSON.stringify(h3)}.`
+    );
+  }
+  if (h4.sold || h4.taxTreatment !== "not_sold" || h4.gain !== 0) {
+    throw new Error(`Expected h4 (not sold) to have no gain/tax, got ${JSON.stringify(h4)}.`);
+  }
+  if (foreignEquitySummary.totalLtcgTax !== 43750) {
+    throw new Error(
+      `Expected total LTCG tax 25,000 + 18,750 = 43,750, got ${foreignEquitySummary.totalLtcgTax}.`
+    );
+  }
+  if (foreignEquitySummary.totalStcgGain !== 20000) {
+    throw new Error(
+      `Expected total STCG gain 20,000 (h2 only), got ${foreignEquitySummary.totalStcgGain}.`
+    );
+  }
+  if (foreignEquitySummary.totalPerquisiteValueInr !== 500000) {
+    throw new Error(
+      `Expected total RSU perquisite value 5,00,000 (h3 only), got ${foreignEquitySummary.totalPerquisiteValueInr}.`
+    );
+  }
+  if (foreignEquitySummary.totalForeignTaxCreditOnLtcg !== 40000) {
+    throw new Error(
+      `Expected total LTCG foreign tax credit 25,000 + 15,000 = 40,000, got ${foreignEquitySummary.totalForeignTaxCreditOnLtcg}.`
+    );
+  }
+
+  // Section 90/91 foreign tax credit helpers directly: flat-rate (exact
+  // Indian tax known) and average-rate (Rule 128's method against total
+  // regime tax/income), both capped at the lower of foreign tax paid and
+  // the computed Indian tax.
+  const flatCredit = computeForeignTaxCreditFlatRate(200000, 0.125, 30000);
+  if (flatCredit.indianTaxOnThisIncomeInr !== 25000 || flatCredit.creditInr !== 25000) {
+    throw new Error(
+      `Expected flat-rate credit case to match h1 above, got ${JSON.stringify(flatCredit)}.`
+    );
+  }
+  const flatCreditCappedByForeignTax = computeForeignTaxCreditFlatRate(200000, 0.125, 10000);
+  if (flatCreditCappedByForeignTax.creditInr !== 10000) {
+    throw new Error(
+      `Expected the credit to be capped at the (lower) foreign tax paid, got ${JSON.stringify(flatCreditCappedByForeignTax)}.`
+    );
+  }
+  const averageCredit = computeForeignTaxCreditAverageRate(100000, 8000, 100000, 1000000);
+  if (averageCredit.indianTaxOnThisIncomeInr !== 10000 || averageCredit.creditInr !== 8000) {
+    throw new Error(
+      `Expected average-rate credit of Rs 10,000 Indian tax (10% average rate x Rs 1,00,000) capped at the Rs 8,000 foreign tax paid, got ${JSON.stringify(averageCredit)}.`
+    );
+  }
+
+  // additionalSalaryIncome (an RSU/ESPP perquisite) must be added to the
+  // salary bucket BEFORE the standard deduction, not the other-income
+  // bucket - Rs 9L salary + Rs 1L perquisite must tax identically to a
+  // straight Rs 10L salary with no perquisite.
+  const withPerquisite = compareRegimes(
+    {
+      salaryIncome: 900000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      seniorCitizen: false,
+      additionalSalaryIncome: 100000
+    },
+    ruleCatalog.regimeChoice
+  );
+  const withoutPerquisite = compareRegimes(
+    {
+      salaryIncome: 1000000,
+      dividends: 0,
+      interestOtherIncome: 0,
+      eligibleInterestDeduction: 0,
+      debtMfShortTermDeemedGain: 0,
+      intradayGain: 0,
+      oldRegimeDeductions: 0,
+      seniorCitizen: false
+    },
+    ruleCatalog.regimeChoice
+  );
+  if (
+    withPerquisite.oldRegimeTax !== withoutPerquisite.oldRegimeTax ||
+    withPerquisite.newRegimeTax !== withoutPerquisite.newRegimeTax
+  ) {
+    throw new Error(
+      `Expected additionalSalaryIncome to fold into the salary bucket identically to entering it directly, got ${JSON.stringify(withPerquisite)} vs ${JSON.stringify(withoutPerquisite)}.`
+    );
+  }
+
   // Regime comparison excludes NRI dividends from slab income entirely: a Rs
   // 12L salary plus Rs 1L dividends should tax exactly the same as the known
   // Rs 12L-salary-only case (new regime zero, old regime Rs 1,63,800) once
@@ -1216,7 +1399,7 @@ export async function main() {
   }
 
   console.log(
-    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 and super-senior 80+ old-regime bands, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, NRI repatriation check matches the known below-threshold/CA-certificate/USD-cap-breach cases with the renamed Form 145/146, Schedule FA Phase 1 account totals sum correctly with the disclosure calendar year derived from the financial year, insurance-policy Section 10(10D) exemption matches the death-benefit/exempt/aggregate-cap/ratio-test/ULIP-LT/ULIP-ST known cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
+    "Validated webapp calculations: rule JSON mirror matches source, CA Summary matches M1, fixture totals match M2 buckets, regime comparison matches the known Rs 12L salary case plus the Rs 12.75L zero-tax edge and the senior 60-79 and super-senior 80+ old-regime bands, Section 234B advance-tax interest matches the known shortfall case, Section 234C matches the full-default/safe-harbour/TDS-floor cases plus the quarter-precision late-gain/mixed-timing/cumulative-LTCG-exemption cases from real transaction dates, NRI dividend tax takes the lower of the domestic and treaty rate (UAE benefits, US/unknown don't) and NRO TDS reconciliation matches the known recoverable-amount case with dividends excluded from slab income, NRI repatriation check matches the known below-threshold/CA-certificate/USD-cap-breach cases with the renamed Form 145/146, Schedule FA Phase 1 account totals sum correctly with the disclosure calendar year derived from the financial year, Schedule FA Phase 2 foreign-share/RSU capital gains match the known long-term/short-term/RSU-cost-basis/unsold cases with the Section 90/91 flat-rate and average-rate foreign tax credit helpers, additionalSalaryIncome folds an RSU perquisite into the salary bucket identically to entering it directly, insurance-policy Section 10(10D) exemption matches the death-benefit/exempt/aggregate-cap/ratio-test/ULIP-LT/ULIP-ST known cases, let-out house property matches the loss-cap and income cases (including the per-regime feed into the comparison), home-loan principal caps inside the shared 80C ceiling, LRS TCS follows the purpose's rate branch, and minor's-income clubbing matches the known two-child case with and without the Section 64(1A) exclusions."
   );
 }
 

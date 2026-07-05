@@ -357,6 +357,29 @@ export type ForeignInvestmentsValues = {
     requires_itr_form: string[];
     cannot_use_forms: string[];
   };
+  income_taxation: {
+    /** Foreign shares are taxed like unlisted Indian shares, NOT listed equity - a different threshold/rate from rules/capital-gains-equity.json. */
+    capital_gains_on_foreign_shares: {
+      long_term_holding_period_days_gt: number;
+      ltcg_rate: number;
+      /** Short-term is taxed at slab rate, not a flat rate - folds into the regime comparison's other-slab-income bucket. */
+      stcg_treatment: string;
+      indexation_allowed: boolean;
+    };
+    rsu_espp_vesting: {
+      /** FMV at vesting minus exercise price becomes a salary perquisite in the vesting year. */
+      perquisite_value_basis: string;
+      /** That same FMV becomes the cost basis for the later sale. */
+      cost_basis_for_later_sale: string;
+      holding_period_starts_from: string;
+    };
+  };
+  foreign_tax_credit: {
+    sections: string[];
+    rule: string;
+    forms_required: string[];
+    computation_method: string;
+  };
   tcs_on_lrs_remittances: {
     section: string;
     threshold_inr: number;

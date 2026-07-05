@@ -623,6 +623,8 @@ function checkResultsStepDefaultsToSimple() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -680,6 +682,8 @@ function checkResultsStepAdvancedToggle() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -796,6 +800,8 @@ function checkResultsStepSummaryPrefill() {
     onChangeHufTransfers: noop,
     foreignAccounts: [],
     onChangeForeignAccounts: noop,
+    foreignEquityHoldings: [],
+    onChangeForeignEquityHoldings: noop,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     insurancePolicies: [],
     onChangeInsurancePolicies: noop,
@@ -881,6 +887,8 @@ function checkRegimeComparisonPanel() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -924,6 +932,8 @@ function checkRegimeComparisonPanel() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -983,6 +993,8 @@ function resultsStepWithReconciliation(props: {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -1061,6 +1073,8 @@ function resultsStepWithConfidence(report: ConfidenceReport) {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -1103,6 +1117,8 @@ function checkAdvanceTaxPanel() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -1153,6 +1169,8 @@ function checkAdvanceTaxPanel() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={EMPTY_CAPITAL_GAINS_TAX}
       insurancePolicies={[]}
       onChangeInsurancePolicies={noop}
@@ -1215,6 +1233,8 @@ function checkAdvanceTaxPanel() {
       onChangeHufTransfers={noop}
       foreignAccounts={[]}
       onChangeForeignAccounts={noop}
+      foreignEquityHoldings={[]}
+      onChangeForeignEquityHoldings={noop}
       capitalGainsTaxByInstalment={{
         cumulativeByInstalment: [0, 0, 0, 40000],
         totalForYear: 40000
@@ -1265,6 +1285,8 @@ function checkNriHufSingleParentPartialCalculations() {
     onChangeHufTransfers: noop,
     foreignAccounts: [],
     onChangeForeignAccounts: noop,
+    foreignEquityHoldings: [],
+    onChangeForeignEquityHoldings: noop,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     insurancePolicies: [],
     onChangeInsurancePolicies: noop,
@@ -1441,6 +1463,59 @@ function checkNriHufSingleParentPartialCalculations() {
     throw new Error("The Schedule FA panel should only render for the foreign-assets profile.");
   }
 
+  // Schedule FA Phase 2: a long-term foreign-share sale shows its computed
+  // gain/LTCG tax/credit; the foreign-tax-credit estimate note only appears
+  // once there's a regime result (salary entered) to compute an average rate.
+  const foreignEquityNoSalaryHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES}
+      hasForeignAssets
+      foreignEquityHoldings={[
+        {
+          id: "fe1",
+          entityName: "Acme Inc",
+          isRsuOrEspp: false,
+          acquisitionDate: "2022-01-01",
+          costBasisInr: 100000,
+          perquisiteValueInr: 0,
+          closingValueInr: 0,
+          saleDate: "2025-06-01",
+          saleProceedsInr: 300000,
+          foreignTaxPaidOnGainInr: 30000
+        }
+      ]}
+    />
+  );
+  assertIncludes(foreignEquityNoSalaryHtml, "Foreign shares, RSU");
+  assertIncludes(foreignEquityNoSalaryHtml, "unlisted");
+  assertIncludes(foreignEquityNoSalaryHtml, "2,00,000");
+  assertIncludes(foreignEquityNoSalaryHtml, "25,000");
+  assertIncludes(
+    foreignEquityNoSalaryHtml,
+    "Enter your salary income above to see a foreign tax credit estimate"
+  );
+  if (defaultHtml.includes("Foreign shares, RSU")) {
+    throw new Error("The foreign-equity panel should only render for the foreign-assets profile.");
+  }
+
+  const foreignEquityWithSalaryHtml = renderToString(
+    <ResultsStep
+      {...baseProps}
+      supplementalFigures={{ ...BLANK_SUPPLEMENTAL_FIGURES, salaryIncome: 1_200_000 }}
+      hasForeignAssets
+      foreignEquityHoldings={[]}
+    />
+  );
+  assertIncludes(foreignEquityWithSalaryHtml, "average-rate method");
+  if (
+    foreignEquityWithSalaryHtml.includes(
+      "Enter your salary income above to see a foreign tax credit estimate"
+    )
+  ) {
+    throw new Error("The foreign tax credit estimate note should show once salary is entered.");
+  }
+
   const singleParentHtml = renderToString(
     <ResultsStep {...baseProps} supplementalFigures={BLANK_SUPPLEMENTAL_FIGURES} singleParent />
   );
@@ -1489,7 +1564,7 @@ function checkNriHufSingleParentPartialCalculations() {
   }
 
   console.log(
-    "Validated NRI/HUF/single-parent partial calculations: NRE exempt line, NRI repatriation check with renamed forms, HUF regime-comparison skip, HUF Section 64(2) transfer clubbing note, Schedule FA Phase 1 panel visibility and totals, minor's-income clubbing math."
+    "Validated NRI/HUF/single-parent partial calculations: NRE exempt line, NRI repatriation check with renamed forms, HUF regime-comparison skip, HUF Section 64(2) transfer clubbing note, Schedule FA Phases 1-2 panel visibility/totals and the salary-gated foreign tax credit note, minor's-income clubbing math."
   );
 }
 
@@ -1511,6 +1586,8 @@ function checkInsurancePolicyPanel() {
     onChangeHufTransfers: noop,
     foreignAccounts: [],
     onChangeForeignAccounts: noop,
+    foreignEquityHoldings: [],
+    onChangeForeignEquityHoldings: noop,
     capitalGainsTaxByInstalment: EMPTY_CAPITAL_GAINS_TAX,
     aisFigures: BLANK_AIS_REPORTED_FIGURES,
     onChangeAisFigures: noop,

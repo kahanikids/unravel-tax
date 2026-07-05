@@ -189,9 +189,10 @@ export function ScheduleFaPanel({
           </div>
           {summary.totalGrossInterestInr > 0 ? (
             <p className="regime-verdict">
-              This interest is taxable at slab rate under income from other sources - add it to
-              "Bank interest &amp; other income" in "A few more numbers" yourself if you want it
-              reflected in the figures on this page; this section doesn&apos;t add it automatically.
+              This interest is taxable at slab rate under income from other sources - it's added
+              automatically to your slab income in the regime comparison below, and to the Section
+              90/91 foreign tax credit estimate in the "Foreign shares, RSU &amp; ESPP" section.
+              Don't re-enter it in "Bank interest &amp; other income".
             </p>
           ) : null}
         </div>

@@ -316,19 +316,59 @@ scope is disclosure-only: producing the schedule's rows, not the tax.
    ("Schedule FA and foreign income computation") — worth confirming
    whether both are wanted or just the disclosure half.
 
-### Build note
+### Build note (Phase 1)
 
 Phase 1 approved and implemented at the proposed scope (question 1:
 Phase 1 only, foreign bank/brokerage accounts). Output is a workbook
 sheet (question 2 answered: sheet, not a CA Summary row - there's no tax
 figure to summarize, only disclosure rows), matching the existing
 raw-reference-sheet pattern. Question 3 answered narrowly for this
-phase: disclosure rows only, no tax computation - the panel says so
-explicitly, and the gross-interest total is shown with a note that it
-isn't added to any tax figure automatically. Amounts are entered already
-converted to rupees by the user rather than converted by this tool,
-since there's no live exchange-rate source available (same reasoning as
-the NRI repatriation check above). Phases 2 (RSU/ESPP, foreign
-equity/debt) and 3 (trusts, other assets) remain undesigned. See
-`webapp/src/lib/scheduleFa.ts`, `ScheduleFaPanel.tsx`, and the
-`buildScheduleFaSheet` workbook export.
+phase: disclosure rows only, no tax computation. Amounts are entered
+already converted to rupees by the user rather than converted by this
+tool, since there's no live exchange-rate source available (same
+reasoning as the NRI repatriation check above). See
+`webapp/src/lib/scheduleFa.ts` and `ScheduleFaPanel.tsx`.
+
+### Build note (Phase 2 + Schedule FSI/OS)
+
+A follow-up round approved and implemented Phase 2 (foreign equity/debt,
+including RSU/ESPP - table A3) together with Schedule FSI/OS's income tax
+(question 3 revisited: the original ask bundled "Schedule FA and foreign
+income computation," and this round built both halves for the income
+types now covered).
+
+New `webapp/src/lib/foreignEquity.ts`: a combined record type for regular
+foreign shares and RSU/ESPP (an `isRsuOrEspp` flag rather than a second
+type, since a vested RSU's later sale is computed identically to a
+regular holding - cost basis = FMV at vesting, holding period from the
+vesting date). Foreign shares are taxed like **unlisted** Indian shares,
+not listed equity - a new structured `capital_gains_on_foreign_shares`
+block in `rules/foreign-investments.json` (24-month threshold, flat
+12.5%, no indexation, verified via Budget 2024 secondary sources) governs
+a long-term sale's flat tax, shown as its own CA Summary row. A
+short-term sale, and the RSU/ESPP perquisite value itself, fold
+automatically into the regime comparison - the perquisite into the
+**salary** bucket specifically (via a new `additionalSalaryIncome` input,
+eligible for the standard deduction), the short-term gain into the same
+other-income bucket as foreign dividends/interest (via the existing
+`additionalOtherSlabIncome` input, NOT eligible for the standard
+deduction) - a real distinction this build got right rather than lumping
+both into one bucket.
+
+New `webapp/src/lib/foreignTaxCredit.ts` implements Rule 128's Section
+90/91 credit: exact for long-term foreign-share gains (a known flat
+rate), and using the **average-rate method** (this filing's own average
+tax rate, from the existing regime-comparison output, applied to the
+doubly-taxed income) for everything slab-taxed - dividends, interest,
+short-term gains, RSU perquisite - matching how Rule 128 actually
+computes credit for non-flat-rate income. Shown as one combined CA
+Summary row, explicitly framed as a planning estimate, not a Form 67
+number, since real filing itemizes credit per country and this tool
+doesn't collect a country field for income line items (unlike the NRI
+DTAA country table, which serves a different purpose).
+
+The Phase 1 Schedule FA workbook sheet was extended (not duplicated) to
+add an A3 section beneath the A1/A2 table when equity holdings exist,
+and renamed from "Schedule FA (Phase 1)" to plain "Schedule FA" now that
+it covers both phases. Phase 3 (foreign trusts and other assets) remains
+undesigned and lower priority, per the original phasing rationale.

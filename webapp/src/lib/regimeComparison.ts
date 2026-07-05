@@ -30,13 +30,25 @@ export type RegimeComparisonInputs = {
    */
   excludeDividendsFromSlab?: boolean;
   /**
-   * Extra ordinary slab income from elsewhere in the tool (currently: a
-   * taxable traditional-insurance-policy payout, see lib/insurance.ts),
-   * folded into the same "other income" bucket as interestOtherIncome -
-   * including sharing its 80TTA/80TTB deduction on the old-regime side,
-   * the same blended-bucket approximation interestOtherIncome already makes.
+   * Extra ordinary slab income from elsewhere in the tool (a taxable
+   * traditional-insurance-policy payout, see lib/insurance.ts; foreign
+   * dividends/interest and short-term foreign-share gains, see
+   * lib/scheduleFa.ts and lib/foreignEquity.ts), folded into the same
+   * "other income" bucket as interestOtherIncome - including sharing its
+   * 80TTA/80TTB deduction on the old-regime side, the same blended-bucket
+   * approximation interestOtherIncome already makes. Foreign interest isn't
+   * actually 80TTA/80TTB-eligible (those sections cover Indian banks/post
+   * offices), so a CA should confirm the deduction wasn't inflated by it.
    */
   additionalOtherSlabIncome?: number;
+  /**
+   * Extra salary-bucket income from elsewhere in the tool (an RSU/ESPP
+   * vesting perquisite under Section 17(2)(vi), see lib/foreignEquity.ts) -
+   * added to salaryIncome BEFORE the standard deduction, unlike
+   * additionalOtherSlabIncome, since a perquisite is salary income and
+   * genuinely eligible for it.
+   */
+  additionalSalaryIncome?: number;
 };
 
 export type RegimeComparisonResult = {
@@ -87,7 +99,7 @@ export function compareRegimes(
     Math.max(0, inputs.debtMfShortTermDeemedGain) +
     Math.max(0, inputs.intradayGain) +
     Math.max(0, inputs.additionalOtherSlabIncome ?? 0);
-  const salary = Math.max(0, inputs.salaryIncome);
+  const salary = Math.max(0, inputs.salaryIncome) + Math.max(0, inputs.additionalSalaryIncome ?? 0);
   // House property is the one head that can go negative here: the let-out
   // figures arrive pre-capped per regime (loss floored at zero for new,
   // capped at the set-off limit for old), so they're added as-is rather than

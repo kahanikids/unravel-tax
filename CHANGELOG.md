@@ -4,6 +4,67 @@ Dated log of rule changes and notable project milestones. Rule changes
 should reference the `rules/` file(s) touched and the source for the
 change (Budget, Finance Act, CBDT circular).
 
+## 2026-07-05 (Schedule FA Phase 2 + Schedule FSI/OS: foreign share/RSU capital gains, salary perquisite, Section 90/91 foreign tax credit estimate)
+
+- **Foreign shares and vested RSU/ESPP now get real Indian tax computed on
+  a sale**, not just disclosed. New `webapp/src/lib/foreignEquity.ts`
+  models a combined holding record (a regular foreign share and a vested
+  RSU/ESPP are computed identically once vested - cost basis = FMV at
+  vesting, holding period from the vesting date). Foreign shares are
+  taxed like **unlisted** Indian shares, not listed equity: a new
+  structured `income_taxation.capital_gains_on_foreign_shares` block in
+  `rules/foreign-investments.json` (24-month long-term threshold, flat
+  12.5% rate, no indexation, effective for transfers on/after 23-Jul-2024)
+  replaces what was previously a plain-English note, verified against
+  Budget 2024 secondary sources. A long-term sale's tax is its own CA
+  Summary row; a short-term sale folds automatically into the regime
+  comparison's other-income bucket.
+- **RSU/ESPP vesting perquisite (Section 17(2)(vi)) now folds into the
+  salary bucket, not other income** - a new `additionalSalaryIncome` input
+  on `regimeComparison.ts`, added before the standard deduction on both
+  regime sides, correctly reflecting that a perquisite is salary income
+  and standard-deduction-eligible, unlike other-sources income. A new
+  structured `income_taxation.rsu_espp_vesting` block documents the
+  FMV-at-vesting-minus-exercise-price basis and the SBI TT-rate conversion
+  convention (source: secondary RSU/ESPP taxation guides).
+- **Foreign dividends/interest (from the Schedule FA Phase 1 accounts) now
+  fold automatically into slab income too**, replacing the previous
+  "add this to your own figures" note - this is what actually computing
+  tax on Schedule FSI/OS income means, rather than leaving it as a
+  disclosure-only reminder.
+- **A Section 90/91 foreign tax credit estimate is computed**, per Rule
+  128. New `webapp/src/lib/foreignTaxCredit.ts`: exact for long-term
+  foreign-share gains (a known flat rate - credit is the lower of foreign
+  tax paid and the exact Indian tax); Rule 128's **average-rate method**
+  for everything else taxed at slab (dividends, interest, short-term
+  gains, RSU perquisite) - this filing's own average tax rate (from the
+  existing regime-comparison output) applied to the doubly-taxed income,
+  using whichever regime looks cheaper. Shown as one combined CA Summary
+  row, explicitly framed as a planning estimate: real Form 67/Schedule
+  FSI/TR filing itemizes credit per country, which this tool doesn't
+  collect a country field for on income line items. New structured
+  `foreign_tax_credit.computation_method`/`rule` fields in
+  `rules/foreign-investments.json` (source: incometaxindia.gov.in Rule
+  128, ClearTax Form 67 guide).
+- The Schedule FA workbook sheet was extended (not duplicated) with an A3
+  section for equity/RSU holdings beneath the A1/A2 accounts table, and
+  renamed from "Schedule FA (Phase 1)" to plain "Schedule FA" now that it
+  covers both phases.
+- New components: `ForeignEquityPanel.tsx` ("Foreign shares, RSU & ESPP"),
+  gated on the same foreign-assets profile flag as the Phase 1 panel.
+- `rules/foreign-investments.json`'s verification block re-checked and
+  re-dated (still `verified_secondary_source` - the underlying sources are
+  secondary tax-reference summaries, not the bare statute/rule text).
+- `docs/DESIGN-remaining-gaps.md`'s Schedule FA section gets a second
+  build note recording this round's scope decisions. Phase 3 (foreign
+  trusts/other assets) and a precise per-country foreign tax credit remain
+  the honestly-flagged gaps.
+- Validators extended: foreign-equity long-term/short-term/RSU-cost-basis/
+  unsold cases, the flat-rate and average-rate foreign-tax-credit helpers,
+  `additionalSalaryIncome` folding identically to entering salary directly,
+  panel visibility/salary-gating, and a workbook round-trip for the
+  extended Schedule FA sheet.
+
 ## 2026-07-05 (implemented the design-doc proposals: HUF clubbing, NRI repatriation check, Schedule FA Phase 1; 80+ super-senior slab; questionnaire review)
 
 - **Old-regime super-senior (80+) slab is now selected**, not just the

@@ -91,9 +91,14 @@ infer scope from the roadmap or implementation notes.
   simple charts.
 - Deduction planning widgets for 80C, 80D, and 80CCD(1B).
 - Insurance payout premium-cap reminder for Section 10(10D).
-- Foreign asset Schedule FA reminder and LRS TCS estimate, plus a Phase 1
-  Schedule FA builder producing foreign bank/brokerage account disclosure
-  rows as a workbook sheet.
+- Foreign asset Schedule FA reminder and LRS TCS estimate, plus a
+  two-phase Schedule FA builder: Phase 1 produces foreign bank/brokerage
+  account disclosure rows as a workbook sheet; Phase 2 computes actual tax
+  on foreign shares and RSU/ESPP (unlisted-share rates for a sale,
+  Section 17(2)(vi) perquisite for a vesting), folds short-term
+  gains/dividends/interest/perquisite into the regime comparison, and
+  estimates a Section 90/91 foreign tax credit (Rule 128's average-rate
+  method).
 - Dismissible first-visit disclaimer, full legal/privacy/AI disclosure, help
   panel, tool tour, sample-data mode, error boundary, issue/report links, and
   project-source links.
@@ -148,14 +153,20 @@ infer scope from the roadmap or implementation notes.
   each taxable ULIP uses the full exemption on its own, flagged rather
   than silently assumed.
 - Foreign-asset support is a disclosure reminder, a purpose-aware LRS TCS
-  estimate, and Phase 1 of the Schedule FA builder: a foreign bank or
+  estimate, and a two-phase Schedule FA builder. Phase 1: a foreign bank or
   brokerage account (country, institution, account number, opening date,
   peak/closing balance, gross interest, all entered already-converted to
-  rupees) produces the schedule's disclosure rows as a workbook sheet, with
-  no Indian tax computed on the interest shown. It does not cover RSUs,
-  foreign property, or trusts (Schedule FA tables A3/B/C), compute foreign
-  dividend/interest/gains tax (Schedule FSI/OS), or prepare Form 67
-  foreign-tax-credit inputs. See docs/DESIGN-remaining-gaps.md for the
+  rupees) produces disclosure rows as a workbook sheet, with the interest
+  folded automatically into slab income. Phase 2: a foreign share or vested
+  RSU/ESPP holding computes real Indian tax on a sale - unlisted-share
+  rates (24-month threshold, flat 12.5%, no indexation) for long-term,
+  slab rate folded into the regime comparison for short-term - plus the
+  RSU/ESPP vesting perquisite (Section 17(2)(vi), folded into the salary
+  bucket) and a Section 90/91 foreign tax credit estimate (exact for
+  long-term gains, Rule 128's average-rate method for everything else -
+  a planning estimate, not a Form 67 number, since it doesn't itemize by
+  country). It does not cover foreign property or trusts (Schedule FA
+  tables B/C, Phase 3). See docs/DESIGN-remaining-gaps.md for the
   remaining phased Schedule FA design.
 - Past-filing import is a dashboard history feature that reads a handful of
   ITR JSON or ITR-V PDF fields when it can. Importing a previous Unravel Tax
@@ -180,10 +191,13 @@ infer scope from the roadmap or implementation notes.
   tax-invisible under Section 171(9) and this tool can't verify an
   Assessing Officer's total-partition order.
 - Single-parent Schedule SPI placement.
-- Schedule FA Phases 2-3 (RSU/ESPP and foreign equity/debt, then trusts and
-  other assets) and the foreign-income tax computation (Schedule FSI/OS)
-  for resident foreign assets - Phase 1 (foreign bank/brokerage accounts)
-  is built; see docs/DESIGN-remaining-gaps.md for the remaining phases.
+- Schedule FA Phase 3 (foreign trusts and other assets) - Phases 1
+  (foreign bank/brokerage accounts) and 2 (foreign shares, RSU/ESPP, with
+  Schedule FSI/OS income tax and a foreign tax credit estimate) are built;
+  see docs/DESIGN-remaining-gaps.md for the remaining phase.
+- Precise, per-country Section 90/91 foreign tax credit computation for
+  Form 67/Schedule FSI/TR filing - the average-rate estimate this tool
+  computes is a planning figure, not a per-country final number.
 - Combining a taxable ULIP's capital gains with other equity LTCG under the
   one shared annual exemption, instead of each source using it
   independently.
