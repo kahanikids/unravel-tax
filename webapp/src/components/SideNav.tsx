@@ -53,7 +53,7 @@ const DESTINATION_ITEMS = [
     label: "Home",
     mobileLabel: "Home",
     Icon: IconHome,
-    className: "side-nav-home side-nav-home-mobile-only"
+    className: "side-nav-home"
   },
   {
     key: "dashboard",

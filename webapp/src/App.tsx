@@ -89,7 +89,6 @@ import { ChecklistPanel } from "./components/ChecklistPanel";
 import { UploadStep, type UploadedDocument } from "./components/UploadStep";
 import { ResultsStep } from "./components/ResultsStep";
 import { SideNav } from "./components/SideNav";
-import { IconHome } from "./components/icons";
 import { Dashboard, type ThisYearSnapshot } from "./components/Dashboard";
 import { HelpPanel } from "./components/HelpPanel";
 import { CapabilitiesPanel } from "./components/CapabilitiesPanel";
@@ -1120,14 +1119,6 @@ function App() {
               alt="Unravel Tax"
               className="brand-mark"
             />
-          </button>
-          {/* Same destination as the brand mark - sitting right next to the
-            logo on laptop/tablet puts it at the same eye level instead of
-            down the side rail. The side rail keeps its own Home button for
-            the mobile bottom bar (see SideNav.tsx). */}
-          <button type="button" className="header-home-button" onClick={goHome}>
-            <IconHome className="header-home-icon" />
-            Home
           </button>
           {!showDashboard && step === "welcome" ? <CountdownBanner variant="header" /> : null}
           <HelpPanel open={showHelp} onOpenChange={setShowHelp} />
