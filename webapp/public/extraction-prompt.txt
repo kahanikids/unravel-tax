@@ -41,7 +41,12 @@ the document and OMIT or set to null anything the document doesn't give.
     "dividendIncome": null,
     "interestIncome": null,
     "tdsDeducted": null,
-    "deductibleCharges": null
+    "deductibleCharges": null,
+    "speculativeGain": null,
+    "shortTermCapitalGains": null,
+    "longTermCapitalGains": null,
+    "debtOrSpecifiedMutualFundGains": null,
+    "totalCapitalGains": null
   },
   "netRealisedCapitalGainNoDetail": null,
   "confidence": "high, medium, or low",
@@ -59,20 +64,29 @@ the document and OMIT or set to null anything the document doesn't give.
   or disclaimer table, and say which in "notes". Drop subtotal/summary rows. If
   a transaction is missing a purchase or sell date, leave that date out and
   mention it in "notes" rather than guessing.
-- NEVER invent transaction rows. If the only capital-gains figure available is
-  a net or aggregate realised gain WITHOUT per-transaction buy/sell dates, leave
-  capitalGainsTransactions empty, put that number in
-  "netRealisedCapitalGainNoDetail", and say in "notes" that the detailed
-  per-transaction capital-gains statement is still needed to classify the gains
-  as short-term vs long-term.
+- NEVER invent transaction rows. If the document gives summary totals such as
+  SPEC GAIN, ST GAIN, LT GAIN, Total Gain, short-term gain, long-term gain,
+  equity short term, equity long term, debt/specifed mutual fund gain, or similar
+  labels, put those exact totals in annualFigures even when there are no
+  per-transaction rows. Do not force them into transaction rows.
+- If the only capital-gains figure available is one unsplit net or aggregate
+  realised gain WITHOUT per-transaction buy/sell dates and WITHOUT a stated
+  short-term/long-term split, leave capitalGainsTransactions empty, put that
+  number in "netRealisedCapitalGainNoDetail", and say in "notes" that the
+  detailed per-transaction capital-gains statement is still needed.
 - HOLDINGS ARE NOT SALES. If the document only lists securities held as on a
   date (quantity and value, no sale), do NOT put them in
   capitalGainsTransactions. Note in "notes" that this is a holdings statement,
   not a capital-gains realisation statement.
 - annualFigures: fill any annual totals the document gives (dividend income,
   interest income, TDS already deducted, deductible charges such as brokerage /
-  PMS fees / STT / custodian or admin charges). Leave anything not stated as
-  null. Plain numbers, no ₹ or commas.
+  PMS fees / STT / custodian or admin charges, and summary capital-gains splits).
+  Be flexible with labels: ST Gain / Short Term / Short-Term Capital Gain ->
+  shortTermCapitalGains; LT Gain / Long Term / Long-Term Capital Gain ->
+  longTermCapitalGains; Spec Gain / Speculative / Intraday ->
+  speculativeGain; Total Gain / Net Gain ->
+  totalCapitalGains. Leave anything not stated as null. Plain numbers, no ₹ or
+  commas.
 - confidence: your honest read of how complete and clear the document was.
 - notes: one short sentence only (under 200 characters). Do not repeat yourself or
   list every row.

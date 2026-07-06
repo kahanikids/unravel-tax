@@ -97,15 +97,20 @@ export type PromptRoute = {
  * object of its JSON contract, for summary-style documents (PMS annual reports,
  * AIS, capital-gains summaries) that carry no per-transaction rows. These are
  * recognised only to GUIDE the user - they are never fed into the deterministic
- * tax engine. netRealisedGainNoDetail is a net/aggregate gain with no buy/sell
- * dates, so it cannot be split short-term vs long-term and is treated as a gap,
- * not a figure.
+ * tax engine. Summary capital-gains split fields preserve what a broker/PMS
+ * stated when per-transaction dates are absent; netRealisedGainNoDetail is only
+ * for one unsplit net gain and is treated as a gap, not a figure.
  */
 export type ExtractionSummaryFigures = {
   dividendIncome?: number;
   interestIncome?: number;
   tdsDeducted?: number;
   deductibleCharges?: number;
+  speculativeGain?: number;
+  shortTermCapitalGains?: number;
+  longTermCapitalGains?: number;
+  debtOrSpecifiedMutualFundGains?: number;
+  totalCapitalGains?: number;
   netRealisedGainNoDetail?: number;
 };
 

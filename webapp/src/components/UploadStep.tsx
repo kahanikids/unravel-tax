@@ -1068,20 +1068,50 @@ export function UploadStep({
                   ] as [string, number | undefined][]
                 ).filter((row): row is [string, number] => typeof row[1] === "number")
               : [];
-            return annualRows.length > 0 ? (
+            const capitalGainsRows: [string, number][] = figures
+              ? (
+                  [
+                    ["Speculative / intraday gain", figures.speculativeGain],
+                    ["Short-term capital gains", figures.shortTermCapitalGains],
+                    ["Long-term capital gains", figures.longTermCapitalGains],
+                    ["Debt/specified mutual fund gains", figures.debtOrSpecifiedMutualFundGains],
+                    ["Total capital gains", figures.totalCapitalGains]
+                  ] as [string, number | undefined][]
+                ).filter((row): row is [string, number] => typeof row[1] === "number")
+              : [];
+            return annualRows.length > 0 || capitalGainsRows.length > 0 ? (
               <div>
-                <p>
-                  We recognised these annual figures and added them for you under{" "}
-                  <strong>"A few more numbers"</strong> on the Current Filing page. Open that
-                  section and check them:
-                </p>
-                <ul className="paste-steps">
-                  {annualRows.map(([label, value]) => (
-                    <li key={label}>
-                      {label}: <strong>₹{value.toLocaleString("en-IN")}</strong>
-                    </li>
-                  ))}
-                </ul>
+                {annualRows.length > 0 ? (
+                  <>
+                    <p>
+                      We recognised these annual figures and added them for you under{" "}
+                      <strong>"A few more numbers"</strong> on the Current Filing page. Open that
+                      section and check them:
+                    </p>
+                    <ul className="paste-steps">
+                      {annualRows.map(([label, value]) => (
+                        <li key={label}>
+                          {label}: <strong>₹{value.toLocaleString("en-IN")}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+                {capitalGainsRows.length > 0 ? (
+                  <>
+                    <p>
+                      We also found these capital-gains summary totals. They are shown for review,
+                      but not used in automatic calculations unless you enter/verify them:
+                    </p>
+                    <ul className="paste-steps">
+                      {capitalGainsRows.map(([label, value]) => (
+                        <li key={label}>
+                          {label}: <strong>₹{value.toLocaleString("en-IN")}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
               </div>
             ) : null;
           })()}

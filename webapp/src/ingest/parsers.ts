@@ -418,7 +418,9 @@ export function parseExtractionJson(text: string, sourceText?: string): IngestRe
 
   const summaryFigures = parseAnnualFigures(obj.annualFigures, obj.netRealisedCapitalGainNoDetail);
   const summary = summarizeTransactions(transactions);
-  const sourceTotalWarnings = sourceText ? brokerSummaryTotalWarnings(sourceText, summary) : [];
+  const sourceTotalWarnings = sourceText
+    ? brokerSummaryTotalWarnings(sourceText, summary, summaryFigures)
+    : [];
 
   return {
     kind: "structured_text",
@@ -432,7 +434,10 @@ export function parseExtractionJson(text: string, sourceText?: string): IngestRe
     summaryFigures,
     // A net realised gain with no per-transaction rows can't be split ST/LT, so
     // it's a gap to flag, not a figure to use - only when no real rows came in.
-    netGainOnly: summaryFigures?.netRealisedGainNoDetail !== undefined && transactions.length === 0,
+    netGainOnly:
+      summaryFigures?.netRealisedGainNoDetail !== undefined &&
+      !hasCapitalGainsSummarySplit(summaryFigures) &&
+      transactions.length === 0,
     documentType: optionalString(obj.documentType),
     confidence: optionalString(obj.confidence),
     notes: optionalString(obj.notes)
@@ -441,22 +446,28 @@ export function parseExtractionJson(text: string, sourceText?: string): IngestRe
 
 function brokerSummaryTotalWarnings(
   sourceText: string,
-  summary: ReturnType<typeof summarizeTransactions>
+  summary: ReturnType<typeof summarizeTransactions>,
+  summaryFigures?: ExtractionSummaryFigures
 ): IngestWarning[] {
   const sourceTotals = extractBrokerSummaryTotals(sourceText);
   if (!sourceTotals) {
     return [];
   }
+  const extractedSpeculative =
+    summary.rows > 0 ? summary.intradayGain : summaryFigures?.speculativeGain;
+  const extractedSt = summary.rows > 0 ? summary.stcg : summaryFigures?.shortTermCapitalGains;
+  const extractedLt = summary.rows > 0 ? summary.ltcg : summaryFigures?.longTermCapitalGains;
   const checks: { label: string; source: number; extracted: number }[] = [
     {
       label: "Speculative / Intraday income",
       source: sourceTotals.speculativeGain,
-      extracted: summary.intradayGain
+      extracted: extractedSpeculative ?? 0
     },
-    { label: "Short-Term Capital Gains", source: sourceTotals.stGain, extracted: summary.stcg },
-    { label: "Long-Term Capital Gains", source: sourceTotals.ltGain, extracted: summary.ltcg }
+    { label: "Short-Term Capital Gains", source: sourceTotals.stGain, extracted: extractedSt ?? 0 },
+    { label: "Long-Term Capital Gains", source: sourceTotals.ltGain, extracted: extractedLt ?? 0 }
   ];
   return checks
+    .filter((check) => check.source !== 0 || check.extracted !== 0)
     .filter((check) => Math.abs(check.source - check.extracted) > 5)
     .map((check) => ({
       code: "source_total_mismatch",
@@ -548,8 +559,23 @@ function parseAnnualFigures(
   assign("interestIncome", source.interestIncome);
   assign("tdsDeducted", source.tdsDeducted);
   assign("deductibleCharges", source.deductibleCharges);
+  assign("speculativeGain", source.speculativeGain);
+  assign("shortTermCapitalGains", source.shortTermCapitalGains);
+  assign("longTermCapitalGains", source.longTermCapitalGains);
+  assign("debtOrSpecifiedMutualFundGains", source.debtOrSpecifiedMutualFundGains);
+  assign("totalCapitalGains", source.totalCapitalGains);
   assign("netRealisedGainNoDetail", netRealisedGain);
   return Object.keys(figures).length > 0 ? figures : undefined;
+}
+
+function hasCapitalGainsSummarySplit(figures: ExtractionSummaryFigures | undefined): boolean {
+  return Boolean(
+    figures &&
+    (figures.speculativeGain !== undefined ||
+      figures.shortTermCapitalGains !== undefined ||
+      figures.longTermCapitalGains !== undefined ||
+      figures.debtOrSpecifiedMutualFundGains !== undefined)
+  );
 }
 
 /** Tolerant number coercion: plain numbers, or strings with ₹/commas; null/undefined/"not stated" -> absent. */

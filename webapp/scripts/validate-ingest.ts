@@ -240,6 +240,42 @@ export async function main() {
     throw new Error("A net-realised-gain-only JSON paste with no rows should set netGainOnly.");
   }
 
+  const splitSummaryOnly = parsePastedExtraction(
+    JSON.stringify({
+      documentType: "broker capital gains summary",
+      capitalGainsTransactions: [],
+      annualFigures: {
+        speculativeGain: "0.00",
+        shortTermCapitalGains: "-20,622.71",
+        longTermCapitalGains: "4,28,919.42",
+        totalCapitalGains: "4,08,296.72"
+      },
+      netRealisedCapitalGainNoDetail: "4,08,296.72",
+      confidence: "high",
+      notes: "Summary split found; transaction rows not present."
+    }),
+    [
+      "Summary",
+      "PRODUCT INTEREST ACCRUED INTEREST DIVIDEND SPEC GAIN ST GAIN LT GAIN BUY BACK TOTAL GAIN STT",
+      "Equity 0.0000 0.00 0.00 0.00 -20,622.71 4,28,919.42 0.00 4,08,296.72 2,834.04"
+    ].join("\n")
+  );
+  if (splitSummaryOnly.netGainOnly) {
+    throw new Error("A summary with stated ST/LT split should not be treated as net-gain-only.");
+  }
+  if (
+    splitSummaryOnly.summaryFigures?.shortTermCapitalGains !== -20622.71 ||
+    splitSummaryOnly.summaryFigures.longTermCapitalGains !== 428919.42 ||
+    splitSummaryOnly.summaryFigures.totalCapitalGains !== 408296.72
+  ) {
+    throw new Error(
+      `Split capital-gains summary figures were not parsed: ${JSON.stringify(splitSummaryOnly.summaryFigures)}`
+    );
+  }
+  if (splitSummaryOnly.warnings.some((warning) => warning.code === "source_total_mismatch")) {
+    throw new Error("Matching source ST/LT summary totals should not produce mismatch warnings.");
+  }
+
   // Indian-grouped INR amounts (lakh-style "1,23,456" grouping, ₹ sign, and
   // decimals) must parse to their full value, not truncate at the first comma.
   // Synthetic figures only. This is a real correctness bug guard for INR.
