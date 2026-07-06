@@ -351,7 +351,15 @@ export function UploadStep({
           setWebGpuAvailable(available);
         }
       })
-    );
+    ).catch((err) => {
+      if (!cancelled) {
+        setWebGpuAvailable(false);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (errMsg.toLowerCase().includes("dynamically imported")) {
+          setError("The app was recently updated. Please refresh your browser page to load the latest version.");
+        }
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -554,8 +562,15 @@ export function UploadStep({
   }
 
   function showExtractionError(message: string, source?: ExtractionMethod) {
-    setError(message);
-    setExtractionError(makeExtractionError(message, source));
+    let finalMessage = message;
+    if (
+      message.toLowerCase().includes("failed to fetch dynamically imported module") ||
+      message.toLowerCase().includes("dynamically imported module")
+    ) {
+      finalMessage = "The app was recently updated. Please refresh your browser page to load the latest version and try again.";
+    }
+    setError(finalMessage);
+    setExtractionError(makeExtractionError(finalMessage, source));
   }
 
   async function handleExtractHere() {
