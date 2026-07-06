@@ -21,7 +21,7 @@ async function loadPdfJs(): Promise<typeof import("pdfjs-dist")> {
  * sense of a statement.
  */
 function groupItemsIntoLines(items: TextItem[]): string[] {
-  const lines: { y: number; parts: { x: number; str: string }[] }[] = [];
+  const lines: { y: number; parts: { x: number; str: string; width: number }[] }[] = [];
   const Y_TOLERANCE = 2;
 
   for (const item of items) {
@@ -30,24 +30,35 @@ function groupItemsIntoLines(items: TextItem[]): string[] {
     }
     const x = item.transform[4];
     const y = item.transform[5];
+    const width = (item as any).width || (item.str.length * 6);
     let line = lines.find((candidate) => Math.abs(candidate.y - y) <= Y_TOLERANCE);
     if (!line) {
       line = { y, parts: [] };
       lines.push(line);
     }
-    line.parts.push({ x, str: item.str });
+    line.parts.push({ x, str: item.str, width });
   }
 
   return lines
     .sort((a, b) => b.y - a.y)
-    .map((line) =>
-      line.parts
-        .sort((a, b) => a.x - b.x)
-        .map((part) => part.str)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim()
-    )
+    .map((line) => {
+      const sorted = line.parts.sort((a, b) => a.x - b.x);
+      let result = "";
+      for (let i = 0; i < sorted.length; i++) {
+        const part = sorted[i];
+        if (i > 0) {
+          const prev = sorted[i - 1];
+          const gap = part.x - (prev.x + prev.width);
+          if (gap > 12) {
+            result += "\t";
+          } else {
+            result += " ";
+          }
+        }
+        result += part.str;
+      }
+      return result.replace(/ +/g, " ").trim();
+    })
     .filter((line) => line.length > 0);
 }
 
@@ -145,6 +156,7 @@ export type PdfTextExtraction = {
   sheetNameHint?: string;
   /** Set when bookmarks or repeated pagination suggest this PDF is several statements merged together. */
   mergedDocumentsNote?: string;
+  pages?: string[];
 };
 
 export async function extractPdfText(
@@ -195,7 +207,8 @@ export async function extractPdfText(
     text,
     pageCount: pdf.numPages,
     sheetNameHint,
-    mergedDocumentsNote: detectMergedDocumentsNote(text, outlineTitles)
+    mergedDocumentsNote: detectMergedDocumentsNote(text, outlineTitles),
+    pages
   };
 }
 

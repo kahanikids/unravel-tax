@@ -47,6 +47,92 @@ function getWorker(): Worker {
   return worker;
 }
 
+const TRANSACTION_KEYWORDS = [
+  "purchase", "sell", "buy", "sale", "quantity", "isin", "gain", "loss", "folio", "units",
+  "dividend", "interest", "speculative", "intraday", "stcg", "ltcg", "charges", "fees",
+  "realised", "realized", "scrip", "mutual", "share"
+];
+
+export function filterPagesForExtraction(pages: string[]): { filteredPages: string[]; skippedPagesCount: number } {
+  const filteredPages: string[] = [];
+  let skippedPagesCount = 0;
+
+  for (const page of pages) {
+    const lower = page.toLowerCase();
+    const hasKeyword = TRANSACTION_KEYWORDS.some((kw) => lower.includes(kw));
+    // Always keep page 1 or page with summary totals, or if page has any keyword
+    if (hasKeyword || filteredPages.length === 0 || lower.includes("summary") || lower.includes("annual")) {
+      filteredPages.push(page);
+    } else {
+      skippedPagesCount++;
+    }
+  }
+
+  return { filteredPages, skippedPagesCount };
+}
+
+export function chunkPagesForLlama(
+  pages: string[],
+  targetChars = 4500
+): { text: string }[] {
+  const chunks: { text: string }[] = [];
+  let currentPages: string[] = [];
+  let currentLength = 0;
+
+  for (let i = 0; i < pages.length; i++) {
+    const pageText = pages[i];
+    const pageNumber = i + 1;
+
+    if (currentLength + pageText.length > targetChars && currentPages.length > 0) {
+      chunks.push({
+        text: currentPages.join("\n\n")
+      });
+      currentPages = [];
+      currentLength = 0;
+    }
+
+    currentPages.push(`--- PAGE ${pageNumber} ---\n${pageText}`);
+    currentLength += pageText.length;
+  }
+
+  if (currentPages.length > 0) {
+    chunks.push({
+      text: currentPages.join("\n\n")
+    });
+  }
+
+  return chunks;
+}
+
+export function chunkPagesForOpenRouter(
+  pages: string[],
+  targetChars = 24000
+): string[] {
+  const chunks: string[] = [];
+  let currentPages: string[] = [];
+  let currentLength = 0;
+
+  for (let i = 0; i < pages.length; i++) {
+    const pageText = pages[i];
+    const pageNumber = i + 1;
+
+    if (currentLength + pageText.length > targetChars && currentPages.length > 0) {
+      chunks.push(currentPages.join("\n\n"));
+      currentPages = [];
+      currentLength = 0;
+    }
+
+    currentPages.push(`--- PAGE ${pageNumber} ---\n${pageText}`);
+    currentLength += pageText.length;
+  }
+
+  if (currentPages.length > 0) {
+    chunks.push(currentPages.join("\n\n"));
+  }
+
+  return chunks;
+}
+
 /**
  * Runs Llama 3.2 3B extraction in a Web Worker so the UI stays responsive.
  * Weights download on first use (~2 GB). Long reports are split into sequential
@@ -57,18 +143,38 @@ export async function runInBrowserExtraction(
   documentText: string,
   extractionPrompt: string,
   fileName: string,
-  onProgress: (progress: ExtractProgress) => void
+  onProgress: (progress: ExtractProgress) => void,
+  extractedPages?: string[]
 ): Promise<string> {
-  const chunks = splitForLlamaContext(documentText);
+  let chunks: { text: string }[] = [];
+  let filterMessage = "";
+
+  if (extractedPages && extractedPages.length > 0) {
+    const { filteredPages, skippedPagesCount } = filterPagesForExtraction(extractedPages);
+    if (skippedPagesCount > 0) {
+      filterMessage = `Filtered out ${skippedPagesCount} page(s) with no transaction data. `;
+    }
+    chunks = chunkPagesForLlama(filteredPages, LLAMA_CHUNK_TARGET_CHARS);
+  } else {
+    chunks = splitForLlamaContext(documentText);
+  }
+
   if (chunks.length === 1) {
-    return runWorkerExtraction(documentText, extractionPrompt, fileName, onProgress);
+    if (filterMessage) {
+      onProgress({
+        phase: "generating",
+        progress: 0,
+        message: `${filterMessage}Processing 1 optimized chunk…`
+      });
+    }
+    return runWorkerExtraction(chunks[0].text, extractionPrompt, fileName, onProgress);
   }
 
   const chunkOutputs: ChunkExtractionObject[] = [];
   onProgress({
     phase: "generating",
     progress: 0,
-    message: `Splitting report into ${chunks.length} chunks for local Llama…`
+    message: `${filterMessage}Splitting report into ${chunks.length} chunks for local Llama…`
   });
 
   for (const [index, chunk] of chunks.entries()) {

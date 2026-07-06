@@ -267,6 +267,7 @@ export function UploadStep({
     fileName: string;
     reason?: string;
     extractedText?: string;
+    extractedPages?: string[];
     diagnosticSummary?: string;
     suggestedSheetName?: string;
     thumbnailDataUrl?: string;
@@ -397,6 +398,7 @@ export function UploadStep({
         fileName,
         reason: result.promptRoute.reason,
         extractedText: result.promptRoute.extractedText,
+        extractedPages: result.promptRoute.extractedPages,
         diagnosticSummary: result.promptRoute.diagnosticSummary,
         suggestedSheetName: result.promptRoute.suggestedSheetName,
         thumbnailDataUrl
@@ -569,7 +571,8 @@ export function UploadStep({
         awaitingPaste.extractedText,
         extractionPrompt,
         awaitingPaste.fileName,
-        setExtractProgress
+        setExtractProgress,
+        awaitingPaste.extractedPages
       );
       const parsed = parsePastedExtraction(rawText, awaitingPaste.extractedText);
       const opened = openExtractionResult(parsed);
@@ -607,8 +610,20 @@ export function UploadStep({
     setExtracting(true);
 
     try {
-      // Chunking text: Use 24000 chars per chunk to fit comfortably and optimize API calls
-      const chunks = splitDocumentTextWithLength(awaitingPaste.extractedText, 24000);
+      let chunks: string[] = [];
+      let filterMessage = "";
+
+      if (awaitingPaste.extractedPages && awaitingPaste.extractedPages.length > 0) {
+        const { filterPagesForExtraction, chunkPagesForOpenRouter } = await import("../ingest/llmExtract");
+        const { filteredPages, skippedPagesCount } = filterPagesForExtraction(awaitingPaste.extractedPages);
+        if (skippedPagesCount > 0) {
+          filterMessage = `Filtered out ${skippedPagesCount} page(s) with no transactions. `;
+        }
+        chunks = chunkPagesForOpenRouter(filteredPages, 24000);
+      } else {
+        chunks = splitDocumentTextWithLength(awaitingPaste.extractedText, 24000);
+      }
+
       const totalChunks = chunks.length;
       let completed = 0;
 
@@ -616,8 +631,8 @@ export function UploadStep({
         phase: "generating",
         progress: 0,
         message: totalChunks > 1
-          ? `Splitting document into ${totalChunks} parts and processing in parallel…`
-          : "Sending to OpenRouter…"
+          ? `${filterMessage}Splitting document into ${totalChunks} parts and processing in parallel…`
+          : `${filterMessage}Sending to OpenRouter…`
       });
 
       const promises = chunks.map(async (chunk, index) => {
@@ -1536,6 +1551,7 @@ export function UploadStep({
                           fileName: pending.fileName,
                           reason: pending.ingest.promptRoute?.reason,
                           extractedText: pending.ingest.promptRoute?.extractedText,
+                          extractedPages: pending.ingest.promptRoute?.extractedPages,
                           diagnosticSummary: pending.ingest.promptRoute?.diagnosticSummary,
                           suggestedSheetName:
                             pending.ingest.promptRoute?.suggestedSheetName ??

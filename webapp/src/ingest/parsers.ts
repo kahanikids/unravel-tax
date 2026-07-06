@@ -88,7 +88,7 @@ export function detectIngestionKind(fileName: string, mimeType = ""): IngestionK
 
 export function routePdfOrFreeform(
   reason: string,
-  extra?: { extractedText?: string; diagnosticSummary?: string; suggestedSheetName?: string }
+  extra?: { extractedText?: string; extractedPages?: string[]; diagnosticSummary?: string; suggestedSheetName?: string }
 ): PromptRoute {
   return {
     kind: "pdf_or_freeform",
@@ -449,30 +449,56 @@ function brokerSummaryTotalWarnings(
   summary: ReturnType<typeof summarizeTransactions>,
   summaryFigures?: ExtractionSummaryFigures
 ): IngestWarning[] {
-  const sourceTotals = extractBrokerSummaryTotals(sourceText);
-  if (!sourceTotals) {
-    return [];
+  const warnings: IngestWarning[] = [];
+
+  // We only validate the sum of individual rows against printed totals if individual rows actually exist
+  if (summary.rows > 0) {
+    // 1. Check if we have LLM-extracted summary figures
+    if (summaryFigures) {
+      const checkCompare = (label: string, extracted: number, source: number | undefined) => {
+        if (source !== undefined && Math.abs(source - extracted) > 5) {
+          warnings.push({
+            code: "source_total_mismatch",
+            message: `The report summary says ${label} is ${formatSignedInr(source)}, but the extracted rows add up to ${formatSignedInr(extracted)}. This extraction is probably incomplete. Use Frontier AI copy-paste or upload the broker Excel/XLSX instead.`
+          });
+        }
+      };
+
+      checkCompare("Speculative / Intraday income", summary.intradayGain, summaryFigures.speculativeGain);
+      checkCompare("Short-Term Capital Gains", summary.stcg, summaryFigures.shortTermCapitalGains);
+      checkCompare("Long-Term Capital Gains", summary.ltcg, summaryFigures.longTermCapitalGains);
+
+      if (summaryFigures.totalCapitalGains !== undefined) {
+        const sumExtracted = summary.stcg + summary.ltcg + summary.intradayGain;
+        if (Math.abs(summaryFigures.totalCapitalGains - sumExtracted) > 5) {
+          warnings.push({
+            code: "source_total_mismatch",
+            message: `The report summary says Total Capital Gains is ${formatSignedInr(summaryFigures.totalCapitalGains)}, but the extracted rows add up to ${formatSignedInr(sumExtracted)}. This extraction is probably incomplete. Use Frontier AI copy-paste or upload the broker Excel/XLSX instead.`
+          });
+        }
+      }
+    }
+
+    // 2. Fall back to regex-based extraction from raw text if no warnings were generated yet
+    if (warnings.length === 0) {
+      const sourceTotals = extractBrokerSummaryTotals(sourceText);
+      if (sourceTotals) {
+        const checkRegex = (label: string, extracted: number, source: number) => {
+          if ((source !== 0 || extracted !== 0) && Math.abs(source - extracted) > 5) {
+            warnings.push({
+              code: "source_total_mismatch",
+              message: `The report summary says ${label} is ${formatSignedInr(source)}, but the extracted rows add up to ${formatSignedInr(extracted)}. This extraction is probably incomplete. Use Frontier AI copy-paste or upload the broker Excel/XLSX instead.`
+            });
+          }
+        };
+        checkRegex("Speculative / Intraday income", summary.intradayGain, sourceTotals.speculativeGain);
+        checkRegex("Short-Term Capital Gains", summary.stcg, sourceTotals.stGain);
+        checkRegex("Long-Term Capital Gains", summary.ltcg, sourceTotals.ltGain);
+      }
+    }
   }
-  const extractedSpeculative =
-    summary.rows > 0 ? summary.intradayGain : summaryFigures?.speculativeGain;
-  const extractedSt = summary.rows > 0 ? summary.stcg : summaryFigures?.shortTermCapitalGains;
-  const extractedLt = summary.rows > 0 ? summary.ltcg : summaryFigures?.longTermCapitalGains;
-  const checks: { label: string; source: number; extracted: number }[] = [
-    {
-      label: "Speculative / Intraday income",
-      source: sourceTotals.speculativeGain,
-      extracted: extractedSpeculative ?? 0
-    },
-    { label: "Short-Term Capital Gains", source: sourceTotals.stGain, extracted: extractedSt ?? 0 },
-    { label: "Long-Term Capital Gains", source: sourceTotals.ltGain, extracted: extractedLt ?? 0 }
-  ];
-  return checks
-    .filter((check) => check.source !== 0 || check.extracted !== 0)
-    .filter((check) => Math.abs(check.source - check.extracted) > 5)
-    .map((check) => ({
-      code: "source_total_mismatch",
-      message: `The report summary says ${check.label} is ${formatSignedInr(check.source)}, but the extracted rows add up to ${formatSignedInr(check.extracted)}. This extraction is probably incomplete. Use Frontier AI copy-paste or upload the broker Excel/XLSX instead.`
-    }));
+
+  return warnings;
 }
 
 function extractBrokerSummaryTotals(sourceText: string):
@@ -669,7 +695,7 @@ export async function parseFile(
   if (kind === "pdf_or_freeform" && file.name.toLowerCase().endsWith(".pdf")) {
     try {
       const { extractPdfText, diagnosePdfText } = await import("./pdfExtract");
-      const { text, pageCount, sheetNameHint, mergedDocumentsNote } = await extractPdfText(
+      const { text, pageCount, sheetNameHint, mergedDocumentsNote, pages } = await extractPdfText(
         await file.arrayBuffer(),
         options.pdfPassword
       );
@@ -682,6 +708,7 @@ export async function parseFile(
         result.promptRoute?.reason ?? "Could not find a transaction table in this PDF.",
         {
           extractedText: text,
+          extractedPages: pages,
           diagnosticSummary: diagnostic.summary,
           suggestedSheetName: sheetNameHint
         }

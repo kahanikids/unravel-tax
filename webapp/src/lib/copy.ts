@@ -35,19 +35,19 @@ export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
   {
     id: "frontier",
     label: "Frontier LLMs (copy-paste)",
-    takes: "ChatGPT, Claude, Gemini + copy-paste",
-    gives: "Best shot for messy reports",
-    accuracy: "Highest",
+    takes: "Copy Prompt into ChatGPT, Gemini, Claude",
+    gives: "Best Shot & Time Efficient",
+    accuracy: "81% - 93%",
     time: "A few minutes",
     effort: "Manual",
-    data: "Leaves your browser"
+    data: "Sent to LLMs"
   },
   {
     id: "browser",
     label: "Llama (In-browser, free)",
-    takes: "WebGPU + 2 GB download + smaller context window",
-    gives: "Private first try. If it misses info, use Frontier AI.",
-    accuracy: "Meta IFEval 77.4",
+    takes: "Local download of ~2GB",
+    gives: "Doesn't work on long PDFs",
+    accuracy: "77%",
     time: "2-10 min first run",
     effort: "One click",
     data: "Stays with you"
@@ -55,9 +55,9 @@ export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
   {
     id: "openrouter",
     label: "Openrouter (Free models)",
-    takes: "OpenRouter key + network",
-    gives: "Automatic extraction with selected free models",
-    accuracy: "Testing now",
+    takes: "Setup OpenRouter API Key",
+    gives: "Limitations to the free models",
+    accuracy: "84% - 95%",
     time: "30 sec-2 min",
     effort: "One click",
     data: "Sent to OpenRouter"

@@ -86,6 +86,8 @@ export type PromptRoute = {
   reason: string;
   /** Text this app already read from the PDF itself (line-reconstructed, not table-parsed), so the user can hand it straight to an AI chat instead of re-attaching the file. */
   extractedText?: string;
+  /** Texts of individual pages of the original PDF, to allow page-aware chunking and filtering. */
+  extractedPages?: string[];
   /** Plain-language read on how complete that extracted text looks (scanned/no text layer, has transaction-shaped wording, etc). */
   diagnosticSummary?: string;
   /** Carried from the original PDF's metadata so it survives the round trip through the AI extraction paste, for sheet naming once the pasted result is committed. */
