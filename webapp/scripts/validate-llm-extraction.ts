@@ -8,7 +8,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { parsePastedExtraction } from "../src/ingest";
+import { mergeChunkExtractions, parsePastedExtraction, splitForLlamaContext } from "../src/ingest";
 
 const repoRoot = resolve(import.meta.dirname, "..", "..");
 const spikeDir = resolve(repoRoot, "spike");
@@ -49,6 +49,81 @@ export async function main() {
     throw new Error(
       `parsePastedExtraction with post-process should yield 5 rows, got ${repaired.transactions.length}.`
     );
+  }
+
+  const longSyntheticText = Array.from(
+    { length: 220 },
+    (_, index) =>
+      `Synthetic row ${index + 1}: Dummy Equity ${index + 1} 01-Apr-2024 01-Aug-2024 10 1110 2220`
+  ).join("\n");
+  const chunks = splitForLlamaContext(longSyntheticText);
+  if (chunks.length < 2) {
+    throw new Error("Long Llama input should split into multiple chunks.");
+  }
+  if (!chunks.slice(1).every((chunk) => chunk.text.includes("Synthetic row"))) {
+    throw new Error("Llama chunks should keep readable line text after splitting.");
+  }
+
+  const merged = mergeChunkExtractions([
+    {
+      documentType: "broker capital gains statement",
+      capitalGainsTransactions: [
+        {
+          scripName: "Dummy Equity Ltd",
+          purchaseDate: "01-Apr-2024",
+          sellDate: "01-Aug-2024",
+          units: 10,
+          buyValue: 1110,
+          sellValue: 2220,
+          buyPrice: 111,
+          sellPrice: 222
+        }
+      ],
+      annualFigures: { dividendIncome: 100 },
+      confidence: "high",
+      notes: "First chunk."
+    },
+    {
+      documentType: "broker capital gains statement",
+      capitalGainsTransactions: [
+        {
+          scripName: "Dummy Equity Ltd",
+          purchaseDate: "01-Apr-2024",
+          sellDate: "01-Aug-2024",
+          units: 10,
+          buyValue: 1110,
+          sellValue: 2220,
+          buyPrice: 111,
+          sellPrice: 222
+        },
+        {
+          scripName: "Second Dummy Ltd",
+          purchaseDate: "02-Apr-2024",
+          sellDate: "02-Aug-2024",
+          units: 5,
+          buyValue: 500,
+          sellValue: 700,
+          buyPrice: 100,
+          sellPrice: 140
+        }
+      ],
+      annualFigures: { tdsDeducted: 25 },
+      confidence: "medium",
+      notes: "Second chunk."
+    }
+  ]);
+  const mergedParsed = parsePastedExtraction(JSON.stringify(merged));
+  if (mergedParsed.transactions.length !== 2) {
+    throw new Error(
+      `Merged chunk output should de-duplicate overlap rows and keep 2 transactions, got ${mergedParsed.transactions.length}.`
+    );
+  }
+  if (
+    !mergedParsed.summaryFigures ||
+    mergedParsed.summaryFigures.dividendIncome !== 100 ||
+    mergedParsed.summaryFigures.tdsDeducted !== 25
+  ) {
+    throw new Error("Merged chunk output should preserve annual figures from different chunks.");
   }
 
   const livePath = resolve(spikeDir, "fixtures", "llama-live-broker-cg.txt");

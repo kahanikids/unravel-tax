@@ -1419,6 +1419,32 @@ button.side-nav-step.side-nav-step-current:hover {
   text-align: center;
 }
 
+.extraction-progress-modal {
+  max-width: 520px;
+}
+
+.extraction-progress-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+}
+
+.extraction-progress-track span {
+  display: block;
+  height: 100%;
+  min-width: 8px;
+  background: var(--accent);
+  transition: width 220ms ease;
+}
+
+.extraction-progress-detail {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .upload-empty-hint {
   color: var(--muted);
   font-size: 0.88rem;

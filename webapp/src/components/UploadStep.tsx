@@ -713,6 +713,42 @@ export function UploadStep({
 
       {error ? <p className="inline-error">{error}</p> : null}
 
+      {extracting && extractProgress ? (
+        <div className="modal-backdrop">
+          <div
+            className="modal-card extraction-progress-modal"
+            role="dialog"
+            aria-live="polite"
+            aria-labelledby="extraction-progress-title"
+          >
+            <h3 id="extraction-progress-title">
+              {extractionMethod === "browser" ? "Extracting With Local Llama" : "Extracting Report"}
+            </h3>
+            <p>{extractProgress.message}</p>
+            <div
+              className="extraction-progress-track"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(Math.min(Math.max(extractProgress.progress, 0), 1) * 100)}
+            >
+              <span
+                style={{
+                  width: `${Math.round(Math.min(Math.max(extractProgress.progress, 0), 1) * 100)}%`
+                }}
+              />
+            </div>
+            <p className="extraction-progress-detail">
+              {extractProgress.phase === "loading"
+                ? "Loading the model on your device. This can take a few minutes the first time."
+                : extractionMethod === "browser"
+                  ? "Large reports are split into smaller pieces, extracted one by one, then combined before review."
+                  : "Keep this tab open while extraction finishes."}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {awaitingPaste ? (
         <div className="paste-panel">
           {awaitingPaste.thumbnailDataUrl ? (

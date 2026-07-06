@@ -47,15 +47,17 @@ self.onmessage = async (event: MessageEvent<ExtractMessage>) => {
       message: "Reading your document…"
     });
 
-    const userContent = `Document text to extract (read from ${event.data.fileName} by this app):\n\n${event.data.documentText}`;
+    const userContent = event.data.documentText.startsWith("Document text")
+      ? event.data.documentText
+      : `Document text to extract (read from ${event.data.fileName} by this app):\n\n${event.data.documentText}`;
 
     const reply = await engine.chat.completions.create({
       messages: [
         { role: "system", content: event.data.extractionPrompt },
         { role: "user", content: userContent }
       ],
-      temperature: 0.1,
-      max_tokens: 1200
+      temperature: 0,
+      max_tokens: 1800
     });
 
     post({ type: "done", rawText: reply.choices[0]?.message?.content ?? "" });
