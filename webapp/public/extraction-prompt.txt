@@ -78,15 +78,18 @@ the document and OMIT or set to null anything the document doesn't give.
   date (quantity and value, no sale), do NOT put them in
   capitalGainsTransactions. Note in "notes" that this is a holdings statement,
   not a capital-gains realisation statement.
-- annualFigures: fill any annual totals the document gives (dividend income,
-  interest income, TDS already deducted, deductible charges such as brokerage /
-  PMS fees / STT / custodian or admin charges, and summary capital-gains splits).
-  Be flexible with labels: ST Gain / Short Term / Short-Term Capital Gain ->
-  shortTermCapitalGains; LT Gain / Long Term / Long-Term Capital Gain ->
-  longTermCapitalGains; Spec Gain / Speculative / Intraday ->
-  speculativeGain; Total Gain / Net Gain ->
-  totalCapitalGains. Leave anything not stated as null. Plain numbers, no ₹ or
-  commas.
+- annualFigures: Extract any annual or period totals for non-capital-gains items (dividend income, interest income, TDS already deducted, deductible charges such as brokerage / PMS fees / STT / custodian or admin charges) as well as capital-gains summary splits.
+  - If the document lists multiple individual dividend entries, interest credits, or TDS rows instead of a single total, sum them up yourself and put the total in the respective "annualFigures" field. For example, sum all "Dividend Paid" / "Div Amt" / "Dividend" entries into "dividendIncome", all "Interest Paid" / "Int Credited" into "interestIncome", and all TDS/tax deducted entries into "tdsDeducted".
+  - Be flexible with labels:
+    - Dividend / Dividend payout / Dividend received / Div -> dividendIncome
+    - Interest / Saving Interest / FD Interest / Int. Recd / Int -> interestIncome
+    - Tax Deducted at Source / TDS / WH Tax / WhTax -> tdsDeducted
+    - Brokerage / STT / Custody fee / PMS Fee / Management fee / AMC Fees -> deductibleCharges
+    - ST Gain / Short Term / Short-Term Capital Gain -> shortTermCapitalGains
+    - LT Gain / Long Term / Long-Term Capital Gain -> longTermCapitalGains
+    - Spec Gain / Speculative / Intraday -> speculativeGain
+    - Total Gain / Net Gain -> totalCapitalGains
+  - Leave anything not stated as null. Use plain numbers, with no ₹ or commas.
 - confidence: your honest read of how complete and clear the document was.
 - notes: one short sentence only (under 200 characters). Do not repeat yourself or
   list every row.
