@@ -183,7 +183,8 @@ async function requestOpenRouterCompletion({
     });
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : String(error);
-    if (error instanceof DOMException && error.name === "AbortError") {
+    const errorName = error instanceof Error ? error.name : "";
+    if (errorName === "AbortError") {
       throw new Error(
         "OpenRouter did not return a response within 3 minutes. The selected model may be busy or the report may be too large. Try again, use Frontier AI copy-paste, or split the report."
       );
@@ -315,6 +316,9 @@ function previewText(text: string): string {
 }
 
 function openRouterChatCompletionsUrl(): string {
+  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+    return "/openrouter/api/v1/chat/completions";
+  }
   if (
     typeof location !== "undefined" &&
     (location.hostname === "127.0.0.1" || location.hostname === "localhost")

@@ -77,12 +77,13 @@ function openRouterProxy(): Plugin {
             body
           });
 
+          const responseText = await upstream.text();
           res.statusCode = upstream.status;
           res.setHeader(
             "Content-Type",
             upstream.headers.get("content-type") ?? "application/json; charset=utf-8"
           );
-          res.end(await upstream.text());
+          res.end(responseText);
         } catch (error) {
           res.statusCode = 502;
           res.setHeader("Content-Type", "application/json");
