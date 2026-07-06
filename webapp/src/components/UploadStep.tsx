@@ -876,7 +876,7 @@ export function UploadStep({
                       onClick={() => chooseExtractionMethod("browser")}
                     >
                       <span className="extraction-tab-icon" aria-hidden="true">💻</span>
-                      In-Browser
+                      Llama (In-browser, free)
                     </button>
                     <button
                       type="button"
@@ -884,7 +884,7 @@ export function UploadStep({
                       onClick={() => chooseExtractionMethod("openrouter")}
                     >
                       <span className="extraction-tab-icon" aria-hidden="true">🔗</span>
-                      OpenRouter
+                      Openrouter (Free models)
                     </button>
                     <button
                       type="button"
@@ -892,7 +892,7 @@ export function UploadStep({
                       onClick={() => chooseExtractionMethod("frontier")}
                     >
                       <span className="extraction-tab-icon" aria-hidden="true">💬</span>
-                      Copy-Paste
+                      Frontier LLMs (copy-paste)
                     </button>
                   </div>
                 </div>
