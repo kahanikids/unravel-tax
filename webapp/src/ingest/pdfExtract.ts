@@ -24,19 +24,33 @@ function groupItemsIntoLines(items: TextItem[]): string[] {
   const lines: { y: number; parts: { x: number; str: string; width: number }[] }[] = [];
   const Y_TOLERANCE = 2;
 
-  for (const item of items) {
-    if (!item.str) {
-      continue;
+  // Sort items by y coordinate descending first
+  const validItems = items
+    .filter((item) => item.str && item.str.trim().length > 0)
+    .map((item) => ({
+      x: item.transform[4],
+      y: item.transform[5],
+      str: item.str,
+      width: (item as any).width || (item.str.length * 6)
+    }));
+
+  validItems.sort((a, b) => b.y - a.y);
+
+  for (const part of validItems) {
+    let line = null;
+    // Since it's sorted by y descending, the matching line is almost certainly at the end of the list.
+    // Check the last 10 lines to handle tiny float/ordering overlaps.
+    for (let i = lines.length - 1; i >= Math.max(0, lines.length - 10); i--) {
+      if (Math.abs(lines[i].y - part.y) <= Y_TOLERANCE) {
+        line = lines[i];
+        break;
+      }
     }
-    const x = item.transform[4];
-    const y = item.transform[5];
-    const width = (item as any).width || (item.str.length * 6);
-    let line = lines.find((candidate) => Math.abs(candidate.y - y) <= Y_TOLERANCE);
     if (!line) {
-      line = { y, parts: [] };
+      line = { y: part.y, parts: [] };
       lines.push(line);
     }
-    line.parts.push({ x, str: item.str, width });
+    line.parts.push(part);
   }
 
   return lines
@@ -178,13 +192,15 @@ export async function extractPdfText(
     throw error;
   }
 
-  const pages: string[] = [];
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
-    const page = await pdf.getPage(pageNum);
-    const content = await page.getTextContent();
-    const items = content.items.filter((item): item is TextItem => "str" in item);
-    pages.push(groupItemsIntoLines(items).join("\n"));
-  }
+  const pageNumbers = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
+  const pages = await Promise.all(
+    pageNumbers.map(async (pageNum) => {
+      const page = await pdf.getPage(pageNum);
+      const content = await page.getTextContent();
+      const items = content.items.filter((item): item is TextItem => "str" in item);
+      return groupItemsIntoLines(items).join("\n");
+    })
+  );
   const text = pages.join("\n\n");
 
   let sheetNameHint: string | undefined;

@@ -645,36 +645,64 @@ export function UploadStep({
       }
 
       const totalChunks = chunks.length;
-      const extractions: any[] = [];
+      const extractions: any[] = new Array(totalChunks);
 
       setExtractProgress({
         phase: "generating",
         progress: 0,
         message: totalChunks > 1
-          ? `${filterMessage}Splitting document into ${totalChunks} parts and processing sequentially…`
+          ? `${filterMessage}Splitting document into ${totalChunks} parts and processing concurrently…`
           : `${filterMessage}Sending to OpenRouter…`
       });
 
-      for (let index = 0; index < totalChunks; index++) {
-        const chunk = chunks[index];
-        const partNumber = index + 1;
-        setExtractProgress({
-          phase: "generating",
-          progress: Math.round((index / totalChunks) * 100),
-          message: totalChunks > 1
-            ? `Sending part ${partNumber} of ${totalChunks} to OpenRouter…`
-            : "Sending request to OpenRouter…"
-        });
+      const CONCURRENCY = 3;
+      const queue = chunks.map((chunk, index) => ({ chunk, index }));
+      let completed = 0;
 
-        const result = await runOpenRouterExtraction(
-          chunk,
-          extractionPrompt,
-          totalChunks > 1 ? `${awaitingPaste.fileName} (Part ${partNumber})` : awaitingPaste.fileName,
-          key,
-          () => {}
-        );
-        extractions.push(result);
+      async function processQueue() {
+        while (queue.length > 0) {
+          const item = queue.shift();
+          if (!item) {
+            break;
+          }
+          const { chunk, index } = item;
+          const partNumber = index + 1;
+
+          setExtractProgress((prev) => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              message: totalChunks > 1
+                ? `Sending part ${partNumber} of ${totalChunks} to OpenRouter…`
+                : "Sending request to OpenRouter…"
+            };
+          });
+
+          const result = await runOpenRouterExtraction(
+            chunk,
+            extractionPrompt,
+            totalChunks > 1 ? `${awaitingPaste.fileName} (Part ${partNumber})` : awaitingPaste.fileName,
+            key,
+            () => {}
+          );
+          extractions[index] = result;
+          completed++;
+
+          setExtractProgress((prev) => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              progress: Math.round((completed / totalChunks) * 100),
+              message: totalChunks > 1
+                ? `Processed part ${completed} of ${totalChunks}…`
+                : "Sending request to OpenRouter…"
+            };
+          });
+        }
       }
+
+      const workers = Array.from({ length: Math.min(CONCURRENCY, totalChunks) }, processQueue);
+      await Promise.all(workers);
 
       setExtractProgress({
         phase: "generating",
