@@ -21,7 +21,13 @@ export type TaxClass = "Intraday" | "ST" | "LT";
  * covers Section 50AA specified funds, which are always short-term-deemed and
  * taxed at slab rate regardless of holding period - see rules/capital-gains-mutual-funds.json.
  */
-export type InstrumentType = "equity" | "debt_mutual_fund";
+export type InstrumentType =
+  | "equity"
+  | "listed_equity"
+  | "unlisted_equity"
+  | "equity_mutual_fund"
+  | "debt_mutual_fund"
+  | "other";
 
 export const OPTIONAL_INSTRUMENT_TYPE_COLUMN = "Instrument Type";
 

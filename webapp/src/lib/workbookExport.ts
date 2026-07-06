@@ -253,17 +253,19 @@ function brokerColumnKeys(transactions: NormalizedTransaction[]): string[] {
 
 function classificationFormula(row: number, instCol: string, holdCol: string): string {
   const ltDays = cellRef(DETAILED_SHEET, "B", DS_LT_DAYS_ROW);
-  return `IF(${instCol}${row}="debt_mutual_fund","Debt-MF",IF(${holdCol}${row}=0,"Intraday",IF(${holdCol}${row}>${ltDays},"LT","ST")))`;
+  return `IF(${instCol}${row}="debt_mutual_fund","Debt-MF",IF(${holdCol}${row}=0,"Intraday",IF(${holdCol}${row}>IF(${instCol}${row}="unlisted_equity",730,${ltDays}),"LT","ST")))`;
 }
 
-function treatmentFormula(classCol: string, row: number): string {
+function treatmentFormula(classCol: string, row: number, instCol: string): string {
   const c = `${classCol}${row}`;
-  return `IF(${c}="Intraday","Slab rate (speculative business income, Sec 43(5))",IF(${c}="ST","20% flat (Sec 111A)",IF(${c}="Debt-MF","Slab rate (debt/specified MF, Sec 50AA)","12.5% flat, no indexation (Sec 112A)")))`;
+  const inst = `${instCol}${row}`;
+  return `IF(${c}="Intraday","Slab rate (speculative business income, Sec 43(5))",IF(${inst}="unlisted_equity",IF(${c}="ST","Slab rate (unlisted, Sec 112)","12.5% flat, no indexation (Sec 112)"),IF(${c}="ST","20% flat (Sec 111A)",IF(${c}="Debt-MF","Slab rate (debt/specified MF, Sec 50AA)","12.5% flat, no indexation (Sec 112A)"))))`;
 }
 
-function ruleFlagFormula(classCol: string, row: number): string {
+function ruleFlagFormula(classCol: string, row: number, instCol: string): string {
   const c = `${classCol}${row}`;
-  return `IF(${c}="Intraday","Business income: taxed with other income at slab rate; losses ring-fenced to speculative gains only (Sec 73)",IF(${c}="ST","Rate raised 15%->20% eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)",IF(${c}="Debt-MF","Short-term-deemed debt MF gain: slab rate (Sec 50AA)","Rate raised 10%->12.5% & exemption Rs1L->Rs1.25L eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)")))`;
+  const inst = `${instCol}${row}`;
+  return `IF(${c}="Intraday","Business income: taxed with other income at slab rate; losses ring-fenced to speculative gains only (Sec 73)",IF(${inst}="unlisted_equity",IF(${c}="ST","Short-term unlisted equity: taxed at slab rate; losses offset against STCG/LTCG","Long-term unlisted equity: rate lowered 20%->12.5% eff 23-Jul-2024 (FA 2024); no indexation"),IF(${c}="ST","Rate raised 15%->20% eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)",IF(${c}="Debt-MF","Short-term-deemed debt MF gain: slab rate (Sec 50AA)","Rate raised 10%->12.5% & exemption Rs1L->Rs1.25L eff 23-Jul-2024 (FA 2024); no 87A rebate vs this income from AY2026-27 (FA 2025)"))))`
 }
 
 function toExcelDate(dateText: string): Date | string {
@@ -376,8 +378,8 @@ export function buildBrokerSheet(
       f(classificationFormula(rowNum, "J", "E"), C.td),
       f(`G${rowNum}-F${rowNum}`, C.currency()),
       varianceCell,
-      f(treatmentFormula(classCol, rowNum), { ...C.tdWrap }),
-      f(ruleFlagFormula(classCol, rowNum), { ...C.tdWrap })
+      f(treatmentFormula(classCol, rowNum, "J"), { ...C.tdWrap }),
+      f(ruleFlagFormula(classCol, rowNum, "J"), { ...C.tdWrap })
     ];
     data.push(row);
   });

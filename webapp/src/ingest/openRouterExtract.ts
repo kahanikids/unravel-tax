@@ -346,7 +346,7 @@ Important output rules for this automatic extraction:
 - Return ONLY one complete JSON object.
 - Use minified JSON with no markdown fences and no prose.
 - Do not explain your reasoning.
-- Keep notes under 100 characters.
+- Keep notes concise (under 500 characters) and include the requested totals and splits.
 - Omit fields that are missing instead of writing long explanations.
 - Close every array and object. The final character must be }.`;
 }

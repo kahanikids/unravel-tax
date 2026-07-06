@@ -71,10 +71,12 @@ export function classifyTransactionWithRules(
     return "Intraday";
   }
 
-  if (
-    transaction.holdPeriodDays >
-    capitalGainsRule.values.listed_equity.long_term_holding_period_days_gt
-  ) {
+  const threshold =
+    transaction.instrumentType === "unlisted_equity"
+      ? 730
+      : capitalGainsRule.values.listed_equity.long_term_holding_period_days_gt;
+
+  if (transaction.holdPeriodDays > threshold) {
     return "LT";
   }
 

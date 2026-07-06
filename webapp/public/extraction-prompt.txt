@@ -34,7 +34,7 @@ the document and OMIT or set to null anything the document doesn't give.
       "sellValue": 0,
       "buyPrice": 0,
       "sellPrice": 0,
-      "instrumentType": "equity or debt_mutual_fund (optional; leave out if unsure)"
+      "instrumentType": "listed_equity, unlisted_equity, equity_mutual_fund, debt_mutual_fund, or other (optional; leave out if unsure)"
     }
   ],
   "annualFigures": {
@@ -91,8 +91,10 @@ the document and OMIT or set to null anything the document doesn't give.
     - Total Gain / Net Gain -> totalCapitalGains
   - Leave anything not stated as null. Use plain numbers, with no ₹ or commas.
 - confidence: your honest read of how complete and clear the document was.
-- notes: one short sentence only (under 200 characters). Do not repeat yourself or
-  list every row.
+- notes: concise text (under 500 characters). Do not repeat yourself or list every individual row, but ALWAYS include:
+  1. Total sales value and total cost of acquisition if mentioned in any summaries, P&L, or totals in the document.
+  2. Any stated splits of asset types or instruments (e.g., listed/unlisted shares, equity vs debt mutual funds, etc.).
+  3. Any holdings-only warnings, missing transaction detail warnings, or other discrepancies.
 - Broken-line PDF text: a single transaction row often spans several lines. Scrip
   name on one line, purchase and sell dates on the next lines, units and values on
   another. Dates on following lines still belong to the SAME transaction. Match

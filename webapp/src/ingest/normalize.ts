@@ -185,6 +185,38 @@ export function parseInstrumentType(value: string | number | Date | undefined): 
   ) {
     return "debt_mutual_fund";
   }
+  if (
+    text === "listed_equity" ||
+    text === "listed equity" ||
+    text === "listed" ||
+    text === "listed_shares" ||
+    text === "listed shares"
+  ) {
+    return "listed_equity";
+  }
+  if (
+    text === "unlisted_equity" ||
+    text === "unlisted equity" ||
+    text === "unlisted" ||
+    text === "unlisted_shares" ||
+    text === "unlisted shares"
+  ) {
+    return "unlisted_equity";
+  }
+  if (
+    text === "equity_mutual_fund" ||
+    text === "equity mutual fund" ||
+    text === "equity_mf" ||
+    text === "equity mf" ||
+    text === "mutual fund" ||
+    text === "mutual_fund" ||
+    text === "mf"
+  ) {
+    return "equity_mutual_fund";
+  }
+  if (text === "other") {
+    return "other";
+  }
   return "equity";
 }
 
@@ -204,10 +236,13 @@ export function deriveComputedFields(fields: EditableTransactionFields): Normali
     taxClass = "ST";
   } else if (holdPeriodDays === 0) {
     taxClass = "Intraday";
-  } else if (holdPeriodDays > LONG_TERM_HOLDING_DAYS_GT) {
-    taxClass = "LT";
   } else {
-    taxClass = "ST";
+    const threshold = fields.instrumentType === "unlisted_equity" ? 730 : LONG_TERM_HOLDING_DAYS_GT;
+    if (holdPeriodDays > threshold) {
+      taxClass = "LT";
+    } else {
+      taxClass = "ST";
+    }
   }
 
   return {
