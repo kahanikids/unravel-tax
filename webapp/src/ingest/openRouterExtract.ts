@@ -155,17 +155,22 @@ async function requestOpenRouterCompletion({
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
 
+  const isLocalProxy = openRouterChatCompletionsUrl().startsWith("/");
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${bearerToken}`,
+    "Content-Type": "application/json"
+  };
+  if (isLocalProxy) {
+    headers["X-OpenRouter-Metadata"] = "enabled";
+  }
+
   let response: Response;
   try {
     onProgress?.("OpenRouter accepted the request. Waiting for a model to respond…");
     response = await fetch(openRouterChatCompletionsUrl(), {
       method: "POST",
       signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${bearerToken}`,
-        "Content-Type": "application/json",
-        "X-OpenRouter-Metadata": "enabled"
-      },
+      headers,
       body: JSON.stringify({
         model,
         messages: [
@@ -173,10 +178,6 @@ async function requestOpenRouterCompletion({
           { role: "user", content: userContent }
         ],
         ...(forceJson ? { response_format: { type: "json_object" } } : {}),
-        reasoning: {
-          effort: "none",
-          exclude: true
-        },
         temperature: 0,
         max_tokens: OPENROUTER_MAX_TOKENS
       })
@@ -316,6 +317,9 @@ function previewText(text: string): string {
 }
 
 function openRouterChatCompletionsUrl(): string {
+  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_OPENROUTER_PROXY_URL) {
+    return import.meta.env.VITE_OPENROUTER_PROXY_URL;
+  }
   if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
     return "/openrouter/api/v1/chat/completions";
   }
