@@ -125,8 +125,7 @@ export function ChecklistPanel({
 
         {showDefaultsBanner ? (
           <div className="defaults-banner" style={{ marginTop: "4px" }}>
-            <p>You skipped the questions, so this checklist and recommendation use default assumptions: resident, no special circumstances.</p>
-            <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>For Exhaustive List</span>
               <button
                 type="button"

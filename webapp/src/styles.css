@@ -2896,7 +2896,7 @@ button.side-nav-step.side-nav-step-current:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 4px;
 }
 
 .footer-disclaimer-hint {
@@ -2904,26 +2904,29 @@ button.side-nav-step.side-nav-step-current:hover {
   color: var(--muted);
   font-size: 0.76rem;
   margin-top: 2px;
+  padding-left: 8px;
 }
 
 .footer-link {
   appearance: none;
   border: none;
   background: transparent;
-  padding: 0;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
   text-align: left;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--muted);
   text-decoration: none;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .footer-link:hover,
 .footer-link:focus-visible {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--accent-dark);
+  background: var(--surface-soft);
+  text-decoration: none;
   outline: none;
 }
 

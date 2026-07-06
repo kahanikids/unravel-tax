@@ -1360,11 +1360,12 @@ function App() {
             <div className="footer-inner">
               <div className="footer-meta">
                 <p className="footer-scope-note">{SCOPE_AND_DISCLAIMER_NOTE}</p>
-                <p className="footer-privacy">Runs locally in your browser; nothing is uploaded.</p>
+                <p className="footer-privacy" style={{ color: "var(--ink)", opacity: 0.8 }}>Runs locally in your browser; nothing is uploaded.</p>
               </div>
               <nav className="footer-links" aria-label="Project and legal links">
                 <div className="footer-disclaimer-link">
                   <button type="button" className="footer-link" onClick={() => goToStep("welcome")}>
+                    <span aria-hidden="true" style={{ marginRight: 6 }}>⚖️</span>
                     Full Disclaimer, AI Use &amp; Privacy
                   </button>
                   <span className="footer-disclaimer-hint">
@@ -1377,6 +1378,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
+                  <span aria-hidden="true" style={{ marginRight: 6 }}>💻</span>
                   Source On GitHub
                 </a>
                 <a
@@ -1385,11 +1387,12 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
+                  <span aria-hidden="true" style={{ marginRight: 6 }}>🐛</span>
                   Report An Issue
                 </a>
               </nav>
             </div>
-            <p className="footer-baseline">Free and open source, MIT licensed.</p>
+            <p className="footer-baseline" style={{ borderTop: "1px solid var(--line)" }}>Free and open source, MIT licensed.</p>
           </div>
         </footer>
       </main>
