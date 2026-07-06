@@ -1406,6 +1406,10 @@ button.side-nav-step.side-nav-step-current:hover {
   transform: none;
 }
 
+.info-tip-wide .info-tip-bubble {
+  max-width: min(600px, calc(100vw - 40px));
+}
+
 .upload-info-tip {
   position: absolute;
   top: 12px;

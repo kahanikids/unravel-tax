@@ -6,6 +6,7 @@ import {
   parseExtractionJson,
   parsePastedExtraction,
   reparseWithColumnMap,
+  extractJsonBlock,
   type ExtractionSummaryFigures,
   type IngestResult,
   type IngestWarning,
@@ -20,7 +21,7 @@ import {
   setStoredOpenRouterApiKey,
   type ExtractionMethod
 } from "../lib/extractionPrefs";
-import { EXTRACTION_METHOD_OPTIONS } from "../lib/copy";
+import { EXTRACTION_METHOD_OPTIONS, type ExtractionMethodOption } from "../lib/copy";
 import { EXPECTED_TRANSACTION_COLUMNS } from "../ingest/types";
 import type { CanonicalTransactionColumn } from "../ingest/headerMatching";
 import type { RawSheet } from "../lib";
@@ -109,6 +110,130 @@ function splitDocumentText(text: string): string[] {
     start = end;
   }
   return chunks.filter(Boolean);
+}
+
+function splitDocumentTextWithLength(text: string, size: number): string[] {
+  if (text.length <= size) {
+    return [text];
+  }
+
+  const chunks: string[] = [];
+  let start = 0;
+  while (start < text.length) {
+    const hardEnd = Math.min(start + size, text.length);
+    const newlineBreak = text.lastIndexOf("\n", hardEnd);
+    const end = newlineBreak > start + size * 0.65 ? newlineBreak : hardEnd;
+    chunks.push(text.slice(start, end).trim());
+    start = end;
+  }
+  return chunks.filter(Boolean);
+}
+
+function mergeExtractionJsonObjects(rawResponses: string[]): string {
+  const merged: any = {
+    documentType: null,
+    capitalGainsTransactions: [],
+    annualFigures: {
+      dividendIncome: null,
+      interestIncome: null,
+      tdsDeducted: null,
+      deductibleCharges: null,
+      speculativeGain: null,
+      shortTermCapitalGains: null,
+      longTermCapitalGains: null,
+      debtOrSpecifiedMutualFundGains: null,
+      totalCapitalGains: null
+    },
+    netRealisedCapitalGainNoDetail: null,
+    confidence: "high",
+    notes: ""
+  };
+
+  const notesList: string[] = [];
+  const docTypes: string[] = [];
+  const confidences: string[] = [];
+
+  for (const raw of rawResponses) {
+    try {
+      const jsonText = extractJsonBlock(raw);
+      const parsed = JSON.parse(jsonText);
+      if (!parsed || typeof parsed !== "object") {
+        continue;
+      }
+
+      if (parsed.documentType) {
+        docTypes.push(parsed.documentType);
+      }
+
+      if (Array.isArray(parsed.capitalGainsTransactions)) {
+        for (const tx of parsed.capitalGainsTransactions) {
+          if (!tx || typeof tx !== "object") continue;
+          const isDuplicate = merged.capitalGainsTransactions.some((existing: any) => {
+            return (
+              existing.scripName === tx.scripName &&
+              existing.purchaseDate === tx.purchaseDate &&
+              existing.sellDate === tx.sellDate &&
+              existing.units === tx.units &&
+              existing.buyValue === tx.buyValue &&
+              existing.sellValue === tx.sellValue
+            );
+          });
+          if (!isDuplicate) {
+            merged.capitalGainsTransactions.push(tx);
+          }
+        }
+      }
+
+      if (parsed.annualFigures && typeof parsed.annualFigures === "object") {
+        for (const key of Object.keys(merged.annualFigures)) {
+          const val = parsed.annualFigures[key];
+          if (val !== null && val !== undefined) {
+            const numVal = Number(String(val).replace(/[₹,\s]/g, ""));
+            if (!isNaN(numVal)) {
+              const existing = merged.annualFigures[key];
+              merged.annualFigures[key] = existing === null ? numVal : Math.max(existing, numVal);
+            } else if (typeof val === "string" && val.trim() !== "") {
+              merged.annualFigures[key] = val.trim();
+            }
+          }
+        }
+      }
+
+      if (parsed.netRealisedCapitalGainNoDetail !== null && parsed.netRealisedCapitalGainNoDetail !== undefined) {
+        const numVal = Number(String(parsed.netRealisedCapitalGainNoDetail).replace(/[₹,\s]/g, ""));
+        if (!isNaN(numVal)) {
+          const existing = merged.netRealisedCapitalGainNoDetail;
+          merged.netRealisedCapitalGainNoDetail = existing === null ? numVal : Math.max(existing, numVal);
+        }
+      }
+
+      if (parsed.confidence) {
+        confidences.push(parsed.confidence.toLowerCase());
+      }
+
+      if (parsed.notes && typeof parsed.notes === "string" && parsed.notes.trim() !== "") {
+        notesList.push(parsed.notes.trim());
+      }
+    } catch (e) {
+      console.warn("Failed to parse chunk JSON text in merge:", e);
+    }
+  }
+
+  if (docTypes.length > 0) {
+    merged.documentType = docTypes[0];
+  }
+  if (confidences.includes("low")) {
+    merged.confidence = "low";
+  } else if (confidences.includes("medium")) {
+    merged.confidence = "medium";
+  } else {
+    merged.confidence = "high";
+  }
+  if (notesList.length > 0) {
+    merged.notes = Array.from(new Set(notesList)).join("; ");
+  }
+
+  return JSON.stringify(merged);
 }
 
 export function UploadStep({
@@ -480,24 +605,61 @@ export function UploadStep({
     setStoredOpenRouterApiKey(key);
     setError(null);
     setExtracting(true);
-    setExtractProgress({ phase: "generating", progress: 0, message: "Sending to OpenRouter…" });
+
     try {
-      const extraction = await runOpenRouterExtraction(
-        awaitingPaste.extractedText,
-        extractionPrompt,
-        awaitingPaste.fileName,
-        key,
-        (message) => setExtractProgress({ phase: "generating", progress: 0, message })
-      );
+      // Chunking text: Use 24000 chars per chunk to fit comfortably and optimize API calls
+      const chunks = splitDocumentTextWithLength(awaitingPaste.extractedText, 24000);
+      const totalChunks = chunks.length;
+      let completed = 0;
+
       setExtractProgress({
         phase: "generating",
         progress: 0,
-        message: "Checking the extracted JSON…"
+        message: totalChunks > 1
+          ? `Splitting document into ${totalChunks} parts and processing in parallel…`
+          : "Sending to OpenRouter…"
       });
-      const parsed = parseExtractionJson(extraction.rawText, awaitingPaste.extractedText);
+
+      const promises = chunks.map(async (chunk, index) => {
+        const result = await runOpenRouterExtraction(
+          chunk,
+          extractionPrompt,
+          totalChunks > 1 ? `${awaitingPaste.fileName} (Part ${index + 1})` : awaitingPaste.fileName,
+          key,
+          // Since they run in parallel, silence inner logs to prevent jumping UI text
+          () => {}
+        );
+        completed++;
+        setExtractProgress({
+          phase: "generating",
+          progress: Math.round((completed / totalChunks) * 100),
+          message: totalChunks > 1
+            ? `Extracted ${completed} of ${totalChunks} parts…`
+            : "Received response from OpenRouter…"
+        });
+        return result;
+      });
+
+      const extractions = await Promise.all(promises);
+
+      setExtractProgress({
+        phase: "generating",
+        progress: 100,
+        message: "Checking and merging the extracted JSON…"
+      });
+
+      // Merge JSON from all chunks
+      const mergedJsonText = mergeExtractionJsonObjects(extractions.map((e) => e.rawText));
+
+      // Collect unique models used
+      const modelsUsedSet = new Set(extractions.map((e) => e.modelUsed).filter(Boolean));
+      const modelUsed = Array.from(modelsUsedSet).join(", ") || undefined;
+
+      const parsed = parseExtractionJson(mergedJsonText, awaitingPaste.extractedText);
       const opened = openExtractionResult(parsed, {
-        modelUsed: extraction.modelUsed
+        modelUsed
       });
+
       if (!opened) {
         showExtractionError(
           parsed.warnings[0]?.message ??
@@ -869,19 +1031,31 @@ export function UploadStep({
                 <div className="paste-stepper-content">
                   <h4 className="paste-stepper-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     Choose how to extract
-                    <InfoTooltip label="Compare extraction methods" className="align-right">
-                      <div style={{ minWidth: 280, padding: 4 }}>
+                    <InfoTooltip label="Compare extraction methods" className="align-right info-tip-wide">
+                      <div style={{ display: "grid", gridTemplateColumns: "70px repeat(3, 1fr)", gap: "8px 12px", padding: "4px 0" }}>
+                        <div />
                         {EXTRACTION_METHOD_OPTIONS.map((opt) => (
-                          <div key={opt.id} style={{ marginBottom: 12 }}>
-                            <strong style={{ fontSize: "0.9rem", display: "block", marginBottom: 2 }}>
-                              {opt.label}
-                            </strong>
-                            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)" }}>
-                              {opt.gives}
-                            </p>
-                            <p style={{ margin: "4px 0 0", fontSize: "0.75rem", opacity: 0.8 }}>
-                              Accuracy: {opt.accuracy} · {opt.data}
-                            </p>
+                          <div key={opt.id} style={{ fontWeight: 800, fontSize: "0.8rem", textAlign: "center", color: "var(--accent-dark)" }}>
+                            {opt.label.split(" (")[0]}
+                          </div>
+                        ))}
+                        {[
+                          { label: "Takes", key: "takes" },
+                          { label: "Gives", key: "gives" },
+                          { label: "Accuracy", key: "accuracy" },
+                          { label: "Time", key: "time" },
+                          { label: "Effort", key: "effort" },
+                          { label: "Data", key: "data" }
+                        ].map((attr) => (
+                          <div key={attr.key} style={{ display: "contents" }}>
+                            <div style={{ fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase", color: "var(--muted)", alignSelf: "center" }}>
+                              {attr.label === "Data" ? "Privacy" : attr.label}
+                            </div>
+                            {EXTRACTION_METHOD_OPTIONS.map((opt) => (
+                              <div key={opt.id} style={{ fontSize: "0.78rem", textAlign: "center", padding: "6px 8px", background: "var(--surface-soft)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {opt[attr.key as keyof ExtractionMethodOption]}
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
@@ -1047,24 +1221,6 @@ export function UploadStep({
                         ) : null}
                       </>
                     ) : null}
-
-                    {/* Method Facts */}
-                    {extractionMethod && (() => {
-                      const opt = EXTRACTION_METHOD_OPTIONS.find((o) => o.id === extractionMethod);
-                      if (!opt) return null;
-                      return (
-                        <div className="extraction-method-facts-wrap" style={{ marginTop: 16 }}>
-                          <dl className="extraction-method-facts">
-                            <div><dt>Takes</dt><dd>{opt.takes}</dd></div>
-                            <div><dt>Gives</dt><dd>{opt.gives}</dd></div>
-                            <div><dt>Accuracy</dt><dd>{opt.accuracy}</dd></div>
-                            <div><dt>Time</dt><dd>{opt.time}</dd></div>
-                            <div><dt>Effort</dt><dd>{opt.effort}</dd></div>
-                            <div><dt>Data</dt><dd>{opt.data}</dd></div>
-                          </dl>
-                        </div>
-                      );
-                    })()}
 
                     {/* Prompt details — collapsed */}
                     {extractionMethod ? (

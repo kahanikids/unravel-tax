@@ -4,7 +4,7 @@ import { extractJsonBlock } from "./extractionPostProcess";
 export const OPENROUTER_EXTRACTION_MODEL = "openai/gpt-oss-120b:free";
 export const OPENROUTER_EXTRACTION_MODELS = [
   OPENROUTER_EXTRACTION_MODEL,
-  "qwen/qwen3-235b-a22b:free",
+  "poolside/laguna-m.1:free",
   "nvidia/nemotron-3-nano-30b-a3b"
 ] as const;
 
