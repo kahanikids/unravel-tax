@@ -26,11 +26,15 @@ const MOBILE_TABLET_BREAKPOINT = 860;
 export function ChecklistPanel({
   checklistItems,
   riskTriggers,
-  profileScopeCaveats
+  profileScopeCaveats,
+  showDefaultsBanner,
+  onAnswerQuestions
 }: {
   checklistItems: ChecklistItem[];
   riskTriggers: RiskTrigger[];
   profileScopeCaveats: ProfileScopeCaveat[];
+  showDefaultsBanner?: boolean;
+  onAnswerQuestions?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= MOBILE_TABLET_BREAKPOINT
@@ -118,6 +122,23 @@ export function ChecklistPanel({
             ))
           )}
         </div>
+
+        {showDefaultsBanner ? (
+          <div className="defaults-banner" style={{ marginTop: "4px" }}>
+            <p>You skipped the questions, so this checklist and recommendation use default assumptions: resident, no special circumstances.</p>
+            <p style={{ marginTop: "8px", fontWeight: 600 }}>
+              For Exhaustive List —{" "}
+              <button
+                type="button"
+                className="text-button"
+                onClick={onAnswerQuestions}
+                style={{ fontWeight: "inherit" }}
+              >
+                Answer these
+              </button>
+            </p>
+          </div>
+        ) : null}
       </div>
     </aside>
   );

@@ -1241,6 +1241,8 @@ function App() {
               checklistItems={checklistItems}
               riskTriggers={riskTriggers}
               profileScopeCaveats={scopeCaveats}
+              showDefaultsBanner={!sampleMode && orientation.residency === null}
+              onAnswerQuestions={() => setStep("orientation")}
             />
 
             <div
@@ -1253,21 +1255,6 @@ function App() {
             <div className="stage-main">
               {sampleMode ? (
                 <p className="sample-banner">You're viewing sample data. Nothing here is real.</p>
-              ) : null}
-
-              {!sampleMode && orientation.residency === null ? (
-                <p className="defaults-banner">
-                  You skipped the questions, so this checklist and recommendation use default
-                  assumptions: resident, no special circumstances.{" "}
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => setStep("orientation")}
-                  >
-                    Answer Them Now
-                  </button>{" "}
-                  for a more accurate one.
-                </p>
               ) : null}
 
               {step === "documents" ? (
