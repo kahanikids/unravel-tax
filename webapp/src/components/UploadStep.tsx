@@ -416,7 +416,15 @@ export function UploadStep({
         awaitingPaste.fileName,
         setExtractProgress
       );
-      openExtractionResult(parsePastedExtraction(rawText, awaitingPaste.extractedText));
+      const parsed = parsePastedExtraction(rawText, awaitingPaste.extractedText);
+      const opened = openExtractionResult(parsed);
+      if (!opened) {
+        showExtractionError(
+          parsed.warnings[0]?.message ??
+            "Local Llama finished, but the app could not find usable JSON in the response. Use OpenRouter or Frontier AI copy-paste instead.",
+          "browser"
+        );
+      }
     } catch (extractError) {
       showExtractionError(
         extractError instanceof Error

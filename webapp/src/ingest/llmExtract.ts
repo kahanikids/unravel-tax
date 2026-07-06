@@ -19,6 +19,8 @@ let worker: Worker | null = null;
 
 const LLAMA_CHUNK_TARGET_CHARS = 4_500;
 const LLAMA_CHUNK_OVERLAP_LINES = 3;
+const LLAMA_GENERATION_TIMEOUT_MS = 180_000;
+const LLAMA_STALLED_PROGRESS_MS = 60_000;
 
 /** True when WebGPU is available - required for in-browser Llama extraction. */
 export async function isWebGpuAvailable(): Promise<boolean> {
@@ -133,6 +135,37 @@ function runWorkerExtraction(
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const activeWorker = getWorker();
+    let settled = false;
+
+    const cleanup = () => {
+      activeWorker.removeEventListener("message", handleMessage);
+      activeWorker.removeEventListener("error", handleWorkerError);
+      activeWorker.removeEventListener("messageerror", handleWorkerMessageError);
+      window.clearTimeout(stalledProgressId);
+      window.clearTimeout(timeoutId);
+    };
+
+    const fail = (error: Error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      activeWorker.terminate();
+      if (worker === activeWorker) {
+        worker = null;
+      }
+      reject(error);
+    };
+
+    const finish = (rawText: string) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve(rawText);
+    };
 
     const handleMessage = (event: MessageEvent) => {
       const message = event.data as
@@ -149,17 +182,45 @@ function runWorkerExtraction(
         return;
       }
 
-      activeWorker.removeEventListener("message", handleMessage);
-
       if (message.type === "error") {
-        reject(new Error(message.message));
+        fail(new Error(message.message));
         return;
       }
 
-      resolve(message.rawText);
+      finish(message.rawText);
+    };
+
+    const handleWorkerError = (event: ErrorEvent) => {
+      fail(new Error(event.message || "Local Llama worker crashed."));
+    };
+
+    const handleWorkerMessageError = () => {
+      fail(new Error("Local Llama worker returned a message the app could not read."));
     };
 
     activeWorker.addEventListener("message", handleMessage);
+    activeWorker.addEventListener("error", handleWorkerError);
+    activeWorker.addEventListener("messageerror", handleWorkerMessageError);
+
+    const stalledProgressId = window.setTimeout(() => {
+      if (!settled) {
+        onProgress({
+          phase: "generating",
+          progress: 0,
+          message:
+            "Local Llama is still working. If this stays here, use OpenRouter or copy-paste instead."
+        });
+      }
+    }, LLAMA_STALLED_PROGRESS_MS);
+
+    const timeoutId = window.setTimeout(() => {
+      fail(
+        new Error(
+          "Local Llama did not finish within 3 minutes. The browser model may be stuck on this report. Try OpenRouter or Frontier AI copy-paste."
+        )
+      );
+    }, LLAMA_GENERATION_TIMEOUT_MS);
+
     activeWorker.postMessage({
       type: "extract",
       extractionPrompt,
