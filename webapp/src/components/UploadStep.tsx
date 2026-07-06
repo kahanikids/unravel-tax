@@ -1128,6 +1128,14 @@ export function UploadStep({
                         </div>
                       ) : (
                         <>
+                          {awaitingPaste.extractedPages && awaitingPaste.extractedPages.length > 8 ? (
+                            <div className="extraction-tab-info" style={{ borderColor: "var(--flag)", background: "var(--flag-soft)", color: "var(--flag)" }}>
+                              <span className="extraction-tab-info-icon" aria-hidden="true">⚠️</span>
+                              <p style={{ color: "inherit", fontWeight: 500, margin: 0 }}>
+                                <strong>Warning: Very long document ({awaitingPaste.extractedPages.length} pages).</strong> Running local Llama on devices with limited memory can slow down or freeze your browser. For files over 8 pages, we highly recommend using <strong>OpenRouter</strong> or <strong>Frontier LLMs (copy-paste)</strong>.
+                              </p>
+                            </div>
+                          ) : null}
                           <div className="extraction-tab-info">
                             <span className="extraction-tab-info-icon" aria-hidden="true">🔒</span>
                             <p>
