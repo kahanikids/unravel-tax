@@ -56,7 +56,7 @@ def validate_json_payload(stem: str, payload: dict[str, Any], failures: list[str
 
 
 def main() -> None:
-    markdown_files = {path.stem: path for path in RULES_DIR.glob("*.md")}
+    markdown_files = {path.stem: path for path in RULES_DIR.glob("*.md") if not path.stem.startswith("CA-Review-")}
     json_files = {path.stem: path for path in RULES_DIR.glob("*.json")}
 
     if not markdown_files:
