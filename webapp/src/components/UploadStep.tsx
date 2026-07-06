@@ -672,13 +672,11 @@ export function UploadStep({
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
         <h2>Add your documents</h2>
         <InfoTooltip label="About adding documents" className="align-right">
-          Add broker and AMC capital-gains statements—CSV, Excel, saved webpages are read in your
-          browser; PDFs use an LLM extraction step. Bank interest, dividend, and MF statements can
-          also be added as reference sheets.
+          Add any financial documents or statements—broker CG reports, mutual funds, bank interest, loan interest, dividends, insurance, property tax, etc. CSV, Excel, and HTML are read in your browser; PDFs use an LLM extraction step.
         </InfoTooltip>
       </div>
       <p className="step-lede">
-        Add your broker and AMC statements. We'll review each file before using anything.
+        Add your statements, certificates, or reports. We'll extract and review each file before using anything.
       </p>
 
       {parsing ? (
@@ -1609,20 +1607,11 @@ export function UploadStep({
         </div>
       ) : null}
 
-      {documents.length === 0 ? (
-        <p className="upload-skip-hint">
-          <button type="button" className="text-button" onClick={onContinue} style={{ fontWeight: 600 }}>
-            Skip — I have no capital gains to report
-          </button>
-        </p>
-      ) : null}
-
       <div className="step-actions">
         <button
           type="button"
           className="primary-button"
           onClick={onContinue}
-          disabled={documents.length === 0}
         >
           Continue To Your Results
         </button>

@@ -15,7 +15,7 @@ Run on **local dev** (`cd webapp && npm run dev`) and **GitHub Pages** after dep
 - [ ] NRI path: country question; resident-only questions hidden
 - [ ] Upload: drop zone, file list, review modal blocks until confirmed
 - [ ] Summary-only JSON paste: auto-fill + navigate to results
-- [ ] Skip upload path works when no capital gains
+- [ ] Continue without upload path works cleanly when starting fresh
 
 ## Results and exports
 
