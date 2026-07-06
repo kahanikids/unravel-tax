@@ -30,6 +30,62 @@ type OpenRouterChatResponse = {
   model?: string;
 };
 
+const OPENROUTER_REQUESTS_KEY = "unravel-tax-openrouter-requests";
+
+interface OpenRouterRequestLog {
+  timestamp: number;
+}
+
+function checkOpenRouterRateLimits(): void {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+  const raw = localStorage.getItem(OPENROUTER_REQUESTS_KEY);
+  if (!raw) return;
+  try {
+    const requests: OpenRouterRequestLog[] = JSON.parse(raw);
+    const now = Date.now();
+    const oneMinuteAgo = now - 60 * 1000;
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+    const inLastMinute = requests.filter((r) => r.timestamp > oneMinuteAgo).length;
+    const inLastDay = requests.filter((r) => r.timestamp > oneDayAgo).length;
+
+    if (inLastDay >= 50) {
+      throw new Error(
+        "OpenRouter Free Plan limit (50 requests/day) has been reached. Please wait or try again tomorrow. You can also use Frontier LLMs (copy-paste) for unlimited free extractions."
+      );
+    }
+    if (inLastMinute >= 20) {
+      throw new Error(
+        "OpenRouter Free Plan rate limit (20 requests/minute) has been exceeded. Please wait a moment before trying again, or switch to Frontier LLMs (copy-paste)."
+      );
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("OpenRouter Free Plan")) {
+      throw error;
+    }
+  }
+}
+
+function logOpenRouterRequest(): void {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+  try {
+    const raw = localStorage.getItem(OPENROUTER_REQUESTS_KEY);
+    const requests: OpenRouterRequestLog[] = raw ? JSON.parse(raw) : [];
+    requests.push({ timestamp: Date.now() });
+
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const activeRequests = requests.filter((r) => r.timestamp > oneDayAgo);
+
+    localStorage.setItem(OPENROUTER_REQUESTS_KEY, JSON.stringify(activeRequests));
+  } catch {
+    // Ignore storage quota/security restrictions
+  }
+}
+
 /**
  * Runs extraction via OpenRouter's OpenAI-compatible API. In local dev, the
  * browser calls Vite's same-origin proxy to avoid browser CORS/preflight
@@ -42,6 +98,7 @@ export async function runOpenRouterExtraction(
   apiKey: string,
   onProgress?: (message: string) => void
 ): Promise<OpenRouterExtractionResult> {
+  checkOpenRouterRateLimits();
   onProgress?.("Sending to OpenRouter…");
 
   const userContent = `Document text to extract (read from ${fileName} by this app):\n\n${documentText}`;
@@ -213,6 +270,7 @@ async function requestOpenRouterCompletion({
     );
   }
 
+  logOpenRouterRequest();
   return { data: await readOpenRouterSuccess(response) };
 }
 
