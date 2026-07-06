@@ -86,9 +86,23 @@ very slightly smaller.
 
 From FY 2026-27 onward, Section 208 becomes Section 404, Section 234B
 becomes Section 424, and Section 234C becomes Section 425, though the
-underlying rates and thresholds carry over unchanged. This tool is scoped
-to FY 2025-26 (AY 2026-27), so it uses the 1961 Act's section numbers
-throughout, since that's what actually governs income earned in that
-year even if payment happens after 1 April 2026 (see
-`rules/new-act-2025-transition.json` for the same pattern already noted
-for NRI repatriation forms).
+underlying rates and thresholds carry over unchanged. This mapping is
+corroborated by dedicated per-section coverage (AUBSP's numbered
+Section 404/424/425 pages and AxisMaxLife's Section 424 page), so it's
+treated as reliable — though as always with this Act, worth a final
+check against the Income Tax Department's own comparison tool if it
+matters to you. This tool is scoped to FY 2025-26 (AY 2026-27), so it
+uses the 1961 Act's section numbers throughout, since that's what
+actually governs income earned in that year even if payment happens
+after 1 April 2026 (see `rules/new-act-2025-transition.json` for the same
+pattern already noted for NRI repatriation forms).
+
+## Sources
+
+- Income Tax Act, 1961, Sections 208, 234B, 234C
+- [AUBSP — Income Tax Act 2025, Section 404 (advance tax liability)](https://www.aubsp.com/income-tax-act-2025-section-404/)
+- [AUBSP — Income Tax Act 2025, Section 424 (interest for default)](https://www.aubsp.com/income-tax-act-2025-section-424/)
+- [AUBSP — Income Tax Act 2025, Section 425 (interest for deferment)](https://www.aubsp.com/income-tax-act-2025-section-425/)
+- [AxisMaxLife — Section 424, interest on advance tax delay](https://www.axismaxlife.com/blog/tax-savings/section-424)
+- [Income Tax Department — official 1961 Act vs 2025 Act comparison tool](https://incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx)
+- `rules/senior-citizen-advance-tax-and-regime.json` (senior citizen exemption without business income)

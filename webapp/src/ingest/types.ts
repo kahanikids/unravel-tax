@@ -137,6 +137,8 @@ export type IngestResult = {
   notes?: string;
   /** For a PDF: a short word/acronym pulled from its own Title/Subject metadata, to use as the workbook sheet name instead of the full filename. */
   suggestedSheetName?: string;
+  /** True when pdf.js needs a password before the app can read the PDF text. */
+  pdfPasswordRequired?: boolean;
 };
 
 /** @deprecated Use IngestResult — kept for scripts that only need transactions. */

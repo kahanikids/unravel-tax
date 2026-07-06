@@ -13,10 +13,13 @@
   "verification": {
     "status": "verified_current_sources",
     "last_verified": "2026-07-05",
-    "note": "Form applicability (who can/cannot use ITR-1/2/3/4) cross-checked against current AY 2026-27 ITR-form reporting and the CBDT-notified form changes. ITR-1 now allows Section 112A LTCG up to Rs 1.25 lakh when no capital loss is carried forward, but this tool conservatively routes detected capital-gains uploads to ITR-2 because broker uploads can include disqualifying STCG/loss details. Due dates are separated by profile: most non-audit individual/ITR-2 paths use 31-Jul-2026; non-audit business/professional ITR-3 paths use 31-Aug-2026; audit paths use 31-Oct-2026. Confirm against the e-filing portal before filing."
+    "note": "Form applicability (who can/cannot use ITR-1/2/3/4) cross-checked against current AY 2026-27 ITR-form reporting and the CBDT-notified form changes. ITR-1 now allows Section 112A LTCG up to Rs 1.25 lakh when no capital loss is carried forward, but this tool conservatively routes detected capital-gains uploads to ITR-2 because broker uploads can include disqualifying STCG/loss details. Due dates are separated by profile: most non-audit individual/ITR-2 paths use 31-Jul-2026; non-audit business/professional ITR-3 paths use 31-Aug-2026; audit paths use 31-Oct-2026. CORRECTED/CLARIFIED 2026-07-06 CA review: the 31-Aug-2026 bucket is a genuinely new category for AY2026-27 (historically non-audit business/professional filers were also due 31-Jul), but per the department's own notification it specifically EXCLUDES an assessee (or a firm's partner) subject to Section 92E transfer-pricing reporting - those get 30-Nov-2026 instead, not 31-Aug. This tool does not yet carve out the Section 92E exception; a filer with international/specified-domestic transactions requiring a Section 92E report should confirm 30-Nov applies to them rather than 31-Aug. No general CBDT extension of the 31-Jul deadline had been announced for AY2026-27 as of this check, unlike AY2025-26 which was extended to 15/16-Sep-2025 - confirm on the e-filing portal before filing since this is time-sensitive and could still change.",
+    "source_type": "secondary"
   },
   "source_refs": [
     "https://cleartax.in/s/which-itr-to-file",
+    "https://cleartax.in/s/due-date-tax-filing",
+    "https://upstox.com/news/personal-finance/tax/3-reasons-why-itr-filing-due-date-extension-for-ay-2026-27-may-not-happen-what-to-do-now/article-195737/",
     "https://m.economictimes.com/wealth/tax/made-less-than-rs-1-25-lakh-ltcg-from-equities-this-year-do-you-need-to-file-itr/articleshow/132135264.cms",
     "https://m.economictimes.com/wealth/tax/will-the-itr-filing-deadline-for-ay-2026-27-be-extended-heres-what-taxpayers-need-to-know/articleshow/131964799.cms",
     "https://m.economictimes.com/wealth/tax/is-extended-august-31-itr-deadline-applicable-to-all-taxpayers-or-only-select-categories/articleshow/127855824.cms",
@@ -39,11 +42,17 @@
       },
       "business_or_speculative_non_audit": {
         "form": "ITR-3",
-        "due_date": "2026-08-31"
+        "due_date": "2026-08-31",
+        "due_date_note": "Excludes a filer (or firm partner) subject to Section 92E transfer-pricing reporting - see section_92e_due_date below."
       },
       "business_or_speculative_audit": {
         "form": "ITR-3",
         "due_date": "2026-10-31"
+      },
+      "section_92e_transfer_pricing": {
+        "form": "ITR-3",
+        "due_date": "2026-11-30",
+        "note": "An assessee (or partner of a firm) required to furnish a Section 92E transfer-pricing report gets 30-Nov, not the 31-Aug non-audit business date or the 31-Oct audit date. Not yet applied by this tool - flagged for the CA to confirm before relying on the 31-Aug default for any filer with international or specified-domestic transactions."
       },
       "nri_no_business": {
         "form": "ITR-2",

@@ -41,3 +41,8 @@ out of the clubbed amount before applying the exemption. It doesn't place
 the figure into Schedule SPI itself, and it can't verify that an
 exception genuinely applies — keep the evidence (the source of the
 minor's earnings, or the 80U certificate) and have a CA confirm it.
+
+## Sources
+
+- Income Tax Act, 1961, Section 64(1A) (clubbing of minor's income)
+- Income Tax Act, 1961, Section 10(32) (per-child exemption on the clubbed amount)

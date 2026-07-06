@@ -55,11 +55,15 @@ desk before the transfer.
 
 ## Sources
 
+- [RBI — Master Direction on Remittance of Assets (FED MD No. 13/2015-16)](https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=10197)
+- [RBI — Master Direction on Other Remittance Facilities](https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=10193)
 - [Panda — NRO Repatriation USD 1M Limit](https://www.getpanda.money/blogs/nro-account-repatriation-usd-1-million-limit/)
 - [Income Tax Department — Form 145 FAQs](https://www.incometaxindia.gov.in/documents/d/guest/form-145-faqs)
 - [ClearTax — Form 145 Income Tax 2025](https://cleartax.in/s/form-145-income-tax)
 
 The Income Tax Department Form 145 FAQ verifies the Form 145/146 workflow
 and the Rs 5 lakh threshold for Part C/Form 146. The USD 1 million NRO
-cap is still carried from RBI/FEMA summaries here, so confirm the exact
-remittance paperwork with your bank/CA before money moves.
+cap traces to the RBI master directions above (added 2026-07-06 — a
+fintech blog was previously the only citation for this figure); RBI
+updates these directions periodically, so confirm the current version
+with your bank/CA before money moves.

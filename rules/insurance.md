@@ -94,7 +94,20 @@ issue date or exact ratio.
 
 ## Renumbering under the new Income Tax Act, 2025
 
-From FY 2026-27 onward these are renumbered (80C → 123, 80D → 126, 10(10D)
-→ Schedule II Sr. No. 2) with the rules unchanged. For a FY 2025-26
-(AY 2026-27) return, use the 1961 Act numbers. Same pattern as
-`new-act-2025-transition.md`.
+From FY 2026-27 onward these are renumbered (80C → 123, with Schedule XV;
+80D → 126; 10(10D) → Schedule II Sr. No. 2) with the rules unchanged. For
+a FY 2025-26 (AY 2026-27) return, use the 1961 Act numbers. Same pattern
+as `new-act-2025-transition.md`. The 80C → 123 mapping is corroborated by
+nine-plus independent sources including ClearTax's own dedicated page; one
+general aggregator shows a different number, likely from an earlier bill
+draft, so treat this as reliable but not gospel until you've checked the
+Income Tax Department's own old-vs-new comparison tool.
+
+## Sources
+
+- Income Tax Act, 1961, Sections 80C, 80D, 10(10D), 194DA
+- [ClearTax — life insurance policy taxability](https://cleartax.in/s/life-insurance-taxability)
+- [HDFC Life — Section 10(10D) of the Income Tax Act](https://www.hdfclife.com/insurance-knowledge-centre/tax-saving-insurance/section-10-10d-of-the-income-tax-act)
+- [ClearTax — Section 123 of the Income Tax Act, 2025](https://cleartax.in/s/section-123-income-tax-act-2025)
+- [Business Today — Section 80C becomes Section 123 from 1 April 2026](https://www.businesstoday.in/personal-finance/tax/story/income-tax-act-2025-section-80c-becomes-section-123-from-april-1-2026-heres-what-taxpayers-must-know-522120-2026-03-24)
+- [Income Tax Department — official 1961 Act vs 2025 Act comparison tool](https://incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx)

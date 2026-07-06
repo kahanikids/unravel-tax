@@ -656,7 +656,10 @@ export function reparseWithColumnMap(
   return buildIngestResult(kind, sourceHeaders, sourceRecords, resolution);
 }
 
-export async function parseFile(file: File): Promise<IngestResult> {
+export async function parseFile(
+  file: File,
+  options: { pdfPassword?: string; pdfPasswordAttempted?: boolean } = {}
+): Promise<IngestResult> {
   const kind = detectIngestionKind(file.name, file.type);
 
   if (kind === "excel") {
@@ -667,7 +670,8 @@ export async function parseFile(file: File): Promise<IngestResult> {
     try {
       const { extractPdfText, diagnosePdfText } = await import("./pdfExtract");
       const { text, pageCount, sheetNameHint, mergedDocumentsNote } = await extractPdfText(
-        await file.arrayBuffer()
+        await file.arrayBuffer(),
+        options.pdfPassword
       );
       const diagnostic = diagnosePdfText(text, pageCount, mergedDocumentsNote);
       const result = parseTextSource(file.name, text, file.type);
@@ -686,12 +690,17 @@ export async function parseFile(file: File): Promise<IngestResult> {
     } catch (error) {
       const { PdfPasswordError } = await import("./pdfExtract");
       if (error instanceof PdfPasswordError) {
-        return emptyResult(
-          "pdf_or_freeform",
-          routePdfOrFreeform(
-            "This PDF is password-protected. Open it, save/print an unprotected copy (most PDF readers and phone apps can do this), and upload that instead."
-          )
-        );
+        return {
+          ...emptyResult("pdf_or_freeform", undefined, [
+            {
+              code: "parse_error",
+              message: options.pdfPasswordAttempted
+                ? "That password did not unlock this PDF. Check the password and try again."
+                : "This PDF is password-protected. Enter its password so the app can read the text locally."
+            }
+          ]),
+          pdfPasswordRequired: true
+        };
       }
       return emptyResult(
         "pdf_or_freeform",

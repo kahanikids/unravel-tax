@@ -11,11 +11,15 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-06",
+    "note": "Equity-oriented funds use the same Section 112A/111A rates as direct listed equity (see capital-gains-equity.json), unchanged for FY2025-26. Section 50AA 'specified mutual fund' threshold added 2026-07-06 CA review: the operative test for FY2025-26/AY2026-27 is a fund investing more than 65% in debt/money-market instruments (or at least 65% in units of such funds) - not the earlier, narrower '<=35% equity' formulation some older material still uses. A fund in the roughly 35-65% equity range does not automatically get deemed-short-term treatment; it may instead get equity or other-capital-asset treatment depending on its actual category. This tool cannot yet read a fund's exact portfolio composition from a statement alone, so needs_fund_type_check remains true. Cross-checked against ClearTax and TaxGuru coverage of the Section 50AA redefinition; confirm the exact fund category with the AMC's factsheet before relying on this for a specific fund.",
+    "source_type": "secondary"
   },
   "source_refs": [
+    "https://cleartax.in/s/section-50aa-income-tax-act",
+    "https://taxguru.in/income-tax/amendment-specified-mutual-fund-definition-section-50aa-budget-2024.html",
+    "capital-gains-equity.json (Section 112A/111A rates used for equity-oriented funds)",
     "SYSTEM_SPEC.md Section 8",
     "BUILD_PLAN.md Section 15.1"
   ],
@@ -30,6 +34,8 @@
       "classification": "short_term_deemed",
       "tax_rate": "slab",
       "indexation_allowed": false,
+      "debt_or_money_market_allocation_threshold_pct_gt": 65,
+      "threshold_note": "A fund investing more than 65% in debt/money-market instruments (or at least 65% in units of such funds) is a 'specified mutual fund' under Section 50AA: deemed short-term, taxed at slab rate, no indexation, regardless of actual holding period. A fund below that threshold is not automatically caught by 50AA and may instead get equity-oriented or other-capital-asset treatment.",
       "needs_fund_type_check": true
     }
   }

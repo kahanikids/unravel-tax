@@ -3845,6 +3845,16 @@ button.side-nav-step.side-nav-step-current:hover {
   padding: 10px 12px;
 }
 
+.dashboard-password-panel {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.dashboard-password-panel .secondary-button {
+  justify-self: flex-start;
+}
+
 .dashboard-add-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

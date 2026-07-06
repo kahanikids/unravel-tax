@@ -79,3 +79,11 @@ income type:
 - **Form 13** lower/nil-deduction certificates — this tool doesn't
   generate or track one; it only reconciles what was actually withheld
   against what should have been.
+
+## Sources
+
+- [Income Tax Department — taxation of non-residents](https://www.incometaxindia.gov.in/documents/20117/42998/Taxation-of-Non-Resident_2026-03-19_04-28-57_6dbd99_en.pdf)
+- [Income Tax Department — taxation of dividend and interest](https://www.incometaxindia.gov.in/taxation-of-dividend-and-interest)
+- Income Tax Act, 1961, Section 195 (TDS on payments to a non-resident)
+- Income Tax Act, 1961, Section 115A (tax on dividends, interest, royalties, fees for a non-resident)
+- `rules/nri-dtaa.json` (per-country treaty rates, applied when more beneficial than these domestic defaults)

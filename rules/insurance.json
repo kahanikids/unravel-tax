@@ -19,7 +19,10 @@
   "source_refs": [
     "Income Tax Act, 1961, Sections 80C, 80D, 10(10D), 194DA",
     "https://cleartax.in/s/life-insurance-taxability",
-    "https://www.hdfclife.com/insurance-knowledge-centre/tax-saving-insurance/section-10-10d-of-the-income-tax-act"
+    "https://www.hdfclife.com/insurance-knowledge-centre/tax-saving-insurance/section-10-10d-of-the-income-tax-act",
+    "https://cleartax.in/s/section-123-income-tax-act-2025",
+    "https://www.businesstoday.in/personal-finance/tax/story/income-tax-act-2025-section-80c-becomes-section-123-from-april-1-2026-heres-what-taxpayers-must-know-522120-2026-03-24",
+    "https://incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx"
   ],
   "values": {
     "premiums": {
@@ -65,9 +68,10 @@
     },
     "new_act_2025_renumbering": {
       "applies_from_financial_year": "2026-27",
-      "section_80c": "Section 123",
+      "section_80c": "Section 123 (with Schedule XV)",
       "section_80d": "Section 126",
       "section_10_10d": "Schedule II Sr. No. 2",
+      "confidence_note": "2026-07-06 CA review: Section 80C -> 123 is corroborated by at least nine independent sources including ClearTax's own dedicated Section 123 page, IndiaFilings, Bajaj Housing Finance, TaxTMI's clause-by-clause bill comparison, Business Today, AxisMaxLife, Outlook Money and HDFC Life - treated as reliable. One general aggregator (Tax2win's section-mapping guide) shows a different, lower set of numbers (e.g. 80C->100) for the same provisions, likely reflecting an earlier bill draft rather than the Act as finally passed; the dedicated per-section sources above are more likely correct, but confirm against the Income Tax Department's own official parallel Act comparison tool (incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx) before treating any of these new numbers as final. None of this affects FY2025-26 filing itself, since the 1961 Act numbers govern this year regardless.",
       "note": "The Income Tax Act, 2025 renumbers these from FY 2026-27 onward with the rules unchanged. For a FY 2025-26 (AY 2026-27) return use the 1961 Act numbers."
     }
   }

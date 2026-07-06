@@ -118,9 +118,22 @@ anything ambiguous, check with a CA.
 
 ## Renumbering under the new Income Tax Act, 2025
 
-From FY 2026-27 onward these sections are renumbered (80C → 123, 80E →
-129, 80EE/80EEA → 130, 80EEB → 132, and the house-property interest under
-24(b) → Section 22), with the limits unchanged. For a FY 2025-26
-(AY 2026-27) return filed around July 2026, use the old 1961 Act numbers,
-since that's what governs income earned in that year even if you pay after
-1 April 2026. Same pattern as `new-act-2025-transition.md`.
+From FY 2026-27 onward these sections are renumbered (80C → 123 with
+Schedule XV, 80E → 129, 80EE → 130, 80EEA → 131, 80EEB → 132, and the
+house-property interest under 24(b) → Section 22), with the limits
+unchanged. Note 80EE and 80EEA get **separate** new numbers (130 and 131)
+— they're two distinct provisions, not one. For a FY 2025-26 (AY 2026-27)
+return filed around July 2026, use the old 1961 Act numbers, since that's
+what governs income earned in that year even if you pay after 1 April
+2026. Same pattern as `new-act-2025-transition.md`.
+
+## Sources
+
+- Income Tax Act, 1961, Sections 24(a), 24(b), 80C, 80E, 80EE, 80EEA, 80EEB, 64
+- [ClearTax — Section 24, deductions from house property income](https://cleartax.in/s/deductions-under-section24-income-from-house-property)
+- [ClearTax — Section 80EE, home loan interest deduction](https://cleartax.in/s/section-80ee-income-tax-deduction-for-interest-on-home-loan)
+- [ClearTax — Section 80EEA, affordable-housing deduction](https://cleartax.in/s/section-80eea-deduction-affordable-housing)
+- [ClearTax — Section 80EEB, electric vehicle loan deduction](https://cleartax.in/s/section-80eeb-deduction-purchase-electric-vehicle)
+- [TaxGuru — old vs new tax regime, deductions comparison](https://taxguru.in/income-tax/old-vs-new-tax-regime-complete-comparison-deductions-tax-benefits.html)
+- [AxisMaxLife — Section 22 of the Income Tax Act 2025](https://www.axismaxlife.com/blog/tax-savings/section-22)
+- [Income Tax Department — official 1961 Act vs 2025 Act comparison tool](https://incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx)

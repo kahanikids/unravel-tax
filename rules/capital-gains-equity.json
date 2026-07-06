@@ -11,13 +11,19 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": "2026-07-03",
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Source links (Section 112A LTCG 12.5% / Section 111A STCG 20%, FY 2025-26) added and checked 2026-07-03; remaining values still pending full current-source verification."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-06",
+    "note": "LTCG under Section 112A (12.5% flat, no indexation, Rs 1,25,000 annual exemption) and STCG under Section 111A (20% flat) both effective for transfers on/after 23-Jul-2024 (Finance (No.2) Act 2024), unchanged for FY2025-26. Section 87A rebate exclusion for 111A/112A income (added 2026-07-06 CA review): this was genuinely contested through 2024-25 - CBDT's July 2024 ITR-utility change blocked the rebate against both, the Bombay High Court (Chamber of Tax Consultants v. DGIT(Systems), 2025) held that restriction improper specifically for Section 111A STCG (Section 112A LTCG was always excluded by Section 112A(6) itself), and ITAT Ahmedabad (Jayshreeben Jayantibhai Palsana, Aug 2025) allowed the rebate against STCG for AY 2024-25/2025-26 on that basis. Finance Act 2025 then amended the law prospectively, effective AY 2026-27 (this filing year), to expressly bar the Section 87A rebate against ALL special-rate income including both 111A and 112A - so 'rebate not allowed' is correct for FY2025-26, but only because of that amendment, not because it was always settled. Cross-checked against ClearTax, CAalley, TaxGuru, EY India and FirstReports coverage of the Bombay HC/ITAT rulings and the Finance Act 2025 amendment.",
+    "source_type": "secondary"
   },
   "source_refs": [
     "https://cleartax.in/s/long-term-capital-gains-on-shares",
     "https://cleartax.in/s/short-term-capital-gain-on-shares",
+    "https://cleartax.in/s/income-tax-rebate-us-87a",
+    "https://www.caalley.com/news-updates/indian-news/87a-and-stcg-will-recent-itat-ruling-on-section-87a-allow-taxpayer-to-claim-87a-rebate-on-short-term-capital-gains-while-filing-itr",
+    "https://taxguru.in/income-tax/section-87a-rebate-post-bombay-high-court-judgement.html",
+    "https://www.ey.com/en_in/technical/alerts-hub/2025/09/ahmedabad-tribunal-allows-rebate-against-short-term-capital-gains-under-new-regime",
+    "https://www.firstreports.in/blog/section-87a-rebate-capital-gains-stcg-ltcg-2025-26",
     "BUILD_PLAN.md Sections 15.1, 15.2, 15.4",
     "SYSTEM_SPEC.md Section 8"
   ],
@@ -30,6 +36,7 @@
       "indexation_allowed": false,
       "surcharge_cap_rate": 0.15,
       "section_87a_rebate_allowed": false,
+      "section_87a_rebate_note": "Correct for FY2025-26/AY2026-27 because Finance Act 2025 expressly excluded Sections 111A and 112A income from the 87A rebate effective this assessment year. Section 112A was always excluded by Section 112A(6). Section 111A was genuinely contested for AY2024-25/2025-26 (Bombay HC and ITAT Ahmedabad both allowed the rebate against STCG for those earlier years) before the FY2025-26 amendment closed the gap - see verification note.",
       "health_education_cess_rate": 0.04
     },
     "transaction_costs": {

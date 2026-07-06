@@ -9,7 +9,7 @@
   "verification": {
     "status": "pending_current_source",
     "last_verified": "2026-07-03",
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Source link (Section 234F late-filing fee, FY 2025-26) added and checked 2026-07-03; underlying trigger table still pending full current-source verification."
+    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Section 234F late-filing fee (Rs 1,000/Rs 5,000 by the Rs 5 lakh income threshold) and the Section 139(1) carry-forward-forfeiture mechanic are verified against a current source. The other nine risk_triggers below (wrong ITR form, AIS/26AS mismatch, multi-employer TDS, HRA/landlord PAN, 234B/234C, EPF withdrawal, unsupported deductions, 270A underreporting/misreporting) are still drafted from internal planning docs, not individually re-verified against a current source — the paired .md now states this distinction explicitly instead of implying the whole table is checked. 2026-07-06 CA review pass."
   },
   "source_refs": [
     "https://cleartax.in/s/late-tax-return",

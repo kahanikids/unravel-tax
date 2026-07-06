@@ -146,6 +146,11 @@ export function UploadStep({
     suggestedSheetName?: string;
     thumbnailDataUrl?: string;
   } | null>(null);
+  const [awaitingPdfPassword, setAwaitingPdfPassword] = useState<{
+    file: File;
+    message: string;
+  } | null>(null);
+  const [pdfPassword, setPdfPassword] = useState("");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   // A paste that yielded only annual totals / a net-gain-only marker (no usable
   // transaction rows) lands here instead of dead-ending as a generic error.
@@ -209,7 +214,7 @@ export function UploadStep({
       setExtractionMethod(null);
       setShowMethodPicker(true);
     }
-  }, [awaitingPaste?.fileName]);
+  }, [awaitingPaste]);
 
   useEffect(() => {
     if (!awaitingPaste || extractionMethod !== "browser") {
@@ -227,12 +232,16 @@ export function UploadStep({
     return () => {
       cancelled = true;
     };
-  }, [awaitingPaste?.fileName, extractionMethod]);
+  }, [awaitingPaste, extractionMethod]);
 
   /** Opens the right review UI for a file. Returns true when it needs the user
    * (a review modal or the paste panel), false when nothing interactive opened
    * (a hard error) so a queued batch can move on to the next file. */
   function openReview(fileName: string, result: IngestResult, thumbnailDataUrl?: string): boolean {
+    if (result.pdfPasswordRequired) {
+      return false;
+    }
+
     const missingCols = EXPECTED_TRANSACTION_COLUMNS.filter(
       (col) => !Object.values(result.headerMap).includes(col)
     );
@@ -279,26 +288,42 @@ export function UploadStep({
     return false;
   }
 
-  async function generatePdfThumbnail(file: File): Promise<string | undefined> {
+  async function generatePdfThumbnail(
+    file: File,
+    pdfPassword?: string
+  ): Promise<string | undefined> {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       return undefined;
     }
     try {
       const { renderPdfThumbnail } = await import("../ingest/pdfExtract");
-      return await renderPdfThumbnail(await file.arrayBuffer());
+      return await renderPdfThumbnail(await file.arrayBuffer(), 200, pdfPassword);
     } catch {
       return undefined;
     }
   }
 
-  async function processFile(file: File) {
+  async function processFile(file: File, options?: { pdfPassword?: string }) {
     setParsing(true);
     let opened = false;
     try {
+      const pdfPasswordAttempted = Boolean(options?.pdfPassword);
       const [result, thumbnailDataUrl] = await Promise.all([
-        parseFile(file),
-        generatePdfThumbnail(file)
+        parseFile(file, { pdfPassword: options?.pdfPassword, pdfPasswordAttempted }),
+        generatePdfThumbnail(file, options?.pdfPassword)
       ]);
+      if (result.pdfPasswordRequired) {
+        setAwaitingPdfPassword({
+          file,
+          message:
+            result.warnings[0]?.message ??
+            "This PDF is password-protected. Enter its password so the app can read it locally."
+        });
+        setPdfPassword("");
+        opened = true;
+        return;
+      }
+      setAwaitingPdfPassword(null);
       opened = openReview(file.name, result, thumbnailDataUrl);
     } catch {
       setError(`Could not read ${file.name}.`);
@@ -334,6 +359,15 @@ export function UploadStep({
     const [first, ...rest] = files;
     setQueue(rest);
     await processFile(first);
+  }
+
+  async function retryPasswordProtectedPdf() {
+    if (!awaitingPdfPassword || !pdfPassword.trim()) {
+      return;
+    }
+    setError(null);
+    const file = awaitingPdfPassword.file;
+    await processFile(file, { pdfPassword: pdfPassword.trim() });
   }
 
   function openExtractionResult(
@@ -720,6 +754,50 @@ export function UploadStep({
       ) : null}
 
       {error ? <p className="inline-error">{error}</p> : null}
+
+      {awaitingPdfPassword ? (
+        <div className="paste-panel">
+          <p>
+            <strong>{awaitingPdfPassword.file.name}</strong> is password-protected.{" "}
+            {awaitingPdfPassword.message}
+          </p>
+          <label className="column-mapper-row">
+            <span>PDF password</span>
+            <input
+              type="password"
+              value={pdfPassword}
+              autoComplete="off"
+              onChange={(event) => setPdfPassword(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  void retryPasswordProtectedPdf();
+                }
+              }}
+            />
+          </label>
+          <div className="paste-actions">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => void retryPasswordProtectedPdf()}
+              disabled={!pdfPassword.trim() || parsing}
+            >
+              Unlock And Read PDF
+            </button>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                setAwaitingPdfPassword(null);
+                setPdfPassword("");
+                advanceQueue();
+              }}
+            >
+              Skip This File
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {extracting && extractProgress ? (
         <div className="modal-backdrop">

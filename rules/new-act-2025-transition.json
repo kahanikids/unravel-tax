@@ -1,24 +1,52 @@
 {
   "topic": "new-act-2025-transition",
   "applies_to": [
-    "all-profiles"
+    "resident",
+    "senior-citizen",
+    "nri",
+    "huf",
+    "single-parent"
   ],
   "effective_date": "2026-04-01",
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_official_source",
+    "last_verified": "2026-07-06",
+    "note": "The Income-tax Act, 2025 replaces the Income-tax Act, 1961. Legislative path: an original Income Tax Bill, 2025 was introduced then withdrawn; a revised Income Tax (No. 2) Bill, 2025 was passed by Parliament on 12 August 2025 and received Presidential assent on 21 August 2025. The Income-tax Rules, 2026 were notified 20 March 2026. The Act came into force 1 April 2026 per the Income Tax Department's own press release of that date, applying from Tax Year/FY 2026-27 (the new Act replaces 'Previous Year/Assessment Year' with a single 'Tax Year'). FY 2025-26 (AY 2026-27) - the year this tool files for - remains governed entirely by the 1961 Act. Section 536 ('Repeal and savings') of the 2025 Act repeals the 1961 Act while expressly preserving everything already done, earned, accrued, or pending under it; Section 6 of the General Clauses Act, 1897 fills any gap Section 536 does not cover. The core transition trap: administrative mechanics (e.g. which form NAME/NUMBER to file) can follow today's calendar date, while the TAX TREATMENT of income follows the year it was earned - these run on different clocks during the transition. Confirmed example: Form 15CA/15CB renamed Form 145/Form 146 effective 1 April 2026 (now under Sections 393, 395, 397, 462 of the 2025 Act and Rule 220 of the 2026 Rules) - filed under the new form numbers on/after 1 April 2026 regardless of which year's income the remittance relates to, even though FY2025-26 income itself stays taxed under 1961 Act rules. Section-number mappings between the two Acts (e.g. 80C, 234B) are secondary-source territory and some sources disagree with each other, likely reflecting numbering drift between the withdrawn Bill, the revised Bill, and the Act as finally passed - the Income Tax Department's own comparison utility is the authoritative check for any specific section-mapping question this repo's other files cite.",
+    "source_type": "official_primary_for_dates_and_saving_clause_secondary_for_form_mechanics"
   },
   "source_refs": [
-    "SYSTEM_SPEC.md Sections 1, 8, 9.5",
-    "00 Project Overview.md"
+    "https://www.incometaxindia.gov.in/documents/d/guest/press-release-income-tax-act-2025-comes-into-force-from-01-april-2026-pdf",
+    "https://newsonair.gov.in/income-tax-act-2025-gets-presidents-assent-will-be-effective-from-1st-april-2026/",
+    "https://www.ey.com/en_in/technical/alerts-hub/2025/08/presidential-assent-granted-to-revised-income-tax-no2-bill-2025",
+    "https://taxguru.in/income-tax/income-tax-act-2025-receives-presidents-assent-apply-april-1-2026.html",
+    "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/objective-and-scope-new-act",
+    "https://www.incometaxindia.gov.in/utility-to-check-provisions-of-income-tax-act-1961-vis-a-vis-income-tax-act-2025",
+    "https://incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx",
+    "https://taxguru.in/income-tax/happens-old-tax-laws-income-tax-act-2025-section-536-explained.html",
+    "https://eztax.in/income-tax-act-2025/section-536",
+    "https://cleartax.in/s/form-145-income-tax",
+    "https://kmgcollp.com/form-145-form-146-replace-forms-15ca-15cb/",
+    "https://www.incometax.gov.in/iec/foportal/newformpage/forms/form145-UM"
   ],
   "values": {
+    "old_act": "Income-tax Act, 1961",
+    "new_act": "Income-tax Act, 2025",
+    "new_act_bill_history": "Original Income Tax Bill, 2025 introduced then withdrawn; revised Income Tax (No. 2) Bill, 2025 passed by Parliament 2025-08-12, Presidential assent 2025-08-21",
+    "new_act_rules": "Income-tax Rules, 2026, notified 2026-03-20",
+    "new_act_effective_date": "2026-04-01",
+    "new_act_applies_from_tax_year": "2026-27",
+    "new_act_terminology_change": "Previous Year and Assessment Year replaced by a single Tax Year, starting Tax Year 2026-27",
     "fy_2025_26_still_old_act_1961": true,
     "new_income_tax_act_applies_from_fy_2026_27": true,
-    "transition_caution": "form_names_and_income_year_rules_may_be_on_different_clocks",
+    "repeal_and_savings_clause": {
+      "section": "Section 536, Income-tax Act, 2025",
+      "effect": "Repeals the 1961 Act but preserves everything already done, earned, accrued, or pending under it; orders passed, assessments made, and proceedings begun before 2026-04-01 continue under the 1961 Act to conclusion.",
+      "fallback": "Section 6, General Clauses Act, 1897, covers anything not explicitly addressed by Section 536"
+    },
+    "transition_caution": "form_names_and_income_year_tax_rules_may_be_on_different_clocks",
+    "transition_caution_explanation": "The form/mechanic used follows TODAY'S DATE (the filing-date clock); the tax treatment of the income follows THE YEAR THE INCOME WAS EARNED (the income-year clock). These can differ during the transition window.",
     "nro_repatriation_forms": {
       "old": [
         "15CA",
@@ -27,7 +55,30 @@
       "new": [
         "145",
         "146"
-      ]
-    }
+      ],
+      "renaming_effective_date": "2026-04-01",
+      "new_form_governing_sections": [
+        "393",
+        "395",
+        "397",
+        "462"
+      ],
+      "new_form_governing_rule": "Rule 220, Income-tax Rules, 2026",
+      "note": "If filed on/after 2026-04-01, use Form 145/146 regardless of which year's income the remittance relates to, even if that income (e.g. FY2025-26) is taxed under the 1961 Act."
+    },
+    "section_renumbering_caution": {
+      "status": "contested_across_secondary_sources",
+      "reason": "Numbering appears to have shifted between the withdrawn 2025 Bill draft, the revised Bill, and the Act as finally passed; different secondary sources sometimes give different new-Act section numbers for the same old-Act provision.",
+      "authoritative_check": "https://www.incometaxindia.gov.in/utility-to-check-provisions-of-income-tax-act-1961-vis-a-vis-income-tax-act-2025",
+      "note": "Any specific section-number mapping cited elsewhere in this repo (advance-tax.json, insurance.json, loan-treatment.json) should be treated as a well-corroborated best effort, not a certainty, and checked against this utility if it matters."
+    },
+    "referenced_by": [
+      "advance-tax.md",
+      "insurance.json",
+      "insurance.md",
+      "loan-treatment.json",
+      "loan-treatment.md",
+      "foreign-investments.md"
+    ]
   }
 }

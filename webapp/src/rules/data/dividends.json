@@ -2,28 +2,67 @@
   "topic": "dividends",
   "applies_to": [
     "resident",
-    "nri",
     "huf",
     "senior-citizen",
     "single-parent"
+  ],
+  "not_applicable_to": [
+    "nri"
   ],
   "effective_date": "2025-04-01",
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_current",
+    "last_verified": "2026-07-06",
+    "note": "Confirmed DDT abolition (Finance Act 2020) still governs FY2025-26: dividends fully taxable at slab rate under Section 56, no re-introduction of DDT or Section 115BBDA. Confirmed Section 194/194K TDS threshold was raised from Rs 5,000 to Rs 10,000 by Budget 2025, effective 1 April 2025 -- this is a genuine change from the prior FY2024-25 threshold and updates the tool's earlier stub value (which already showed Rs 10,000, now confirmed correct for the right reason). Rate remains 10% with PAN / 20% without PAN. Confirmed Schedule OS quarter-wise dividend reporting mechanic for Section 234C. Section 57 20% interest-deduction cap confirmed still in force for FY2025-26; ClearTax flags a Budget 2026 proposal to remove this deduction entirely from FY2026-27 onward -- not relevant to this filing year but worth re-checking before reusing this file for FY2026-27.",
+    "source_type": "multiple_independent_current_secondary_sources_plus_statute"
   },
   "source_refs": [
-    "BUILD_PLAN.md Section 15.3",
-    "SYSTEM_SPEC.md Section 8"
+    "Income Tax Act, 1961, Sections 56(2), 57, 194, 194K, 2(22)(e), 115A, 115BBDA (withdrawn)",
+    "https://cleartax.in/s/how-dividends-taxable",
+    "https://cleartax.in/s/section-194-income-tax-act",
+    "https://learn.quicko.com/section-194k-tds-dividend-mutual-funds",
+    "https://www.indiafilings.com/learn/tds-rule-changes-from-1st-april-2025",
+    "https://www.taxbuddy.com/blog/schedule-os-income-reporting",
+    "https://cleartax.in/s/interest-imposed-by-income-tax-department-under-section-234c",
+    "https://tax2win.in/guide/deemed-dividend-section2-22e",
+    "https://cleartax.in/s/dividend-distribution-tax",
+    "rules/loan-treatment.json",
+    "rules/advance-tax.json",
+    "rules/capital-gains-equity.json",
+    "rules/nri-tds-and-refunds.json"
   ],
   "values": {
     "taxable": true,
+    "taxable_since": "2020-04-01",
+    "ddt_abolished_by": "Finance Act 2020",
     "tax_rate": "slab",
+    "income_head": "income_from_other_sources_section_56",
+    "regime_dependent": false,
+    "equity_ltcg_exemption_applies": false,
+    "tds_section": {
+      "shares_direct": "194",
+      "mutual_funds": "194K"
+    },
+    "tds_threshold_per_payer_inr": 10000,
+    "tds_threshold_effective_date": "2025-04-01",
+    "tds_threshold_prior_value_inr": 5000,
+    "tds_threshold_change_source": "Budget 2025",
+    "tds_rate_with_pan_pct": 10,
+    "tds_rate_without_pan_pct": 20,
     "reporting": "quarter_wise_schedule_os",
-    "tds_threshold_per_company_inr": 10000,
-    "advance_tax_timing_relevant": true
+    "reporting_default_if_not_provided": "spread_evenly_across_four_quarters",
+    "advance_tax_timing_relevant": true,
+    "advance_tax_section": "234C",
+    "section_57_interest_deduction_cap_pct": 20,
+    "section_57_interest_deduction_cross_ref": "rules/loan-treatment.json",
+    "section_57_deduction_removal_proposed_fy": "2026-27",
+    "section_57_deduction_removal_status": "not_yet_effective_for_fy2025-26",
+    "deemed_dividend_section": "2(22)(e)",
+    "deemed_dividend_in_scope": false,
+    "nri_dividend_tds_section": "115A",
+    "nri_dividend_tds_rate_pct": 20,
+    "nri_dividend_cross_ref": "rules/nri-tds-and-refunds.json"
   }
 }

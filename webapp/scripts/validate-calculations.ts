@@ -1370,8 +1370,8 @@ export async function main() {
   }
 
   // LRS TCS rate branches (Section 206C(1G)): Rs 15L remitted is Rs 5L over
-  // the Rs 10L threshold - 20% (Rs 1,00,000) for investment/gift, 2%
-  // (Rs 10,000) for education/medical, and nothing when education-loan funded.
+  // the Rs 10L threshold - 20% (Rs 1,00,000) for investment/gift, 5%
+  // (Rs 25,000) for education/medical, and nothing when education-loan funded.
   const lrsBase = { ...BLANK_SUPPLEMENTAL_FIGURES, foreignRemittanceLrs: 1_500_000 };
   const lrsInvestment = computeForeignRemittanceTcs(lrsBase, ruleCatalog.foreignInvestments);
   if (lrsInvestment.estimatedTcs !== 100000 || lrsInvestment.rate !== 0.2) {
@@ -1383,9 +1383,9 @@ export async function main() {
     { ...lrsBase, foreignRemittancePurpose: "education_medical" },
     ruleCatalog.foreignInvestments
   );
-  if (lrsEducation.estimatedTcs !== 10000 || lrsEducation.rate !== 0.02) {
+  if (lrsEducation.estimatedTcs !== 25000 || lrsEducation.rate !== 0.05) {
     throw new Error(
-      `Expected Rs 10,000 TCS at 2% on the education/medical branch, got ${JSON.stringify(lrsEducation)}.`
+      `Expected Rs 25,000 TCS at 5% on the education/medical branch, got ${JSON.stringify(lrsEducation)}.`
     );
   }
   const lrsLoanFunded = computeForeignRemittanceTcs(

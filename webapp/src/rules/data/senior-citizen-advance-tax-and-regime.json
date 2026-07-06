@@ -2,24 +2,72 @@
   "topic": "senior-citizen-advance-tax-and-regime",
   "applies_to": [
     "senior-citizen",
-    "business-income"
+    "business-income",
+    "speculative-intraday",
+    "capital-gains"
   ],
   "effective_date": "2025-04-01",
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified",
+    "last_verified": "2026-07-06",
+    "note": "Section 207(2)'s four conditions (individual, resident, 60+ at any time in the year, no PGBP income) are long-standing and confirmed against the Income Tax Department's own tutorial (as amended by Finance Act 2025). The exemption is gated by income type, not amount - it is not capped by the size of non-business income. Section 115BAC(6)'s regime-switching mechanics for persons with business/professional income were confirmed against the Income Tax Department's own Form 10-IEA FAQ page and the statutory first proviso to 115BAC(6) (quoted in full by TaxGuru): it is a one-time reversal (old-regime taxpayer may switch back to the new regime exactly once, after which they are locked out of the old regime for good unless they cease to have business income) - not a lifetime cap on choosing the old regime, and not literally 'once in a lifetime' as commonly and imprecisely summarised. Re-check only if a Budget/Finance Act amendment to Section 207, 115BAC, or 43(5) is reported.",
+    "source_type": "official_government_tutorial_and_faq_plus_practitioner_commentary"
   },
   "source_refs": [
-    "SYSTEM_SPEC.md Sections 6.2, 8",
-    "00 Project Overview.md"
+    "Income Tax Act, 1961, Section 207(2) (advance tax exemption for resident senior citizens without business/professional income)",
+    "Income Tax Act, 1961, Section 208 (liability to pay advance tax)",
+    "Income Tax Act, 1961, Section 43(5) (definition of speculative transaction - intraday equity is speculative business, F&O is non-speculative business)",
+    "Income Tax Act, 1961, Section 115BAC(6) and its first proviso (option to opt out of new regime for business/professional-income taxpayers, and its one-time withdrawal)",
+    "https://incometaxindia.gov.in/tutorials/32-%20exemption%20from%20pymt%20of%20adv.%20tax.pdf (Income Tax Department official tutorial, as amended by Finance Act 2025)",
+    "https://www.incometax.gov.in/iec/foportal/help/statutory-forms/popular-form/form-10-IEA-faq (Income Tax Department official Form 10-IEA FAQ, see Q12/Q14/Q20/Q21)",
+    "https://taxguru.in/income-tax/section-115bac6-opting-out-new-tax-regime.html (quotes the statutory proviso to 115BAC(6) in full)",
+    "https://cleartax.in/s/fo-trader-return-filing (F&O as non-speculative business income under Section 43(5))",
+    "rules/advance-tax.json (the 234B/234C calculation this exemption feeds into)"
   ],
   "values": {
     "senior_advance_tax_exemption_requires_no_business_income": true,
+    "senior_advance_tax_exemption_conditions": {
+      "must_be_individual": true,
+      "must_be_resident": true,
+      "non_resident_senior_citizens_excluded": true,
+      "min_age_at_any_time_in_financial_year": 60,
+      "must_have_no_pgbp_income": true,
+      "exemption_is_income_type_gated_not_amount_capped": true
+    },
     "business_or_speculative_income_disqualifies_simple_exemption": true,
+    "disqualification_is_all_or_nothing_for_the_year": true,
     "speculative_intraday_counts_as_business_income": true,
-    "business_income_restricts_regime_switching": true
+    "speculative_intraday_classification": "speculative_business_section_43_5",
+    "fno_counts_as_business_income": true,
+    "fno_classification": "non_speculative_business_section_43_5",
+    "business_income_restricts_regime_switching": true,
+    "regime_switching": {
+      "no_business_income": {
+        "can_switch_regime_every_year": true,
+        "restriction": "none",
+        "how_exercised": "selected directly in ITR-1/ITR-2 by the Section 139(1) due date, no separate form"
+      },
+      "has_business_or_professional_income_including_speculative_or_fno": {
+        "default_regime": "new_regime_115BAC_1A",
+        "opting_into_old_regime": {
+          "requires_form": "Form 10-IEA",
+          "deadline": "on or before Section 139(1) due date for that assessment year",
+          "carries_forward_automatically": true,
+          "note": "once filed to opt for the old regime, does not need to be re-filed every subsequent year to remain on the old regime"
+        },
+        "reverting_to_new_regime": {
+          "requires_form": "Form 10-IEA (re-entering/withdrawal option)",
+          "allowed_number_of_times": 1,
+          "after_reversal": "permanently ineligible to opt for the old regime again while business/professional income continues"
+        },
+        "exception_restoring_free_choice": "if the person ceases to have any business or professional income in a later year, they revert to the 'no business income' category and regain the free annual regime choice",
+        "common_mischaracterization": "described online as 'switch old/new only once in a lifetime' - the precise rule is a one-time reversal from old back to new regime, not a lifetime cap on ever choosing the old regime, and not a symmetrical once-each-direction rule",
+        "statutory_basis": "Income Tax Act, 1961, Section 115BAC(6), first proviso"
+      }
+    },
+    "senior_citizen_specific_rule": false,
+    "compounding_scenario_note": "A resident senior citizen (60+) who has only pension/salary/capital-gains/other-sources income gets both the Section 207(2) advance-tax exemption and a free annual regime choice. The moment they acquire any business or professional income - including from intraday/speculative or F&O trading - both benefits are lost together for that year: they become subject to ordinary advance-tax/234B/234C rules, and their regime choice becomes governed by the Section 115BAC(6) one-time-reversal mechanic instead of a free annual pick. Neither loss is age-related; both are triggered purely by the presence of business income."
   }
 }

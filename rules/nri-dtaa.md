@@ -21,21 +21,24 @@ purposes.
   for tax already paid abroad. Do not mix up exemption (TRC + 10F) with
   credit (Form 67).
 
-## Mutual fund gains — the ITAT ruling (Mar 2025)
+## Mutual fund gains — the ITAT ruling (26 March 2025)
 
-In *Anushaka Sanjay Shah v. ITO* (ITAT Mumbai), a Singapore tax resident
-redeemed Indian mutual funds for ₹1.35 crore of gains. The department
-wanted to tax this in India. The tribunal said **no** — mutual fund units
-are issued by **trusts**, not companies, so they are **not "shares"**
-under the India–Singapore DTAA. The gains fell under the treaty's
-**residual clause** (Article 13(5)): taxable only in Singapore.
+In *Anushka Sanjay Shah v. ITO* (ITAT Mumbai, IT(IT)A No. 174/Mum/2025,
+decided 26 March 2025), a Singapore tax resident redeemed Indian mutual
+funds for ₹1.35 crore of gains. The department wanted to tax this in
+India. The tribunal said **no** — mutual fund units are issued by
+**trusts**, not companies, so they are **not "shares"** under the
+India–Singapore DTAA. The gains fell under the treaty's **residual
+clause** (Article 13(5)): taxable only in Singapore.
 
 Singapore does not tax personal capital gains, so her effective tax was
 zero — but she still had to **file an ITR in India** to claim the
 exemption and recover TDS the AMC had deducted.
 
-The same residual-clause logic has been applied in comparable cases under
-the India–UAE DTAA. It does **not** automatically apply to every country.
+The same residual-clause logic was applied a few months earlier under the
+India–UAE DTAA, in *Saket Kanoi v. DCIT (Intl. Taxation)* (ITAT Delhi
+Bench 'D', October 2024) — a genuine second data point, not just a single
+outlier ruling. It does **not** automatically apply to every country.
 
 ## Country-by-country (mutual fund redemptions)
 
@@ -102,3 +105,12 @@ sourced from multiple current filing/withholding guides, not the
 primary treaty text of each country — treat the whole table as a
 starting point, not a substitute for a CA checking your specific
 treaty's Article 10/11 wording.
+
+## Sources
+
+- [ITAT Online — Anushka Sanjay Shah (Ms) v. ITO digest](https://itatonline.org/digest/verdicts/anushaka-sanjay-shah-ms-v-ito-it-itat-mumbai/)
+- [Indian Kanoon — full order text, 26 March 2025](https://indiankanoon.org/doc/23391260/)
+- [Economic Times — coverage of the ITAT ruling](https://economictimes.indiatimes.com/nri/invest/cap-gains-of-nris-on-mutual-fund-units-cant-be-taxed-in-india-itat/articleshow/120253938.cms)
+- [Strata Law — case analysis and DTAA landscape](https://stratalaw.in/can-india-tax-mutual-fund-gains-of-nris-insights-from-the-case-of-anushka-sanjay-shah-v-ito-and-the-dtaa-landscape/)
+- [ITAT Delhi — Saket Kanoi v. DCIT order (India-UAE comparable ruling)](https://itat.gov.in/public/files/upload/1730272384-j3YKhE-1-TO.pdf)
+- Income Tax Act, 1961, Sections 90 and 115A

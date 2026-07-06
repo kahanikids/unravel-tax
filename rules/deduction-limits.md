@@ -37,4 +37,11 @@ Many other deductions exist (80CCD(2) employer NPS, 80E education-loan
 interest, 80G donations, 80TTA/80TTB interest, the 80D parents' add-on,
 and more). Only the three headline limits above are modelled here, since
 they are the ones the dashboard visualises. For anything else, or to
-confirm eligibility, check with a CA.
+confirm eligibility, check with a CA. See `senior-citizen-basics.md` for
+80TTA/80TTB, `loan-treatment.md` for 80E, and `regime-choice.md` for
+80CCD(2).
+
+## Sources
+
+- [ClearTax — Section 80C and other deductions](https://cleartax.in/s/80c-80-deductions)
+- Income Tax Act, 1961, Sections 80C, 80D, 80CCD(1B)

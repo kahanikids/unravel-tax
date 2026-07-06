@@ -28,3 +28,9 @@ longer silently missing or wrongly taxed. It still doesn't apply DTAA
 relief to reduce NRO TDS, track repatriation limits, or reconcile the
 exact TDS rate the bank should have withheld. Bring your NRO TDS
 certificates and any DTAA paperwork to a CA for those.
+
+## Sources
+
+- [Income Tax Department — taxation for a non-resident](https://www.incometaxindia.gov.in/non-resident)
+- Income Tax Act, 1961, Section 10(4)(ii) (NRE interest exemption)
+- Income Tax Act, 1961, Section 195 (TDS on payments to a non-resident)

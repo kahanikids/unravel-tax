@@ -9,10 +9,12 @@
   "verification": {
     "status": "verified_secondary_source",
     "last_verified": "2026-07-05",
-    "note": "The Form 145/146 workflow and the Rs 5 lakh Part C/Form 146 threshold were checked against the Income Tax Department's Form 145 FAQ. The USD 1 million/year NRO repatriation cap (RBI 2012 notice, no cap on NRE) is still verified through secondary tax-reference summaries here; re-check an RBI FEMA master direction before treating the exact FEMA limit as final."
+    "note": "The Form 145/146 workflow and the Rs 5 lakh Part C/Form 146 threshold were checked against the Income Tax Department's Form 145 FAQ. The USD 1 million/year NRO repatriation cap traces to RBI's Master Direction on Remittance of Assets (FED Master Direction No. 13/2015-16) and the Master Direction on Other Remittance Facilities under FEMA - added 2026-07-06 CA review alongside the pre-existing secondary tax-reference summary, since a fintech blog alone is a thin citation for a regulatory cap; re-check the current RBI master direction (RBI updates these periodically) before treating the exact FEMA limit as final."
   },
   "source_refs": [
     "SYSTEM_SPEC.md Sections 9.5, 8",
+    "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=10197",
+    "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=10193",
     "https://www.getpanda.money/blogs/nro-account-repatriation-usd-1-million-limit/",
     "https://www.incometaxindia.gov.in/documents/d/guest/form-145-faqs",
     "https://cleartax.in/s/form-145-income-tax"

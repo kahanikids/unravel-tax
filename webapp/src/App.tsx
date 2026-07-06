@@ -999,7 +999,7 @@ function App() {
   }
 
   // The LRS remittance purpose picks the Section 206C(1G) TCS rate branch
-  // (20% investment/gift, 2% education/medical, nil when education-loan funded).
+  // (20% investment/gift, 5% education/medical, nil when education-loan funded).
   function changeRemittancePurpose(purpose: RemittancePurpose) {
     setSupplementalFigures((prev) => ({ ...prev, foreignRemittancePurpose: purpose }));
   }

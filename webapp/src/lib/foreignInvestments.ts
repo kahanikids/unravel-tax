@@ -28,7 +28,7 @@ export const REMITTANCE_PURPOSE_LABELS: Record<RemittancePurpose, string> = {
 /**
  * Turns the LRS remittance the user types into the Section 206C(1G) TCS that
  * gets collected above the ₹10 lakh yearly threshold, using the rate for what
- * the money was actually for: 20% for investment/gift/other, 2% for education
+ * the money was actually for: 20% for investment/gift/other, 5% for education
  * or medical treatment, and nothing at all when the remittance is funded by a
  * Section 80E education loan (threshold and rates read from
  * rules/foreign-investments.json, never hardcoded). TCS is a prepaid credit,

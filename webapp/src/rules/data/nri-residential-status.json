@@ -1,30 +1,94 @@
 {
   "topic": "nri-residential-status",
   "applies_to": [
-    "nri"
+    "resident",
+    "nri",
+    "rnor"
   ],
   "effective_date": "2025-04-01",
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_current_sources",
+    "last_verified": "2026-07-06",
+    "note": "Section 6 day-count rules for FY 2025-26 (AY 2026-27) are governed by the Income Tax Act, 1961 (the Income Tax Act, 2025 only applies from tax years beginning 1 April 2026 onward), confirmed against the Income Tax Department's own Non-Resident FAQ page, which states the basic conditions (182 days; or 60 days + 365 days in preceding 4 years), the crew-member/employment-abroad relaxation (182-day test only), the visiting-citizen/PIO relaxation (182 days, or for income >Rs 15 lakh excluding foreign sources, 120 days + 365 days in preceding 4 years), the Section 6(1A) deemed-resident rule (Indian citizen, income >Rs 15 lakh excluding foreign sources, not liable to tax elsewhere - always classified RNOR), and the RNOR test (non-resident in 9 of preceding 10 years, OR present 729 days or less in preceding 7 years) are all unchanged from the 1961 Act and carry over as continuity tests even once the 2025 Act applies in later years. Only individuals and HUFs can be RNOR.",
+    "source_type": "primary_and_secondary"
   },
   "source_refs": [
-    "SYSTEM_SPEC.md Sections 6.2, 8, 9"
+    "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/non%20resident%20-faq",
+    "https://cleartax.in/s/residential-status",
+    "https://taxguru.in/income-tax/residential-status-income-tax-act-2025-overview-section-6.html",
+    "Income Tax Act, 1961, Section 6(1), 6(1A), 6(6)"
   ],
   "values": {
     "requires_days_in_india_count": true,
     "statuses": [
-      "resident",
-      "nri",
-      "rnor"
+      "resident_ordinarily_resident",
+      "resident_not_ordinarily_resident",
+      "non_resident"
     ],
+    "basic_resident_test": {
+      "condition_a_days_current_year": 182,
+      "condition_b_days_current_year": 60,
+      "condition_b_days_preceding_4_years": 365,
+      "rule": "resident_if_condition_a_OR_condition_b",
+      "else": "non_resident"
+    },
+    "relaxations": {
+      "citizen_leaving_for_employment_or_ship_crew": {
+        "applies_condition_a_only": true,
+        "days_current_year": 182,
+        "note": "60-day + 365-day condition does not apply at all"
+      },
+      "visiting_citizen_or_pio_standard": {
+        "days_current_year": 182,
+        "note": "Applies when total income excluding foreign sources is Rs 15 lakh or less; above that see high_income_visiting_citizen_or_pio"
+      },
+      "high_income_visiting_citizen_or_pio": {
+        "income_threshold_inr_excl_foreign_source": 1500000,
+        "condition_a_days_current_year": 182,
+        "condition_b_days_current_year": 120,
+        "condition_b_days_preceding_4_years": 365,
+        "note": "60 days is replaced by 120 days (not removed) when income excluding foreign sources exceeds Rs 15 lakh; if resident only via the 120-179 day band, status is RNOR not ROR"
+      }
+    },
+    "deemed_resident_section_6_1A": {
+      "applies_to": "indian_citizen",
+      "income_threshold_inr_excl_foreign_source": 1500000,
+      "condition": "not_liable_to_tax_in_any_other_country_or_territory",
+      "day_count_irrelevant": true,
+      "resulting_status": "resident_not_ordinarily_resident",
+      "introduced_by": "Finance Act, 2020",
+      "effective_from_ay": "2021-22",
+      "still_in_force_fy_2025_26": true
+    },
+    "rnor_test": {
+      "non_resident_in_years_out_of_preceding_10": 9,
+      "OR_days_in_india_preceding_7_years_max": 729,
+      "rule": "rnor_if_either_condition_true_else_ror",
+      "only_applies_to": [
+        "individual",
+        "huf"
+      ]
+    },
+    "day_count_notes": {
+      "arrival_and_departure_day_both_count": true,
+      "territorial_waters_count": true,
+      "days_need_not_be_continuous": true
+    },
+    "taxability_by_status": {
+      "resident_ordinarily_resident": "global_income_taxed_in_india",
+      "resident_not_ordinarily_resident": "india_sourced_income_only_plus_income_from_business_controlled_from_india",
+      "non_resident": "india_sourced_income_only"
+    },
     "feeds_tabs": [
       "DTAA & Residency",
-      "ITR Form Guide"
+      "ITR Form Guide",
+      "Foreign Investments"
     ],
-    "nri_cannot_use_itr_1_or_itr_4": true
+    "nri_cannot_use_itr_1_or_itr_4": true,
+    "rnor_cannot_use_itr_1_or_itr_4": true,
+    "governing_act_for_fy_2025_26": "Income Tax Act, 1961",
+    "income_tax_act_2025_effective_from_fy": "2026-27"
   }
 }

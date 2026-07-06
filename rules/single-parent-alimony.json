@@ -8,20 +8,30 @@
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_secondary",
+    "last_verified": "2026-07-06",
+    "note": "No Income Tax Act section governs alimony directly; treatment rests on judicial doctrine (principally Bombay HC, Princess Maheshwari Devi of Pratapgarh v. CIT (1984) 147 ITR 258) and is consistently described the same way across current tax-advisory sources. Well-established for straightforward facts; whether a specific 'lump sum' is a genuine full-and-final settlement (capital receipt) versus a disguised periodic arrangement (revenue receipt) is a fact-specific judgment call that needs CA review of the actual decree/deed.",
+    "source_type": "secondary"
   },
   "source_refs": [
-    "SYSTEM_SPEC.md Sections 6.2, 8"
+    "Princess Maheshwari Devi of Pratapgarh v. CIT, (1984) 147 ITR 258 (Bombay High Court) — cited via BCAJ and TheLeagle secondary analyses, primary judgment text not directly retrieved",
+    "Income Tax Act, 1961, Section 56 (Income from Other Sources)",
+    "Taxation of Alimony, Sunil Shenoy, Bombay Chartered Accountants' Society Journal, https://bcajonline.org/journal/taxation-of-alimony/",
+    "When A Princess Worried About Tax on Alimony, TheLeagle, https://theleagle.in/?p=1056",
+    "Is Alimony In India Taxable?, ClearTax, https://cleartax.in/s/alimony-india-taxable",
+    "Lump-Sum Alimony Not Taxable While Monthly Maintenance Is Taxable, TaxGuru, https://taxguru.in/income-tax/lump-sum-alimony-taxable-monthly-maintenance-taxable.html",
+    "Alimony & Taxation: Is Divorce Settlement Money Taxable in India?, Tax2win, https://tax2win.in/guide/alimony-taxation-divorce-settlement-india"
   ],
   "values": {
     "periodic_maintenance": {
-      "tax_treatment": "review_as_income"
+      "tax_treatment": "taxable_income",
+      "section": "56 (Income from Other Sources)"
     },
     "lump_sum_settlement": {
-      "tax_treatment": "generally_capital_receipt_review_facts"
+      "tax_treatment": "capital_receipt_not_taxable",
+      "basis": "Judicial doctrine (Princess Maheshwari Devi of Pratapgarh v. CIT, 1984), not a statutory exemption; only applies where the lump sum genuinely extinguishes future maintenance rights as a full-and-final settlement, not where it functions as a bundled/accelerated periodic payment"
     },
+    "payer_side_deduction": false,
     "requires_periodic_vs_lump_sum_flag": true,
     "needs_documentation": true
   }

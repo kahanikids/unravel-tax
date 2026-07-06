@@ -62,8 +62,11 @@ When you remit money overseas under the Liberalised Remittance Scheme
 - From **1 April 2025** the threshold rose from ₹7 lakh to **₹10 lakh** per
   financial year, combined across all your LRS remittances.
 - **20%** on investment, gift, and most other remittances above ₹10 lakh.
-- **2%** on education (not loan-funded) and medical remittances above
-  ₹10 lakh; **nil** where the remittance is funded by an education loan.
+- **5%** on education (not loan-funded) and medical remittances above
+  ₹10 lakh (Budget 2025, effective 1-Apr-2025 — a lower 2% rate has been
+  proposed in Budget 2026 but only applies from 1-Apr-2026, i.e. next
+  filing year, not this one); **nil** where the remittance is funded by
+  an education loan.
 - TCS is **not a cost** — it's a prepaid tax credit that shows in your
   Form 26AS / AIS and is refunded or set off when you file your return.
 
@@ -124,3 +127,14 @@ From FY 2026-27 the mandatory foreign-asset filing requirement continues
 under Section 263 of the Income Tax Act, 2025, and the Black Money Act,
 2015 is unchanged. For a FY 2025-26 (AY 2026-27) return, the 1961 Act
 provisions apply. Same pattern as `new-act-2025-transition.md`.
+
+## Sources
+
+- [Income Tax Department — Schedule FA/FSI step-by-step guide](https://www.incometax.gov.in/iec/foportal/sites/default/files/2026-03/Step%20by%20Step%20Guide%20FA%20FSI.pdf)
+- [TaxGuru — foreign assets, RSUs, Schedule FA reporting and penalties](https://taxguru.in/income-tax/foreign-assets-rsus-foreign-bank-accounts-itr-schedule-fa-reporting-notices-penalty.html)
+- [ClearTax — Form 67, foreign tax credit](https://cleartax.in/s/form-67-claim-foreign-tax-credit)
+- [Income Tax Rules — Rule 128 (foreign tax credit)](https://incometaxindia.gov.in/Rules/Income-Tax%20Rules/rule128.htm)
+- [Reyman Wealth — RSU/ESPP taxation for Indian residents](https://www.reymanwealth.com/post/taxing-foreign-equity-in-india-rsus-espps-overseas-stocks)
+- [Business Today — Budget 2025 TCS threshold raised to ₹10 lakh](https://www.businesstoday.in/personal-finance/tax/story/budget-2025-tcs-threshold-for-foreign-remittances-hiked-to-rs10-lakh-what-it-means-for-you-462983-2025-02-01)
+- [ClearTax — TCS on foreign remittances, including the Budget 2026 2% education/medical proposal](https://cleartax.in/s/tax-on-foreign-remittance)
+- Black Money (Undisclosed Foreign Income and Assets) and Imposition of Tax Act, 2015, Sections 41–43

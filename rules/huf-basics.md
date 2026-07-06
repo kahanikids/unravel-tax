@@ -38,3 +38,8 @@ comparison and take actual slab-tax figures to a CA. The capital gains,
 dividend, and interest calculations elsewhere in the app apply the same
 way to an HUF as to an individual, since those use flat rates untouched
 by any of the differences above.
+
+## Sources
+
+- [Income Tax Department — tax rates applicable to an HUF](https://incometaxindia.gov.in/Documents/Left%20Menu/TAX%20RATES_HUF.htm)
+- Income Tax Act, 1961, Section 87A (rebate limited to a resident individual, not an HUF)

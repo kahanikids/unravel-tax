@@ -9,12 +9,15 @@
   "verification": {
     "status": "verified_secondary_source",
     "last_verified": "2026-07-04",
-    "note": "MF capital-gains country map checked against ITAT Mumbai Anushaka Sanjay Shah (ITA No. 174/MUM/2025, 26 Mar 2025) and current NRI filing guides. Treaty article numbers are indicative — confirm the exact article in your country's DTAA before filing. nro_withholding_rates is cross-checked against multiple current NRI filing/withholding-tax guides rather than the primary treaty text of every country, since several of these treaties don't have a single canonical rate table published in an easily verifiable form; a null rate means this tool could not corroborate a specific figure and defaults to the domestic Section 195/115A rate rather than guessing. Confirm the exact treaty article with a CA before relying on any of these as the withheld rate.",
+    "note": "MF capital-gains country map checked against ITAT Mumbai Anushka Sanjay Shah (IT(IT)A No. 174/Mum/2025, decided 26 March 2025 — corrected 2026-07-06 CA review: an earlier draft of this file misdated the ruling as 2026-03-26 and misspelled the party's name as 'Anushaka'; both are fixed here, cross-checked against Indian Kanoon's primary record of the order) and current NRI filing guides. Treaty article numbers are indicative — confirm the exact article in your country's DTAA before filing. nro_withholding_rates is cross-checked against multiple current NRI filing/withholding-tax guides rather than the primary treaty text of every country, since several of these treaties don't have a single canonical rate table published in an easily verifiable form; a null rate means this tool could not corroborate a specific figure and defaults to the domestic Section 195/115A rate rather than guessing. Confirm the exact treaty article with a CA before relying on any of these as the withheld rate.",
     "source_type": "secondary"
   },
   "source_refs": [
     "https://itatonline.org/digest/verdicts/anushaka-sanjay-shah-ms-v-ito-it-itat-mumbai/",
+    "https://indiankanoon.org/doc/23391260/",
     "https://economictimes.indiatimes.com/nri/invest/cap-gains-of-nris-on-mutual-fund-units-cant-be-taxed-in-india-itat/articleshow/120253938.cms",
+    "https://stratalaw.in/can-india-tax-mutual-fund-gains-of-nris-insights-from-the-case-of-anushka-sanjay-shah-v-ito-and-the-dtaa-landscape/",
+    "https://itat.gov.in/public/files/upload/1730272384-j3YKhE-1-TO.pdf",
     "Income Tax Act, 1961, Section 90 (DTAA relief)",
     "Income Tax Act, 1961, Section 115A (dividend tax on a non-resident, lower of domestic rate or treaty rate)",
     "rules/nri-tds-and-refunds.json (domestic Section 195/115A default rates)",
@@ -30,9 +33,10 @@
     "requires_country_of_tax_residence": true,
     "mutual_fund_units_not_shares": true,
     "itat_mf_ruling": {
-      "case": "Anushaka Sanjay Shah v. ITO (ITAT Mumbai)",
-      "date": "2026-03-26",
-      "holding": "MF units are not company shares; gains fall under the DTAA residual clause and may be taxable only in the country of residence when that clause grants exclusive taxing rights there."
+      "case": "Anushka Sanjay Shah v. ITO (ITAT Mumbai)",
+      "date": "2025-03-26",
+      "holding": "MF units are not company shares; gains fall under the DTAA residual clause and may be taxable only in the country of residence when that clause grants exclusive taxing rights there.",
+      "comparable_ruling": "Saket Kanoi v. DCIT (Intl. Taxation), ITAT Delhi Bench 'D', Oct 2024, applied the same logic under the India-UAE DTAA (source: https://itat.gov.in/public/files/upload/1730272384-j3YKhE-1-TO.pdf)."
     },
     "mutual_fund_capital_gains": {
       "default_treatment": "check_treaty",

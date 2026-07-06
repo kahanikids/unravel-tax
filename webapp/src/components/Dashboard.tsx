@@ -791,6 +791,8 @@ function AddPastFilingForm({
   const [autoSource, setAutoSource] = useState<"itr-json" | "itr-v" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [awaitingItrVPdfPassword, setAwaitingItrVPdfPassword] = useState<File | null>(null);
+  const [itrVPdfPassword, setItrVPdfPassword] = useState("");
 
   function set<K extends keyof PastFilingFields>(key: K, value: PastFilingFields[K]) {
     setFields((prev) => ({ ...prev, [key]: value }));
@@ -809,17 +811,18 @@ function AddPastFilingForm({
   // is run through the existing pdf.js text extractor first, then the same
   // tolerant reader. Either way, unreadable input routes to manual entry
   // rather than throwing (the user said skipping-to-manual is fine).
-  async function handleFile(fileList: FileList | null) {
-    const file = fileList?.[0];
-    if (!file) {
-      return;
-    }
+  async function readPastFilingFile(file: File, pdfPassword?: string) {
     setError(null);
     const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
     try {
       const parsed = isPdf
         ? parseItrVText(
-            (await (await import("../ingest/pdfExtract")).extractPdfText(await file.arrayBuffer()))
+            (
+              await (await import("../ingest/pdfExtract")).extractPdfText(
+                await file.arrayBuffer(),
+                pdfPassword
+              )
+            )
               .text
           )
         : parseItrJson(await file.text());
@@ -827,12 +830,18 @@ function AddPastFilingForm({
       setAutoRead(new Set(parsed.readFields));
       setAutoSource(parsed.ok ? (isPdf ? "itr-v" : "itr-json") : null);
       setNotice(parsed.message);
+      setAwaitingItrVPdfPassword(null);
+      setItrVPdfPassword("");
     } catch (error) {
       setAutoSource(null);
       const { PdfPasswordError } = await import("../ingest/pdfExtract");
       if (isPdf && error instanceof PdfPasswordError) {
+        setAwaitingItrVPdfPassword(file);
+        setItrVPdfPassword("");
         setError(
-          "This PDF is password-protected. Open it, save/print an unprotected copy, and upload that instead - or enter the figures by hand below."
+          pdfPassword
+            ? "That password did not unlock this ITR-V PDF. Check the password and try again, or enter the figures by hand below."
+            : "This ITR-V PDF is password-protected. Enter its password to prefill the fields, or enter the figures by hand below."
         );
         return;
       }
@@ -844,12 +853,29 @@ function AddPastFilingForm({
     }
   }
 
+  async function handleFile(fileList: FileList | null) {
+    const file = fileList?.[0];
+    if (!file) {
+      return;
+    }
+    await readPastFilingFile(file);
+  }
+
+  async function retryItrVPdfPassword() {
+    if (!awaitingItrVPdfPassword || !itrVPdfPassword.trim()) {
+      return;
+    }
+    await readPastFilingFile(awaitingItrVPdfPassword, itrVPdfPassword.trim());
+  }
+
   function reset() {
     setFields(BLANK_PAST_FILING_FIELDS);
     setAutoRead(new Set());
     setAutoSource(null);
     setNotice(null);
     setError(null);
+    setAwaitingItrVPdfPassword(null);
+    setItrVPdfPassword("");
   }
 
   function submit() {
@@ -886,6 +912,32 @@ function AddPastFilingForm({
           />
         </label>
         {notice ? <p className="dashboard-notice">{notice}</p> : null}
+        {awaitingItrVPdfPassword ? (
+          <div className="dashboard-password-panel">
+            <label className="column-mapper-row">
+              <span>ITR-V PDF password</span>
+              <input
+                type="password"
+                value={itrVPdfPassword}
+                autoComplete="off"
+                onChange={(event) => setItrVPdfPassword(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    void retryItrVPdfPassword();
+                  }
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void retryItrVPdfPassword()}
+              disabled={!itrVPdfPassword.trim()}
+            >
+              Unlock ITR-V PDF
+            </button>
+          </div>
+        ) : null}
 
         <div className="dashboard-add-grid">
           <label className="supplemental-field">

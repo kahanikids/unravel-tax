@@ -115,9 +115,21 @@ The due date is not a single date for every profile. The rule JSON uses:
   and HUF-without-business paths.
 - 31 Aug 2026 for non-audit business/professional ITR-3 paths.
 - 31 Oct 2026 for audit ITR-3 paths.
+- **30 Nov 2026** for anyone (or any firm partner) required to furnish a
+  Section 92E transfer-pricing report — this carve-out applies **instead
+  of** the 31 Aug non-audit date, not in addition to it. This tool
+  doesn't yet detect Section 92E applicability, so a filer with
+  international or specified-domestic transactions should confirm 30 Nov
+  applies to them rather than assuming the 31 Aug default.
 
-Confirm the date on the e-filing portal before filing, especially if the
-case has audit, transfer-pricing, or firm-partner complications.
+The 31 Aug bucket itself is a genuinely new addition for AY 2026-27 —
+in past years, non-audit business/professional filers were also due
+31 July, same as everyone else. No general extension of the 31 Jul
+deadline had been announced for AY 2026-27 as of this check (unlike
+AY 2025-26, whose 31 Jul deadline was extended twice, ultimately to
+16 Sep 2025). Confirm the date on the e-filing portal before filing,
+especially if the case has audit, transfer-pricing, or firm-partner
+complications.
 
 ## Sources
 
@@ -131,4 +143,6 @@ case has audit, transfer-pricing, or firm-partner complications.
 - Economic Times, "Is extended August 31 ITR deadline applicable to all
   taxpayers or only select categories?"
   <https://m.economictimes.com/wealth/tax/is-extended-august-31-itr-deadline-applicable-to-all-taxpayers-or-only-select-categories/articleshow/127855824.cms>
+- [ClearTax — income tax return due dates](https://cleartax.in/s/due-date-tax-filing)
+- [Upstox — why an AY 2026-27 due-date extension may not happen](https://upstox.com/news/personal-finance/tax/3-reasons-why-itr-filing-due-date-extension-for-ay-2026-27-may-not-happen-what-to-do-now/article-195737/)
 - BUILD_PLAN.md Section 15.6; SYSTEM_SPEC.md Section 10.

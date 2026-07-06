@@ -1,29 +1,85 @@
 {
   "topic": "senior-citizen-basics",
   "applies_to": [
-    "senior-citizen"
+    "senior-citizen",
+    "super-senior-citizen"
   ],
   "effective_date": "2025-04-01",
   "financial_year": "2025-26",
   "assessment_year": "2026-27",
   "verification": {
-    "status": "pending_current_source",
-    "last_verified": null,
-    "note": "Structured from BUILD_PLAN.md and SYSTEM_SPEC.md draft content. Verify against current official sources before using as filing advice."
+    "status": "verified_secondary_source",
+    "last_verified": "2026-07-06",
+    "note": "Age thresholds (60/80, resident-only), Section 80TTB (Rs 50,000, old-regime-only, replaces rather than stacks with Section 80TTA), Section 80DDB (Rs 40,000 non-senior / Rs 1,00,000 senior, based on the patient's age), and Section 194P (75+, resident, pension+same-account-interest-only, bank deducts full TDS) all cross-checked against multiple current FY 2025-26 / AY 2026-27 filing guides and the Income Tax Department's own AY 2026-27 help page. Section 80D senior-citizen limit (Rs 50,000) is not duplicated here; see deduction-limits.json. Confirm against official incometax.gov.in instructions before relying on this as filing advice.",
+    "source_type": "secondary"
   },
   "source_refs": [
-    "SYSTEM_SPEC.md Sections 6.2, 8",
-    "BUILD_PLAN.md Section 14"
+    "Income Tax Act, 1961, Sections 80TTA, 80TTB, 80D, 80DDB, 139, 194P",
+    "https://cleartax.in/s/section-80ttb",
+    "https://taxgarden.in/blog/section-80tta-80ttb-savings-interest-deduction-ay-2026-27",
+    "https://cleartax.in/s/80tta-vs-80ttb",
+    "https://www.shriramlife.com/blog/advice/can-senior-citizens-claim-both-80tta-and-80ttb",
+    "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-2",
+    "https://cleartax.in/s/income-tax-slab-for-senior-citizen",
+    "https://www.slohia.com/income-tax-deductions-exemptions-reliefs-in-income-tax-act-nris-pios-ocis-expatriates/",
+    "https://tax2win.in/guide/section-80ddb",
+    "https://www.pnbmetlife.com/articles/taxation/section-80ddb-deduction.html",
+    "https://tax2win.in/guide/deductions-under-section-80dd-80ddb-80u",
+    "https://tax2win.in/guide/section-194p-of-income-tax-act",
+    "https://cleartax.in/s/itr-filing-for-senior-citizen",
+    "https://disytax.com/section-194p-tds-senior-citizens/"
   ],
   "values": {
     "senior_age_years_gte": 60,
     "super_senior_age_years_gte": 80,
+    "resident_only": true,
+    "nri_excluded_note": "An NRI does not get senior/super-senior treatment at any age: no enhanced basic exemption slab (see regime-choice.json), no Section 87A rebate, and no Section 80TTB. Uses the same rules as a non-senior resident under 60, except the general Rs 2,50,000 basic exemption still applies.",
     "interest_deduction": {
       "section": "80TTB",
       "limit_inr": 50000,
-      "old_regime_only": true
+      "old_regime_only": true,
+      "resident_only": true,
+      "covers": "Interest on savings accounts, fixed deposits, and recurring deposits with banks, co-operative banks, and post offices.",
+      "replaces_80tta": true,
+      "replaces_80tta_note": "Once an individual qualifies as a senior citizen (60+) in a financial year, they claim under 80TTB instead of 80TTA for that year, not both. 80TTA is Rs 10,000, savings-account interest only, available to everyone under 60."
     },
-    "not_80tta_once_senior": true,
-    "needs_dob_proof": true
+    "section_80tta_comparison": {
+      "section": "80TTA",
+      "limit_inr": 10000,
+      "old_regime_only": true,
+      "covers": "Savings-account interest only (excludes FD/RD interest).",
+      "applies_to": "Individuals and HUFs below 60, or any senior citizen not opting to use 80TTB in a given year is not an option — 80TTB is mandatory in place of 80TTA once senior."
+    },
+    "section_80d_cross_reference": {
+      "note": "The Rs 50,000 health-insurance premium limit when a senior citizen is covered is recorded in deduction-limits.json (section_80d.self_family_senior_citizen_inr) and is not duplicated here.",
+      "senior_trigger_age_years_gte": 60
+    },
+    "section_80ddb": {
+      "section": "80DDB",
+      "non_senior_limit_inr": 40000,
+      "senior_limit_inr": 100000,
+      "senior_trigger": "patient_age",
+      "senior_trigger_note": "The higher limit is based on the age of the person being treated (self, spouse, children, parents, or dependent siblings), not the taxpayer's own age.",
+      "old_regime_only": true,
+      "net_of_reimbursement": true,
+      "covers": "Actual expenditure on medical treatment of specified critical illnesses under Rule 11DD (e.g. cancer, chronic renal failure, specified neurological diseases, AIDS), net of any insurance or employer reimbursement.",
+      "certificate_required": true
+    },
+    "section_194p_filing_exemption": {
+      "section": "194P",
+      "min_age_years": 75,
+      "resident_only": true,
+      "eligible_income": "Pension plus interest income from the same bank account the pension is credited into",
+      "condition": "Declaration filed with a specified bank; bank computes tax after Chapter VI-A deductions and Section 87A rebate and deducts it as full and final TDS",
+      "effect": "Exempt from filing a return under Section 139",
+      "breaks_if_other_income": true,
+      "reduces_tax_owed": false,
+      "note": "A filing-mechanics exemption only; does not change the amount of tax owed."
+    },
+    "cross_references": {
+      "old_regime_slabs_and_higher_basic_exemption": "regime-choice.json",
+      "section_80d_limits": "deduction-limits.json",
+      "advance_tax_exemption_and_regime_switching": "senior-citizen-advance-tax-and-regime.json"
+    }
   }
 }

@@ -20,8 +20,11 @@
     "Income Tax Act, 1961, Sections 24(a), 24(b), 80C, 80EE, 80EEA, 80EEB, 80E, 64",
     "https://cleartax.in/s/deductions-under-section24-income-from-house-property",
     "https://taxguru.in/income-tax/old-vs-new-tax-regime-complete-comparison-deductions-tax-benefits.html",
-    "https://www.taxsmooth.com/knowledge-center/section-80e-80ee-80eea-80eeb",
-    "https://cleartax.in/s/section-80eeb-deduction-purchase-electric-vehicle"
+    "https://cleartax.in/s/section-80ee-income-tax-deduction-for-interest-on-home-loan",
+    "https://cleartax.in/s/section-80eea-deduction-affordable-housing",
+    "https://cleartax.in/s/section-80eeb-deduction-purchase-electric-vehicle",
+    "https://www.axismaxlife.com/blog/tax-savings/section-22",
+    "https://incometaxindia.gov.in/pages/acts/income-tax-act-2025.aspx"
   ],
   "values": {
     "regime_applicability": "old_regime_only_except_let_out_home_loan_interest",
@@ -96,11 +99,13 @@
     },
     "new_act_2025_renumbering": {
       "applies_from_financial_year": "2026-27",
-      "section_80c": "Section 123",
+      "section_80c": "Section 123 (with Schedule XV)",
       "section_80e": "Section 129",
-      "section_80ee_and_80eea": "Section 130",
+      "section_80ee": "Section 130",
+      "section_80eea": "Section 131",
       "section_80eeb": "Section 132",
       "house_property_interest_24b": "Section 22",
+      "correction_note": "2026-07-06 CA review: 80EE and 80EEA are two separate provisions with separate new numbers (130 and 131 respectively) - an earlier draft of this file merged them into a single 'Section 130' figure, which understates the distinction. Section 24(b) -> 22 is corroborated by AxisMaxLife's dedicated Section 22 page and the Income Tax Department's own official 1961-vs-2025 comparison tool; treat it as reliable. As with insurance.json's 80C->123 note, a general aggregator (Tax2win) shows some different numbers for other provisions elsewhere in the Act, so confirm any of these against the official comparison tool before treating them as final - none of this affects FY2025-26 filing itself.",
       "note": "The Income Tax Act, 2025 renumbers these from FY 2026-27 onward; the rates and limits carry over unchanged. For a FY 2025-26 (AY 2026-27) return, filed around July 2026, use the 1961 Act's old section numbers, since that is what governs income earned in that year. Same 'form/section name follows today's date, tax rule follows the year the income was earned' pattern noted in new-act-2025-transition.json."
     }
   }

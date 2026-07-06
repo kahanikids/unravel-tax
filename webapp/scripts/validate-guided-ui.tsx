@@ -577,7 +577,7 @@ function checkOrientationForm() {
     "utf8"
   );
   const presumptiveBlock = orientationSource.match(
-    /id: "presumptiveTaxation"[\s\S]*?(?=\n  \},\n  \{|\n\];)/
+    /id: "presumptiveTaxation"[\s\S]*?(?=\n {2}\},\n {2}\{|\n\];)/
   )?.[0];
   if (!presumptiveBlock?.includes("infoTooltip:")) {
     throw new Error("Presumptive question should use infoTooltip for the explanation.");

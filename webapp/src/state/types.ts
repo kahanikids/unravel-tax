@@ -191,7 +191,7 @@ export const STEP_LABELS: Record<AppStep, string> = {
 /**
  * Why the money went abroad, for the Section 206C(1G) TCS rate branch:
  * investment/gift/other collects 20% above the threshold, education or
- * medical 2%, and an education-loan-funded remittance collects nothing.
+ * medical 5%, and an education-loan-funded remittance collects nothing.
  * Rates and threshold read from rules/foreign-investments.json.
  */
 export type RemittancePurpose =
@@ -258,7 +258,7 @@ export type SupplementalFigures = {
   insuranceAnnualPremium: number;
   /** Resident only. Total money sent abroad this year under the LRS, checked against the Section 206C(1G) TCS threshold (read from rules/foreign-investments.json). Planning figure only; the TCS is a prepaid credit, not a cost. */
   foreignRemittanceLrs: number;
-  /** What the LRS money was for - picks the TCS rate branch (20% investment/gift, 2% education/medical, nil when funded by an education loan). */
+  /** What the LRS money was for - picks the TCS rate branch (20% investment/gift, 5% education/medical, nil when funded by an education loan). */
   foreignRemittancePurpose: RemittancePurpose;
   /** Resident only. Foreign tax paid/withheld on foreign dividends, interest, short-term foreign-share gains, and RSU/ESPP perquisite value combined - for the Section 90/91 average-rate foreign tax credit estimate. Long-term foreign-share gains have their own per-holding field instead (a flat, exact rate). */
   foreignTaxPaidOnOtherIncomeInr: number;

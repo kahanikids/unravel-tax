@@ -147,12 +147,15 @@ export type PdfTextExtraction = {
   mergedDocumentsNote?: string;
 };
 
-export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtraction> {
+export async function extractPdfText(
+  buffer: ArrayBuffer,
+  password?: string
+): Promise<PdfTextExtraction> {
   const pdfjs = await loadPdfJs();
 
   let pdf;
   try {
-    pdf = await pdfjs.getDocument({ data: buffer }).promise;
+    pdf = await pdfjs.getDocument({ data: buffer, password }).promise;
   } catch (error) {
     // pdf.js doesn't export its PasswordException class from the public API
     // (only PasswordResponses), so the documented way to recognise it is by
@@ -206,14 +209,15 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfTextExtrac
  */
 export async function renderPdfThumbnail(
   buffer: ArrayBuffer,
-  maxWidth = 200
+  maxWidth = 200,
+  password?: string
 ): Promise<string | undefined> {
   if (typeof document === "undefined") {
     return undefined;
   }
   try {
     const pdfjs = await loadPdfJs();
-    const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+    const pdf = await pdfjs.getDocument({ data: buffer, password }).promise;
     const page = await pdf.getPage(1);
     const baseViewport = page.getViewport({ scale: 1 });
     const scale = maxWidth / baseViewport.width;

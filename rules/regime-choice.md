@@ -72,8 +72,15 @@ first. The actual rupee limits for the common ones live in the paired
   rates. The one meaningful deduction it still allows is **Section
   80CCD(2)** — your *employer's* contribution to your NPS account. That
   one is allowed under *both* regimes and is capped as a percentage of
-  salary (14% for government employees, 10% for others), not as a flat
-  rupee figure, so there's no single number to quote.
+  salary, not as a flat rupee figure, so there's no single number to
+  quote. Budget 2024 raised the private-sector cap to **14%** of salary
+  (basic + DA) under the new regime, matching what government employees
+  already got — so for FY 2025-26 it's 14% for everyone under the new
+  regime, not the older 10% figure for private-sector employees that's
+  still quoted in a lot of pre-2024 material. The old regime's
+  private-sector cap may still sit at 10%; if this matters for you (a
+  large employer NPS contribution), have a CA confirm the old-regime
+  figure specifically, since this tool doesn't model that split.
 
 ## Which one should you choose?
 
@@ -165,4 +172,12 @@ and the once-in-a-lifetime restriction that applies once business or
 speculative income is present) is still drafted from
 `BUILD_PLAN.md`/`SYSTEM_SPEC.md` and hasn't had its own dedicated
 re-check yet. Treat it as directionally right, not filing-ready, until
-it gets the same verification pass as the slabs above.
+it gets the same verification pass as the slabs above. See
+`senior-citizen-advance-tax-and-regime.md` for how this restriction
+specifically plays out for a senior citizen with speculative income.
+
+## Sources
+
+- [Income Tax Department — official Budget 2025 FAQ](https://incometaxindia.gov.in/Documents/Budget/budget-2025/faqs-budget-2025.pdf)
+- [Business Today — Budget 2024 raises employer-NPS cap to 14% for private-sector employees](https://www.businesstoday.in/union-budget/story/union-budget-2024-nps-contribution-limit-for-employers-in-private-sector-raised-to-14-from-10-of-employees-basic-salary-438364-2024-07-23)
+- [ClearTax — surcharge and marginal relief, AY 2026-27](https://cleartax.in/s/marginal-relief-surcharge)
