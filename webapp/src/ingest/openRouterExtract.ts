@@ -109,8 +109,12 @@ async function requestOpenRouterCompletion({
           { role: "user", content: userContent }
         ],
         ...(forceJson ? { response_format: { type: "json_object" } } : {}),
+        reasoning: {
+          effort: "none",
+          exclude: true
+        },
         temperature: 0,
-        max_tokens: 2000
+        max_tokens: 8000
       })
     });
   } catch (error) {
