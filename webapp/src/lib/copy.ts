@@ -34,7 +34,7 @@ export type ExtractionMethodOption = {
 export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
   {
     id: "frontier",
-    label: "Frontier AI",
+    label: "Frontier LLMs (copy-paste)",
     takes: "ChatGPT, Claude, Gemini + copy-paste",
     gives: "Best shot for messy reports",
     accuracy: "Highest",
@@ -44,7 +44,7 @@ export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
   },
   {
     id: "browser",
-    label: "Open-Source Llama 3.2 3B",
+    label: "Llama (In-browser, free)",
     takes: "WebGPU + 2 GB download + smaller context window",
     gives: "Private first try. If it misses info, use Frontier AI.",
     accuracy: "Meta IFEval 77.4",
@@ -54,7 +54,7 @@ export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
   },
   {
     id: "openrouter",
-    label: "OpenRouter Free Selected Models",
+    label: "Openrouter (Free models)",
     takes: "OpenRouter key + network",
     gives: "Automatic extraction with selected free models",
     accuracy: "Testing now",

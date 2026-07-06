@@ -869,7 +869,26 @@ export function UploadStep({
               <div className="paste-stepper-step paste-stepper-step-current">
                 <div className="paste-stepper-indicator">2</div>
                 <div className="paste-stepper-content">
-                  <h4 className="paste-stepper-title">Choose how to extract</h4>
+                  <h4 className="paste-stepper-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    Choose how to extract
+                    <InfoTooltip label="Compare extraction methods" className="align-right">
+                      <div style={{ minWidth: 280, padding: 4 }}>
+                        {EXTRACTION_METHOD_OPTIONS.map((opt) => (
+                          <div key={opt.id} style={{ marginBottom: 12 }}>
+                            <strong style={{ fontSize: "0.9rem", display: "block", marginBottom: 2 }}>
+                              {opt.label}
+                            </strong>
+                            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)" }}>
+                              {opt.gives}
+                            </p>
+                            <p style={{ margin: "4px 0 0", fontSize: "0.75rem", opacity: 0.8 }}>
+                              Accuracy: {opt.accuracy} · {opt.data}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </InfoTooltip>
+                  </h4>
                   <div className="extraction-tabs" role="group" aria-label="Extraction method">
                     <button
                       type="button"
@@ -1036,9 +1055,8 @@ export function UploadStep({
                       const opt = EXTRACTION_METHOD_OPTIONS.find((o) => o.id === extractionMethod);
                       if (!opt) return null;
                       return (
-                        <details className="extraction-method-facts-wrap" style={{ marginTop: 14 }}>
-                          <summary>Method details (speed, accuracy, privacy)</summary>
-                          <dl className="extraction-method-facts" style={{ marginTop: 8 }}>
+                        <div className="extraction-method-facts-wrap" style={{ marginTop: 16 }}>
+                          <dl className="extraction-method-facts">
                             <div><dt>Takes</dt><dd>{opt.takes}</dd></div>
                             <div><dt>Gives</dt><dd>{opt.gives}</dd></div>
                             <div><dt>Accuracy</dt><dd>{opt.accuracy}</dd></div>
@@ -1046,7 +1064,7 @@ export function UploadStep({
                             <div><dt>Effort</dt><dd>{opt.effort}</dd></div>
                             <div><dt>Data</dt><dd>{opt.data}</dd></div>
                           </dl>
-                        </details>
+                        </div>
                       );
                     })()}
 
