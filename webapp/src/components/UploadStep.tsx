@@ -634,43 +634,43 @@ export function UploadStep({
         if (skippedPagesCount > 0) {
           filterMessage = `Filtered out ${skippedPagesCount} page(s) with no transactions. `;
         }
-        chunks = chunkPagesForOpenRouter(filteredPages, 24000);
+        // Limit to max 5 pages (~16,000 chars) per chunk to keep chunks small and high-precision
+        chunks = chunkPagesForOpenRouter(filteredPages, 16000);
       } else {
-        chunks = splitDocumentTextWithLength(awaitingPaste.extractedText, 24000);
+        chunks = splitDocumentTextWithLength(awaitingPaste.extractedText, 16000);
       }
 
       const totalChunks = chunks.length;
-      let completed = 0;
+      const extractions: any[] = [];
 
       setExtractProgress({
         phase: "generating",
         progress: 0,
         message: totalChunks > 1
-          ? `${filterMessage}Splitting document into ${totalChunks} parts and processing in parallel…`
+          ? `${filterMessage}Splitting document into ${totalChunks} parts and processing sequentially…`
           : `${filterMessage}Sending to OpenRouter…`
       });
 
-      const promises = chunks.map(async (chunk, index) => {
+      for (let index = 0; index < totalChunks; index++) {
+        const chunk = chunks[index];
+        const partNumber = index + 1;
+        setExtractProgress({
+          phase: "generating",
+          progress: Math.round((index / totalChunks) * 100),
+          message: totalChunks > 1
+            ? `Sending part ${partNumber} of ${totalChunks} to OpenRouter…`
+            : "Sending request to OpenRouter…"
+        });
+
         const result = await runOpenRouterExtraction(
           chunk,
           extractionPrompt,
-          totalChunks > 1 ? `${awaitingPaste.fileName} (Part ${index + 1})` : awaitingPaste.fileName,
+          totalChunks > 1 ? `${awaitingPaste.fileName} (Part ${partNumber})` : awaitingPaste.fileName,
           key,
-          // Since they run in parallel, silence inner logs to prevent jumping UI text
           () => {}
         );
-        completed++;
-        setExtractProgress({
-          phase: "generating",
-          progress: Math.round((completed / totalChunks) * 100),
-          message: totalChunks > 1
-            ? `Extracted ${completed} of ${totalChunks} parts…`
-            : "Received response from OpenRouter…"
-        });
-        return result;
-      });
-
-      const extractions = await Promise.all(promises);
+        extractions.push(result);
+      }
 
       setExtractProgress({
         phase: "generating",
