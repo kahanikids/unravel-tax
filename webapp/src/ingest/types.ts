@@ -90,6 +90,8 @@ export type PromptRoute = {
   extractedPages?: string[];
   /** Plain-language read on how complete that extracted text looks (scanned/no text layer, has transaction-shaped wording, etc). */
   diagnosticSummary?: string;
+  looksScanned?: boolean;
+  wordCount?: number;
   /** Carried from the original PDF's metadata so it survives the round trip through the AI extraction paste, for sheet naming once the pasted result is committed. */
   suggestedSheetName?: string;
 };

@@ -271,6 +271,8 @@ export function UploadStep({
     diagnosticSummary?: string;
     suggestedSheetName?: string;
     thumbnailDataUrl?: string;
+    looksScanned?: boolean;
+    wordCount?: number;
   } | null>(null);
   const [awaitingPdfPassword, setAwaitingPdfPassword] = useState<{
     file: File;
@@ -409,7 +411,9 @@ export function UploadStep({
         extractedPages: result.promptRoute.extractedPages,
         diagnosticSummary: result.promptRoute.diagnosticSummary,
         suggestedSheetName: result.promptRoute.suggestedSheetName,
-        thumbnailDataUrl
+        thumbnailDataUrl,
+        looksScanned: result.promptRoute.looksScanned,
+        wordCount: result.promptRoute.wordCount
       });
       return true;
     }
@@ -1091,6 +1095,14 @@ export function UploadStep({
                       </div>
                     </InfoTooltip>
                   </h4>
+                  {awaitingPaste.looksScanned ? (
+                    <div className="extraction-tab-info" style={{ borderColor: "var(--flag)", background: "var(--flag-soft)", color: "var(--flag)", marginBottom: 14 }}>
+                      <span className="extraction-tab-info-icon" aria-hidden="true">⚠️</span>
+                      <p style={{ color: "inherit", fontWeight: 600, margin: 0 }}>
+                        <strong>Unreadable PDF (likely a scanned image/photo):</strong> We found almost no text inside this file. Local Llama and OpenRouter cannot extract data from text-only streams if the PDF has no text layer. We highly recommend using <strong>Frontier LLMs (copy-paste)</strong> like ChatGPT Plus, Claude Pro, or Gemini Advanced by uploading the actual file directly to them.
+                      </p>
+                    </div>
+                  ) : null}
                   <div className="extraction-tabs" role="group" aria-label="Extraction method">
                     <button
                       type="button"
@@ -1434,14 +1446,22 @@ export function UploadStep({
 
       {summaryGuidance ? (
         <div className="paste-panel">
-          <p>
-            <strong>{summaryGuidance.fileName}</strong>
-            {summaryGuidance.documentType
-              ? ` looks like a ${summaryGuidance.documentType}`
-              : " looks like a summary statement"}
-            . It has no per-transaction buy/sell rows, so there's nothing to tax-calculate from it
-            directly.
-          </p>
+          {summaryGuidance.documentType?.toLowerCase().includes("unreadable") ||
+          summaryGuidance.documentType?.toLowerCase().includes("scanned") ||
+          summaryGuidance.notes?.toLowerCase().includes("not provided") ? (
+            <p style={{ color: "var(--flag)" }}>
+              <strong>{summaryGuidance.fileName} appears to be unreadable or contains no text.</strong> It could not be parsed because the PDF lacks an extractable text layer (it may be a scanned image or photo). Please try using <strong>Frontier LLMs (copy-paste)</strong> with layout-aware multimodal AI models that can read images/files directly.
+            </p>
+          ) : (
+            <p>
+              <strong>{summaryGuidance.fileName}</strong>
+              {summaryGuidance.documentType
+                ? ` looks like a ${summaryGuidance.documentType}`
+                : " looks like a summary statement"}
+              . It has no per-transaction buy/sell rows, so there's nothing to tax-calculate from it
+              directly.
+            </p>
+          )}
           {(() => {
             const figures = summaryGuidance.figures;
             const annualRows: [string, number][] = figures

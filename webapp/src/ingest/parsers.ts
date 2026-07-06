@@ -88,7 +88,14 @@ export function detectIngestionKind(fileName: string, mimeType = ""): IngestionK
 
 export function routePdfOrFreeform(
   reason: string,
-  extra?: { extractedText?: string; extractedPages?: string[]; diagnosticSummary?: string; suggestedSheetName?: string }
+  extra?: {
+    extractedText?: string;
+    extractedPages?: string[];
+    diagnosticSummary?: string;
+    suggestedSheetName?: string;
+    looksScanned?: boolean;
+    wordCount?: number;
+  }
 ): PromptRoute {
   return {
     kind: "pdf_or_freeform",
@@ -710,7 +717,9 @@ export async function parseFile(
           extractedText: text,
           extractedPages: pages,
           diagnosticSummary: diagnostic.summary,
-          suggestedSheetName: sheetNameHint
+          suggestedSheetName: sheetNameHint,
+          looksScanned: diagnostic.looksScanned,
+          wordCount: diagnostic.wordCount
         }
       );
       return { ...result, kind: "pdf_or_freeform", promptRoute };
