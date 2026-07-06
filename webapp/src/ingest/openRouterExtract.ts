@@ -1,3 +1,5 @@
+import { extractJsonBlock } from "./extractionPostProcess";
+
 /** Primary OpenRouter extraction model. 262K context on OpenRouter. */
 export const OPENROUTER_EXTRACTION_MODEL = "nvidia/nemotron-3-nano-30b-a3b";
 
@@ -7,7 +9,8 @@ export type OpenRouterExtractionResult = {
   modelUsed?: string;
 };
 
-const OPENROUTER_TIMEOUT_MS = 120_000;
+const OPENROUTER_TIMEOUT_MS = 180_000;
+const OPENROUTER_MAX_TOKENS = 16_000;
 
 type OpenRouterChatResponse = {
   choices?: {
@@ -39,9 +42,10 @@ export async function runOpenRouterExtraction(
   const userContent = `Document text to extract (read from ${fileName} by this app):\n\n${documentText}`;
   const bearerToken = apiKey.trim().replace(/^Bearer\s+/i, "");
 
+  const compactPrompt = compactJsonPrompt(extractionPrompt);
   const first = await requestOpenRouterCompletion({
     bearerToken,
-    extractionPrompt,
+    extractionPrompt: compactPrompt,
     userContent,
     forceJson: true,
     onProgress
@@ -52,13 +56,13 @@ export async function runOpenRouterExtraction(
       ? first.data.model.trim()
       : undefined;
 
-  if (!rawText.trim()) {
-    onProgress?.("OpenRouter returned no text. Retrying Nemotron without JSON mode…");
+  if (!rawText.trim() || !isCompleteJsonObject(rawText)) {
+    onProgress?.("OpenRouter did not return complete JSON. Retrying with stricter output rules…");
     const retry = await requestOpenRouterCompletion({
       bearerToken,
-      extractionPrompt: `${extractionPrompt}\n\nReturn ONLY the JSON object. Do not explain your reasoning. Do not include markdown fences.`,
+      extractionPrompt: retryJsonPrompt(extractionPrompt),
       userContent,
-      forceJson: false,
+      forceJson: true,
       onProgress
     });
     rawText = extractMessageText(retry.data);
@@ -70,6 +74,12 @@ export async function runOpenRouterExtraction(
 
   if (!rawText.trim()) {
     throw new Error(openRouterEmptyMessage(first.data, modelUsed));
+  }
+
+  if (!isCompleteJsonObject(rawText)) {
+    throw new Error(
+      `OpenRouter returned text, but not a complete JSON object. It may have been truncated. Preview: ${previewText(rawText)}`
+    );
   }
 
   return { rawText, modelUsed };
@@ -114,14 +124,14 @@ async function requestOpenRouterCompletion({
           exclude: true
         },
         temperature: 0,
-        max_tokens: 8000
+        max_tokens: OPENROUTER_MAX_TOKENS
       })
     });
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error(
-        "OpenRouter did not return a response within 2 minutes. Nemotron may be busy or the report may be too large. Try again, use Frontier AI copy-paste, or split the report."
+        "OpenRouter did not return a response within 3 minutes. Nemotron may be busy or the report may be too large. Try again, use Frontier AI copy-paste, or split the report."
       );
     }
     throw new Error(
@@ -203,6 +213,41 @@ function openRouterEmptyMessage(data: OpenRouterChatResponse, modelUsed?: string
       ? ` Refusal: ${choice.message.refusal.trim().slice(0, 180)}`
       : "";
   return `OpenRouter returned an empty extraction after retrying.${model}${finish}${reasoning}${refusal} Try again, use Frontier AI copy-paste, or split the report.`;
+}
+
+function compactJsonPrompt(extractionPrompt: string): string {
+  return `${extractionPrompt}
+
+Important output rules for this automatic extraction:
+- Return ONLY one complete JSON object.
+- Use minified JSON with no markdown fences and no prose.
+- Do not explain your reasoning.
+- Keep notes under 100 characters.
+- Omit fields that are missing instead of writing long explanations.
+- Close every array and object. The final character must be }.`;
+}
+
+function retryJsonPrompt(extractionPrompt: string): string {
+  return `${compactJsonPrompt(extractionPrompt)}
+
+Your previous response was not complete JSON. This retry must produce a syntactically valid JSON object that starts with { and ends with }.`;
+}
+
+function isCompleteJsonObject(text: string): boolean {
+  try {
+    const parsed = JSON.parse(extractJsonBlock(text));
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed);
+  } catch {
+    return false;
+  }
+}
+
+function previewText(text: string): string {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  if (trimmed.length <= 360) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, 180)} ... ${trimmed.slice(-180)}`;
 }
 
 function openRouterChatCompletionsUrl(): string {
