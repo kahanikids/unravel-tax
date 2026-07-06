@@ -924,8 +924,8 @@ export function UploadStep({
                           <div className="extraction-tab-info">
                             <span className="extraction-tab-info-icon" aria-hidden="true">🔒</span>
                             <p>
-                              Runs Llama 3.2 3B locally via WebGPU — nothing leaves your device. First run
-                              downloads ~2 GB.
+                        Runs Llama 3.2 3B locally via WebGPU — nothing leaves your device. First run
+                        downloads ~2 GB.
                             </p>
                           </div>
                           <div className="paste-actions" style={{ marginTop: 14 }}>
