@@ -20,6 +20,7 @@ import {
   setStoredOpenRouterApiKey,
   type ExtractionMethod
 } from "../lib/extractionPrefs";
+import { EXTRACTION_METHOD_OPTIONS } from "../lib/copy";
 import { EXPECTED_TRANSACTION_COLUMNS } from "../ingest/types";
 import type { CanonicalTransactionColumn } from "../ingest/headerMatching";
 import type { RawSheet } from "../lib";
@@ -1029,6 +1030,25 @@ export function UploadStep({
                         ) : null}
                       </>
                     ) : null}
+
+                    {/* Method Facts */}
+                    {extractionMethod && (() => {
+                      const opt = EXTRACTION_METHOD_OPTIONS.find((o) => o.id === extractionMethod);
+                      if (!opt) return null;
+                      return (
+                        <details className="extraction-method-facts-wrap" style={{ marginTop: 14 }}>
+                          <summary>Method details (speed, accuracy, privacy)</summary>
+                          <dl className="extraction-method-facts" style={{ marginTop: 8 }}>
+                            <div><dt>Takes</dt><dd>{opt.takes}</dd></div>
+                            <div><dt>Gives</dt><dd>{opt.gives}</dd></div>
+                            <div><dt>Accuracy</dt><dd>{opt.accuracy}</dd></div>
+                            <div><dt>Time</dt><dd>{opt.time}</dd></div>
+                            <div><dt>Effort</dt><dd>{opt.effort}</dd></div>
+                            <div><dt>Data</dt><dd>{opt.data}</dd></div>
+                          </dl>
+                        </details>
+                      );
+                    })()}
 
                     {/* Prompt details — collapsed */}
                     {extractionMethod ? (
