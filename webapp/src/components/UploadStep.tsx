@@ -20,7 +20,6 @@ import {
   setStoredOpenRouterApiKey,
   type ExtractionMethod
 } from "../lib/extractionPrefs";
-import { ExtractionMethodModal } from "./ExtractionMethodModal";
 import { EXPECTED_TRANSACTION_COLUMNS } from "../ingest/types";
 import type { CanonicalTransactionColumn } from "../ingest/headerMatching";
 import type { RawSheet } from "../lib";
@@ -167,7 +166,6 @@ export function UploadStep({
   const [extractionMethod, setExtractionMethod] = useState<ExtractionMethod | null>(() =>
     getStoredExtractionMethod()
   );
-  const [showMethodPicker, setShowMethodPicker] = useState(false);
   const [openRouterApiKey, setOpenRouterApiKey] = useState(() => getStoredOpenRouterApiKey());
   const [webGpuAvailable, setWebGpuAvailable] = useState<boolean | null>(null);
   const [extracting, setExtracting] = useState(false);
@@ -203,18 +201,16 @@ export function UploadStep({
 
   useEffect(() => {
     if (!awaitingPaste) {
-      setShowMethodPicker(false);
       return;
     }
     const stored = getStoredExtractionMethod();
     if (stored) {
       setExtractionMethod(stored);
-      setShowMethodPicker(false);
     } else {
       setExtractionMethod(null);
-      setShowMethodPicker(true);
     }
   }, [awaitingPaste]);
+
 
   useEffect(() => {
     if (!awaitingPaste || extractionMethod !== "browser") {
@@ -425,7 +421,6 @@ export function UploadStep({
   function chooseExtractionMethod(method: ExtractionMethod) {
     setStoredExtractionMethod(method);
     setExtractionMethod(method);
-    setShowMethodPicker(false);
     setError(null);
     setExtractionError(null);
   }
@@ -673,18 +668,16 @@ export function UploadStep({
 
   return (
     <div className="step-card">
-      <h2>Add your documents</h2>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+        <h2>Add your documents</h2>
+        <InfoTooltip label="About adding documents" className="align-right">
+          Add broker and AMC capital-gains statements—CSV, Excel, saved webpages are read in your
+          browser; PDFs use an LLM extraction step. Bank interest, dividend, and MF statements can
+          also be added as reference sheets.
+        </InfoTooltip>
+      </div>
       <p className="step-lede">
-        <span className="upload-lede-desktop">
-          Add all your statements at once, or a few at a time. We'll walk through them one by one
-          and show what we read before using anything. CSV, Excel, and saved webpages are read in
-          your browser. PDFs can be extracted here (in-browser AI, OpenRouter, or copy-paste
-          fallback).
-        </span>
-        <span className="upload-lede-mobile">
-          Add your statements. Pick several at once if you like. We'll show what we read before
-          using each.
-        </span>
+        Add your broker and AMC statements. We'll review each file before using anything.
       </p>
 
       {parsing ? (
@@ -705,11 +698,6 @@ export function UploadStep({
             handleFiles(event.dataTransfer.files);
           }}
         >
-          <InfoTooltip label="About adding documents" className="upload-info-tip align-right">
-            Drop files here, or click to choose. You can pick several at once. Broker/AMC capital
-            gains statements are the main thing this step is for; bank interest, dividend, and MF
-            statements can be added too.
-          </InfoTooltip>
           <label className="primary-button upload-button">
             <svg
               width="16"
@@ -735,6 +723,11 @@ export function UploadStep({
               hidden
             />
           </label>
+          <div className="upload-format-pills" aria-hidden="true">
+            {["CSV", "XLSX", "PDF", "HTML", "TXT"].map((fmt) => (
+              <span key={fmt} className="upload-format-pill">{fmt}</span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -837,222 +830,308 @@ export function UploadStep({
 
       {awaitingPaste ? (
         <div className="paste-panel">
-          {awaitingPaste.thumbnailDataUrl ? (
-            <img
-              className="pdf-thumbnail"
-              src={awaitingPaste.thumbnailDataUrl}
-              alt={`Page 1 preview of ${awaitingPaste.fileName}`}
-            />
-          ) : null}
-          <p>
-            <strong>{awaitingPaste.fileName}</strong> needs the extraction step.
-            {awaitingPaste.reason
-              ? ` ${awaitingPaste.reason}`
-              : " This app couldn't read it on its own."}
-          </p>
-          {awaitingPaste.diagnosticSummary ? (
-            <p className="ingest-warnings">{awaitingPaste.diagnosticSummary}</p>
-          ) : null}
-          {awaitingPaste.extractedText ? (
-            <>
-              {extractionMethod ? (
-                <>
-                  <p className="extraction-choice-heading">
-                    Extracting with:{" "}
-                    {extractionMethod === "frontier"
-                      ? "Frontier AI (copy-paste)"
-                      : extractionMethod === "browser"
-                        ? "Open-Source Llama 3.2 3B"
-                        : "OpenRouter Free Selected Models"}
-                    {" | "}
+          <div className="paste-stepper">
+            {/* Step 1: File confirmed */}
+            <div className="paste-stepper-step paste-stepper-step-done">
+              <div className="paste-stepper-indicator">1</div>
+              <div className="paste-stepper-content">
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {awaitingPaste.thumbnailDataUrl ? (
+                    <img
+                      className="pdf-thumbnail"
+                      src={awaitingPaste.thumbnailDataUrl}
+                      alt={`Page 1 preview of ${awaitingPaste.fileName}`}
+                    />
+                  ) : null}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, margin: 0 }}>{awaitingPaste.fileName}</p>
+                    <p style={{ color: "var(--muted)", fontSize: "0.88rem", margin: 0 }}>
+                      {awaitingPaste.reason
+                        ? awaitingPaste.reason
+                        : "This file needs an extraction step to read the numbers."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Collapsed diagnostic — hidden by default */}
+                {awaitingPaste.diagnosticSummary ? (
+                  <details className="paste-diagnostic" style={{ marginTop: 12 }}>
+                    <summary>Why can’t the app read this directly?</summary>
+                    <div className="paste-diagnostic-body">{awaitingPaste.diagnosticSummary}</div>
+                  </details>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Step 2: Choose how to extract */}
+            {awaitingPaste.extractedText ? (
+              <div className="paste-stepper-step paste-stepper-step-current">
+                <div className="paste-stepper-indicator">2</div>
+                <div className="paste-stepper-content">
+                  <h4 className="paste-stepper-title">Choose how to extract</h4>
+                  <div className="extraction-tabs" role="group" aria-label="Extraction method">
                     <button
                       type="button"
-                      className="text-button"
-                      onClick={() => setShowMethodPicker(true)}
+                      className={`extraction-tab${ extractionMethod === "browser" ? " extraction-tab-active" : ""}`}
+                      onClick={() => chooseExtractionMethod("browser")}
                     >
-                      Change extraction method
+                      <span className="extraction-tab-icon" aria-hidden="true">💻</span>
+                      In-Browser
                     </button>
-                  </p>
+                    <button
+                      type="button"
+                      className={`extraction-tab${extractionMethod === "openrouter" ? " extraction-tab-active" : ""}`}
+                      onClick={() => chooseExtractionMethod("openrouter")}
+                    >
+                      <span className="extraction-tab-icon" aria-hidden="true">🔗</span>
+                      OpenRouter
+                    </button>
+                    <button
+                      type="button"
+                      className={`extraction-tab${extractionMethod === "frontier" ? " extraction-tab-active" : ""}`}
+                      onClick={() => chooseExtractionMethod("frontier")}
+                    >
+                      <span className="extraction-tab-icon" aria-hidden="true">💬</span>
+                      Copy-Paste
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
-                  {extractionMethod === "browser" ? (
-                    webGpuAvailable === false ? (
-                      <p className="paste-steps">
-                        In-browser extraction needs WebGPU (Chrome or Edge on a device with a GPU).{" "}
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => setShowMethodPicker(true)}
-                        >
-                          Pick another method
-                        </button>
-                      </p>
-                    ) : (
+            {/* Step 3: Review / paste result */}
+            <div className={`paste-stepper-step${(!awaitingPaste.extractedText || extractionMethod) ? " paste-stepper-step-current" : ""}`}>
+              <div className="paste-stepper-indicator">{awaitingPaste.extractedText ? "3" : "2"}</div>
+              <div className="paste-stepper-content">
+                <h4 className="paste-stepper-title">{awaitingPaste.extractedText ? "Review / paste result" : "Copy-Paste Extraction"}</h4>
+
+                {awaitingPaste.extractedText ? (
+                  <>
+                    {/* Active method detail */}
+                    {extractionMethod === "browser" ? (
+                      webGpuAvailable === false ? (
+                        <div className="extraction-tab-info">
+                          <span className="extraction-tab-info-icon" aria-hidden="true">⚠️</span>
+                          <p>
+                            In-browser extraction needs WebGPU (Chrome or Edge on a device with a GPU).{" "}
+                            <button type="button" className="text-button" onClick={() => chooseExtractionMethod("frontier")}>
+                              Switch to copy-paste
+                            </button>
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="extraction-tab-info">
+                            <span className="extraction-tab-info-icon" aria-hidden="true">🔒</span>
+                            <p>
+                              Runs Llama 3.2 3B locally via WebGPU — nothing leaves your device. First run
+                              downloads ~2 GB.
+                            </p>
+                          </div>
+                          <div className="paste-actions" style={{ marginTop: 14 }}>
+                            <button
+                              type="button"
+                              className="primary-button"
+                              onClick={() => void handleExtractHere()}
+                              disabled={extracting || !extractionPrompt || webGpuAvailable === null}
+                            >
+                              {extracting ? "Extracting…" : "Extract Here In Your Browser"}
+                            </button>
+                          </div>
+                          {extracting && extractProgress ? (
+                            <p className="upload-parsing-hint" style={{ marginTop: 8, textAlign: "left" }}>
+                              {extractProgress.phase === "loading"
+                                ? `Loading model (${Math.round(extractProgress.progress * 100)}%)… ${extractProgress.message}`
+                                : extractProgress.message}
+                            </p>
+                          ) : null}
+                        </>
+                      )
+                    ) : null}
+
+                    {extractionMethod === "openrouter" ? (
                       <>
-                        <p className="paste-steps">
-                          Uses Llama 3.2 3B on your device (WebGPU). First run downloads about 2 GB.
-                          Nothing is sent to a server.
-                        </p>
-                        <div className="paste-actions">
+                        <div className="extraction-tab-info">
+                          <span className="extraction-tab-info-icon" aria-hidden="true">ℹ️</span>
+                          <p>
+                            Your API key stays in this browser. Document text is sent to OpenRouter and run
+                            with selected free models.{" "}
+                            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">
+                              Get a free key
+                            </a>
+                            .
+                          </p>
+                        </div>
+                        <label className="column-mapper-row" style={{ marginTop: 12 }}>
+                          <span>API key</span>
+                          <input
+                            type="password"
+                            value={openRouterApiKey}
+                            autoComplete="off"
+                            placeholder="sk-or-…"
+                            onChange={(event) => setOpenRouterApiKey(event.target.value)}
+                          />
+                        </label>
+                        <div className="paste-actions" style={{ marginTop: 14 }}>
                           <button
                             type="button"
                             className="primary-button"
-                            onClick={() => void handleExtractHere()}
-                            disabled={extracting || !extractionPrompt || webGpuAvailable === null}
+                            onClick={() => void handleOpenRouterExtract()}
+                            disabled={extracting || !extractionPrompt || !openRouterApiKey.trim()}
                           >
-                            {extracting ? "Extracting…" : "Extract Here In Your Browser"}
+                            {extracting ? "Extracting…" : "Extract With OpenRouter"}
                           </button>
                         </div>
                         {extracting && extractProgress ? (
-                          <p className="upload-parsing-hint">
-                            {extractProgress.phase === "loading"
-                              ? `Loading model (${Math.round(extractProgress.progress * 100)}%)… ${extractProgress.message}`
-                              : extractProgress.message}
-                          </p>
+                          <p className="upload-parsing-hint" style={{ marginTop: 8, textAlign: "left" }}>{extractProgress.message}</p>
                         ) : null}
                       </>
-                    )
-                  ) : null}
+                    ) : null}
 
-                  {extractionMethod === "openrouter" ? (
-                    <>
-                      <p className="paste-steps">
-                        Your OpenRouter API key stays in this browser only. Document text is sent
-                        directly to OpenRouter and run with selected free models. Get a key at{" "}
-                        <a
-                          href="https://openrouter.ai/keys"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          openrouter.ai/keys
-                        </a>
-                        .
-                      </p>
-                      <label className="column-mapper-row">
-                        <span>OpenRouter API key</span>
-                        <input
-                          type="password"
-                          value={openRouterApiKey}
-                          autoComplete="off"
-                          placeholder="sk-or-…"
-                          onChange={(event) => setOpenRouterApiKey(event.target.value)}
+                    {extractionMethod === "frontier" ? (
+                      <>
+                        <div className="extraction-tab-info">
+                          <span className="extraction-tab-info-icon" aria-hidden="true">💬</span>
+                          <p>
+                            Copy the prompt + document text into ChatGPT, Claude, or Gemini.
+                            Paste the JSON it returns below.
+                          </p>
+                        </div>
+                        <ol className="paste-steps" style={{ marginTop: 12 }}>
+                          <li>Copy the prompt and document text (one button does both).</li>
+                          <li>Paste into your AI chat. No need to attach the file again.</li>
+                          <li>Paste the JSON it gives you back below.</li>
+                        </ol>
+                        <div className="paste-actions" style={{ marginTop: 14 }}>
+                          <button type="button" className="secondary-button" onClick={copyPromptBundle}>
+                            {copyStatus === "copied" ? "Copied!" : "Copy Prompt + Document Text"}
+                          </button>
+                        </div>
+                        {textChunks.length > 1 ? (
+                          <div className="extraction-splitter" style={{ marginTop: 14 }}>
+                            <p className="paste-steps" style={{ paddingLeft: 0, marginTop: 0 }}>
+                              This report is long. Copy these parts into the same chat in order, then paste
+                              the final combined JSON back here.
+                            </p>
+                            <div className="extraction-chunk-actions">
+                              {textChunks.map((_, index) => (
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  key={index}
+                                  onClick={() => copyPromptChunk(index)}
+                                >
+                                  Copy Part {index + 1} Of {textChunks.length}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : null}
+
+                    {/* Prompt details — collapsed */}
+                    {extractionMethod ? (
+                      <details className="extraction-prompt" style={{ marginTop: 14 }}>
+                        <summary>Show the extraction prompt and document text separately</summary>
+                        <pre>{extractionPrompt || "Loading prompt…"}</pre>
+                        <pre>{awaitingPaste.extractedText}</pre>
+                      </details>
+                    ) : null}
+
+                    {/* Fallback paste textarea — always shown once a method is selected */}
+                    {extractionMethod ? (
+                      <div style={{ marginTop: 14 }}>
+                        <textarea
+                          className="paste-textarea"
+                          style={{ width: "100%", boxSizing: "border-box" }}
+                          value={pasteText}
+                          onChange={(event) => setPasteText(event.target.value)}
+                          placeholder={
+                            extractionMethod === "frontier"
+                              ? "Paste the JSON here (a table still works if that’s what you got back)."
+                              : "Or paste JSON here if automatic extraction didn’t work."
+                          }
+                          rows={5}
                         />
-                      </label>
-                      <div className="paste-actions">
+                        <div className="paste-actions" style={{ marginTop: 14 }}>
+                          <button
+                            type="button"
+                            className={extractionMethod === "frontier" ? "primary-button" : "secondary-button"}
+                            onClick={() => handlePasteSubmit()}
+                            disabled={!pasteText.trim() || extracting}
+                          >
+                            {extractionMethod === "frontier" ? "Read This JSON" : "Read Pasted JSON"}
+                          </button>
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => {
+                              setAwaitingPaste(null);
+                              setCopyStatus("idle");
+                              setExtractProgress(null);
+                              setExtracting(false);
+                              advanceQueue();
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // No method chosen yet — show a prompt to pick one above
+                      <p className="upload-parsing-hint" style={{ textAlign: "left", marginTop: 4 }}>Pick an extraction method above to continue.</p>
+                    )}
+                  </>
+                ) : (
+                  // No extracted text — full copy-paste flow
+                  <>
+                    <ol className="paste-steps" style={{ marginTop: 0 }}>
+                      <li>Copy the prompt below.</li>
+                      <li>Paste it into your AI chat of choice, along with the document.</li>
+                      <li>Paste the JSON it gives you back here.</li>
+                    </ol>
+                    <details className="extraction-prompt" style={{ marginTop: 14 }}>
+                      <summary>Show the extraction prompt</summary>
+                      <pre>{extractionPrompt || "Loading prompt…"}</pre>
+                    </details>
+                    <div style={{ marginTop: 14 }}>
+                      <textarea
+                        className="paste-textarea"
+                        style={{ width: "100%", boxSizing: "border-box" }}
+                        value={pasteText}
+                        onChange={(event) => setPasteText(event.target.value)}
+                        placeholder="Paste the JSON here (a table still works if that’s what you got back)."
+                        rows={5}
+                      />
+                      <div className="paste-actions" style={{ marginTop: 14 }}>
                         <button
                           type="button"
                           className="primary-button"
-                          onClick={() => void handleOpenRouterExtract()}
-                          disabled={extracting || !extractionPrompt || !openRouterApiKey.trim()}
+                          onClick={() => handlePasteSubmit()}
+                          disabled={!pasteText.trim()}
                         >
-                          {extracting ? "Extracting…" : "Extract With OpenRouter"}
+                          Read This JSON
+                        </button>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => {
+                            setAwaitingPaste(null);
+                            setCopyStatus("idle");
+                            setExtractProgress(null);
+                            setExtracting(false);
+                            advanceQueue();
+                          }}
+                        >
+                          Cancel
                         </button>
                       </div>
-                      {extracting && extractProgress ? (
-                        <p className="upload-parsing-hint">{extractProgress.message}</p>
-                      ) : null}
-                    </>
-                  ) : null}
-
-                  {extractionMethod === "frontier" ? (
-                    <>
-                      <p className="paste-steps">
-                        Copy the prompt and document text into ChatGPT, Claude, Gemini, or any AI
-                        you trust. Paste the JSON it returns below.
-                      </p>
-                      <ol className="paste-steps">
-                        <li>Copy the prompt and document text (one button does both).</li>
-                        <li>Paste into your AI chat. No need to attach the file again.</li>
-                        <li>Paste the JSON it gives you back here.</li>
-                      </ol>
-                      <div className="paste-actions">
-                        <button type="button" className="primary-button" onClick={copyPromptBundle}>
-                          {copyStatus === "copied" ? "Copied!" : "Copy Prompt + Document Text"}
-                        </button>
-                      </div>
-                      {textChunks.length > 1 ? (
-                        <div className="extraction-splitter">
-                          <p>
-                            This report is long. If your AI says its context window is too small,
-                            copy these parts into the same chat in order, then paste the final
-                            combined JSON back here.
-                          </p>
-                          <div className="extraction-chunk-actions">
-                            {textChunks.map((_, index) => (
-                              <button
-                                type="button"
-                                className="secondary-button"
-                                key={index}
-                                onClick={() => copyPromptChunk(index)}
-                              >
-                                Copy Part {index + 1} Of {textChunks.length}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : null}
-
-                  <details className="extraction-prompt">
-                    <summary>Show the extraction prompt and document text separately</summary>
-                    <pre>{extractionPrompt || "Loading prompt…"}</pre>
-                    <pre>{awaitingPaste.extractedText}</pre>
-                  </details>
-                </>
-              ) : null}
-            </>
-          ) : (
-            <>
-              <ol className="paste-steps">
-                <li>Copy the prompt below.</li>
-                <li>Paste it into your AI chat of choice, along with the document.</li>
-                <li>Paste the JSON it gives you back here.</li>
-              </ol>
-              <details className="extraction-prompt">
-                <summary>Show the extraction prompt</summary>
-                <pre>{extractionPrompt || "Loading prompt…"}</pre>
-              </details>
-            </>
-          )}
-          <textarea
-            className="paste-textarea"
-            value={pasteText}
-            onChange={(event) => setPasteText(event.target.value)}
-            placeholder={
-              extractionMethod === "frontier" || !awaitingPaste.extractedText
-                ? "Paste the JSON here (a table still works if that's what you got back)."
-                : "Or paste JSON here if automatic extraction didn't work."
-            }
-            rows={6}
-          />
-          <div className="paste-actions">
-            <button
-              type="button"
-              className={
-                extractionMethod === "frontier" || !awaitingPaste.extractedText
-                  ? "primary-button"
-                  : "text-button"
-              }
-              onClick={() => handlePasteSubmit()}
-              disabled={!pasteText.trim() || extracting}
-            >
-              {extractionMethod === "frontier" || !awaitingPaste.extractedText
-                ? "Read This"
-                : "Read Pasted JSON"}
-            </button>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => {
-                setAwaitingPaste(null);
-                setCopyStatus("idle");
-                setExtractProgress(null);
-                setExtracting(false);
-                advanceQueue();
-              }}
-            >
-              Cancel
-            </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1122,7 +1201,6 @@ export function UploadStep({
         </div>
       ) : null}
 
-      {showMethodPicker ? <ExtractionMethodModal onChoose={chooseExtractionMethod} /> : null}
 
       {summaryGuidance ? (
         <div className="paste-panel">
@@ -1472,16 +1550,33 @@ export function UploadStep({
       {documents.length > 0 ? (
         <div className="document-list">
           <h3>Added so far</h3>
-          {documents.map((document, index) => (
-            <div className="document-row" key={`${document.fileName}-${index}`}>
-              <span>{document.fileName}</span>
-              <span className="document-row-count">{document.rowCount} rows</span>
-              <button type="button" className="text-button" onClick={() => onRemove(index)}>
-                Remove
-              </button>
-            </div>
-          ))}
+          {documents.map((document, index) => {
+            const ext = document.fileName.split(".").pop()?.toUpperCase() ?? "DOC";
+            return (
+              <div className="document-card" key={`${document.fileName}-${index}`}>
+                <span className="document-card-icon" aria-hidden="true">{ext.slice(0, 4)}</span>
+                <span className="document-card-name">{document.fileName}</span>
+                <span className="document-card-count">{document.rowCount} rows</span>
+                <button
+                  type="button"
+                  className="document-card-remove"
+                  aria-label={`Remove ${document.fileName}`}
+                  onClick={() => onRemove(index)}
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
         </div>
+      ) : null}
+
+      {documents.length === 0 ? (
+        <p className="upload-skip-hint">
+          <button type="button" className="text-button" onClick={onContinue} style={{ fontWeight: 600 }}>
+            Skip — I have no capital gains to report
+          </button>
+        </p>
       ) : null}
 
       <div className="step-actions">
@@ -1494,15 +1589,6 @@ export function UploadStep({
           Continue To Your Results
         </button>
       </div>
-      {documents.length === 0 ? (
-        <p className="upload-empty-hint">
-          Add a document to continue. Or, if you didn't sell any shares or mutual funds this year,{" "}
-          <button type="button" className="text-button" onClick={onContinue}>
-            Skip This Step
-          </button>{" "}
-          and type your dividend/interest figures in on the results screen.
-        </p>
-      ) : null}
     </div>
   );
 }
