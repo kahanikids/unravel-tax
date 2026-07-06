@@ -1,7 +1,12 @@
 import { extractJsonBlock } from "./extractionPostProcess";
 
-/** Primary OpenRouter extraction model. 262K context on OpenRouter. */
-export const OPENROUTER_EXTRACTION_MODEL = "nvidia/nemotron-3-nano-30b-a3b";
+/** Primary OpenRouter extraction model. Free, 131K context on OpenRouter. */
+export const OPENROUTER_EXTRACTION_MODEL = "openai/gpt-oss-120b:free";
+export const OPENROUTER_EXTRACTION_MODELS = [
+  OPENROUTER_EXTRACTION_MODEL,
+  "qwen/qwen3-235b-a22b:free",
+  "nvidia/nemotron-3-nano-30b-a3b"
+] as const;
 
 export type OpenRouterExtractionResult = {
   rawText: string;
@@ -43,7 +48,53 @@ export async function runOpenRouterExtraction(
   const bearerToken = apiKey.trim().replace(/^Bearer\s+/i, "");
 
   const compactPrompt = compactJsonPrompt(extractionPrompt);
+  let lastError: Error | undefined;
+  for (const model of OPENROUTER_EXTRACTION_MODELS) {
+    try {
+      const result = await runOpenRouterModel({
+        model,
+        bearerToken,
+        compactPrompt,
+        extractionPrompt,
+        userContent,
+        onProgress
+      });
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.error("[OpenRouter extraction] Model failed", { model, error });
+      if (isFatalOpenRouterError(lastError)) {
+        throw lastError;
+      }
+      const nextModel =
+        OPENROUTER_EXTRACTION_MODELS[OPENROUTER_EXTRACTION_MODELS.indexOf(model) + 1];
+      if (nextModel) {
+        onProgress?.(`${model} failed. Trying ${nextModel}…`);
+      }
+    }
+  }
+
+  throw lastError ?? new Error("OpenRouter extraction failed. Try Frontier AI copy-paste instead.");
+}
+
+async function runOpenRouterModel({
+  model,
+  bearerToken,
+  compactPrompt,
+  extractionPrompt,
+  userContent,
+  onProgress
+}: {
+  model: string;
+  bearerToken: string;
+  compactPrompt: string;
+  extractionPrompt: string;
+  userContent: string;
+  onProgress?: (message: string) => void;
+}): Promise<OpenRouterExtractionResult> {
+  onProgress?.(`Trying ${model}…`);
   const first = await requestOpenRouterCompletion({
+    model,
     bearerToken,
     extractionPrompt: compactPrompt,
     userContent,
@@ -57,8 +108,9 @@ export async function runOpenRouterExtraction(
       : undefined;
 
   if (!rawText.trim() || !isCompleteJsonObject(rawText)) {
-    onProgress?.("OpenRouter did not return complete JSON. Retrying with stricter output rules…");
+    onProgress?.(`${model} did not return complete JSON. Retrying once…`);
     const retry = await requestOpenRouterCompletion({
+      model,
       bearerToken,
       extractionPrompt: retryJsonPrompt(extractionPrompt),
       userContent,
@@ -86,12 +138,14 @@ export async function runOpenRouterExtraction(
 }
 
 async function requestOpenRouterCompletion({
+  model,
   bearerToken,
   extractionPrompt,
   userContent,
   forceJson,
   onProgress
 }: {
+  model: string;
   bearerToken: string;
   extractionPrompt: string;
   userContent: string;
@@ -113,7 +167,7 @@ async function requestOpenRouterCompletion({
         "X-OpenRouter-Metadata": "enabled"
       },
       body: JSON.stringify({
-        model: OPENROUTER_EXTRACTION_MODEL,
+        model,
         messages: [
           { role: "system", content: extractionPrompt },
           { role: "user", content: userContent }
@@ -131,7 +185,7 @@ async function requestOpenRouterCompletion({
     const rawMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error(
-        "OpenRouter did not return a response within 3 minutes. Nemotron may be busy or the report may be too large. Try again, use Frontier AI copy-paste, or split the report."
+        "OpenRouter did not return a response within 3 minutes. The selected model may be busy or the report may be too large. Try again, use Frontier AI copy-paste, or split the report."
       );
     }
     throw new Error(
@@ -158,6 +212,16 @@ async function requestOpenRouterCompletion({
   }
 
   return { data: await readOpenRouterSuccess(response) };
+}
+
+function isFatalOpenRouterError(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("api key") ||
+    message.includes("401") ||
+    message.includes("could not be reached") ||
+    message.includes("request could not start")
+  );
 }
 
 async function readOpenRouterSuccess(response: Response): Promise<OpenRouterChatResponse> {

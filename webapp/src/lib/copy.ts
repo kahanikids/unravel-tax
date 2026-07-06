@@ -54,9 +54,9 @@ export const EXTRACTION_METHOD_OPTIONS: ExtractionMethodOption[] = [
   },
   {
     id: "openrouter",
-    label: "OpenRouter Nemotron",
+    label: "OpenRouter Free Selected Models",
     takes: "OpenRouter key + network",
-    gives: "Automatic extraction with Nemotron",
+    gives: "Automatic extraction with selected free models",
     accuracy: "Testing now",
     time: "30 sec-2 min",
     effort: "One click",
@@ -113,7 +113,7 @@ export const LEGAL_SECTIONS: LegalSection[] = [
     paragraphs: [
       "Tax calculations are always deterministic: they run from versioned rule files and plain formulas in your browser, and are never done by an AI or language model.",
       "LLM Options are used for one narrow job only: reading data out of documents that are not already structured. CSV, Excel, and saved-webpage (HTML) statements are parsed directly in your browser without needing LLM extraction. PDFs and free-form / unstructured text need that extraction step because reports are not standardised enough for reliable native parsing.",
-      "On supported browsers (WebGPU), you can run that extraction here with Llama 3.2 3B entirely on your device. The model weights download once, and nothing is sent to any server. Alternatively, you can use OpenRouter with your own API key to run Nemotron 3 Nano 30B A3B; document text is sent from your browser directly to OpenRouter. If neither suits you, the app still offers a copy-paste prompt you can run in whichever AI chat you choose (ChatGPT, Claude, Gemini, and so on).",
+      "On supported browsers (WebGPU), you can run that extraction here with Llama 3.2 3B entirely on your device. The model weights download once, and nothing is sent to any server. Alternatively, you can use OpenRouter with your own API key to run selected free models; document text is sent from your browser directly to OpenRouter. If neither suits you, the app still offers a copy-paste prompt you can run in whichever AI chat you choose (ChatGPT, Claude, Gemini, and so on).",
       "Because the AI only ever reads and transcribes numbers into a table you then review and edit, it never decides your tax. You confirm every extracted row before it is used."
     ]
   },
@@ -270,7 +270,7 @@ export const CAPABILITIES: Capability[] = [
     label: "PDF extraction (in-browser, OpenRouter, or copy-paste)",
     status: "available",
     detail:
-      "On WebGPU browsers, PDFs can be extracted here with an on-device Llama 3.2 3B model, or via OpenRouter's Nemotron route with your own API key. Otherwise, a copy-paste prompt for your own AI chat is available. The AI only reads documents; it never does the tax maths."
+      "On WebGPU browsers, PDFs can be extracted here with an on-device Llama 3.2 3B model, or via OpenRouter free selected models with your own API key. Otherwise, a copy-paste prompt for your own AI chat is available. The AI only reads documents; it never does the tax maths."
   },
   {
     label: "Capital gains, dividends, and interest calculations",

@@ -1058,13 +1058,20 @@ function App() {
   }
 
   async function deliverExport(file: ExportFile) {
-    if (folderHandle) {
-      await saveExportToFolder(folderHandle, file);
-      setExportMessage(`✓ ${file.filename} saved to "${folderHandle.name}" on your computer.`);
-      return;
+    try {
+      if (folderHandle) {
+        await saveExportToFolder(folderHandle, file);
+        setExportMessage(`✓ ${file.filename} saved to "${folderHandle.name}" on your computer.`);
+        return;
+      }
+      downloadExport(file);
+      setExportMessage(`✓ ${file.filename} generated in this browser.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setExportMessage(
+        `Export did not work: ${message}. Try Save To Local Folder, or use another browser.`
+      );
     }
-    downloadExport(file);
-    setExportMessage(`✓ ${file.filename} generated in this browser.`);
   }
 
   function acknowledgeFormChangingTriggers() {

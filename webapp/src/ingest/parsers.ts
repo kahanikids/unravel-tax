@@ -417,12 +417,14 @@ export function parseExtractionJson(text: string, sourceText?: string): IngestRe
   const { transactions, warnings } = normalizeRowsSoft(rowInputs);
 
   const summaryFigures = parseAnnualFigures(obj.annualFigures, obj.netRealisedCapitalGainNoDetail);
+  const summary = summarizeTransactions(transactions);
+  const sourceTotalWarnings = sourceText ? brokerSummaryTotalWarnings(sourceText, summary) : [];
 
   return {
     kind: "structured_text",
     transactions,
-    summary: summarizeTransactions(transactions),
-    warnings,
+    summary,
+    warnings: [...sourceTotalWarnings, ...warnings],
     headerMap: {},
     headerDetails: [],
     sourceHeaders: [],
@@ -435,6 +437,64 @@ export function parseExtractionJson(text: string, sourceText?: string): IngestRe
     confidence: optionalString(obj.confidence),
     notes: optionalString(obj.notes)
   };
+}
+
+function brokerSummaryTotalWarnings(
+  sourceText: string,
+  summary: ReturnType<typeof summarizeTransactions>
+): IngestWarning[] {
+  const sourceTotals = extractBrokerSummaryTotals(sourceText);
+  if (!sourceTotals) {
+    return [];
+  }
+  const checks: { label: string; source: number; extracted: number }[] = [
+    {
+      label: "Speculative / Intraday income",
+      source: sourceTotals.speculativeGain,
+      extracted: summary.intradayGain
+    },
+    { label: "Short-Term Capital Gains", source: sourceTotals.stGain, extracted: summary.stcg },
+    { label: "Long-Term Capital Gains", source: sourceTotals.ltGain, extracted: summary.ltcg }
+  ];
+  return checks
+    .filter((check) => Math.abs(check.source - check.extracted) > 5)
+    .map((check) => ({
+      code: "source_total_mismatch",
+      message: `The report summary says ${check.label} is ${formatSignedInr(check.source)}, but the extracted rows add up to ${formatSignedInr(check.extracted)}. This extraction is probably incomplete. Use Frontier AI copy-paste or upload the broker Excel/XLSX instead.`
+    }));
+}
+
+function extractBrokerSummaryTotals(sourceText: string):
+  | {
+      speculativeGain: number;
+      stGain: number;
+      ltGain: number;
+    }
+  | undefined {
+  const compact = sourceText.replace(/\s+/g, " ").trim();
+  if (!/\bST\s+GAIN\b/i.test(compact) || !/\bLT\s+GAIN\b/i.test(compact)) {
+    return undefined;
+  }
+  const equityRow = compact.match(/\bEquity\b\s+((?:-?\(?[\d,]+(?:\.\d+)?\)?\s+){5,12})/i);
+  if (!equityRow) {
+    return undefined;
+  }
+  const numbers = [...equityRow[1].matchAll(/-?\(?[\d,]+(?:\.\d+)?\)?/g)]
+    .map((match) => coerceAmount(match[0]))
+    .filter((value): value is number => value !== undefined);
+  if (numbers.length < 6) {
+    return undefined;
+  }
+  return {
+    speculativeGain: numbers[3],
+    stGain: numbers[4],
+    ltGain: numbers[5]
+  };
+}
+
+function formatSignedInr(value: number): string {
+  const sign = value < 0 ? "-" : "";
+  return `${sign}₹${Math.abs(value).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 }
 
 /** Maps one JSON transaction object onto the canonical RawTransactionRow keys. Values pass through as-is; the normalizer cleans dates/numbers. */

@@ -777,7 +777,7 @@ export function UploadStep({
                       ? "Frontier AI (copy-paste)"
                       : extractionMethod === "browser"
                         ? "Open-Source Llama 3.2 3B"
-                        : "OpenRouter Nemotron"}
+                        : "OpenRouter Free Selected Models"}
                     {" | "}
                     <button
                       type="button"
@@ -831,7 +831,7 @@ export function UploadStep({
                     <>
                       <p className="paste-steps">
                         Your OpenRouter API key stays in this browser only. Document text is sent
-                        directly to OpenRouter and run with Nemotron 3 Nano 30B A3B. Get a key at{" "}
+                        directly to OpenRouter and run with selected free models. Get a key at{" "}
                         <a
                           href="https://openrouter.ai/keys"
                           target="_blank"

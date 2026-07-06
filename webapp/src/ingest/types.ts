@@ -61,6 +61,7 @@ export type IngestWarningCode =
   | "invalid_date"
   | "invalid_number"
   | "assumed_instrument_type"
+  | "source_total_mismatch"
   | "parse_error";
 
 export type IngestWarning = {

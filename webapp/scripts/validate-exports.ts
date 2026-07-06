@@ -96,7 +96,7 @@ export async function main() {
   for (const totalsHead of [
     "Total sale value (all documents)",
     "Total cost of purchase (all documents)",
-    "Combined gain/(loss) — sale minus cost"
+    "Combined gain/(loss): sale minus cost"
   ]) {
     if (!linkedCa.some((r) => String(r[0]) === totalsHead)) {
       throw new Error(`CA Summary missing totals/check row: ${totalsHead}`);

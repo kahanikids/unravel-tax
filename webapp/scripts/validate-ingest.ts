@@ -310,6 +310,37 @@ export async function main() {
     );
   }
 
+  const brokerSummaryText = [
+    "Summary",
+    "PRODUCT INTEREST ACCRUED INTEREST DIVIDEND SPEC GAIN ST GAIN LT GAIN BUY BACK TOTAL GAIN STT",
+    "Equity 0.0000 0.00 0.00 0.00 -20,622.71 4,28,919.42 0.00 4,08,296.72 2,834.04"
+  ].join("\n");
+  const incompleteAiExtraction = parsePastedExtraction(
+    JSON.stringify({
+      documentType: "broker capital gains statement",
+      capitalGainsTransactions: [
+        {
+          scripName: "Only One LT Row Ltd",
+          purchaseDate: "01-Apr-2023",
+          sellDate: "01-Aug-2025",
+          units: 1,
+          buyValue: 100000,
+          sellValue: 418622
+        }
+      ]
+    }),
+    brokerSummaryText
+  );
+  const mismatchWarnings = incompleteAiExtraction.warnings.filter(
+    (warning) => warning.code === "source_total_mismatch"
+  );
+  if (
+    !mismatchWarnings.some((warning) => warning.message.includes("Short-Term Capital Gains")) ||
+    !mismatchWarnings.some((warning) => warning.message.includes("Long-Term Capital Gains"))
+  ) {
+    throw new Error("AI extraction should warn when source ST/LT summary totals do not match.");
+  }
+
   // Post-process fixes the spike's Llama failure on broken-line row 2 (string
   // "null" sell date, purchase/sell dates swapped) using source-text date repair.
   const llamaSpikeOutput = await readFile(

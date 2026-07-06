@@ -232,8 +232,14 @@ export function downloadExport(file: ExportFile) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = file.filename;
+  anchor.rel = "noopener";
+  anchor.style.display = "none";
+  document.body.append(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, 30_000);
 }
 
 function csvCell(value: string | number) {
